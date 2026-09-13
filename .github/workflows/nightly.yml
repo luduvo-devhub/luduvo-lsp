@@ -15,17 +15,17 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            artifact-name: luau-lsp-win64
+            artifact-name: luduvo-lsp-win64
             code-target: [win32-x64]
-            crash-reporting: true
+            crash-reporting: false
           - os: ubuntu-22.04
-            artifact-name: luau-lsp-linux
+            artifact-name: luduvo-lsp-linux
             code-target: [linux-x64]
             crash-reporting: false
           - os: macos-latest
-            artifact-name: luau-lsp-macos
+            artifact-name: luduvo-lsp-macos
             code-target: [darwin-x64, darwin-arm64]
-            crash-reporting: true
+            crash-reporting: false
 
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -56,15 +56,15 @@ jobs:
 
       - name: (MacOS) Verify universal build
         if: matrix.os == 'macos-latest'
-        run: lipo -archs build/luau-lsp
+        run: lipo -archs build/luduvo-lsp
 
       - name: (MacOS) Separate debug symbols
         if: matrix.os == 'macos-latest'
-        run: dsymutil build/luau-lsp && strip -S build/luau-lsp
+        run: dsymutil build/luduvo-lsp && strip -S build/luduvo-lsp
 
       - name: (Linux) Separate debug symbols
         if: matrix.os == 'ubuntu-22.04'
-        run: objcopy --only-keep-debug build/luau-lsp build/luau-lsp.dbg && objcopy --strip-debug build/luau-lsp
+        run: objcopy --only-keep-debug build/luduvo-lsp build/luduvo-lsp.dbg && objcopy --strip-debug build/luduvo-lsp
 
       - name: Copy Build into Extension
         shell: bash
@@ -72,10 +72,10 @@ jobs:
           mkdir -p ./dist
           mkdir -p editors/code/bin
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp build/RelWithDebInfo/luau-lsp.exe editors/code/bin/server.exe
-            cp build/RelWithDebInfo/luau-lsp.pdb editors/code/bin/server.pdb
+            cp build/RelWithDebInfo/luduvo-lsp.exe editors/code/bin/server.exe
+            cp build/RelWithDebInfo/luduvo-lsp.pdb editors/code/bin/server.pdb
           else
-            cp build/luau-lsp editors/code/bin/server
+            cp build/luduvo-lsp editors/code/bin/server
             chmod 777 editors/code/bin/server
           fi
 
@@ -90,31 +90,16 @@ jobs:
               chmod 777 editors/code/bin/crashpad_handler
           fi
 
-      - name: Setup Sentry CLI
-        uses: matbour/setup-sentry-cli@v2
-        if: matrix.crash-reporting == true
-        with:
-          token: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          organization: luau-lsp
-          project: luau-lsp
-
-      - name: Upload debug symbols
-        shell: bash
-        if: matrix.crash-reporting == true
-        run: |
-          rm -rf build/_deps
-          sentry-cli debug-files upload --include-sources build
-
       - name: Create Release Archive
         shell: bash
         run: |
           mkdir staging
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp "build/RelWithDebInfo/luau-lsp.exe" staging/
+            cp "build/RelWithDebInfo/luduvo-lsp.exe" staging/
             cd staging
             7z a ../dist/server.zip *
           else
-            cp "build/luau-lsp" staging/
+            cp "build/luduvo-lsp" staging/
             cd staging
             zip ../dist/server.zip *
           fi

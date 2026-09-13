@@ -219,7 +219,7 @@ target_include_directories(Luau.LanguageServer PUBLIC src/include)
 target_include_directories(Luau.LanguageServer SYSTEM PUBLIC ${EXTERN_INCLUDES})
 target_link_libraries(Luau.LanguageServer PRIVATE Luau.Ast Luau.Analysis Luau.Compiler Luau.VM Luau.CodeGen)
 
-set_target_properties(Luau.LanguageServer.CLI PROPERTIES OUTPUT_NAME luau-lsp)
+set_target_properties(Luau.LanguageServer.CLI PROPERTIES OUTPUT_NAME luduvo-lsp)
 target_compile_options(Luau.LanguageServer.CLI PRIVATE ${LUAU_LSP_OPTIONS})
 target_include_directories(Luau.LanguageServer.CLI PRIVATE src/include)
 target_include_directories(Luau.LanguageServer.CLI SYSTEM PRIVATE ${EXTERN_INCLUDES})

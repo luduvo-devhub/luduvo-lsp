@@ -30,7 +30,7 @@ For example, this is what I put in my `.zed/settings.json`:
   "lsp": {
     "luau-lsp": {
       "binary": {
-        "path": "C:/path/to/luduvo-lsp/build-luduvo/luau-lsp.exe",
+        "path": "C:/path/to/luduvo-lsp/build-luduvo/luduvo-lsp.exe",
         "arguments": ["lsp"]
       },
       "settings": {

@@ -16,11 +16,11 @@
       "outFiles": ["${workspaceFolder}/editors/code/dist/**/*.js"],
       "preLaunchTask": "npm: compile",
       "env": {
-        "LUAU_LSP_SERVER_PATH": "${workspaceFolder}/${input:binaryPath}/luau-lsp"
+        "LUAU_LSP_SERVER_PATH": "${workspaceFolder}/${input:binaryPath}/luduvo-lsp"
       },
       "windows": {
         "env": {
-          "LUAU_LSP_SERVER_PATH": "${workspaceFolder}/${input:binaryPath}/luau-lsp.exe"
+          "LUAU_LSP_SERVER_PATH": "${workspaceFolder}/${input:binaryPath}/luduvo-lsp.exe"
         }
       }
     },
@@ -61,7 +61,7 @@
     {
       "id": "binaryPath",
       "type": "pickString",
-      "description": "Path to build folder containing 'luau-lsp'",
+      "description": "Path to build folder containing 'luduvo-lsp'",
       "default": "cmake-build-relwithdebinfo-visual-studio",
       "options": [
         "cmake-build-debug-visual-studio",
