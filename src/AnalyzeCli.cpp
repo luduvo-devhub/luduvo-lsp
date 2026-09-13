@@ -271,7 +271,9 @@ int startAnalyze(const argparse::ArgumentParser& program)
 
     if (auto platformArg = program.present("--platform"))
     {
-        if (platformArg == "standard")
+        if (platformArg == "luduvo")
+            client.globalConfig.platform.type = LSPPlatformConfig::Luduvo;
+        else if (platformArg == "standard")
             client.globalConfig.platform.type = LSPPlatformConfig::Standard;
         else if (platformArg == "roblox")
             client.globalConfig.platform.type = LSPPlatformConfig::Roblox;

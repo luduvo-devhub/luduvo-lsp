@@ -236,7 +236,8 @@
           "type": "string",
           "enum": [
             "standard",
-            "roblox"
+            "roblox",
+            "luduvo"
           ],
           "scope": "window",
           "default": "roblox"

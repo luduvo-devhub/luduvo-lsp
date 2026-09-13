@@ -291,10 +291,12 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientPluginConfiguration, enabl
 enum struct LSPPlatformConfig
 {
     Standard,
+    Luduvo,
     Roblox
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(LSPPlatformConfig, {
                                                     {LSPPlatformConfig::Standard, "standard"},
+                                                    {LSPPlatformConfig::Luduvo, "luduvo"},
                                                     {LSPPlatformConfig::Roblox, "roblox"},
                                                 })
 

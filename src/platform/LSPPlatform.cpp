@@ -4,6 +4,7 @@
 #include "LSP/ClientConfiguration.hpp"
 #include "LSP/Workspace.hpp"
 #include "Platform/RobloxPlatform.hpp"
+#include "Platform/LuduvoPlatform.hpp"
 #include "Platform/StringRequireSuggester.hpp"
 #include "Platform/StringRequireAutoImporter.hpp"
 
@@ -21,6 +22,9 @@ LSPPlatform::LSPPlatform(WorkspaceFileResolver* fileResolver, WorkspaceFolder* w
 std::unique_ptr<LSPPlatform> LSPPlatform::getPlatform(
     const ClientConfiguration& config, WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder)
 {
+    if (config.platform.type == LSPPlatformConfig::Luduvo)
+        return std::make_unique<LuduvoPlatform>(fileResolver, workspaceFolder);
+
     if (config.types.roblox && config.platform.type == LSPPlatformConfig::Roblox)
         return std::make_unique<RobloxPlatform>(fileResolver, workspaceFolder);
 

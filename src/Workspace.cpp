@@ -558,7 +558,14 @@ void WorkspaceFolder::registerTypes(const std::vector<std::string>& disabledGlob
     frontend.applyBuiltinDefinitionToEnvironment("LSPPlugin", "LSPPlugin");
     client->sendTrace("workspace initialization: registering LSPPlugin environment COMPLETED");
 
-    if (client->definitionsFiles.empty())
+    if (const auto* definitions = platform->getBuiltinDefinitions())
+    {
+        auto result = loadDefinitionFile("@luduvo", definitions);
+        if (!result.success)
+            throw std::runtime_error("Failed to load bundled Luduvo definitions");
+    }
+
+    if (client->definitionsFiles.empty() && !platform->getBuiltinDefinitions())
         client->sendLogMessage(lsp::MessageType::Warning, "No definitions file provided by client");
 
     // For backwards compatibility, we need to keep an ordering where a definitions file for '@roblox' is always processed first

@@ -249,7 +249,7 @@ int main(int argc, char** argv)
         .append()
         .metavar("GLOB");
     analyze_command.add_argument("--base-luaurc").help("path to a .luaurc file which acts as the base default configuration").metavar("PATH");
-    analyze_command.add_argument("--platform").help("platform-specific support features").choices("standard", "roblox");
+    analyze_command.add_argument("--platform").help("platform-specific support features").choices("standard", "roblox", "luduvo");
     analyze_command.add_argument("--settings").help("path to LSP-style settings").metavar("PATH");
     analyze_command.add_argument("files").help("files to perform analysis on").remaining();
 
@@ -290,7 +290,7 @@ int main(int argc, char** argv)
     require_graph_command.add_parents(parent_parser);
     require_graph_command.add_argument("--sourcemap").help("path to a Rojo-style instance sourcemap to understand the DataModel").metavar("PATH");
     require_graph_command.add_argument("--base-luaurc").help("path to a .luaurc file which acts as the base default configuration").metavar("PATH");
-    require_graph_command.add_argument("--platform").help("platform-specific support features").choices("standard", "roblox");
+    require_graph_command.add_argument("--platform").help("platform-specific support features").choices("standard", "roblox", "luduvo");
     require_graph_command.add_argument("--output-format")
         .help("output dependency graph in a particular format")
         .choices("json", "dot")

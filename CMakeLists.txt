@@ -40,8 +40,20 @@ endif ()
 
 add_subdirectory(luau)
 add_library(Luau.LanguageServer STATIC)
+
+# Bundle Luduvo-specific declarations into the executable
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/globalTypes.d.luau")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/globalTypes.d.luau" LUDUVO_DEFINITIONS)
+configure_file(src/platform/luduvo/LuduvoDefinitions.hpp.in generated/LuduvoDefinitions.hpp @ONLY)
+target_include_directories(Luau.LanguageServer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 add_executable(Luau.LanguageServer.CLI)
 add_executable(Luau.LanguageServer.Test)
+
+if (MINGW)
+    # Need to keep the Windows binaries usable outside the compiler's PATH
+    target_link_options(Luau.LanguageServer.CLI PRIVATE -static)
+    target_link_options(Luau.LanguageServer.Test PRIVATE -static)
+endif ()
 
 target_sources(Luau.LanguageServer PRIVATE
         src/LanguageServer.cpp
@@ -62,6 +74,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/CliConfigurationParser.cpp
         src/platform/AutoImports.cpp
         src/platform/LSPPlatform.cpp
+        src/platform/luduvo/LuduvoPlatform.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
         src/platform/roblox/InstanceRequireAutoImporter.cpp

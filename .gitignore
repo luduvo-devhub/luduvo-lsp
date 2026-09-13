@@ -50,3 +50,6 @@ trace.json
 
 # Python venvs
 .venv
+/build-luduvo/
+/.zed/settings.json
+*/__pycache__/*

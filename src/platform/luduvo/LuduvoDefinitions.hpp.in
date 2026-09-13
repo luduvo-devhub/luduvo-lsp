@@ -1,0 +1,2 @@
+#pragma once
+inline constexpr const char* LUDUVO_DEFINITIONS = R"LUDUVO(@LUDUVO_DEFINITIONS@)LUDUVO";

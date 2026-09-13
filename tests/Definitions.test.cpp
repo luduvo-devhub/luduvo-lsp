@@ -189,3 +189,47 @@ TEST_CASE_FIXTURE(Fixture, "type_functions_in_definition_files_work")
 }
 
 TEST_SUITE_END();
+
+TEST_CASE("luduvo_platform_loads_bundled_definitions_without_client_files")
+{
+    TestClient client;
+    auto config = defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    client.globalConfig = config;
+    WorkspaceFolder workspace(&client, "$LUDUVO_TEST", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    REQUIRE(client.definitionsFiles.empty());
+    auto document = newDocument(workspace, "luduvo-test.luau", R"(
+        --!strict
+        local entity: Instance = self
+        local position: vector = Vector3.new(1, 2, 3)
+        entity.Position = position
+        entity.Parent = game.World
+        local found: Instance? = game.Prefabs.Spawn("Part")
+        local query = game.World.Query("Position")
+        local count: number = query:Refresh()
+        local row: Instance = query.Entity[1]
+        local signal: Signal = entity:GetSignal("Changed")
+        signal:Connect(function() print(count, row, found) end)
+        local events = Event("Hit", ToServer, {{"target", Entity}})
+        events:Push(entity)
+    )");
+    auto result = workspace.frontend.check(workspace.fileResolver.getModuleName(document));
+    REQUIRE(result.errors.empty());
+
+    auto badDocument = newDocument(workspace, "luduvo-bad.luau", R"(
+        --!strict
+        self.Anchored = "wrong"
+        game.Physics.Raycast("wrong", Vector3.zero, 10)
+    )");
+    auto badResult = workspace.frontend.check(workspace.fileResolver.getModuleName(badDocument));
+    REQUIRE(badResult.errors.size() >= 2);
+}
+
+TEST_CASE("luduvo_platform_configuration_round_trips")
+{
+    auto config = json::parse(R"({"platform":{"type":"luduvo"}})").get<ClientConfiguration>();
+    CHECK(config.platform.type == LSPPlatformConfig::Luduvo);
+    CHECK(json(config)["platform"]["type"] == "luduvo");
+}

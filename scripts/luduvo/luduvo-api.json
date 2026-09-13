@@ -1,0 +1,3698 @@
+[
+  {
+    "name": "Instance",
+    "type": "",
+    "doc": "an entity in the place tree; the components it holds add the members listed under each section",
+    "flags": 0,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Action",
+    "type": "string",
+    "doc": "Engine action this core menu button triggers",
+    "flags": 1,
+    "parent": 1,
+    "component": 60
+  },
+  {
+    "name": "Activated",
+    "type": "Signal",
+    "doc": "fires when the pointer clicks this element, client side only",
+    "flags": 17,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Active",
+    "type": "number",
+    "doc": "Prefab id of the currently held item",
+    "flags": 1,
+    "parent": 1,
+    "component": 24
+  },
+  {
+    "name": "ActiveAnimation",
+    "type": "(self: Instance) -> string?",
+    "doc": "name of the playing animation clip, nil when none plays",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "AddComponent",
+    "type": "(self: Instance, name: string) -> Component | Instance",
+    "doc": "attach a component by name and return it",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "AdvancePreview",
+    "type": "(self: Instance) -> boolean",
+    "doc": "step the animation preview, false when no preview runs",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Albedo",
+    "type": "string",
+    "doc": "Base color texture override; 0 keeps the material texture",
+    "flags": 1,
+    "parent": 1,
+    "component": 3
+  },
+  {
+    "name": "Align",
+    "type": "string",
+    "doc": "Cross-axis alignment of the children: Start, Center, or End",
+    "flags": 1,
+    "parent": 1,
+    "component": 71
+  },
+  {
+    "name": "Anchor",
+    "type": "vector",
+    "doc": "Constraint pivot in the ECS parent's body frame",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "AnchorPoint",
+    "type": "vector",
+    "doc": "Pivot inside the rect, 0,0 top left to 1,1 bottom right",
+    "flags": 1,
+    "parent": 1,
+    "component": 73
+  },
+  {
+    "name": "Anchored",
+    "type": "boolean",
+    "doc": "Fixes the body in place; gravity and contacts cannot move it",
+    "flags": 1,
+    "parent": 1,
+    "component": 47
+  },
+  {
+    "name": "AngularDamping",
+    "type": "number",
+    "doc": "Decay rate of angular velocity per second; 0 means no drag",
+    "flags": 1,
+    "parent": 1,
+    "component": 51
+  },
+  {
+    "name": "AnimLayers",
+    "type": "AnimLayers",
+    "doc": "animation layer rows of a character, indexed by layer",
+    "flags": 25,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "AnimationPreview",
+    "type": "(self: Instance) -> AnimPreviewInfo?",
+    "doc": "state of the animation preview, nil when no preview runs",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "AnimationWeight",
+    "type": "(self: Instance, clip: string) -> number?",
+    "doc": "blend weight of a clip, nil when the entity has no animator",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "ApplyForce",
+    "type": "(self: Instance, force: vector, at: vector?) -> ()",
+    "doc": "push the physics body with a force, optionally at a point",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "ApplyImpulse",
+    "type": "(self: Instance, impulse: vector, at: vector?) -> ()",
+    "doc": "kick the physics body with an impulse, optionally at a point",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "ApplyTorque",
+    "type": "(self: Instance, torque: vector) -> ()",
+    "doc": "spin the physics body with a torque",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Attacker",
+    "type": "Instance?",
+    "doc": "The entity that dealt the last damage",
+    "flags": 17,
+    "parent": 1,
+    "component": 11
+  },
+  {
+    "name": "AutoLocomotion",
+    "type": "boolean",
+    "doc": "Automatic walk/idle/jump clip selection from velocity and state",
+    "flags": 1,
+    "parent": 1,
+    "component": 23
+  },
+  {
+    "name": "AutoRotate",
+    "type": "boolean",
+    "doc": "The character turns to the move direction",
+    "flags": 1,
+    "parent": 1,
+    "component": 6
+  },
+  {
+    "name": "Axis",
+    "type": "string",
+    "doc": "Direction the children stack: Vertical or Horizontal",
+    "flags": 1,
+    "parent": 1,
+    "component": 71
+  },
+  {
+    "name": "BackgroundColor3",
+    "type": "vector",
+    "doc": "Background color of the frame",
+    "flags": 1,
+    "parent": 1,
+    "component": 67
+  },
+  {
+    "name": "BackgroundTransparency",
+    "type": "number",
+    "doc": "Transparency of the frame background, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 67
+  },
+  {
+    "name": "Bold",
+    "type": "boolean",
+    "doc": "Draws the text with the bold font weight",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "BorderColor3",
+    "type": "vector",
+    "doc": "Color of the border stroke",
+    "flags": 1,
+    "parent": 1,
+    "component": 78
+  },
+  {
+    "name": "BorderSizePixel",
+    "type": "number",
+    "doc": "Pixels",
+    "flags": 1,
+    "parent": 1,
+    "component": 78
+  },
+  {
+    "name": "BorderTransparency",
+    "type": "number",
+    "doc": "Transparency of the border stroke, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 78
+  },
+  {
+    "name": "BreakForce",
+    "type": "number",
+    "doc": "Joint reaction force in Newtons that breaks the weld; zero holds forever",
+    "flags": 1,
+    "parent": 1,
+    "component": 56
+  },
+  {
+    "name": "CanvasSize",
+    "type": "UDim2",
+    "doc": "Scrollable canvas size, a fraction of the frame plus pixels",
+    "flags": 1,
+    "parent": 1,
+    "component": 75
+  },
+  {
+    "name": "CellPadding",
+    "type": "number",
+    "doc": "Pixels between cells",
+    "flags": 1,
+    "parent": 1,
+    "component": 68
+  },
+  {
+    "name": "CellSize",
+    "type": "vector",
+    "doc": "Size of one grid cell in pixels",
+    "flags": 1,
+    "parent": 1,
+    "component": 68
+  },
+  {
+    "name": "Changed",
+    "type": "Signal",
+    "doc": "fires after a property of the entity changes",
+    "flags": 17,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Character",
+    "type": "boolean",
+    "doc": "Marks the root entity of a humanoid character",
+    "flags": 1,
+    "parent": 1,
+    "component": 26
+  },
+  {
+    "name": "CharacterAnimation",
+    "type": "boolean",
+    "doc": "Attaches an Animator once the six body parts exist (R6 fallback)",
+    "flags": 1,
+    "parent": 1,
+    "component": 27
+  },
+  {
+    "name": "CharacterPhysics",
+    "type": "boolean",
+    "doc": "Opt-in dynamic torso body; Health and Locomotion alone are inert data",
+    "flags": 1,
+    "parent": 1,
+    "component": 28
+  },
+  {
+    "name": "CharacterRig",
+    "type": "boolean",
+    "doc": "Kinematic limb bodies for the BodyPart children, ridden on the torso and pose",
+    "flags": 1,
+    "parent": 1,
+    "component": 29
+  },
+  {
+    "name": "ClipsDescendants",
+    "type": "boolean",
+    "doc": "Scissors the descendants to this entity's rect",
+    "flags": 1,
+    "parent": 1,
+    "component": 64
+  },
+  {
+    "name": "Clone",
+    "type": "(self: Instance) -> Instance",
+    "doc": "copy the entity with its descendants, the copy becomes a root",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Collider",
+    "type": "string",
+    "doc": "Auto derives from Shape (cone as cylinder, wedge as box)",
+    "flags": 1,
+    "parent": 1,
+    "component": 48
+  },
+  {
+    "name": "CollisionGroup",
+    "type": "string",
+    "doc": "collision group name, Default when none is set",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Color",
+    "type": "vector",
+    "doc": "Surface color of the part or mesh",
+    "flags": 1,
+    "parent": 1,
+    "component": 1
+  },
+  {
+    "name": "Columns",
+    "type": "number",
+    "doc": "Cells across one grid line",
+    "flags": 1,
+    "parent": 1,
+    "component": 68
+  },
+  {
+    "name": "CornerRadius",
+    "type": "number",
+    "doc": "Pixels",
+    "flags": 1,
+    "parent": 1,
+    "component": 65
+  },
+  {
+    "name": "CursorColor3",
+    "type": "vector",
+    "doc": "Color of the text input cursor",
+    "flags": 1,
+    "parent": 1,
+    "component": 79
+  },
+  {
+    "name": "CursorTransparency",
+    "type": "number",
+    "doc": "Transparency of the text cursor, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 79
+  },
+  {
+    "name": "Density",
+    "type": "number",
+    "doc": "Mass per unit of volume used to derive the body mass",
+    "flags": 1,
+    "parent": 1,
+    "component": 52
+  },
+  {
+    "name": "Destroy",
+    "type": "(self: Instance) -> ()",
+    "doc": "remove the entity and its descendants, no-op when already dead",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Disabled",
+    "type": "boolean",
+    "doc": "Draws the control dim and refuses the pointer and the key; absent means usable",
+    "flags": 1,
+    "parent": 1,
+    "component": 66
+  },
+  {
+    "name": "DisplayNameId",
+    "type": "number",
+    "doc": "Interned id of the account display name, set by the server session layer on join",
+    "flags": 17,
+    "parent": 1,
+    "component": 31
+  },
+  {
+    "name": "DragMoved",
+    "type": "Signal",
+    "doc": "fires while the pointer drags this element, client side only",
+    "flags": 17,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Emissive",
+    "type": "string",
+    "doc": "Emissive color texture added to the lighting; 0 adds none",
+    "flags": 1,
+    "parent": 1,
+    "component": 3
+  },
+  {
+    "name": "Emit",
+    "type": "(self: Instance, name: string, ...any) -> ()",
+    "doc": "fire the named signal on the entity with the given arguments",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Face",
+    "type": "string",
+    "doc": "Texture asset of the face decal",
+    "flags": 1,
+    "parent": 1,
+    "component": 7
+  },
+  {
+    "name": "FillColor3",
+    "type": "vector",
+    "doc": "Color of the track between its start and the thumb",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "FillTransparency",
+    "type": "number",
+    "doc": "Transparency of the track fill, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "FindFirstChild",
+    "type": "(self: Instance, name: string) -> Instance?",
+    "doc": "the direct child with the given name, nil when none",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Friction",
+    "type": "number",
+    "doc": "Friction coefficient of contacts on this surface, 0 to 2",
+    "flags": 1,
+    "parent": 1,
+    "component": 52
+  },
+  {
+    "name": "FrictionTorque",
+    "type": "number",
+    "doc": "Anti-jitter friction torque in Nm once the joint settles",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "GetAngularVelocity",
+    "type": "(self: Instance) -> vector",
+    "doc": "angular velocity of the physics body",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "GetChildren",
+    "type": "(self: Instance) -> {Instance}",
+    "doc": "array of the direct children",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "GetIdentity",
+    "type": "(self: Instance) -> Identity?",
+    "doc": "user id, display name, and admin flag, nil for non-players",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "GetLinearVelocity",
+    "type": "(self: Instance) -> vector",
+    "doc": "linear velocity of the physics body",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "GetMass",
+    "type": "(self: Instance) -> number?",
+    "doc": "mass of the physics body, nil when the entity has none",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "GetMoveIntent",
+    "type": "(self: Instance) -> MoveIntent?",
+    "doc": "movement intent of a character, nil when the entity has none",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "GetSignal",
+    "type": "(self: Instance, name: string) -> Signal",
+    "doc": "the named signal of the entity, created on first use",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "GetSwingTwistJoint",
+    "type": "(self: Instance) -> SwingTwistJointInfo?",
+    "doc": "swing-twist joint parameters, nil when the entity has no joint",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "HasComponent",
+    "type": "(self: Instance, name: string) -> boolean",
+    "doc": "whether the entity holds the named component",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Health",
+    "type": "number",
+    "doc": "Current hit points; reaching 0 kills the character",
+    "flags": 1,
+    "parent": 1,
+    "component": 8
+  },
+  {
+    "name": "HipHeight",
+    "type": "number",
+    "doc": "Clearance between the floor and the torso in studs",
+    "flags": 1,
+    "parent": 1,
+    "component": 12
+  },
+  {
+    "name": "Hovered",
+    "type": "Signal",
+    "doc": "fires when the pointer enters this element, client side only",
+    "flags": 17,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Id",
+    "type": "number",
+    "doc": "Team number of this entity. Team 0 means no team",
+    "flags": 1,
+    "parent": 1,
+    "component": 39
+  },
+  {
+    "name": "Image",
+    "type": "string",
+    "doc": "The texture asset this element draws. 0 draws nothing.",
+    "flags": 1,
+    "parent": 1,
+    "component": 70
+  },
+  {
+    "name": "ImageColor3",
+    "type": "vector",
+    "doc": "Multiplies the texture; white keeps the source colors",
+    "flags": 1,
+    "parent": 1,
+    "component": 70
+  },
+  {
+    "name": "ImageTransparency",
+    "type": "number",
+    "doc": "Transparency of the texture, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 70
+  },
+  {
+    "name": "InnerAngle",
+    "type": "number",
+    "doc": "Half-angle in radians with full intensity inside the cone",
+    "flags": 1,
+    "parent": 1,
+    "component": 46
+  },
+  {
+    "name": "InputMove",
+    "type": "boolean",
+    "doc": "whether local movement input drives this camera",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "InputSteer",
+    "type": "boolean",
+    "doc": "whether local pointer input steers this camera",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Intensity",
+    "type": "number",
+    "doc": "Brightness of the emitted light; 0 turns it off",
+    "flags": 1,
+    "parent": 1,
+    "component": 44
+  },
+  {
+    "name": "Invulnerable",
+    "type": "boolean",
+    "doc": "TakeDamage does nothing while this tag exists",
+    "flags": 1,
+    "parent": 1,
+    "component": 10
+  },
+  {
+    "name": "IsAlive",
+    "type": "(self: Instance) -> boolean",
+    "doc": "whether the entity still exists in the world",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "IsDescendantOf",
+    "type": "(self: Instance, ancestor: Instance) -> boolean",
+    "doc": "whether the entity sits below the given ancestor",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "IsRoot",
+    "type": "boolean",
+    "doc": "This entity is the root of an accessory prefab",
+    "flags": 1,
+    "parent": 1,
+    "component": 22
+  },
+  {
+    "name": "Joint",
+    "type": "vector",
+    "doc": "Motor6D C0 in the torso frame",
+    "flags": 1,
+    "parent": 1,
+    "component": 34
+  },
+  {
+    "name": "JumpPower",
+    "type": "number",
+    "doc": "Upward velocity given on jump in studs/s",
+    "flags": 1,
+    "parent": 1,
+    "component": 12
+  },
+  {
+    "name": "KnobColor3",
+    "type": "vector",
+    "doc": "Color of the sliding knob",
+    "flags": 1,
+    "parent": 1,
+    "component": 82
+  },
+  {
+    "name": "KnobInset",
+    "type": "number",
+    "doc": "Pixels between the knob and the track",
+    "flags": 1,
+    "parent": 1,
+    "component": 82
+  },
+  {
+    "name": "KnobTransparency",
+    "type": "number",
+    "doc": "Transparency of the knob, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 82
+  },
+  {
+    "name": "LayoutOrder",
+    "type": "number",
+    "doc": "Place order under a parent that has a UIListLayout",
+    "flags": 1,
+    "parent": 1,
+    "component": 72
+  },
+  {
+    "name": "LightColor",
+    "type": "vector",
+    "doc": "Color of the emitted light",
+    "flags": 1,
+    "parent": 1,
+    "component": 44
+  },
+  {
+    "name": "LightShadowOff",
+    "type": "boolean",
+    "doc": "The light casts no shadow. Absence means it casts",
+    "flags": 1,
+    "parent": 1,
+    "component": 45
+  },
+  {
+    "name": "LinearDamping",
+    "type": "number",
+    "doc": "Decay rate of linear velocity per second; 0 means no drag",
+    "flags": 1,
+    "parent": 1,
+    "component": 51
+  },
+  {
+    "name": "LocalOrientation",
+    "type": "vector",
+    "doc": "YXZ Euler degrees relative to the parent",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "LocalPosition",
+    "type": "vector",
+    "doc": "offset in studs relative to the parent",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Locked",
+    "type": "boolean",
+    "doc": "Cannot be selected or moved in the editor viewport",
+    "flags": 1,
+    "parent": 1,
+    "component": 13
+  },
+  {
+    "name": "MarginBottom",
+    "type": "number",
+    "doc": "Pixels inside the bottom edge",
+    "flags": 1,
+    "parent": 1,
+    "component": 71
+  },
+  {
+    "name": "MarginLeft",
+    "type": "number",
+    "doc": "Pixels inside the left edge",
+    "flags": 1,
+    "parent": 1,
+    "component": 71
+  },
+  {
+    "name": "MarginRight",
+    "type": "number",
+    "doc": "Pixels inside the right edge",
+    "flags": 1,
+    "parent": 1,
+    "component": 71
+  },
+  {
+    "name": "MarginTop",
+    "type": "number",
+    "doc": "Pixels inside the top edge",
+    "flags": 1,
+    "parent": 1,
+    "component": 71
+  },
+  {
+    "name": "Margins",
+    "type": "Rect",
+    "doc": "Inner margins in pixels: left, top, right, bottom",
+    "flags": 1,
+    "parent": 1,
+    "component": 68
+  },
+  {
+    "name": "Material",
+    "type": "string",
+    "doc": "surface material name, empty when none is set",
+    "flags": 9,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "MaxHealth",
+    "type": "number",
+    "doc": "Hit point cap that healing cannot exceed",
+    "flags": 1,
+    "parent": 1,
+    "component": 8
+  },
+  {
+    "name": "MaxSize",
+    "type": "UDim2",
+    "doc": "Size cap, a fraction of the parent plus pixels; 0 means no cap",
+    "flags": 1,
+    "parent": 1,
+    "component": 73
+  },
+  {
+    "name": "MaxSlopeAngle",
+    "type": "number",
+    "doc": "Floor angle in degrees a character walks on",
+    "flags": 1,
+    "parent": 1,
+    "component": 12
+  },
+  {
+    "name": "Mesh",
+    "type": "string",
+    "doc": "The mesh asset this entity draws; 0 draws nothing",
+    "flags": 1,
+    "parent": 1,
+    "component": 84
+  },
+  {
+    "name": "MetallicRoughness",
+    "type": "string",
+    "doc": "Roughness in green and metallic in blue; 0 keeps the material",
+    "flags": 1,
+    "parent": 1,
+    "component": 3
+  },
+  {
+    "name": "Name",
+    "type": "string",
+    "doc": "entity name, empty when unset",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "NameId",
+    "type": "number",
+    "doc": "Hash id of the entity name. Use the outliner to rename.",
+    "flags": 17,
+    "parent": 1,
+    "component": 42
+  },
+  {
+    "name": "NoContactFriction",
+    "type": "boolean",
+    "doc": "Zero contact friction while present; the FSM holds it during GettingUp",
+    "flags": 1,
+    "parent": 1,
+    "component": 35
+  },
+  {
+    "name": "NoTranslate",
+    "type": "boolean",
+    "doc": "Show this text as typed, with no translation",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "Normal",
+    "type": "string",
+    "doc": "Tangent-space normal map override; 0 keeps the material map",
+    "flags": 1,
+    "parent": 1,
+    "component": 3
+  },
+  {
+    "name": "NormalCone",
+    "type": "number",
+    "doc": "Swing half-angle perpendicular to Plane Axis; already degrees",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "Occlusion",
+    "type": "string",
+    "doc": "Ambient occlusion texture, red channel; 0 keeps the material",
+    "flags": 1,
+    "parent": 1,
+    "component": 3
+  },
+  {
+    "name": "OffColor3",
+    "type": "vector",
+    "doc": "Track color while the switch is off",
+    "flags": 1,
+    "parent": 1,
+    "component": 82
+  },
+  {
+    "name": "OffTransparency",
+    "type": "number",
+    "doc": "Track transparency while off, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 82
+  },
+  {
+    "name": "On",
+    "type": "boolean",
+    "doc": "The switch is in the on position",
+    "flags": 1,
+    "parent": 1,
+    "component": 83
+  },
+  {
+    "name": "OnColor3",
+    "type": "vector",
+    "doc": "Track color while the switch is on",
+    "flags": 1,
+    "parent": 1,
+    "component": 82
+  },
+  {
+    "name": "OnTransparency",
+    "type": "number",
+    "doc": "Track transparency while on, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 82
+  },
+  {
+    "name": "Op",
+    "type": "string",
+    "doc": "Widget operation: Show the value, or Previous and Next to cycle it",
+    "flags": 1,
+    "parent": 1,
+    "component": 62
+  },
+  {
+    "name": "Orientation",
+    "type": "vector",
+    "doc": "world rotation as YXZ Euler degrees",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Other",
+    "type": "Instance?",
+    "doc": "The second welded entity; the weld holds the relative pose the two bodies had when the joint appeared",
+    "flags": 1,
+    "parent": 1,
+    "component": 55
+  },
+  {
+    "name": "OuterAngle",
+    "type": "number",
+    "doc": "Half-angle in radians where the light fades to zero",
+    "flags": 1,
+    "parent": 1,
+    "component": 46
+  },
+  {
+    "name": "Page",
+    "type": "number",
+    "doc": "Core menu page this subtree belongs to",
+    "flags": 1,
+    "parent": 1,
+    "component": 61
+  },
+  {
+    "name": "Pants",
+    "type": "string",
+    "doc": "Texture asset of the pants",
+    "flags": 1,
+    "parent": 1,
+    "component": 7
+  },
+  {
+    "name": "Parent",
+    "type": "Instance?",
+    "doc": "parent entity, nil for a root",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Part",
+    "type": "string",
+    "doc": "Which body part of the rig this entity is",
+    "flags": 1,
+    "parent": 1,
+    "component": 25
+  },
+  {
+    "name": "Password",
+    "type": "boolean",
+    "doc": "Mask typed characters",
+    "flags": 1,
+    "parent": 1,
+    "component": 79
+  },
+  {
+    "name": "Pivot",
+    "type": "vector",
+    "doc": "-C1 in the limb frame",
+    "flags": 1,
+    "parent": 1,
+    "component": 34
+  },
+  {
+    "name": "PlaceholderText",
+    "type": "string",
+    "doc": "Interned id of the placeholder text. Set PlaceholderText through the property panel or a script.",
+    "flags": 1,
+    "parent": 1,
+    "component": 79
+  },
+  {
+    "name": "PlaneAxis",
+    "type": "vector",
+    "doc": "Rest-pose swing ellipse axis, parent body frame",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "PlaneCone",
+    "type": "number",
+    "doc": "Swing half-angle toward Plane Axis; already degrees",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "PlayAnimation",
+    "type": "(self: Instance, clip: string, fade: number?, speed: number?) -> ()",
+    "doc": "play a clip with an optional fade time and speed",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Position",
+    "type": "vector | UDim2",
+    "doc": "world position in studs, a UDim2 on GUI elements",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "PrefabId",
+    "type": "number",
+    "doc": "Id of the prefab this instance was spawned from",
+    "flags": 1,
+    "parent": 1,
+    "component": 43
+  },
+  {
+    "name": "PreviewAnimation",
+    "type": "(self: Instance, clip: string, playing: boolean?, time: number?, speed: number?) -> boolean",
+    "doc": "start an animation preview, false when the clip is refused",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Range",
+    "type": "number",
+    "doc": "Distance the light reaches in studs",
+    "flags": 1,
+    "parent": 1,
+    "component": 44
+  },
+  {
+    "name": "Remaining",
+    "type": "number",
+    "doc": "Seconds left before the server destroys the entity and its children",
+    "flags": 1,
+    "parent": 1,
+    "component": 33
+  },
+  {
+    "name": "RemoveComponent",
+    "type": "(self: Instance, name: string) -> ()",
+    "doc": "detach the named component from the entity",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "RenderDisabled",
+    "type": "boolean",
+    "doc": "No render slot; physics, replication, and raycasts untouched",
+    "flags": 1,
+    "parent": 1,
+    "component": 85
+  },
+  {
+    "name": "Restitution",
+    "type": "number",
+    "doc": "Bounciness of contacts on this surface; 0 does not bounce",
+    "flags": 1,
+    "parent": 1,
+    "component": 52
+  },
+  {
+    "name": "Rotate",
+    "type": "(self: Instance, axis: vector, angle: number) -> ()",
+    "doc": "rotate the entity around an axis by an angle in radians",
+    "flags": 2,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "SetAngularVelocity",
+    "type": "(self: Instance, velocity: vector) -> ()",
+    "doc": "set the angular velocity of the physics body",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "SetBodyMotion",
+    "type": "(self: Instance, kind: string) -> ()",
+    "doc": "switch the physics body between dynamic and kinematic",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "SetLinearVelocity",
+    "type": "(self: Instance, velocity: vector) -> ()",
+    "doc": "set the linear velocity of the physics body",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "SetSwingTwistJoint",
+    "type": "(self: Instance, joint: SwingTwistJointDesc) -> ()",
+    "doc": "configure the swing-twist joint of the entity",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Setting",
+    "type": "string",
+    "doc": "Device setting this widget shows or adjusts",
+    "flags": 1,
+    "parent": 1,
+    "component": 62
+  },
+  {
+    "name": "ShadowOff",
+    "type": "boolean",
+    "doc": "No shadow from this entity; the shadow passes skip it",
+    "flags": 1,
+    "parent": 1,
+    "component": 2
+  },
+  {
+    "name": "Shirt",
+    "type": "string",
+    "doc": "Texture asset of the shirt",
+    "flags": 1,
+    "parent": 1,
+    "component": 7
+  },
+  {
+    "name": "Size",
+    "type": "vector | UDim2",
+    "doc": "part size in studs, a UDim2 on GUI elements",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "SizeModeX",
+    "type": "number",
+    "doc": "Fit sizes X to content. Grow splits the list remainder",
+    "flags": 1,
+    "parent": 1,
+    "component": 73
+  },
+  {
+    "name": "SizeModeY",
+    "type": "number",
+    "doc": "Fit sizes Y to content. Grow splits the list remainder",
+    "flags": 1,
+    "parent": 1,
+    "component": 73
+  },
+  {
+    "name": "Slot",
+    "type": "string",
+    "doc": "Rig socket the accessory binds to",
+    "flags": 1,
+    "parent": 1,
+    "component": 22
+  },
+  {
+    "name": "Slots",
+    "type": "{number}",
+    "doc": "Prefab ids of items in backpack slots",
+    "flags": 1,
+    "parent": 1,
+    "component": 24
+  },
+  {
+    "name": "Spacing",
+    "type": "number",
+    "doc": "Pixels between children",
+    "flags": 1,
+    "parent": 1,
+    "component": 71
+  },
+  {
+    "name": "SpawnPoint",
+    "type": "boolean",
+    "doc": "Players spawn at this part",
+    "flags": 1,
+    "parent": 1,
+    "component": 37
+  },
+  {
+    "name": "State",
+    "type": "string",
+    "doc": "Current state of the character state machine",
+    "flags": 17,
+    "parent": 1,
+    "component": 9
+  },
+  {
+    "name": "Steps",
+    "type": "number",
+    "doc": "How many places the track holds",
+    "flags": 1,
+    "parent": 1,
+    "component": 77
+  },
+  {
+    "name": "StopAnimation",
+    "type": "(self: Instance) -> ()",
+    "doc": "stop all playing clips and close any preview",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "StopPreview",
+    "type": "(self: Instance) -> boolean",
+    "doc": "stop the animation preview, false when no preview ran",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "TakeDamage",
+    "type": "(self: Instance, amount: number, attacker: Instance?) -> ()",
+    "doc": "deal damage to the entity and record the attacker",
+    "flags": 10,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Text",
+    "type": "string",
+    "doc": "Interned id of the authored text. Set Text through the property panel or a script.",
+    "flags": 1,
+    "parent": 1,
+    "component": 80
+  },
+  {
+    "name": "TextColor3",
+    "type": "vector",
+    "doc": "Color of the text",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "TextSize",
+    "type": "number",
+    "doc": "Pixels",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "TextStrokeColor3",
+    "type": "vector",
+    "doc": "Color of the text outline",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "TextStrokeTransparency",
+    "type": "number",
+    "doc": "Transparency of the text outline, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "TextStrokeWidth",
+    "type": "number",
+    "doc": "Zero disables the MSDF outline",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "TextTransparency",
+    "type": "number",
+    "doc": "Transparency of the text, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "TextXAlignment",
+    "type": "number",
+    "doc": "Horizontal text alignment: Left, Center, or Right",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "TextYAlignment",
+    "type": "number",
+    "doc": "Vertical text alignment: Top, Center, or Bottom",
+    "flags": 1,
+    "parent": 1,
+    "component": 81
+  },
+  {
+    "name": "ThumbColor3",
+    "type": "vector",
+    "doc": "Color of the draggable thumb",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "ThumbSize",
+    "type": "number",
+    "doc": "Pixels",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "ThumbTransparency",
+    "type": "number",
+    "doc": "Transparency of the thumb, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "TrackColor3",
+    "type": "vector",
+    "doc": "Color of the track behind the fill",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "TrackThickness",
+    "type": "number",
+    "doc": "Pixels",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "TrackTransparency",
+    "type": "number",
+    "doc": "Transparency of the track, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 76
+  },
+  {
+    "name": "Transparency",
+    "type": "number",
+    "doc": "Surface transparency, 0 opaque to 1 invisible",
+    "flags": 1,
+    "parent": 1,
+    "component": 5
+  },
+  {
+    "name": "TwistAxis",
+    "type": "vector",
+    "doc": "Rest-pose twist axis, parent body frame",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "TwistMax",
+    "type": "number",
+    "doc": "Twist limit about Twist Axis; already degrees",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "TwistMin",
+    "type": "number",
+    "doc": "Twist limit about Twist Axis; already degrees",
+    "flags": 1,
+    "parent": 1,
+    "component": 53
+  },
+  {
+    "name": "Type",
+    "type": "string",
+    "doc": "CK_PARTS shape byte; one identity for render, raycast, physics",
+    "flags": 1,
+    "parent": 1,
+    "component": 86
+  },
+  {
+    "name": "UIClickable",
+    "type": "boolean",
+    "doc": "Opts into hit-testing and click/press events",
+    "flags": 1,
+    "parent": 1,
+    "component": 63
+  },
+  {
+    "name": "UIRoot",
+    "type": "boolean",
+    "doc": "ScreenGui: top-level entity whose descendants form one overlay",
+    "flags": 1,
+    "parent": 1,
+    "component": 74
+  },
+  {
+    "name": "Underlay",
+    "type": "string",
+    "doc": "Second albedo, alpha-composited under Albedo over the part colour; read only where a BrickColor makes the mesh a decal",
+    "flags": 1,
+    "parent": 1,
+    "component": 3
+  },
+  {
+    "name": "UserId",
+    "type": "string",
+    "doc": "Account id of the player who controls this character",
+    "flags": 17,
+    "parent": 1,
+    "component": 32
+  },
+  {
+    "name": "Value",
+    "type": "number",
+    "doc": "The place the thumb shows",
+    "flags": 1,
+    "parent": 1,
+    "component": 77
+  },
+  {
+    "name": "Velocity",
+    "type": "vector",
+    "doc": "Linear velocity in studs/s; live while the world simulates",
+    "flags": 1,
+    "parent": 1,
+    "component": 54
+  },
+  {
+    "name": "ViewSource",
+    "type": "Instance?",
+    "doc": "camera entity this screen renders from, nil when none",
+    "flags": 1,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Visible",
+    "type": "boolean",
+    "doc": "Draws the entity and its subtree; false hides them",
+    "flags": 1,
+    "parent": 1,
+    "component": 69
+  },
+  {
+    "name": "WalkSpeed",
+    "type": "number",
+    "doc": "Ground movement speed of the character in studs/s",
+    "flags": 1,
+    "parent": 1,
+    "component": 12
+  },
+  {
+    "name": "ZIndex",
+    "type": "number",
+    "doc": "Draw order among siblings; the higher one draws last",
+    "flags": 1,
+    "parent": 1,
+    "component": 72
+  },
+  {
+    "name": "attr",
+    "type": "{ [string]: any }",
+    "doc": "attribute table of the entity, read and write as e.attr.Name",
+    "flags": 17,
+    "parent": 1,
+    "component": 0
+  },
+  {
+    "name": "Physics",
+    "type": "",
+    "doc": "queries the physics world with rays, overlaps, and sweeps, and sets the collision groups and gravity the solver uses",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "RegisterCollisionGroup",
+    "type": "(name: string) -> ()",
+    "doc": "register a named collision group",
+    "flags": 10,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "RenameCollisionGroup",
+    "type": "(from: string, to: string) -> ()",
+    "doc": "rename a collision group",
+    "flags": 10,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "SetCollisionRule",
+    "type": "(a: string, b: string, collidable: boolean) -> ()",
+    "doc": "set whether two groups collide",
+    "flags": 10,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "Raycast",
+    "type": "(origin: vector, dir: vector, maxDist: number, ignore: Instance?) -> RaycastResult?",
+    "doc": "cast a ray and report the first hit",
+    "flags": 2,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "OverlapSphere",
+    "type": "(center: vector, radius: number, out: {Instance}?) -> (number, {Instance})",
+    "doc": "collect the entities inside a sphere",
+    "flags": 2,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "IsSleeping",
+    "type": "(e: Instance) -> boolean",
+    "doc": "whether the physics body of an entity sleeps",
+    "flags": 2,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "OverlapBox",
+    "type": "(center: vector, half: vector, rotation: vector?, out: {Instance}?) -> (number, {Instance})",
+    "doc": "collect the entities inside a rotated box",
+    "flags": 2,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "Shapecast",
+    "type": "(shape: string, size: vector, from: vector, to: vector, rotation: vector?, out: {ShapecastHit}?) -> (number, {ShapecastHit})",
+    "doc": "sweep a box, a sphere, or a capsule and report every entity in the path, nearest first",
+    "flags": 2,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "DrainTouchEvents",
+    "type": "() -> ({TouchEvent}, boolean)",
+    "doc": "drain the buffered touch begin and end events, second result reports lost events",
+    "flags": 2,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "Explode",
+    "type": "(position: vector, radius: number, force: number) -> number",
+    "doc": "break the welds inside a sphere and push the bodies out, result counts the bodies pushed",
+    "flags": 10,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "Gravity",
+    "type": "number",
+    "doc": "downward acceleration",
+    "flags": 9,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "FallenPartsDestroyHeight",
+    "type": "number",
+    "doc": "height where fallen parts vanish",
+    "flags": 17,
+    "parent": 193,
+    "component": 0
+  },
+  {
+    "name": "World",
+    "type": "",
+    "doc": "iterates the entities of the running place and registers the systems that run over them every tick",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Each",
+    "type": "(component: string) -> () -> Instance?",
+    "doc": "iterate the entities that hold a component",
+    "flags": 2,
+    "parent": 206,
+    "component": 0
+  },
+  {
+    "name": "DumpAttributes",
+    "type": "(entity: Instance?) -> ()",
+    "doc": "print attribute usage to the output",
+    "flags": 2,
+    "parent": 206,
+    "component": 0
+  },
+  {
+    "name": "Query",
+    "type": "(...string) -> Query",
+    "doc": "build a cached multi-component query",
+    "flags": 2,
+    "parent": 206,
+    "component": 0
+  },
+  {
+    "name": "System",
+    "type": "(name: string, q: Query, fn: (Query) -> (), phase: string?) -> ()",
+    "doc": "register a per-tick system over a query",
+    "flags": 2,
+    "parent": 206,
+    "component": 0
+  },
+  {
+    "name": "Tags",
+    "type": "",
+    "doc": "marks entities with named tags and finds every entity with that tag",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Add",
+    "type": "(entity: Instance, tag: string) -> ()",
+    "doc": "add a tag to an entity",
+    "flags": 2,
+    "parent": 211,
+    "component": 0
+  },
+  {
+    "name": "Find",
+    "type": "(tag: string) -> {Instance}",
+    "doc": "find all entities with a tag",
+    "flags": 2,
+    "parent": 211,
+    "component": 0
+  },
+  {
+    "name": "Get",
+    "type": "(entity: Instance) -> {string}",
+    "doc": "list tags on an entity",
+    "flags": 2,
+    "parent": 211,
+    "component": 0
+  },
+  {
+    "name": "Has",
+    "type": "(entity: Instance, tag: string) -> boolean",
+    "doc": "check whether an entity has a tag",
+    "flags": 2,
+    "parent": 211,
+    "component": 0
+  },
+  {
+    "name": "Remove",
+    "type": "(entity: Instance, tag: string) -> ()",
+    "doc": "remove a tag from an entity",
+    "flags": 2,
+    "parent": 211,
+    "component": 0
+  },
+  {
+    "name": "Prefabs",
+    "type": "",
+    "doc": "spawns saved prefabs by name and translates between prefab names and their numeric ids",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Spawn",
+    "type": "(name: string) -> Instance?",
+    "doc": "spawn a prefab by name",
+    "flags": 2,
+    "parent": 217,
+    "component": 0
+  },
+  {
+    "name": "Exists",
+    "type": "(name: string) -> boolean",
+    "doc": "whether a prefab exists",
+    "flags": 2,
+    "parent": 217,
+    "component": 0
+  },
+  {
+    "name": "Id",
+    "type": "(name: string) -> number",
+    "doc": "lookup a prefab numeric id by name",
+    "flags": 2,
+    "parent": 217,
+    "component": 0
+  },
+  {
+    "name": "Name",
+    "type": "(id: number) -> string?",
+    "doc": "lookup a prefab name by numeric id",
+    "flags": 2,
+    "parent": 217,
+    "component": 0
+  },
+  {
+    "name": "Profiler",
+    "type": "",
+    "doc": "reports where the last tick spent its time and how long each script took",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Frame",
+    "type": "() -> FrameStats?",
+    "doc": "timings of the last frame",
+    "flags": 2,
+    "parent": 222,
+    "component": 0
+  },
+  {
+    "name": "Scripts",
+    "type": "() -> {ScriptCost}",
+    "doc": "per-script costs of the last frame",
+    "flags": 2,
+    "parent": 222,
+    "component": 0
+  },
+  {
+    "name": "Dropped",
+    "type": "() -> number",
+    "doc": "scripts dropped from the profile",
+    "flags": 2,
+    "parent": 222,
+    "component": 0
+  },
+  {
+    "name": "Lighting",
+    "type": "",
+    "doc": "sets the sun, sky, ambient light, and exposure that the renderer meters the scene with",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Sun",
+    "type": "{ Azimuth: number, Elevation: number, Tint: vector, Intensity: number }",
+    "doc": "sun direction, tint, and strength",
+    "flags": 17,
+    "parent": 226,
+    "component": 0
+  },
+  {
+    "name": "Ambient",
+    "type": "{ Tint: vector, Intensity: number, Source: number }",
+    "doc": "ambient light tint, strength, and source",
+    "flags": 17,
+    "parent": 226,
+    "component": 0
+  },
+  {
+    "name": "Sky",
+    "type": "{ Mode: number, Color: vector, Contribution: number }",
+    "doc": "background mode, color, and sky share of ambient light",
+    "flags": 17,
+    "parent": 226,
+    "component": 0
+  },
+  {
+    "name": "Shadows",
+    "type": "{ Mode: number, Fill: number }",
+    "doc": "shadow mode and the light level inside shadows",
+    "flags": 17,
+    "parent": 226,
+    "component": 0
+  },
+  {
+    "name": "Exposure",
+    "type": "{ MinEV: number, MaxEV: number }",
+    "doc": "auto exposure bounds",
+    "flags": 17,
+    "parent": 226,
+    "component": 0
+  },
+  {
+    "name": "Stars",
+    "type": "{ Luminance: number }",
+    "doc": "night sky star brightness",
+    "flags": 17,
+    "parent": 226,
+    "component": 0
+  },
+  {
+    "name": "Flare",
+    "type": "{ Intensity: number, Scale: number, Tint: vector, Ghost: number }",
+    "doc": "lens flare, intensity 0 disables it",
+    "flags": 17,
+    "parent": 226,
+    "component": 0
+  },
+  {
+    "name": "Animation",
+    "type": "",
+    "doc": "reads the markers an animation clip crossed since the last drain, and names the body parts a blend layer may move",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "DrainMarkers",
+    "type": "() -> ({{Entity: Instance, Clip: string, Marker: string}}, boolean)",
+    "doc": "drain the clip markers the sampler crossed, second result reports lost markers",
+    "flags": 10,
+    "parent": 234,
+    "component": 0
+  },
+  {
+    "name": "Part",
+    "type": "{Head: number, Torso: number, LeftArm: number, RightArm: number, LeftLeg: number, RightLeg: number}",
+    "doc": "body part mask bits for AnimLayers rows",
+    "flags": 17,
+    "parent": 234,
+    "component": 0
+  },
+  {
+    "name": "Sound",
+    "type": "",
+    "doc": "plays a cooked sound at a point in the world on every client, and sets the volume of surface contact sounds",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "PlayAt",
+    "type": "(assetId: string, position: vector, volume: number?) -> boolean",
+    "doc": "play a cooked sound at a world position on every client",
+    "flags": 2,
+    "parent": 237,
+    "component": 0
+  },
+  {
+    "name": "SurfaceSoundsVolume",
+    "type": "number",
+    "doc": "volume of surface contact sounds, 0 to 1",
+    "flags": 9,
+    "parent": 237,
+    "component": 0
+  },
+  {
+    "name": "Locale",
+    "type": "",
+    "doc": "reads and switches the active locale, and translates a key into the text of that locale",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Get",
+    "type": "() -> string",
+    "doc": "the current locale tag",
+    "flags": 2,
+    "parent": 240,
+    "component": 0
+  },
+  {
+    "name": "Set",
+    "type": "(tag: string) -> (boolean, string)",
+    "doc": "switch the locale",
+    "flags": 2,
+    "parent": 240,
+    "component": 0
+  },
+  {
+    "name": "Translate",
+    "type": "(key: string) -> string",
+    "doc": "translate a key",
+    "flags": 2,
+    "parent": 240,
+    "component": 0
+  },
+  {
+    "name": "Session",
+    "type": "",
+    "doc": "tracks the players on this server, the character each one drives, and the signals that fire as they join, leave, and die",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "BindCharacter",
+    "type": "(userId: number, character: Instance) -> ()",
+    "doc": "bind a character entity to a user",
+    "flags": 10,
+    "parent": 244,
+    "component": 0
+  },
+  {
+    "name": "CharacterOf",
+    "type": "(userId: number) -> Instance?",
+    "doc": "the character bound to a user",
+    "flags": 2,
+    "parent": 244,
+    "component": 0
+  },
+  {
+    "name": "LocalCharacter",
+    "type": "() -> Instance?",
+    "doc": "the character entity of the local client",
+    "flags": 2,
+    "parent": 244,
+    "component": 0
+  },
+  {
+    "name": "Kick",
+    "type": "(userId: number, reason: string?) -> boolean",
+    "doc": "remove a player from this server",
+    "flags": 10,
+    "parent": 244,
+    "component": 0
+  },
+  {
+    "name": "PlayerJoined",
+    "type": "Signal",
+    "doc": "fires when a player joins",
+    "flags": 17,
+    "parent": 244,
+    "component": 0
+  },
+  {
+    "name": "PlayerLeft",
+    "type": "Signal",
+    "doc": "fires when a player leaves",
+    "flags": 17,
+    "parent": 244,
+    "component": 0
+  },
+  {
+    "name": "CharacterDied",
+    "type": "Signal",
+    "doc": "fires with the character, the user id, and the attacker",
+    "flags": 17,
+    "parent": 244,
+    "component": 0
+  },
+  {
+    "name": "Input",
+    "type": "",
+    "doc": "reads the keyboard and mouse state of the local client, and the camera ray under the cursor",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "KeyDown",
+    "type": "(keyCode: number) -> boolean",
+    "doc": "whether a key is down",
+    "flags": 2,
+    "parent": 252,
+    "component": 0
+  },
+  {
+    "name": "KeyPressed",
+    "type": "(keyCode: number) -> boolean",
+    "doc": "whether a key was pressed this frame",
+    "flags": 2,
+    "parent": 252,
+    "component": 0
+  },
+  {
+    "name": "ButtonDown",
+    "type": "(button: number) -> boolean",
+    "doc": "whether a mouse button is down",
+    "flags": 2,
+    "parent": 252,
+    "component": 0
+  },
+  {
+    "name": "ButtonPressed",
+    "type": "(button: number) -> boolean",
+    "doc": "whether a mouse button was pressed this frame",
+    "flags": 2,
+    "parent": 252,
+    "component": 0
+  },
+  {
+    "name": "PointerRay",
+    "type": "() -> (vector?, vector?)",
+    "doc": "camera ray through the cursor",
+    "flags": 2,
+    "parent": 252,
+    "component": 0
+  },
+  {
+    "name": "Items",
+    "type": "",
+    "doc": "loads the bytes of a place, a model, or an accessory in a scratch world and reports the facts it finds",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Examine",
+    "type": "(kind: string, bytes: string) -> {[string]: any}",
+    "doc": "load item bytes in a scratch world and answer the facts",
+    "flags": 10,
+    "parent": 258,
+    "component": 0
+  },
+  {
+    "name": "Store",
+    "type": "",
+    "doc": "opens a key-value store kept with the place, so its rows survive a restart",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "open",
+    "type": "(name: string) -> Store",
+    "doc": "open the saved key store with that name",
+    "flags": 10,
+    "parent": 260,
+    "component": 0
+  },
+  {
+    "name": "CloudStore",
+    "type": "",
+    "doc": "opens a key-value store that every server of the experience shares",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "open",
+    "type": "(name: string) -> CloudStore",
+    "doc": "open the persistent cloud store with that name",
+    "flags": 10,
+    "parent": 262,
+    "component": 0
+  },
+  {
+    "name": "Materials",
+    "type": "",
+    "doc": "lists, defines, and replaces the materials that parts render with",
+    "flags": 36,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "GetMaterials",
+    "type": "() -> {{Id: string, Name: string, Pipeline: string, Model: string}}",
+    "doc": "list every material with its pipeline class and surface model",
+    "flags": 2,
+    "parent": 264,
+    "component": 0
+  },
+  {
+    "name": "GetMaterial",
+    "type": "(idOrName: string) -> MaterialSpec",
+    "doc": "read one material. An absent dataset is nil, never a flag",
+    "flags": 2,
+    "parent": 264,
+    "component": 0
+  },
+  {
+    "name": "DefineMaterial",
+    "type": "(spec: MaterialSpec, parent: string?) -> string",
+    "doc": "write the material file, define the material, and answer its asset id. An absent Name takes the next free store name",
+    "flags": 10,
+    "parent": 264,
+    "component": 0
+  },
+  {
+    "name": "RemoveMaterial",
+    "type": "(idOrName: string, replacementIdOrName: string?) -> boolean",
+    "doc": "delete the material and its file. A material in use needs a replacement",
+    "flags": 10,
+    "parent": 264,
+    "component": 0
+  },
+  {
+    "name": "ReplaceMaterial",
+    "type": "(oldIdOrName: string, newIdOrName: string) -> boolean",
+    "doc": "retarget every surface to the new material and delete the old one",
+    "flags": 10,
+    "parent": 264,
+    "component": 0
+  },
+  {
+    "name": "ReloadMaterial",
+    "type": "(idOrName: string) -> boolean",
+    "doc": "read the material file again and define the material in place",
+    "flags": 10,
+    "parent": 264,
+    "component": 0
+  },
+  {
+    "name": "Vector3",
+    "type": "",
+    "doc": "3D positions, directions, and velocities, with the axis and zero vectors alongside",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "new",
+    "type": "(x: number, y: number, z: number) -> vector",
+    "doc": "make a vector",
+    "flags": 2,
+    "parent": 271,
+    "component": 0
+  },
+  {
+    "name": "zero",
+    "type": "vector",
+    "doc": "the zero vector",
+    "flags": 2,
+    "parent": 271,
+    "component": 0
+  },
+  {
+    "name": "one",
+    "type": "vector",
+    "doc": "the all-ones vector",
+    "flags": 2,
+    "parent": 271,
+    "component": 0
+  },
+  {
+    "name": "xAxis",
+    "type": "vector",
+    "doc": "the x axis",
+    "flags": 2,
+    "parent": 271,
+    "component": 0
+  },
+  {
+    "name": "yAxis",
+    "type": "vector",
+    "doc": "the y axis",
+    "flags": 2,
+    "parent": 271,
+    "component": 0
+  },
+  {
+    "name": "zAxis",
+    "type": "vector",
+    "doc": "the z axis",
+    "flags": 2,
+    "parent": 271,
+    "component": 0
+  },
+  {
+    "name": "UDim2",
+    "type": "",
+    "doc": "UI positions and sizes that hold their layout when the viewport resizes",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "new",
+    "type": "(scaleX: number?, offsetX: number?, scaleY: number?, offsetY: number?) -> UDim2",
+    "doc": "make a 2d dimension of scale and offset",
+    "flags": 2,
+    "parent": 278,
+    "component": 0
+  },
+  {
+    "name": "Rect",
+    "type": "",
+    "doc": "2D bounds such as UI margins and screen extents",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "new",
+    "type": "(minX: number?, minY: number?, maxX: number?, maxY: number?) -> Rect",
+    "doc": "make a rectangle of two corners",
+    "flags": 2,
+    "parent": 280,
+    "component": 0
+  },
+  {
+    "name": "Color3",
+    "type": "",
+    "doc": "colors as red, green, and blue channels from 0 to 1",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "new",
+    "type": "(r: number, g: number, b: number) -> vector",
+    "doc": "make a color",
+    "flags": 2,
+    "parent": 282,
+    "component": 0
+  },
+  {
+    "name": "Vector2",
+    "type": "",
+    "doc": "2D points such as screen pixels and UI anchors",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "new",
+    "type": "(x: number, y: number) -> vector",
+    "doc": "make a 2d vector",
+    "flags": 2,
+    "parent": 284,
+    "component": 0
+  },
+  {
+    "name": "Event",
+    "type": "(name: string, direction: EventDirection, fields: {{string | EventFieldType}}) -> EventTable",
+    "doc": "networked event tables",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "print",
+    "type": "(...any) -> ()",
+    "doc": "write to the output",
+    "flags": 2,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "warn",
+    "type": "(...any) -> ()",
+    "doc": "write a warning to the output",
+    "flags": 2,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "tick",
+    "type": "() -> number",
+    "doc": "seconds from a monotonic clock",
+    "flags": 2,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "EventTableDump",
+    "type": "() -> ()",
+    "doc": "print every event table to the output",
+    "flags": 2,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "self",
+    "type": "Instance",
+    "doc": "the entity this script runs on",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "handles",
+    "type": "{ [string]: Instance }",
+    "doc": "named entities of this place",
+    "flags": 5,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "ToServer",
+    "type": "EventDirection",
+    "doc": "clients push rows, the server reads them",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "ToClients",
+    "type": "EventDirection",
+    "doc": "the server pushes rows, clients read them",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "F32",
+    "type": "EventFieldType",
+    "doc": "32-bit float field",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "I32",
+    "type": "EventFieldType",
+    "doc": "32-bit integer field",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "U8",
+    "type": "EventFieldType",
+    "doc": "byte field, 0 to 255",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Bool",
+    "type": "EventFieldType",
+    "doc": "boolean field",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Vec3",
+    "type": "EventFieldType",
+    "doc": "vector field",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Color",
+    "type": "EventFieldType",
+    "doc": "color field, stored as bytes",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Entity",
+    "type": "EventFieldType",
+    "doc": "Instance reference field",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Prefab",
+    "type": "EventFieldType",
+    "doc": "prefab name field",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "String",
+    "type": "EventFieldType",
+    "doc": "text field, interned into the name table, 64 characters or less",
+    "flags": 3,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "RaycastResult",
+    "type": "type RaycastResult = { ... }",
+    "doc": "what a ray hit: the entity, the point, the surface normal, and the distance",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Position",
+    "type": "vector",
+    "doc": "hit position in world space",
+    "flags": 1,
+    "parent": 304,
+    "component": 0
+  },
+  {
+    "name": "Normal",
+    "type": "vector",
+    "doc": "surface normal vector at the hit position",
+    "flags": 1,
+    "parent": 304,
+    "component": 0
+  },
+  {
+    "name": "Entity",
+    "type": "Instance?",
+    "doc": "entity hit by the ray, or nil if none",
+    "flags": 1,
+    "parent": 304,
+    "component": 0
+  },
+  {
+    "name": "Distance",
+    "type": "number",
+    "doc": "distance from the ray origin to the hit position",
+    "flags": 1,
+    "parent": 304,
+    "component": 0
+  },
+  {
+    "name": "ShapecastHit",
+    "type": "type ShapecastHit = { ... }",
+    "doc": "what a swept shape hit, and how far along the sweep it struck",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Entity",
+    "type": "Instance",
+    "doc": "entity hit by the swept shape",
+    "flags": 1,
+    "parent": 309,
+    "component": 0
+  },
+  {
+    "name": "Point",
+    "type": "vector",
+    "doc": "contact point in world space",
+    "flags": 1,
+    "parent": 309,
+    "component": 0
+  },
+  {
+    "name": "Normal",
+    "type": "vector",
+    "doc": "surface normal vector at the contact point",
+    "flags": 1,
+    "parent": 309,
+    "component": 0
+  },
+  {
+    "name": "Fraction",
+    "type": "number",
+    "doc": "fraction along the sweep path where the collision occurred",
+    "flags": 1,
+    "parent": 309,
+    "component": 0
+  },
+  {
+    "name": "TouchEvent",
+    "type": "type TouchEvent = { ... }",
+    "doc": "two entities starting or stopping contact this frame",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "began",
+    "type": "boolean",
+    "doc": "whether the contact began this frame or ended",
+    "flags": 1,
+    "parent": 314,
+    "component": 0
+  },
+  {
+    "name": "a",
+    "type": "Instance",
+    "doc": "first entity involved in the contact",
+    "flags": 1,
+    "parent": 314,
+    "component": 0
+  },
+  {
+    "name": "b",
+    "type": "Instance",
+    "doc": "second entity involved in the contact",
+    "flags": 1,
+    "parent": 314,
+    "component": 0
+  },
+  {
+    "name": "FrameStats",
+    "type": "type FrameStats = { ... }",
+    "doc": "where the last tick spent its time, and what Lua holds in memory",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "sim",
+    "type": "number",
+    "doc": "total simulation frame duration in seconds",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "interval",
+    "type": "number",
+    "doc": "elapsed time since the previous frame in seconds",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "script",
+    "type": "number",
+    "doc": "time spent executing scripts in seconds",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "physics",
+    "type": "number",
+    "doc": "time spent stepping physics simulation in seconds",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "network",
+    "type": "number",
+    "doc": "time spent processing network packets in seconds",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "render",
+    "type": "number",
+    "doc": "time spent preparing render state in seconds",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "gcKB",
+    "type": "number",
+    "doc": "total Lua garbage collector memory usage in kilobytes",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "gcAllocKBs",
+    "type": "number",
+    "doc": "Lua garbage collector allocation rate in kilobytes per second",
+    "flags": 1,
+    "parent": 318,
+    "component": 0
+  },
+  {
+    "name": "ScriptCost",
+    "type": "type ScriptCost = { ... }",
+    "doc": "how often one script ran and how long each call took",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "entity",
+    "type": "number",
+    "doc": "entity id the script is attached to",
+    "flags": 1,
+    "parent": 327,
+    "component": 0
+  },
+  {
+    "name": "path",
+    "type": "string",
+    "doc": "source path of the script",
+    "flags": 1,
+    "parent": 327,
+    "component": 0
+  },
+  {
+    "name": "avg",
+    "type": "number",
+    "doc": "average execution time per call in seconds",
+    "flags": 1,
+    "parent": 327,
+    "component": 0
+  },
+  {
+    "name": "calls",
+    "type": "number",
+    "doc": "number of times the script was invoked",
+    "flags": 1,
+    "parent": 327,
+    "component": 0
+  },
+  {
+    "name": "Identity",
+    "type": "type Identity = { ... }",
+    "doc": "who a player is, and whether the account is an admin",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "userId",
+    "type": "number",
+    "doc": "unique numeric user identifier",
+    "flags": 1,
+    "parent": 332,
+    "component": 0
+  },
+  {
+    "name": "displayName",
+    "type": "string",
+    "doc": "player display name",
+    "flags": 1,
+    "parent": 332,
+    "component": 0
+  },
+  {
+    "name": "isAdmin",
+    "type": "boolean",
+    "doc": "whether the user has administrative privileges",
+    "flags": 1,
+    "parent": 332,
+    "component": 0
+  },
+  {
+    "name": "MoveIntent",
+    "type": "type MoveIntent = { ... }",
+    "doc": "where a character wants to move, and which way it should face",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "x",
+    "type": "number",
+    "doc": "lateral movement input along the horizontal axis",
+    "flags": 1,
+    "parent": 336,
+    "component": 0
+  },
+  {
+    "name": "z",
+    "type": "number",
+    "doc": "forward and backward movement input",
+    "flags": 1,
+    "parent": 336,
+    "component": 0
+  },
+  {
+    "name": "jump",
+    "type": "boolean",
+    "doc": "whether the jump action is active",
+    "flags": 1,
+    "parent": 336,
+    "component": 0
+  },
+  {
+    "name": "shiftLock",
+    "type": "boolean",
+    "doc": "whether shift-lock camera alignment is active",
+    "flags": 1,
+    "parent": 336,
+    "component": 0
+  },
+  {
+    "name": "targetYaw",
+    "type": "number",
+    "doc": "desired character facing angle in radians",
+    "flags": 1,
+    "parent": 336,
+    "component": 0
+  },
+  {
+    "name": "SwingTwistJointDesc",
+    "type": "type SwingTwistJointDesc = { ... }",
+    "doc": "the axes and angle limits to build a swing-twist joint from",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Anchor",
+    "type": "vector",
+    "doc": "anchor position of the joint in local space",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "TwistAxis",
+    "type": "vector",
+    "doc": "primary twist axis of the joint",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "PlaneAxis",
+    "type": "vector",
+    "doc": "plane axis orthogonal to the twist axis",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "RestAxis",
+    "type": "vector?",
+    "doc": "rest direction for swing limits",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "PlaneCone",
+    "type": "number",
+    "doc": "maximum swing angle along the plane axis in radians",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "NormalCone",
+    "type": "number",
+    "doc": "maximum swing angle along the normal axis in radians",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "TwistMin",
+    "type": "number",
+    "doc": "minimum twist angle limit in radians",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "TwistMax",
+    "type": "number",
+    "doc": "maximum twist angle limit in radians",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "Friction",
+    "type": "number?",
+    "doc": "joint rotational friction coefficient",
+    "flags": 1,
+    "parent": 342,
+    "component": 0
+  },
+  {
+    "name": "SwingTwistJointInfo",
+    "type": "type SwingTwistJointInfo = { ... }",
+    "doc": "the axes and angle limits a live swing-twist joint reports",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Anchor",
+    "type": "vector",
+    "doc": "anchor position of the joint in local space",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "TwistAxis",
+    "type": "vector",
+    "doc": "primary twist axis of the joint",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "PlaneAxis",
+    "type": "vector",
+    "doc": "plane axis orthogonal to the twist axis",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "RestAxis",
+    "type": "vector",
+    "doc": "rest direction for swing limits",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "PlaneCone",
+    "type": "number",
+    "doc": "maximum swing angle along the plane axis in radians",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "NormalCone",
+    "type": "number",
+    "doc": "maximum swing angle along the normal axis in radians",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "TwistMin",
+    "type": "number",
+    "doc": "minimum twist angle limit in radians",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "TwistMax",
+    "type": "number",
+    "doc": "maximum twist angle limit in radians",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "Friction",
+    "type": "number",
+    "doc": "joint rotational friction coefficient",
+    "flags": 1,
+    "parent": 352,
+    "component": 0
+  },
+  {
+    "name": "AnimPreviewInfo",
+    "type": "type AnimPreviewInfo = { ... }",
+    "doc": "which clip the preview plays, and where playback sits",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "clip",
+    "type": "string?",
+    "doc": "name of the currently playing animation clip",
+    "flags": 1,
+    "parent": 362,
+    "component": 0
+  },
+  {
+    "name": "time",
+    "type": "number",
+    "doc": "current playback position in seconds",
+    "flags": 1,
+    "parent": 362,
+    "component": 0
+  },
+  {
+    "name": "speed",
+    "type": "number",
+    "doc": "playback speed multiplier",
+    "flags": 1,
+    "parent": 362,
+    "component": 0
+  },
+  {
+    "name": "playing",
+    "type": "boolean",
+    "doc": "whether the preview animation is currently playing",
+    "flags": 1,
+    "parent": 362,
+    "component": 0
+  },
+  {
+    "name": "shared",
+    "type": "boolean",
+    "doc": "whether playback state is shared across peers",
+    "flags": 1,
+    "parent": 362,
+    "component": 0
+  },
+  {
+    "name": "AnimLayerRow",
+    "type": "type AnimLayerRow = { ... }",
+    "doc": "one blend layer: the clip it plays and how it mixes in",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "clip",
+    "type": "string",
+    "doc": "name of the animation clip to blend",
+    "flags": 1,
+    "parent": 368,
+    "component": 0
+  },
+  {
+    "name": "time",
+    "type": "number?",
+    "doc": "playback position in seconds",
+    "flags": 1,
+    "parent": 368,
+    "component": 0
+  },
+  {
+    "name": "weight",
+    "type": "number?",
+    "doc": "blend weight multiplier from 0 to 1",
+    "flags": 1,
+    "parent": 368,
+    "component": 0
+  },
+  {
+    "name": "speed",
+    "type": "number?",
+    "doc": "playback speed multiplier",
+    "flags": 1,
+    "parent": 368,
+    "component": 0
+  },
+  {
+    "name": "mask",
+    "type": "number?",
+    "doc": "bone mask bitmask index for partial body playback",
+    "flags": 1,
+    "parent": 368,
+    "component": 0
+  },
+  {
+    "name": "loop",
+    "type": "boolean?",
+    "doc": "whether the animation layer loops when finished",
+    "flags": 1,
+    "parent": 368,
+    "component": 0
+  },
+  {
+    "name": "additive",
+    "type": "boolean?",
+    "doc": "whether layer transforms are added to base pose",
+    "flags": 1,
+    "parent": 368,
+    "component": 0
+  },
+  {
+    "name": "Signal",
+    "type": "declare extern type Signal",
+    "doc": "an event you connect functions to",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Connect",
+    "type": "(self: Signal, callback: (...any) -> ()) -> ()",
+    "doc": "connect a listener callback to be invoked when the signal is emitted",
+    "flags": 2,
+    "parent": 376,
+    "component": 0
+  },
+  {
+    "name": "Emit",
+    "type": "(self: Signal, ...any) -> ()",
+    "doc": "fire the signal, invoking all connected callbacks with the arguments",
+    "flags": 2,
+    "parent": 376,
+    "component": 0
+  },
+  {
+    "name": "Component",
+    "type": "declare extern type Component",
+    "doc": "the fields of one component, read and written by name",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "AnimLayers",
+    "type": "declare extern type AnimLayers",
+    "doc": "the blend layers of a character, indexed by layer",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "EventFieldType",
+    "type": "declare extern type EventFieldType",
+    "doc": "the value type of one event table field",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "EventDirection",
+    "type": "declare extern type EventDirection",
+    "doc": "whether an event table travels to the server or to the clients",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "EventColumn",
+    "type": "declare extern type EventColumn",
+    "doc": "one field of an event table, holding a value per event",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "EventTable",
+    "type": "declare extern type EventTable",
+    "doc": "a batch of events the server and its clients send each other",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "count",
+    "type": "number",
+    "doc": "number of pending events in the frame buffer",
+    "flags": 1,
+    "parent": 384,
+    "component": 0
+  },
+  {
+    "name": "sender",
+    "type": "EventColumn",
+    "doc": "column containing the user ID of the sender for each event",
+    "flags": 1,
+    "parent": 384,
+    "component": 0
+  },
+  {
+    "name": "Push",
+    "type": "(self: EventTable, ...any) -> ()",
+    "doc": "append a new event entry to be broadcast",
+    "flags": 2,
+    "parent": 384,
+    "component": 0
+  },
+  {
+    "name": "PushTo",
+    "type": "(self: EventTable, userId: number, ...any) -> ()",
+    "doc": "append a new event entry targeted to a specific user",
+    "flags": 2,
+    "parent": 384,
+    "component": 0
+  },
+  {
+    "name": "QueryColumn",
+    "type": "declare extern type QueryColumn",
+    "doc": "one column a query matched, holding a value per entity",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Query",
+    "type": "declare extern type Query",
+    "doc": "a reusable filter that matches entities by the components they hold",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "count",
+    "type": "number",
+    "doc": "number of entities currently matching the query criteria",
+    "flags": 1,
+    "parent": 390,
+    "component": 0
+  },
+  {
+    "name": "Entity",
+    "type": "QueryColumn",
+    "doc": "column array of matched entity instances",
+    "flags": 1,
+    "parent": 390,
+    "component": 0
+  },
+  {
+    "name": "Refresh",
+    "type": "(self): number",
+    "doc": "re-evaluate the query filter and answer the count of matching entities",
+    "flags": 2,
+    "parent": 390,
+    "component": 0
+  },
+  {
+    "name": "With",
+    "type": "(self, name: string): Query",
+    "doc": "answer a new query narrowed to require the specified component",
+    "flags": 2,
+    "parent": 390,
+    "component": 0
+  },
+  {
+    "name": "Without",
+    "type": "(self, name: string): Query",
+    "doc": "answer a new query narrowed to exclude the specified component",
+    "flags": 2,
+    "parent": 390,
+    "component": 0
+  },
+  {
+    "name": "UDim2",
+    "type": "declare extern type UDim2",
+    "doc": "a length on both axes, as a fraction of the parent plus a pixel offset",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Rect",
+    "type": "declare extern type Rect",
+    "doc": "an axis-aligned rectangle, from its minimum corner to its maximum corner",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Min",
+    "type": "vector",
+    "doc": "minimum corner coordinates",
+    "flags": 1,
+    "parent": 397,
+    "component": 0
+  },
+  {
+    "name": "Max",
+    "type": "vector",
+    "doc": "maximum corner coordinates",
+    "flags": 1,
+    "parent": 397,
+    "component": 0
+  },
+  {
+    "name": "Width",
+    "type": "number",
+    "doc": "width of the rectangle along the horizontal axis",
+    "flags": 1,
+    "parent": 397,
+    "component": 0
+  },
+  {
+    "name": "Height",
+    "type": "number",
+    "doc": "height of the rectangle along the vertical axis",
+    "flags": 1,
+    "parent": 397,
+    "component": 0
+  },
+  {
+    "name": "Store",
+    "type": "declare extern type Store",
+    "doc": "a store kept with the place, so its rows survive a restart",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "get",
+    "type": "(self, key: number | string): {[string]: any}?",
+    "doc": "retrieve the record stored under key, or nil if no entry exists",
+    "flags": 2,
+    "parent": 402,
+    "component": 0
+  },
+  {
+    "name": "put",
+    "type": "(self, key: number | string, value: {[string]: any}): ()",
+    "doc": "write a table record under the given key",
+    "flags": 2,
+    "parent": 402,
+    "component": 0
+  },
+  {
+    "name": "CloudStore",
+    "type": "declare extern type CloudStore",
+    "doc": "a store every server of the experience shares, read and written asynchronously",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "fetch",
+    "type": "(self, key: number | string, callback: (any, number, string?) -> ()): ()",
+    "doc": "load the record under key, invoking callback with data, version, and error",
+    "flags": 2,
+    "parent": 405,
+    "component": 0
+  },
+  {
+    "name": "put",
+    "type": "(self, key: number | string, value: {[string]: any}, expect_version: number?, callback: ((number?, string?) -> ())?): ()",
+    "doc": "store value under key with optional expected version check",
+    "flags": 2,
+    "parent": 405,
+    "component": 0
+  },
+  {
+    "name": "update",
+    "type": "(self, key: number | string, transform: (any, number) -> any, callback: ((number?, string?) -> ())?): ()",
+    "doc": "read and update the record via a transform function",
+    "flags": 2,
+    "parent": 405,
+    "component": 0
+  },
+  {
+    "name": "remove",
+    "type": "(self, key: number | string, callback: ((boolean, string?) -> ())?): ()",
+    "doc": "delete the record under key",
+    "flags": 2,
+    "parent": 405,
+    "component": 0
+  },
+  {
+    "name": "keys",
+    "type": "(self, after: string?, limit: number?, callback: ({string}, string?) -> ()): ()",
+    "doc": "list stored keys starting after cursor with optional limit",
+    "flags": 2,
+    "parent": 405,
+    "component": 0
+  },
+  {
+    "name": "MaterialSpec",
+    "type": "type MaterialSpec = { ... }",
+    "doc": "the textures, pipeline class, and physical terms one material renders with",
+    "flags": 6,
+    "parent": 0,
+    "component": 0
+  },
+  {
+    "name": "Id",
+    "type": "string",
+    "doc": "id the material is defined and looked up under",
+    "flags": 1,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Name",
+    "type": "string?",
+    "doc": "name the material can be looked up under, in place of the id",
+    "flags": 1,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Pipeline",
+    "type": "string",
+    "doc": "pipeline class the surfaces draw in: Opaque, Cutout, Transparent, Water, or Decal",
+    "flags": 1,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Model",
+    "type": "string",
+    "doc": "surface model the shader samples with: UV, Triplanar, or Stud",
+    "flags": 1,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Surface",
+    "type": "{BaseColor: string?, Normal: string?, Orm: string?, Tint: {r: number, g: number, b: number, a: number}?, TileSize: number?, NormalStrength: number?, RoughnessMult: number?, MetallicMult: number?, AlphaCutoff: number?, Neon: boolean?, TintVertex: boolean?}",
+    "doc": "base color, normal, and ORM textures, with the tint, tiling, and multipliers applied to them",
+    "flags": 65,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Emission",
+    "type": "{Texture: string?, Tint: {r: number, g: number, b: number}?, Intensity: number?}?",
+    "doc": "emissive texture, and the tint and intensity it radiates at",
+    "flags": 193,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Studs",
+    "type": "{ColorTop: string?, NormalTop: string?, ColorBottom: string?, NormalBottom: string?, StudsPerTile: number?}?",
+    "doc": "top and bottom stud textures the Stud surface model draws",
+    "flags": 193,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Water",
+    "type": "{Absorption: {r: number, g: number, b: number}?, DepthScale: number?, Refraction: number?, FoamScale: number?, FoamDepth: number?, FlowSpeed: number?, FlowScale: number?, WaveAmplitude: number?, WaveScale: number?, WaveSpeed: number?, FlowMap: string?, Foam: string?}?",
+    "doc": "absorption, refraction, foam, and wave terms the Water pipeline class solves",
+    "flags": 193,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Physics",
+    "type": "{Density: number?, Friction: number?, Restitution: number?}?",
+    "doc": "density, friction, and restitution the solver gives the surfaces",
+    "flags": 193,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Footsteps",
+    "type": "{Clips: {string}, Gain: number?, PitchSpread: number?}?",
+    "doc": "clips a character plays walking on the surfaces, and the gain and pitch spread they play at",
+    "flags": 193,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "Impacts",
+    "type": "{Clips: {string}, Gain: number?, PitchSpread: number?}?",
+    "doc": "clips a contact plays against the surfaces, and the gain and pitch spread they play at",
+    "flags": 193,
+    "parent": 411,
+    "component": 0
+  },
+  {
+    "name": "BaseColor",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "Normal",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "Orm",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "Tint",
+    "type": "{r: number, g: number, b: number, a: number}?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "TileSize",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "NormalStrength",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "RoughnessMult",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "MetallicMult",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "AlphaCutoff",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "Neon",
+    "type": "boolean?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "TintVertex",
+    "type": "boolean?",
+    "doc": "",
+    "flags": 1,
+    "parent": 416,
+    "component": 0
+  },
+  {
+    "name": "Texture",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 417,
+    "component": 0
+  },
+  {
+    "name": "Tint",
+    "type": "{r: number, g: number, b: number}?",
+    "doc": "",
+    "flags": 1,
+    "parent": 417,
+    "component": 0
+  },
+  {
+    "name": "Intensity",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 417,
+    "component": 0
+  },
+  {
+    "name": "ColorTop",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 418,
+    "component": 0
+  },
+  {
+    "name": "NormalTop",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 418,
+    "component": 0
+  },
+  {
+    "name": "ColorBottom",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 418,
+    "component": 0
+  },
+  {
+    "name": "NormalBottom",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 418,
+    "component": 0
+  },
+  {
+    "name": "StudsPerTile",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 418,
+    "component": 0
+  },
+  {
+    "name": "Absorption",
+    "type": "{r: number, g: number, b: number}?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "DepthScale",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "Refraction",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "FoamScale",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "FoamDepth",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "FlowSpeed",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "FlowScale",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "WaveAmplitude",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "WaveScale",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "WaveSpeed",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "FlowMap",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "Foam",
+    "type": "string?",
+    "doc": "",
+    "flags": 1,
+    "parent": 419,
+    "component": 0
+  },
+  {
+    "name": "Density",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 420,
+    "component": 0
+  },
+  {
+    "name": "Friction",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 420,
+    "component": 0
+  },
+  {
+    "name": "Restitution",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 420,
+    "component": 0
+  },
+  {
+    "name": "Clips",
+    "type": "{string}",
+    "doc": "",
+    "flags": 1,
+    "parent": 421,
+    "component": 0
+  },
+  {
+    "name": "Gain",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 421,
+    "component": 0
+  },
+  {
+    "name": "PitchSpread",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 421,
+    "component": 0
+  },
+  {
+    "name": "Clips",
+    "type": "{string}",
+    "doc": "",
+    "flags": 1,
+    "parent": 422,
+    "component": 0
+  },
+  {
+    "name": "Gain",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 422,
+    "component": 0
+  },
+  {
+    "name": "PitchSpread",
+    "type": "number?",
+    "doc": "",
+    "flags": 1,
+    "parent": 422,
+    "component": 0
+  }
+]
