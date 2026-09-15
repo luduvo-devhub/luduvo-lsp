@@ -21,8 +21,9 @@ If you set `luduvo` as the platform, the declaration file is embedded at build t
 
 ## Usage
 
-While Luduvo uses Luau for its underlying engine, Luduvo still generates `.lua` files when attaching new scripts to your game. If your editor supports it, be sure to set Luduvo-LSP to activate instead of luaLS when using those files. For me (Zed), this involved editing my default `"file_types"`.
-You can enable Luduvo-specific LSP by setting `luau-lsp.settings.platform.type = "luduvo"` in your editor's server config, or use `luau-lsp analyze --platform=luduvo path/to/script.luau`. For now I decided to keep the platform default as roblox just to be safe. You also need to change `luau-lsp.binary.path` with this Luduvo-specific one.
+You can enable Luduvo-specific LSP by setting `luau-lsp.platform.type = "luduvo"` in your editor's server config, or use `luau-lsp analyze --platform=luduvo path/to/script.luau`. For now I decided to keep the platform default as roblox just to be safe. You also need to change your editor-specific `luau-lsp.binary.path` with this Luduvo-specific one.
+
+Another thing to note is that while Luduvo uses Luau for its underlying engine, Luduvo still generates `.lua` files when attaching new scripts to your game. If your editor supports it, be sure to set Luduvo-LSP to activate instead of luaLS when using those files. For me (Zed), this involved editing my default `"file_types"`.
 
 For example, this is what I put in my `.zed/settings.json`:
 
