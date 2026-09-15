@@ -21,31 +21,40 @@ If you set `luduvo` as the platform, the declaration file is embedded at build t
 
 ## Usage
 
-You can enable Luduvo-specific LSP by setting `luau-lsp.platform.type = "luduvo"` in your editor's server config, or use `luau-lsp analyze --platform=luduvo path/to/script.luau`. For now I decided to keep the platform default as roblox just to be safe. You also need to change `luau-lsp.binary.path` with this Luduvo-specific one.
+While Luduvo uses Luau for its underlying engine, Luduvo still generates `.lua` files when attaching new scripts to your game. If your editor supports it, be sure to set Luduvo-LSP to activate instead of luaLS when using those files. For me (Zed), this involved editing my default `"file_types"`.
+You can enable Luduvo-specific LSP by setting `luau-lsp.settings.platform.type = "luduvo"` in your editor's server config, or use `luau-lsp analyze --platform=luduvo path/to/script.luau`. For now I decided to keep the platform default as roblox just to be safe. You also need to change `luau-lsp.binary.path` with this Luduvo-specific one.
 
 For example, this is what I put in my `.zed/settings.json`:
 
 ```json
-{
-  "lsp": {
-    "luau-lsp": {
-      "binary": {
-        "path": "C:/path/to/luduvo-lsp/build-luduvo/luduvo-lsp.exe",
-        "arguments": ["lsp"]
-      },
-      "settings": {
-        "roblox": { "enabled": false },
-        "plugin": { "enabled": false },
-        "fflags": { "sync": false },
-        "luau-lsp": {
-          "platform": { "type": "luduvo" },
-          "types": { "roblox": false },
-          "sourcemap": { "enabled": false }
-        }
-      }
-    }
-  }
-}
+	"file_types": {
+		"Luau": ["lua"],
+	},
+	"lsp": {
+		"luau-lsp": {
+			"settings": {
+				"binary": {
+					"path": "C:\\Users\\jediw\\Downloads\\luduvo-lsp-windows_x86-64.exe",
+					"ignore_system_version": true,
+				},
+
+				"luau-lsp": {
+					"platform": {
+						"type": "luduvo",
+					},
+
+					"sourcemap": {
+						"enabled": false,
+						"autogenerate": false,
+					},
+
+					"diagnostics": {
+						"workspace": true,
+					},
+				},
+			},
+		},
+	},
 ```
 
 It should work after that. Unless you are using a different declaration file than the one Luduvo LSP provides, there is no need to mess with the `definitionFiles` setting. However if you aren't using Luduvo LSP but still want luduvo type declarations, you will need to manually set `definitionFiles` to link to the declaration file generated in the scripts folder.
