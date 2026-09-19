@@ -4,26 +4,31 @@ on:
   push:
     tags: ["*"]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to package"
+        required: true
+        type: string
+
+permissions:
+  contents: write
 
 env:
   MACOSX_DEPLOYMENT_TARGET: "10.15"
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
 jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create draft release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: true
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "$RELEASE_TAG" --draft --verify-tag
+          fi
 
   api-docs:
     name: Package Luduvo API documentation
@@ -31,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Create API documentation archive
         working-directory: scripts/luduvo
@@ -43,14 +50,9 @@ jobs:
           path: ./luduvo-api-docs.zip
 
       - name: Upload API documentation to Release
-        uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./luduvo-api-docs.zip
-          asset_name: luduvo-api-docs.zip
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" ./luduvo-api-docs.zip --clobber --repo "$GITHUB_REPOSITORY"
 
   dist:
     needs: ["create-release"]
@@ -81,17 +83,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.RELEASE_TAG }}
           submodules: recursive
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Build Server
+        shell: bash
         run: |
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DLSP_STATIC_CRT:BOOL=ON -DLSP_BUILD_WITH_SENTRY:BOOL=${{ matrix.crash-reporting }}
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            export MACOSX_DEPLOYMENT_TARGET=11.0
+            cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DLSP_STATIC_CRT:BOOL=ON -DLSP_BUILD_WITH_SENTRY:BOOL=${{ matrix.crash-reporting }} '-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'
+          else
+            cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DLSP_STATIC_CRT:BOOL=ON -DLSP_BUILD_WITH_SENTRY:BOOL=${{ matrix.crash-reporting }}
+          fi
           cmake --build . --config RelWithDebInfo --target Luau.LanguageServer.CLI -j 3
 
       - name: (MacOS) Verify universal build
@@ -136,11 +140,11 @@ jobs:
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             cp "build/RelWithDebInfo/luduvo-lsp.exe" staging/
             cd staging
-            7z a ../dist/server.zip *
+            7z a "../dist/${{ matrix.artifact-name }}.zip" *
           else
             cp "build/luduvo-lsp" staging/
             cd staging
-            zip ../dist/server.zip *
+            zip "../dist/${{ matrix.artifact-name }}.zip" *
           fi
 
       - name: Copy README, CHANGELOG, LICENSE
@@ -160,14 +164,6 @@ jobs:
           path: ./dist
 
       - name: Upload Server to Release
-        uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./dist/server.zip
-          asset_name: ${{ matrix.artifact-name }}.zip
-          asset_content_type: application/octet-stream
-
-      - run: npm ci
-        working-directory: editors/code
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" "./dist/${{ matrix.artifact-name }}.zip" --clobber --repo "$GITHUB_REPOSITORY"
