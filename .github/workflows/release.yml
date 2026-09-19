@@ -35,7 +35,7 @@ jobs:
     needs: ["create-release"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.RELEASE_TAG }}
 
@@ -44,25 +44,10 @@ jobs:
         run: zip -r "$GITHUB_WORKSPACE/luduvo-api-docs.zip" api-docs
 
       - name: Upload API documentation artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: luduvo-api-docs
           path: ./luduvo-api-docs.zip
-
-      - name: Upload API documentation to Release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          for attempt in {1..5}; do
-            if gh release upload "$RELEASE_TAG" ./luduvo-api-docs.zip --clobber --repo "$GITHUB_REPOSITORY"; then
-              exit 0
-            fi
-            if [ "$attempt" -eq 5 ]; then
-              exit 1
-            fi
-            sleep 15
-          done
 
   dist:
     needs: ["create-release"]
@@ -90,7 +75,7 @@ jobs:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ env.RELEASE_TAG }}
@@ -168,22 +153,23 @@ jobs:
           cp LICENSE.md editors/code/LICENSE
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.artifact-name }}
           path: ./dist
 
-      - name: Upload Server to Release
-        shell: bash
+  publish-assets:
+    name: Attach assets to release
+    needs: ["create-release", "api-docs", "dist"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packaged assets
+        uses: actions/download-artifact@v7
+        with:
+          path: ./release-assets
+          merge-multiple: true
+
+      - name: Upload assets to Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          for attempt in {1..5}; do
-            if gh release upload "$RELEASE_TAG" "./dist/${{ matrix.artifact-name }}.zip" --clobber --repo "$GITHUB_REPOSITORY"; then
-              exit 0
-            fi
-            if [ "$attempt" -eq 5 ]; then
-              exit 1
-            fi
-            sleep 15
-          done
+        run: gh release upload "$RELEASE_TAG" ./release-assets/*.zip --clobber --repo "$GITHUB_REPOSITORY"
