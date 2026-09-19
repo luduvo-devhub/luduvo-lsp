@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.69.1L] - 2026-09-19
+
+### Added
+
+- (Overengineered) Python helper scripts have been added to automatically update `luduvo-api.json` by dumping docs.luduvo.com/reference (for API structure) and the latest Luduvo EXE (for component names). That second one will probably break at some point because examining Luduvo source isn't as easy as it used to be (RIP spike.dll)...
+  - A daily GitHub Action now attempts to refresh the Luduvo API snapshots, generated types, and generated documentation using said scripts.
+- Tagged releases now include `luduvo-api-docs.zip` for manually configuring existing luau-lsp installations.
+- Functions that take component names as values (queries and instances) now have proper autocompletion (for builtin components)
+- Luduvo-specific documentation hover tooltips can now be shown for (most) functions and properties to see documentation links
+
+### Fixed
+
+- Updated Luduvo EventTable info now is formatted correctly
+- Camera controls and their related docs that wasn't in the API reference has been manually added to the globalTypes
+- Luduvo Builtin functions like Update, PhysicsUpdate, and Migrate no longer lint with FunctionUnused
+- Fixed README Usage section giving an unfunctional Zed setup config as an example (my bad for anyone who fell victim to it)
+- The upstream Github Action workers for building releases should now (hopefully) work with this repo.
+
+### Changed
+
+- Luduvo build output now shares the standard `build/` tree, with generated headers grouped under `generated/luduvo`
+- Docs now appear above the type signature in hover tooltips instead of under. Makes them a lot easier to read at the cost of whoever liked them being near the bottom for whatever reason. If enough demand is gnereated, I will introduce a config setting to control this behavior.
+
 ## [1.69.0L] - 2026-09-12
 
 ### Added

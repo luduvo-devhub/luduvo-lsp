@@ -7,8 +7,8 @@ option(LSP_STATIC_CRT "Link with the static CRT (/MT)" OFF)
 option(LSP_BUILD_WITH_SENTRY "Build with Sentry (crash reporting)" OFF)
 option(LSP_WERROR "Warnings as errors" ON)
 
-set(LSP_VERSION "V1.69.0L")
-set(LSP_NAME "Luau")
+set(LSP_VERSION "1.69.1L-alpha")
+set(LSP_NAME "Luduvo Luau")
 
 if (LSP_STATIC_CRT)
     set(LUAU_STATIC_CRT ON)
@@ -42,17 +42,22 @@ add_subdirectory(luau)
 add_library(Luau.LanguageServer STATIC)
 
 # Bundle Luduvo-specific declarations into the executable
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/globalTypes.d.luau")
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/globalTypes.d.luau" LUDUVO_DEFINITIONS)
-configure_file(src/platform/luduvo/LuduvoDefinitions.hpp.in generated/LuduvoDefinitions.hpp @ONLY)
-target_include_directories(Luau.LanguageServer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(LUDUVO_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/luduvo")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.d.luau")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.d.luau" LUDUVO_DEFINITIONS)
+configure_file(src/include/Platform/LuduvoDefinitions.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDefinitions.hpp" @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/documentation.luduvo.json")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/documentation.luduvo.json" LUDUVO_DOCUMENTATION)
+configure_file(src/include/Platform/LuduvoDocumentation.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDocumentation.hpp" @ONLY)
+target_include_directories(Luau.LanguageServer PRIVATE "${LUDUVO_GENERATED_INCLUDE_DIR}")
 add_executable(Luau.LanguageServer.CLI)
 add_executable(Luau.LanguageServer.Test)
 
 if (MINGW)
     # Need to keep the Windows binaries usable outside the compiler's PATH
     target_link_options(Luau.LanguageServer.CLI PRIVATE -static)
-    target_link_options(Luau.LanguageServer.Test PRIVATE -static)
 endif ()
 
 target_sources(Luau.LanguageServer PRIVATE

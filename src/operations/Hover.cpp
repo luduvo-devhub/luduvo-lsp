@@ -58,6 +58,11 @@ static std::optional<size_t> utflen(const char* s, size_t len)
     return n;
 }
 
+static void prependDocumentation(std::string& hoverText, const std::string& documentation)
+{
+    hoverText = documentation + kDocumentationBreaker + hoverText;
+}
+
 /// Construct the initial type description from a typeFun, i.e. Foo<T>
 static std::string toStringTypeFun(const std::string typeName, const Luau::TypeFun& typeFun)
 {
@@ -347,25 +352,21 @@ std::optional<lsp::Hover> WorkspaceFolder::hover(const lsp::HoverParams& params,
     if (std::optional<std::string> docs;
         documentationSymbol && (docs = printDocumentation(client->documentation, *documentationSymbol)) && docs && !docs->empty())
     {
-        typeString += kDocumentationBreaker;
-        typeString += *docs;
+        prependDocumentation(typeString, *docs);
     }
     else if (auto documentation = getDocumentationForType(*type); documentation && !documentation->empty())
     {
-        typeString += kDocumentationBreaker;
-        typeString += *documentation;
+        prependDocumentation(typeString, *documentation);
     }
     else if (auto documentation = getDocumentationForAstNode(moduleName, node, scope); documentation && !documentation->empty())
     {
-        typeString += kDocumentationBreaker;
-        typeString += *documentation;
+        prependDocumentation(typeString, *documentation);
     }
     else if (documentationLocation)
     {
         if (auto text = printMoonwaveDocumentation(getComments(documentationLocation->moduleName, documentationLocation->location)); !text.empty())
         {
-            typeString += kDocumentationBreaker;
-            typeString += text;
+            prependDocumentation(typeString, text);
         }
     }
 

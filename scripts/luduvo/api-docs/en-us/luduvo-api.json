@@ -282,7 +282,7 @@
   {
     "name": "CharacterAnimation",
     "type": "boolean",
-    "doc": "Attaches an Animator once the six body parts exist (R6 fallback)",
+    "doc": "Attaches an Animator once the six body parts exist",
     "flags": 1,
     "parent": 1,
     "component": 27
@@ -674,7 +674,7 @@
   {
     "name": "Joint",
     "type": "vector",
-    "doc": "Motor6D C0 in the torso frame",
+    "doc": "Offset in the torso frame",
     "flags": 1,
     "parent": 1,
     "component": 34
@@ -1026,7 +1026,7 @@
   {
     "name": "Pivot",
     "type": "vector",
-    "doc": "-C1 in the limb frame",
+    "doc": "Offset in the limb frame, negated",
     "flags": 1,
     "parent": 1,
     "component": 34

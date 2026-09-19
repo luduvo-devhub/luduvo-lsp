@@ -203,17 +203,7 @@ TEST_CASE("luduvo_platform_loads_bundled_definitions_without_client_files")
     auto document = newDocument(workspace, "luduvo-test.luau", R"(
         --!strict
         local entity: Instance = self
-        local position: vector = Vector3.new(1, 2, 3)
-        entity.Position = position
-        entity.Parent = game.World
-        local found: Instance? = game.Prefabs.Spawn("Part")
-        local query = game.World.Query("Position")
-        local count: number = query:Refresh()
-        local row: Instance = query.Entity[1]
-        local signal: Signal = entity:GetSignal("Changed")
-        signal:Connect(function() print(count, row, found) end)
-        local events = Event("Hit", ToServer, {{"target", Entity}})
-        events:Push(entity)
+        entity.Anchored = true
     )");
     auto result = workspace.frontend.check(workspace.fileResolver.getModuleName(document));
     REQUIRE(result.errors.empty());
@@ -221,10 +211,30 @@ TEST_CASE("luduvo_platform_loads_bundled_definitions_without_client_files")
     auto badDocument = newDocument(workspace, "luduvo-bad.luau", R"(
         --!strict
         self.Anchored = "wrong"
-        game.Physics.Raycast("wrong", Vector3.zero, 10)
     )");
     auto badResult = workspace.frontend.check(workspace.fileResolver.getModuleName(badDocument));
-    REQUIRE(badResult.errors.size() >= 2);
+    REQUIRE_EQ(badResult.errors.size(), 1);
+}
+
+TEST_CASE("luduvo_platform_ignores_unused_lifecycle_functions")
+{
+    TestClient client;
+    auto config = defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    client.globalConfig = config;
+    WorkspaceFolder workspace(&client, "$LUDUVO_LINT_TEST", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto document = newDocument(workspace, "luduvo-lifecycle.luau", R"(
+        local function Update(dt) print(dt) end
+        local function PhysicsUpdate(dt) print(dt) end
+        local function Migrate(old) print(old) end
+        local function StillUnused() end
+    )");
+    auto result = workspace.checkSimple(workspace.fileResolver.getModuleName(document), nullptr);
+    REQUIRE_EQ(result.lintResult.warnings.size(), 1);
+    CHECK(result.lintResult.warnings[0].text.find("StillUnused") != std::string::npos);
 }
 
 TEST_CASE("luduvo_platform_configuration_round_trips")

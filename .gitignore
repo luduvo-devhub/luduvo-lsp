@@ -50,6 +50,9 @@ trace.json
 
 # Python venvs
 .venv
-/build-luduvo/
 /.zed/settings.json
-*/__pycache__/*
+**/__pycache__/
+
+# Old local build directories. The new builds are built under /build/luduvo/.
+/build-luduvo/
+/build-linux/

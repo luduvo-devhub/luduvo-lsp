@@ -1,0 +1,37 @@
+[
+  {
+    "owner": "Instance",
+    "name": "CameraLens",
+    "type": "{ fovY: number, nearZ: number, farZ: number }",
+    "doc": "perspective projection settings for a camera entity",
+    "flags": 1
+  },
+  {
+    "owner": "Instance",
+    "name": "CameraOrbit",
+    "type": "{ distance: number, smoothDistance: number, smoothSideOffset: number, fade: number }",
+    "doc": "third-person orbit camera controls; smoothed fields are written by the rig",
+    "flags": 1
+  },
+  {
+    "owner": "Instance",
+    "name": "CameraFly",
+    "type": "{ smoothDistance: number, smoothSideOffset: number, fade: number, [string]: number }",
+    "doc": "free-camera yaw, pitch, and zoom controls",
+    "flags": 1
+  },
+  {
+    "owner": "World",
+    "name": "Screen",
+    "type": "Instance",
+    "doc": "the output screen whose ViewSource selects the active camera",
+    "flags": 17
+  },
+  {
+    "owner": "World",
+    "name": "Camera",
+    "type": "Instance?",
+    "doc": "the active camera entity selected by the screen ViewSource",
+    "flags": 17
+  }
+]

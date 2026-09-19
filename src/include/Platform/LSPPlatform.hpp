@@ -9,6 +9,7 @@
 #include "Luau/FileResolver.h"
 #include "Luau/Frontend.h"
 #include "Luau/GlobalTypes.h"
+#include "Luau/LinterConfig.h"
 #include "Luau/Module.h"
 #include "Luau/NotNull.h"
 #include "Luau/TypeFwd.h"
@@ -44,6 +45,16 @@ public:
     virtual const char* getBuiltinDefinitions() const
     {
         return nullptr;
+    }
+
+    virtual const char* getBuiltinDocumentation() const
+    {
+        return nullptr;
+    }
+
+    virtual bool isLintIgnored(const Luau::LintWarning& lint) const
+    {
+        return false;
     }
 
     virtual void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata) {}

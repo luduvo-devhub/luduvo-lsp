@@ -25,6 +25,33 @@ jobs:
           release_name: ${{ github.ref }}
           draft: true
 
+  api-docs:
+    name: Package Luduvo API documentation
+    needs: ["create-release"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create API documentation archive
+        working-directory: scripts/luduvo
+        run: zip -r "$GITHUB_WORKSPACE/luduvo-api-docs.zip" api-docs
+
+      - name: Upload API documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: luduvo-api-docs
+          path: ./luduvo-api-docs.zip
+
+      - name: Upload API documentation to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./luduvo-api-docs.zip
+          asset_name: luduvo-api-docs.zip
+          asset_content_type: application/zip
+
   dist:
     needs: ["create-release"]
     strategy:

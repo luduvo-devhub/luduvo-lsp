@@ -4,6 +4,8 @@
 
 import sys
 import json
+import os
+import shutil
 import subprocess
 from datetime import datetime
 
@@ -16,6 +18,18 @@ assert len(sys.argv) == 2, "Usage: scripts/release.py <version number>"
 VERSION = sys.argv[1]
 
 CHANGELOG_DATE = datetime.now().strftime("%Y-%m-%d")
+
+
+def find_command(name: str) -> str:
+    command = f"{name}.cmd" if os.name == "nt" else name
+    path = shutil.which(command)
+    if path is None:
+        raise RuntimeError(f"Could not find {command} on PATH")
+    return path
+
+
+NPM = find_command("npm")
+NPX = find_command("npx")
 
 # Update version in CHANGELOG.md
 new_changelog_lines: list[str] = []
@@ -55,11 +69,11 @@ with open(PACKAGE_JSON_FILE, "w") as t:
     json.dump(package_json_data, t)
 
 # Update lockfile
-subprocess.run(["npm", "install", "--package-locked"], cwd="editors/code", check=True)
+subprocess.run([NPM, "install", "--package-lock-only"], cwd="editors/code", check=True)
 
 # Run prettier
 subprocess.run(
-    ["npx", "prettier", "--write", CHANGELOG_FILE, PACKAGE_JSON_FILE], check=True
+    [NPX, "prettier", "--write", CHANGELOG_FILE, PACKAGE_JSON_FILE], check=True
 )
 
 # Commit

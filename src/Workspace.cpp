@@ -1,8 +1,10 @@
 #include "LSP/Workspace.hpp"
 
+#include <algorithm>
 #include <memory>
 
 #include "LSP/Diagnostics.hpp"
+#include "LSP/DocumentationParser.hpp"
 #include "Platform/LSPPlatform.hpp"
 #include "Platform/RobloxPlatform.hpp"
 #include "Plugin/PluginManager.hpp"
@@ -14,6 +16,18 @@
 #include "LuauFileUtils.hpp"
 
 LUAU_FASTFLAG(LuauSolverV2)
+
+static void filterIgnoredLints(Luau::CheckResult& result, const LSPPlatform& platform)
+{
+    const auto ignored = [&platform](const Luau::LintWarning& lint)
+    {
+        return platform.isLintIgnored(lint);
+    };
+    result.lintResult.errors.erase(
+        std::remove_if(result.lintResult.errors.begin(), result.lintResult.errors.end(), ignored), result.lintResult.errors.end());
+    result.lintResult.warnings.erase(
+        std::remove_if(result.lintResult.warnings.begin(), result.lintResult.warnings.end(), ignored), result.lintResult.warnings.end());
+}
 
 void throwIfCancelled(const LSPCancellationToken& cancellationToken)
 {
@@ -331,7 +345,9 @@ Luau::CheckResult WorkspaceFolder::checkSimple(const Luau::ModuleName& moduleNam
     {
         Luau::FrontendOptions options{/* retainFullTypeGraphs: */ false, /* forAutocomplete: */ false, /* runLintChecks: */ true};
         options.cancellationToken = cancellationToken;
-        return frontend.check(moduleName, options);
+        auto result = frontend.check(moduleName, options);
+        filterIgnoredLints(result, *platform);
+        return result;
     }
     catch (Luau::InternalCompilerError& err)
     {
@@ -363,7 +379,9 @@ Luau::CheckResult WorkspaceFolder::checkStrict(
 
     Luau::FrontendOptions options{/* retainFullTypeGraphs: */ true, forAutocomplete, /* runLintChecks: */ true};
     options.cancellationToken = cancellationToken;
-    return frontend.check(moduleName, options);
+    auto result = frontend.check(moduleName, options);
+    filterIgnoredLints(result, *platform);
+    return result;
 }
 
 static const char* kIndexProgressToken = "luau/indexFiles";
@@ -564,6 +582,9 @@ void WorkspaceFolder::registerTypes(const std::vector<std::string>& disabledGlob
         if (!result.success)
             throw std::runtime_error("Failed to load bundled Luduvo definitions");
     }
+
+    if (const auto* documentation = platform->getBuiltinDocumentation())
+        parseDocumentationContents(documentation, "bundled platform documentation", client->documentation, client);
 
     if (client->definitionsFiles.empty() && !platform->getBuiltinDefinitions())
         client->sendLogMessage(lsp::MessageType::Warning, "No definitions file provided by client");
