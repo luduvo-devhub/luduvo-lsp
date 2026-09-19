@@ -50,9 +50,19 @@ jobs:
           path: ./luduvo-api-docs.zip
 
       - name: Upload API documentation to Release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$RELEASE_TAG" ./luduvo-api-docs.zip --clobber --repo "$GITHUB_REPOSITORY"
+        run: |
+          for attempt in {1..5}; do
+            if gh release upload "$RELEASE_TAG" ./luduvo-api-docs.zip --clobber --repo "$GITHUB_REPOSITORY"; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
 
   dist:
     needs: ["create-release"]
@@ -164,6 +174,16 @@ jobs:
           path: ./dist
 
       - name: Upload Server to Release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$RELEASE_TAG" "./dist/${{ matrix.artifact-name }}.zip" --clobber --repo "$GITHUB_REPOSITORY"
+        run: |
+          for attempt in {1..5}; do
+            if gh release upload "$RELEASE_TAG" "./dist/${{ matrix.artifact-name }}.zip" --clobber --repo "$GITHUB_REPOSITORY"; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
