@@ -32,7 +32,7 @@ static bool isSameTableDirect(const Luau::TypeId a, const Luau::TypeId b)
     return false;
 }
 
-static bool tableIsRelatedViaMetatable(const Luau::TypeId metatableType, const Luau::TypeId targetTable, Luau::DenseHashSet2<Luau::TypeId>& visited)
+static bool tableIsRelatedViaMetatable(const Luau::TypeId metatableType, const Luau::TypeId targetTable, Luau::DenseHashSet<Luau::TypeId>& visited)
 {
     auto mt = Luau::get<Luau::MetatableType>(Luau::follow(metatableType));
     if (!mt)
@@ -73,7 +73,7 @@ static bool isSameTable(const Luau::TypeId a, const Luau::TypeId b)
     if (isSameTableDirect(a, b))
         return true;
 
-    Luau::DenseHashSet2<Luau::TypeId> visited{};
+    Luau::DenseHashSet<Luau::TypeId> visited{};
 
     if (Luau::get<Luau::MetatableType>(Luau::follow(a)))
     {
@@ -126,7 +126,7 @@ std::vector<Luau::ModuleName> WorkspaceFolder::findReverseDependencies(const Lua
 
         dependents.push_back(next);
 
-        const Luau::Set<Luau::ModuleName>& localDependents = sourceNode.dependents;
+        const Luau::DenseHashSet<Luau::ModuleName>& localDependents = sourceNode.dependents;
         queue.insert(queue.end(), localDependents.begin(), localDependents.end());
     }
 

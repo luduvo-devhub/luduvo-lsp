@@ -4,43 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.69.1L] - 2026-09-19
-
-### Added
-
-- (Overengineered) Python helper scripts have been added to automatically update `luduvo-api.json` by dumping docs.luduvo.com/reference (for API structure) and the latest Luduvo EXE (for component names). That second one will probably break at some point because examining Luduvo source isn't as easy as it used to be (RIP spike.dll)...
-  - A daily GitHub Action now attempts to refresh the Luduvo API snapshots, generated types, and generated documentation using said scripts.
-- Tagged releases now include `luduvo-api-docs.zip` for manually configuring existing luau-lsp installations.
-- Functions that take component names as values (queries and instances) now have proper autocompletion (for builtin components)
-- Luduvo-specific documentation hover tooltips can now be shown for (most) functions and properties to see documentation links
+## [Unreleased]
 
 ### Fixed
 
-- Updated Luduvo EventTable info now is formatted correctly
-- Camera controls and their related docs that wasn't in the API reference has been manually added to the globalTypes
-- Luduvo Builtin functions like Update, PhysicsUpdate, and Migrate no longer lint with FunctionUnused
-- Fixed README Usage section giving an unfunctional Zed setup config as an example (my bad for anyone who fell victim to it)
-- The upstream Github Action workers for building releases should now (hopefully) work with this repo.
+- Hover on a local declared with `const` now reads `const x: T` instead of `local x: T`, at the declaration and at every use
+- Fixed string-require autocomplete stripping everything after the last `.` from directory names, so accepting a folder like `Folder.suffix` inserted `./Folder` instead of `./Folder.suffix` ([#1614](https://github.com/JohnnyMorganz/luau-lsp/issues/1614))
+- Fixed Roblox string-require auto-imports producing `require("@alias/Module/init")` for modules backed by an `init.luau` file when a `.luaurc` alias is used. The directory is now required instead, e.g. `require("@alias/Module")` ([#1590](https://github.com/JohnnyMorganz/luau-lsp/issues/1590))
 
 ### Changed
 
-- Luduvo build output now shares the standard `build/` tree, with generated headers grouped under `generated/luduvo`
-- Docs now appear above the type signature in hover tooltips instead of under. Makes them a lot easier to read at the cost of whoever liked them being near the bottom for whatever reason. If enough demand is gnereated, I will introduce a config setting to control this behavior.
+- Sync to upstream Luau 0.740
 
-## [1.69.0L] - 2026-09-12
+## [1.70.0] - 2026-09-20
 
 ### Added
 
-- Basic Luduvo Typechecking support via new Luduvo platform type
-- Mingw compilation
+- Added `"luau-lsp.analyzeLuaFiles"` setting to control whether standard `.lua` files are analyzed in addition to `.luau` files.
+- Added a new auto-import require style `completion.imports.requireStyle: "nearestAbsolute"` which requires modules relative to the nearest fixed variable that resolves to a known ancestor instance (e.g. `local Main = script:FindFirstAncestor("PluginName")` or `local Main = script.Parent.Parent`), producing requires like `require(Main.X.Y)`. Falls back to `auto` when no such variable is an ancestor of the module
 
 ### Fixed
 
 - Fixed `@self` string-require aliases resolving from the filesystem instead of the sourcemap tree for non-DataModel roots ([#1511](https://github.com/JohnnyMorganz/luau-lsp/issues/1511))
+- Auto-import server/client boundary filtering now respects `.client.luau`/`.server.luau` file suffixes, fixing misclassification of `RunContext = Client` scripts emitted by Rojo's `emitLegacyScripts: false` ([#1594](https://github.com/JohnnyMorganz/luau-lsp/issues/1594))
+- Fixed `@game` string requires and their autocomplete failing in a file that the sourcemap does not cover, such as build output. `@game` is absolute, so it no longer needs the requiring file to have a sourcemap node
 
 ### Changed
 
-- Sync to upstream Luau 0.735
+- Sync to upstream Luau 0.739
 
 ## [1.69.0] - 2026-07-14
 
