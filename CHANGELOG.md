@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+## [1.70.1] - 2026-09-27
+
+### Added
+
+- `"luau-lsp.completion.autocompleteEnd"` now also inserts `until` when pressing Enter inside an unclosed `repeat` block ([#1599](https://github.com/JohnnyMorganz/luau-lsp/issues/1599))
+
+### Fixed
+
+- Hover on a local declared with `const` now reads `const x: T` instead of `local x: T`, at the declaration and at every use
+- Fixed string-require autocomplete stripping everything after the last `.` from directory names, so accepting a folder like `Folder.suffix` inserted `./Folder` instead of `./Folder.suffix` ([#1614](https://github.com/JohnnyMorganz/luau-lsp/issues/1614))
+- Fixed Roblox string-require auto-imports producing `require("@alias/Module/init")` for modules backed by an `init.luau` file when a `.luaurc` alias is used. The directory is now required instead, e.g. `require("@alias/Module")` ([#1590](https://github.com/JohnnyMorganz/luau-lsp/issues/1590))
+- VSCode extension: `luau-lsp.server.path` now expands a leading `~/` (or `~\`) to the user's home directory, matching the existing behaviour of `luau-lsp.server.baseLuaurc` ([#1635](https://github.com/JohnnyMorganz/luau-lsp/issues/1635))
+- Renaming a local variable (e.g. `local jecs = require(...)`) now correctly renames its uses as a type reference prefix (e.g. `jecs.Entity<Player>`), including when the rename is triggered from that prefix itself, which previously failed with "Unable to find symbol to rename". Matching is now done against the resolved local rather than by name, so shadowed locals with the same name are no longer confused ([#1203](https://github.com/JohnnyMorganz/luau-lsp/issues/1203))
+- String require auto-imports are no longer suggested for files that have been renamed or deleted ([#1045](https://github.com/JohnnyMorganz/luau-lsp/issues/1045))
+- Fixed Signature Help showing the implicit first argument of a `__call` metamethod, which is supplied by the table being called rather than by the caller ([#1597](https://github.com/JohnnyMorganz/luau-lsp/issues/1597))
+
+### Changed
+
+- Sync to upstream Luau 0.740
+
+## [1.70.0] - 2026-09-20
+
+### Added
+
+- Added `"luau-lsp.analyzeLuaFiles"` setting to control whether standard `.lua` files are analyzed in addition to `.luau` files.
+- Added a new auto-import require style `completion.imports.requireStyle: "nearestAbsolute"` which requires modules relative to the nearest fixed variable that resolves to a known ancestor instance (e.g. `local Main = script:FindFirstAncestor("PluginName")` or `local Main = script.Parent.Parent`), producing requires like `require(Main.X.Y)`. Falls back to `auto` when no such variable is an ancestor of the module
+
+### Fixed
+
+- Fixed `@self` string-require aliases resolving from the filesystem instead of the sourcemap tree for non-DataModel roots ([#1511](https://github.com/JohnnyMorganz/luau-lsp/issues/1511))
+- Auto-import server/client boundary filtering now respects `.client.luau`/`.server.luau` file suffixes, fixing misclassification of `RunContext = Client` scripts emitted by Rojo's `emitLegacyScripts: false` ([#1594](https://github.com/JohnnyMorganz/luau-lsp/issues/1594))
+- Fixed `@game` string requires and their autocomplete failing in a file that the sourcemap does not cover, such as build output. `@game` is absolute, so it no longer needs the requiring file to have a sourcemap node
+
+### Changed
+
+- Sync to upstream Luau 0.739
+
 ## [1.69.1L] - 2026-09-19
 
 ### Added

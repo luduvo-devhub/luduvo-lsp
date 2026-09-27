@@ -115,7 +115,7 @@ void WorkspaceFolder::onDidSaveTextDocument(const lsp::DocumentUri& uri, const l
     auto config = client->getConfiguration(rootUri);
     if (isWorkspaceDiagnosticsEnabled(client, config))
     {
-        Luau::DenseHashSet2<Luau::ModuleName> dependents{};
+        Luau::DenseHashSet<Luau::ModuleName> dependents{};
         frontend.traverseDependents(fileResolver.getModuleName(uri),
             [&dependents](Luau::SourceNode& sourceNode)
             {
@@ -217,6 +217,7 @@ void WorkspaceFolder::onDidChangeWatchedFiles(const std::vector<lsp::FileEvent>&
     auto config = client->getConfiguration(rootUri);
 
     std::vector<Luau::ModuleName> dirtyFiles;
+    std::vector<Luau::ModuleName> deletedModules;
     std::vector<Uri> deletedFiles;
     bool pluginFileChanged = false;
 
@@ -245,17 +246,29 @@ void WorkspaceFolder::onDidChangeWatchedFiles(const std::vector<lsp::FileEvent>&
             if (!pluginFileChanged && isPluginFile(change.uri))
                 pluginFileChanged = true;
 
-            // Note: we should always mark as dirty, even if the file is ignored
             auto moduleName = fileResolver.getModuleName(change.uri);
-            frontend.markDirty(moduleName, &dirtyFiles);
 
             if (change.type == lsp::FileChangeType::Deleted)
+            {
+                // Fully erase the module from the frontend's caches (including `sourceNodes`, which
+                // is what drives string require auto-import suggestions) so a renamed/deleted file
+                // stops being suggested. This also marks any dependents dirty so they get rechecked.
+                deletedModules.push_back(moduleName);
                 deletedFiles.push_back(change.uri);
+            }
+            else
+            {
+                // Note: we should always mark as dirty, even if the file is ignored
+                frontend.markDirty(moduleName, &dirtyFiles);
+            }
         }
     }
 
     if (pluginFileChanged)
         reloadPlugins();
+
+    if (!deletedModules.empty())
+        frontend.clearModules(deletedModules);
 
     // Parse require graph for files if indexing enable
     if (config.index.enabled && appliedFirstTimeConfiguration)

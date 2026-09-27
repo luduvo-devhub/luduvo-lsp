@@ -405,7 +405,9 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
   const serverConfiguration =
     vscode.workspace.getConfiguration("luau-lsp.server");
 
-  const serverBinConfig = serverConfiguration.get("path", "").trim();
+  const serverBinConfig = utils.resolvePath(
+    serverConfiguration.get("path", "").trim(),
+  );
   const serverBinUri =
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0
@@ -501,12 +503,19 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
   const serverOptions: ServerOptions = { run, debug };
 
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [
-      { language: "lua", scheme: "file" },
-      { language: "luau", scheme: "file" },
-      { language: "lua", scheme: "untitled" },
-      { language: "luau", scheme: "untitled" },
-    ],
+    documentSelector: vscode.workspace
+      .getConfiguration("luau-lsp")
+      .get<boolean>("analyzeLuaFiles", true)
+      ? [
+          { language: "luau", scheme: "file" },
+          { language: "luau", scheme: "untitled" },
+          { language: "lua", scheme: "file" },
+          { language: "lua", scheme: "untitled" },
+        ]
+      : [
+          { language: "luau", scheme: "file" },
+          { language: "luau", scheme: "untitled" },
+        ],
     diagnosticPullOptions: {
       onChange: vscode.workspace
         .getConfiguration("luau-lsp.diagnostics")
@@ -639,7 +648,8 @@ export async function activate(context: vscode.ExtensionContext) {
           });
       } else if (
         e.affectsConfiguration("luau-lsp.types") ||
-        e.affectsConfiguration("luau-lsp.platform.type")
+        e.affectsConfiguration("luau-lsp.platform.type") ||
+        e.affectsConfiguration("luau-lsp.analyzeLuaFiles")
       ) {
         vscode.window
           .showInformationMessage(
