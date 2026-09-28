@@ -12,12 +12,14 @@ static std::string joinPath(std::string_view left, std::string_view right)
     return Luau::FileUtils::joinPaths(std::string(left), std::string(right));
 }
 
+#ifndef __APPLE__
 static std::optional<std::string> environmentVariable(const char* name)
 {
     if (const char* value = std::getenv(name); value && *value)
         return value;
     return std::nullopt;
 }
+#endif
 
 std::optional<std::string> getDefaultLuduvoDataDirectory()
 {
