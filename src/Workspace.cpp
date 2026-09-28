@@ -540,19 +540,24 @@ static void clearDisabledGlobals(const Client* client, const Luau::GlobalTypes& 
 }
 
 static void assignNestedDocumentationSymbols(
-    Luau::TypeId type, const std::string& symbol, Luau::DenseHashSet<Luau::TypeId>& seen)
+    Luau::TypeId type, const std::string& symbol, Luau::DenseHashSet<Luau::TypeId>& seen, bool authoritativeRoot = false)
 {
     type = Luau::follow(type);
     if (seen.contains(type))
         return;
     seen.insert(type);
 
-    Luau::asMutable(type)->documentationSymbol = symbol;
+    std::string typeSymbol = symbol;
+    if (authoritativeRoot || !type->documentationSymbol)
+        Luau::asMutable(type)->documentationSymbol = symbol;
+    else
+        typeSymbol = *type->documentationSymbol;
+
     auto assignProperties = [&](auto& properties)
     {
         for (auto& [name, property] : properties)
         {
-            std::string propertySymbol = symbol + "." + name;
+            std::string propertySymbol = typeSymbol + "." + name;
             property.documentationSymbol = propertySymbol;
             if (property.readTy)
                 assignNestedDocumentationSymbols(*property.readTy, propertySymbol, seen);
@@ -567,16 +572,21 @@ static void assignNestedDocumentationSymbols(
 
 static void assignNestedDocumentationSymbols(const Luau::ScopePtr& scope)
 {
-    Luau::DenseHashSet<Luau::TypeId> seen;
-    for (const auto& [_, binding] : scope->bindings)
-    {
-        if (binding.documentationSymbol)
-            assignNestedDocumentationSymbols(binding.typeId, *binding.documentationSymbol, seen);
-    }
     for (const auto& [_, binding] : scope->exportedTypeBindings)
     {
         if (binding.type->documentationSymbol)
-            assignNestedDocumentationSymbols(binding.type, *binding.type->documentationSymbol, seen);
+        {
+            Luau::DenseHashSet<Luau::TypeId> seen;
+            assignNestedDocumentationSymbols(binding.type, *binding.type->documentationSymbol, seen, true);
+        }
+    }
+    for (const auto& [_, binding] : scope->bindings)
+    {
+        if (binding.documentationSymbol)
+        {
+            Luau::DenseHashSet<Luau::TypeId> seen;
+            assignNestedDocumentationSymbols(binding.typeId, *binding.documentationSymbol, seen);
+        }
     }
 }
 
@@ -592,7 +602,7 @@ static void persistDefinitionTypes(
         Luau::TypeId persistedType = Luau::clone(type, globals.globalTypes, cloneState);
         const std::string documentationSymbol = packageName + "/global/" + name;
         Luau::DenseHashSet<Luau::TypeId> seen;
-        assignNestedDocumentationSymbols(persistedType, documentationSymbol, seen);
+        assignNestedDocumentationSymbols(persistedType, documentationSymbol, seen, true);
         targetScope->bindings[globals.globalNames.names->getOrAdd(name.c_str())] = {
             persistedType, Luau::Location(), false, {}, documentationSymbol};
         persistedTypes.push_back(persistedType);
@@ -603,7 +613,7 @@ static void persistDefinitionTypes(
         Luau::TypeFun persistedType = Luau::clone(typeFunction, globals.globalTypes, cloneState);
         const std::string documentationSymbol = packageName + "/globaltype/" + name;
         Luau::DenseHashSet<Luau::TypeId> seen;
-        assignNestedDocumentationSymbols(persistedType.type, documentationSymbol, seen);
+        assignNestedDocumentationSymbols(persistedType.type, documentationSymbol, seen, true);
         persistedTypes.push_back(persistedType.type);
         targetScope->exportedTypeBindings[name] = std::move(persistedType);
     }

@@ -1,6 +1,7 @@
 #include "doctest.h"
 #include "Fixture.h"
 #include "LSP/DocumentationParser.hpp"
+#include "LuauFileUtils.hpp"
 
 static std::string hoverWithDocumentation(std::string documentation, std::string type)
 {
@@ -24,6 +25,69 @@ TEST_CASE_FIXTURE(Fixture, "show_string_length_on_hover")
     auto result = workspace.hover(params, nullptr);
     REQUIRE(result);
     CHECK_EQ(result->contents.value, codeBlock("luau", "string (16 bytes)"));
+}
+
+TEST_CASE_FIXTURE(Fixture, "documentation_links_do_not_form_setext_headings")
+{
+    loadDefinition("@test", "declare documentedValue: string");
+    client->documentation["@test/global/documentedValue"] =
+        Luau::BasicDocumentation{"Value documentation", "https://example.com/documented-value", ""};
+
+    auto uri = newDocument("foo.luau", "local value = documentedValue");
+
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 15};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value,
+        "Value documentation\n\n[Learn More](https://example.com/documented-value)\n\n___\n\n" +
+            codeBlock("luau", "type documentedValue = string"));
+}
+
+TEST_CASE("luduvo_hover_preserves_named_extern_type_documentation_symbols")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_hover_extern_documentation");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare extern type Instance with
+            Name: string
+        end
+        declare game: {
+            read Selected: Instance,
+        }
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    config.platform.luduvo.definitions.exposePrivateTypes = true;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(
+        &client, "$LUDUVO_HOVER_EXTERN_DOCUMENTATION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    client.documentation["@luduvo/server/globaltype/Instance"] = Luau::BasicDocumentation{"Instance documentation"};
+    client.documentation["@luduvo/server/globaltype/Instance.Name"] = Luau::BasicDocumentation{"Name documentation"};
+
+    auto uri = Luau::LanguageServer::newDocument(
+        workspace, "extern.server.luau", "local selected: Instance = game.Selected\nprint(selected.Name)");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+
+    params.position = lsp::Position{0, 17};
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK(result->contents.value.find("Instance documentation") != std::string::npos);
+
+    params.position = lsp::Position{1, 16};
+    result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK(result->contents.value.find("Name documentation") != std::string::npos);
 }
 
 TEST_CASE_FIXTURE(Fixture, "hover_shows_const_for_a_const_local")
