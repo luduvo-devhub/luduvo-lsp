@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - User-provided `types.documentationFiles` are no longer accidentally overwritten by bundled Luduvo documentation
+- Documentation hover's markdown no longer mistakes the `---` separator for a header and make the learn more button giant
+- `test.luau` is formatted correctly for what might be the first time ever
 
 ## [1.70.1] - 2026-09-27
 

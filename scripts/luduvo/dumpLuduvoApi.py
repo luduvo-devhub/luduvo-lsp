@@ -23,8 +23,8 @@ from pathlib import Path
 from dumpLuduvoTypes import (
     CONTENT_BASE_URL,
     CONTENT_MANIFEST_URL,
-    DefinitionsError,
     OUTPUTS,
+    DefinitionsError,
     default_data_directory,
     installed_definitions,
     remote_definitions,

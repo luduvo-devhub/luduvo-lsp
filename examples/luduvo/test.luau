@@ -1,5 +1,5 @@
 --!strict
--- Tested in Zed. Complete the unfinished game. on line 10 or try hovering any of the luduvo-speciifc data types.
+-- Tested in Zed. Complete the unfinished game. on line 11 or try hovering any of the luduvo-speciifc data types.
 local part = game.Prefabs.Spawn("Part")
 if part then
     part.Position = Vector3.new(0, 10, 0)
@@ -8,7 +8,9 @@ if part then
     game.Tags.Add(part, "Example")
 end
 
-local query = game.World.Query("Position")
+local finishMe = game.
+
+local query = world.Query("Position")
 query:With("Health"):Without("Invulnerable")
 local count: number = query:Refresh()
 for i = 1, count do
@@ -20,7 +22,7 @@ local hit: RaycastResult? = game.Physics.Raycast(Vector3.zero, Vector3.yAxis, 10
 if hit then
     print(hit.Position)
 end
-
+game.Tween
 local ET = game.EventTable
 local damage = ET("Damage", ET.ToServer, {{"target", ET.Entity}, {"amount", ET.F32}})
 damage:Push(self, 10)
