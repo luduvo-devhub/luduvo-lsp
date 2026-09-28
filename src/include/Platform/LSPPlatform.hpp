@@ -21,10 +21,70 @@
 #include "nlohmann/json.hpp"
 
 #include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <unordered_set>
+#include <vector>
 
 class WorkspaceFolder;
 struct WorkspaceFileResolver;
+
+struct PlatformDefinitionCandidate
+{
+    std::string label;
+    std::optional<Uri> sourceUri;
+    std::optional<std::string> source;
+    std::optional<std::string> error;
+    bool notifyOnFailure = false;
+};
+
+struct PlatformDefinitionEnvironment
+{
+    std::string environmentName;
+    std::string packageName;
+    std::vector<PlatformDefinitionCandidate> candidates;
+    bool exposePrivateTypes = false;
+};
+
+enum struct ScriptSide
+{
+    Client,
+    Server,
+};
+
+std::optional<ScriptSide> scriptSideFromPath(std::string_view path);
+
+enum struct PlatformGlobalDefinitionsPolicy
+{
+    PlatformOnly,
+    DefinitionFilesOnly,
+    PreferPlatform,
+    PreferDefinitionFiles,
+    Combine,
+};
+
+enum struct PlatformDefinitionConflictWinner
+{
+    Platform,
+    DefinitionFiles,
+};
+
+struct PlatformDefinitionConfiguration
+{
+    PlatformGlobalDefinitionsPolicy globalPolicy = PlatformGlobalDefinitionsPolicy::Combine;
+    PlatformDefinitionConflictWinner conflictWinner = PlatformDefinitionConflictWinner::Platform;
+};
+
+struct PlatformRequirement
+{
+    std::string name;
+    bool satisfied = true;
+    std::string message;
+    std::string settingsKey;
+    std::optional<std::string> fallbackSettingsKey;
+    std::optional<std::string> fallbackSettingsValue;
+};
 
 /// Context for generating unknown symbol quick fixes
 struct UnknownSymbolFixContext
@@ -40,6 +100,7 @@ class LSPPlatform
 protected:
     WorkspaceFileResolver* fileResolver;
     WorkspaceFolder* workspaceFolder;
+    bool definitionEnvironmentsActive = true;
 
 public:
     virtual const char* getBuiltinDefinitions() const
@@ -50,6 +111,31 @@ public:
     virtual const char* getBuiltinDocumentation() const
     {
         return nullptr;
+    }
+
+    virtual std::vector<PlatformDefinitionEnvironment> getDefinitionEnvironments() const
+    {
+        return {};
+    }
+
+    virtual PlatformDefinitionConfiguration getDefinitionConfiguration() const
+    {
+        return {};
+    }
+
+    virtual std::vector<PlatformRequirement> getRequirements(bool platformDefinitionsActive) const
+    {
+        return {};
+    }
+
+    void setDefinitionEnvironmentsActive(bool active)
+    {
+        definitionEnvironmentsActive = active;
+    }
+
+    virtual std::optional<std::string> getEnvironmentForModule(const Luau::ModuleName& moduleName) const
+    {
+        return std::nullopt;
     }
 
     virtual bool isLintIgnored(const Luau::LintWarning& lint) const

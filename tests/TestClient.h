@@ -10,6 +10,7 @@ public:
     TestClient();
 
     std::vector<std::pair<std::string, std::optional<json>>> requestQueue;
+    std::vector<std::optional<ResponseHandler>> requestHandlers;
     mutable std::vector<std::pair<std::string, std::optional<json>>> notificationQueue;
     std::vector<std::pair<std::optional<id_type>, JsonRpcException>> errorQueue;
 

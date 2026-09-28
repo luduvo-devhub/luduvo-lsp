@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 namespace lsp
 {
@@ -24,4 +25,18 @@ struct ShowMessageParams
     std::string message;
 };
 NLOHMANN_DEFINE_OPTIONAL(ShowMessageParams, type, message)
+
+struct MessageActionItem
+{
+    std::string title;
+};
+NLOHMANN_DEFINE_OPTIONAL(MessageActionItem, title)
+
+struct ShowMessageRequestParams
+{
+    MessageType type = MessageType::Error;
+    std::string message;
+    std::vector<MessageActionItem> actions;
+};
+NLOHMANN_DEFINE_OPTIONAL(ShowMessageRequestParams, type, message, actions)
 } // namespace lsp

@@ -370,5 +370,7 @@ std::optional<std::string> WorkspaceFileResolver::getEnvironmentForModule(const 
 {
     if (isPluginFile(name))
         return "LSPPlugin";
+    if (platform)
+        return platform->getEnvironmentForModule(name);
     return std::nullopt;
 }

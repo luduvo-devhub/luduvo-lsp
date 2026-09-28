@@ -45,11 +45,8 @@ Luau::SourceCode::Type RobloxPlatform::sourceCodeTypeFromPath(const Uri& path) c
 
     auto filename = path.filename();
 
-    if (endsWith(filename, ".server.lua") || endsWith(filename, ".server.luau") || endsWith(filename, ".client.lua") ||
-        endsWith(filename, ".client.luau"))
-    {
+    if (scriptSideFromPath(filename))
         return Luau::SourceCode::Type::Script;
-    }
 
     return Luau::SourceCode::Type::Module;
 }

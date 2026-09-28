@@ -11,8 +11,11 @@
 #include "Plugin/PluginDefinitions.hpp"
 #include "glob/match.h"
 #include "Luau/BuiltinDefinitions.h"
+#include "Luau/Clone.h"
 #include "Luau/NotNull.h"
+#include "Luau/Parser.h"
 #include "Luau/TimeTrace.h"
+#include "Luau/Type.h"
 #include "LuauFileUtils.hpp"
 
 LUAU_FASTFLAG(LuauSolverV2)
@@ -536,12 +539,152 @@ static void clearDisabledGlobals(const Client* client, const Luau::GlobalTypes& 
     }
 }
 
-Luau::LoadDefinitionFileResult WorkspaceFolder::loadDefinitionFile(
-    const std::string& packageName, const std::string& source, std::optional<nlohmann::json> metadata)
+static void assignNestedDocumentationSymbols(
+    Luau::TypeId type, const std::string& symbol, Luau::DenseHashSet<Luau::TypeId>& seen)
 {
-    auto result = types::registerDefinitions(frontend, frontend.globals, packageName, source);
-    if (!FFlag::LuauSolverV2)
+    type = Luau::follow(type);
+    if (seen.contains(type))
+        return;
+    seen.insert(type);
+
+    Luau::asMutable(type)->documentationSymbol = symbol;
+    auto assignProperties = [&](auto& properties)
+    {
+        for (auto& [name, property] : properties)
+        {
+            std::string propertySymbol = symbol + "." + name;
+            property.documentationSymbol = propertySymbol;
+            if (property.readTy)
+                assignNestedDocumentationSymbols(*property.readTy, propertySymbol, seen);
+        }
+    };
+
+    if (auto table = Luau::getMutable<Luau::TableType>(type))
+        assignProperties(table->props);
+    else if (auto externType = Luau::getMutable<Luau::ExternType>(type))
+        assignProperties(externType->props);
+}
+
+static void assignNestedDocumentationSymbols(const Luau::ScopePtr& scope)
+{
+    Luau::DenseHashSet<Luau::TypeId> seen;
+    for (const auto& [_, binding] : scope->bindings)
+    {
+        if (binding.documentationSymbol)
+            assignNestedDocumentationSymbols(binding.typeId, *binding.documentationSymbol, seen);
+    }
+    for (const auto& [_, binding] : scope->exportedTypeBindings)
+    {
+        if (binding.type->documentationSymbol)
+            assignNestedDocumentationSymbols(binding.type, *binding.type->documentationSymbol, seen);
+    }
+}
+
+static void persistDefinitionTypes(
+    const Luau::ModulePtr& module, Luau::GlobalTypes& globals, const Luau::ScopePtr& targetScope, const std::string& packageName)
+{
+    Luau::CloneState cloneState{globals.builtinTypes};
+    std::vector<Luau::TypeId> persistedTypes;
+    persistedTypes.reserve(module->declaredGlobals.size() + module->exportedTypeBindings.size());
+
+    for (const auto& [name, type] : module->declaredGlobals)
+    {
+        Luau::TypeId persistedType = Luau::clone(type, globals.globalTypes, cloneState);
+        const std::string documentationSymbol = packageName + "/global/" + name;
+        Luau::DenseHashSet<Luau::TypeId> seen;
+        assignNestedDocumentationSymbols(persistedType, documentationSymbol, seen);
+        targetScope->bindings[globals.globalNames.names->getOrAdd(name.c_str())] = {
+            persistedType, Luau::Location(), false, {}, documentationSymbol};
+        persistedTypes.push_back(persistedType);
+    }
+
+    for (const auto& [name, typeFunction] : module->exportedTypeBindings)
+    {
+        Luau::TypeFun persistedType = Luau::clone(typeFunction, globals.globalTypes, cloneState);
+        const std::string documentationSymbol = packageName + "/globaltype/" + name;
+        Luau::DenseHashSet<Luau::TypeId> seen;
+        assignNestedDocumentationSymbols(persistedType.type, documentationSymbol, seen);
+        persistedTypes.push_back(persistedType.type);
+        targetScope->exportedTypeBindings[name] = std::move(persistedType);
+    }
+
+    for (Luau::TypeId type : persistedTypes)
+        Luau::persist(type);
+}
+
+static Luau::LoadDefinitionFileResult loadDefinitionFileWithPrivateTypesExposed(Luau::Frontend& frontend, Luau::GlobalTypes& globals,
+    const Luau::ScopePtr& targetScope, const std::string& source, const std::string& packageName)
+{
+    Luau::SourceModule sourceModule;
+    sourceModule.name = packageName;
+    sourceModule.humanReadableName = packageName;
+
+    Luau::ParseOptions options;
+    options.allowDeclarationSyntax = true;
+    options.captureComments = true;
+    Luau::ParseResult parseResult =
+        Luau::Parser::parse(source.data(), source.size(), *sourceModule.names, *sourceModule.allocator, options);
+    sourceModule.root = parseResult.root;
+    sourceModule.mode = Luau::Mode::Definition;
+    sourceModule.hotcomments = parseResult.hotcomments;
+    sourceModule.commentLocations = parseResult.commentLocations;
+
+    if (!parseResult.errors.empty())
+        return {false, std::move(parseResult), std::move(sourceModule), nullptr};
+
+    // Platform definition files describe a global environment. When explicitly enabled,
+    // treat their top-level private type declarations as exports before type checking so
+    // globals and aliases are cloned as one coherent public type graph.
+    for (Luau::AstStat* statement : sourceModule.root->body)
+    {
+        if (auto alias = statement->as<Luau::AstStatTypeAlias>())
+            alias->exported = true;
+        else if (auto typeFunction = statement->as<Luau::AstStatTypeFunction>())
+            typeFunction->exported = true;
+    }
+
+    auto prepareModuleScope = [&frontend](const Luau::ModuleName& name, const Luau::ScopePtr& scope)
+    {
+        if (frontend.prepareModuleScope)
+            frontend.prepareModuleScope(name, scope, false);
+    };
+
+    Luau::Frontend::Stats stats;
+    Luau::ModulePtr checkedModule = Luau::check(sourceModule, Luau::Mode::Definition, {}, frontend.builtinTypes,
+        Luau::NotNull{&frontend.iceHandler}, Luau::NotNull{&frontend.moduleResolver}, Luau::NotNull{frontend.fileResolver}, globals.globalScope,
+        globals.globalTypeFunctionScope, prepareModuleScope, frontend.options, {}, false, stats, frontend.writeJsonLog);
+
+    if (!checkedModule->errors.empty())
+        return {false, std::move(parseResult), std::move(sourceModule), std::move(checkedModule)};
+
+    persistDefinitionTypes(checkedModule, globals, targetScope, packageName);
+    return {true, std::move(parseResult), std::move(sourceModule), std::move(checkedModule)};
+}
+
+struct DefinitionScopeSnapshot
+{
+    std::unordered_map<Luau::Symbol, Luau::Binding> bindings;
+    std::unordered_map<Luau::Name, Luau::TypeFun> exportedTypeBindings;
+};
+
+static DefinitionScopeSnapshot snapshotDefinitionScope(const Luau::ScopePtr& scope)
+{
+    return {scope->bindings, scope->exportedTypeBindings};
+}
+
+Luau::LoadDefinitionFileResult WorkspaceFolder::loadDefinitionFile(
+    const std::string& packageName, const std::string& source, std::optional<nlohmann::json> metadata,
+    std::optional<Luau::ScopePtr> targetScope, bool exposePrivateTypes)
+{
+    auto result = targetScope && exposePrivateTypes
+                      ? loadDefinitionFileWithPrivateTypesExposed(frontend, frontend.globals, *targetScope, source, packageName)
+                  : targetScope ? frontend.loadDefinitionFile(frontend.globals, *targetScope, source, packageName, /* captureComments= */ true)
+                                : types::registerDefinitions(frontend, frontend.globals, packageName, source);
+    if (!targetScope && !FFlag::LuauSolverV2)
         types::registerDefinitions(frontend, frontend.globalsForAutocomplete, packageName, source);
+
+    if (result.success && targetScope)
+        assignNestedDocumentationSymbols(*targetScope);
 
     platform->mutateRegisteredDefinitions(frontend.globals, metadata);
     platform->mutateRegisteredDefinitions(frontend.globalsForAutocomplete, metadata);
@@ -589,81 +732,272 @@ void WorkspaceFolder::registerTypes(const std::vector<std::string>& disabledGlob
     frontend.applyBuiltinDefinitionToEnvironment("LSPPlugin", "LSPPlugin");
     client->sendTrace("workspace initialization: registering LSPPlugin environment COMPLETED");
 
-    if (const auto* definitions = platform->getBuiltinDefinitions())
-    {
-        auto result = loadDefinitionFile("@luduvo", definitions);
-        if (!result.success)
-            throw std::runtime_error("Failed to load bundled Luduvo definitions");
-    }
-
     if (const auto* documentation = platform->getBuiltinDocumentation())
-        parseDocumentationContents(documentation, "bundled platform documentation", client->documentation, client);
+        parseDocumentationContents(documentation, "bundled platform documentation", client->documentation, client, /* overwriteExisting= */ false);
 
-    if (client->definitionsFiles.empty() && !platform->getBuiltinDefinitions())
+    auto platformDefinitionEnvironments = platform->getDefinitionEnvironments();
+    if (client->definitionsFiles.empty() && !platform->getBuiltinDefinitions() && platformDefinitionEnvironments.empty())
         client->sendLogMessage(lsp::MessageType::Warning, "No definitions file provided by client");
 
-    // For backwards compatibility, we need to keep an ordering where a definitions file for '@roblox' is always processed first
-    std::vector<std::pair<std::string, std::string>> definitionsFilesToProcess{};
-    definitionsFilesToProcess.reserve(client->definitionsFiles.size());
-    if (auto it = client->definitionsFiles.find("@roblox"); it != client->definitionsFiles.end())
-        definitionsFilesToProcess.emplace_back(*it);
-    for (const auto& pair : client->definitionsFiles)
+    const PlatformDefinitionConfiguration definitionConfiguration = platform->getDefinitionConfiguration();
+    const auto baseBindings = frontend.globals.globalScope->bindings;
+    const auto baseTypeBindings = frontend.globals.globalScope->exportedTypeBindings;
+    bool attemptedDefinitionFiles = false;
+    size_t loadedDefinitionFiles = 0;
+
+    auto loadConfiguredDefinitionFiles = [&]()
     {
-        if (pair.first != "@roblox")
-            definitionsFilesToProcess.emplace_back(pair);
+        if (attemptedDefinitionFiles)
+            return;
+        attemptedDefinitionFiles = true;
+
+        // For backwards compatibility, process '@roblox' first.
+        std::vector<std::pair<std::string, std::string>> definitionsFilesToProcess{};
+        definitionsFilesToProcess.reserve(client->definitionsFiles.size());
+        if (auto it = client->definitionsFiles.find("@roblox"); it != client->definitionsFiles.end())
+            definitionsFilesToProcess.emplace_back(*it);
+        for (const auto& pair : client->definitionsFiles)
+            if (pair.first != "@roblox")
+                definitionsFilesToProcess.emplace_back(pair);
+
+        for (const auto& [packageName, definitionsFile] : definitionsFilesToProcess)
+        {
+            auto resolvedFilePath = resolvePath(definitionsFile);
+            client->sendLogMessage(lsp::MessageType::Info, "Loading definitions file: " + packageName + " - " + resolvedFilePath);
+            auto definitionsContents = Luau::FileUtils::readFile(resolvedFilePath);
+            if (!definitionsContents)
+            {
+                client->sendWindowMessage(
+                    lsp::MessageType::Error, "Failed to read definitions file " + resolvedFilePath + ". Extended types will not be provided");
+                continue;
+            }
+
+            client->sendTrace("workspace initialization: parsing definitions file metadata");
+            auto metadata = types::parseDefinitionsFileMetadata(*definitionsContents);
+            if (!definitionsFileMetadata)
+                definitionsFileMetadata = metadata;
+            client->sendTrace("workspace initialization: parsing definitions file metadata COMPLETED", json(definitionsFileMetadata).dump());
+
+            client->sendTrace("workspace initialization: registering types definition");
+            auto result = loadDefinitionFile(packageName, *definitionsContents, metadata);
+            client->sendTrace("workspace initialization: registering types definition COMPLETED");
+            auto uri = Uri::file(resolvedFilePath);
+
+            if (result.success)
+            {
+                ++loadedDefinitionFiles;
+                client->publishDiagnostics({uri, std::nullopt, {}});
+                if (auto it = definitionsFileState.find(packageName); it != definitionsFileState.end())
+                    it->second.textDocument = TextDocument(uri, "luau", 0, *definitionsContents);
+            }
+            else
+            {
+                client->sendWindowMessage(
+                    lsp::MessageType::Error, "Failed to load definitions file " + resolvedFilePath + ". Extended types will not be provided");
+                std::vector<lsp::Diagnostic> diagnostics;
+                for (auto& error : result.parseResult.errors)
+                    diagnostics.emplace_back(createParseErrorDiagnostic(error));
+                if (result.module)
+                    for (auto& error : result.module->errors)
+                        diagnostics.emplace_back(createTypeErrorDiagnostic(error, &fileResolver));
+                client->publishDiagnostics({uri, std::nullopt, diagnostics});
+            }
+        }
+    };
+
+    if (definitionConfiguration.globalPolicy == PlatformGlobalDefinitionsPolicy::DefinitionFilesOnly ||
+        definitionConfiguration.globalPolicy == PlatformGlobalDefinitionsPolicy::PreferDefinitionFiles)
+        loadConfiguredDefinitionFiles();
+
+    bool platformDefinitionsActive = !platformDefinitionEnvironments.empty();
+    if (definitionConfiguration.globalPolicy == PlatformGlobalDefinitionsPolicy::DefinitionFilesOnly)
+        platformDefinitionsActive = false;
+    else if (definitionConfiguration.globalPolicy == PlatformGlobalDefinitionsPolicy::PreferDefinitionFiles && loadedDefinitionFiles > 0)
+        platformDefinitionsActive = false;
+
+    for (const auto& requirement : platform->getRequirements(platformDefinitionsActive))
+    {
+        if (requirement.satisfied)
+            continue;
+
+        platformDefinitionsActive = false;
+        std::vector<lsp::MessageActionItem> actions{{"Open Settings"}};
+        if (requirement.fallbackSettingsKey && requirement.fallbackSettingsValue)
+            actions.push_back({"Use Definition Files Only"});
+        client->sendWindowMessageRequest(lsp::MessageType::Error, requirement.message, actions,
+            [client = client, requirement](const JsonRpcMessage& response)
+            {
+                if (!response.result || response.result->is_null())
+                    return;
+                const auto action = response.result->get<lsp::MessageActionItem>();
+                if (action.title == "Open Settings")
+                    client->sendNotification(
+                        "$/command", json{{"command", "workbench.action.openSettings"}, {"data", requirement.settingsKey}});
+                else if (action.title == "Use Definition Files Only" && requirement.fallbackSettingsKey && requirement.fallbackSettingsValue)
+                    client->sendNotification("$/command",
+                        json{{"command", "luau-lsp.updateSettingAndReload"},
+                            {"data", json{{"key", *requirement.fallbackSettingsKey}, {"value", *requirement.fallbackSettingsValue}}}});
+            });
     }
 
-    for (const auto& [packageName, definitionsFile] : definitionsFilesToProcess)
+    std::vector<std::string> platformDefinitionWarnings;
+    std::vector<Luau::ScopePtr> platformDefinitionScopes;
+    bool loadedAllPlatformEnvironments = platformDefinitionsActive;
+    if (platformDefinitionsActive)
     {
-        auto resolvedFilePath = resolvePath(definitionsFile);
-        client->sendLogMessage(lsp::MessageType::Info, "Loading definitions file: " + packageName + " - " + resolvedFilePath);
-
-        auto definitionsContents = Luau::FileUtils::readFile(resolvedFilePath);
-        if (!definitionsContents)
+        for (auto& environment : platformDefinitionEnvironments)
         {
-            client->sendWindowMessage(
-                lsp::MessageType::Error, "Failed to read definitions file " + resolvedFilePath + ". Extended types will not be provided");
-            continue;
+            auto targetScope = frontend.addEnvironment(environment.environmentName);
+            bool loaded = false;
+            for (auto& candidate : environment.candidates)
+            {
+                if (!candidate.source)
+                {
+                    const std::string reason = candidate.error.value_or("no source was provided");
+                    client->sendLogMessage(lsp::MessageType::Warning,
+                        "Skipping " + candidate.label + " for " + environment.environmentName + ": " + reason);
+                    if (candidate.notifyOnFailure)
+                        platformDefinitionWarnings.push_back(environment.environmentName + ": " + reason);
+                    continue;
+                }
+
+                auto result = loadDefinitionFile(
+                    environment.packageName, *candidate.source, std::nullopt, targetScope, environment.exposePrivateTypes);
+                if (!result.success)
+                {
+                    std::string reason = !result.parseResult.errors.empty() ? "Luau could not parse it" : "Luau could not register it";
+                    client->sendLogMessage(lsp::MessageType::Warning,
+                        "Skipping " + candidate.label + " for " + environment.environmentName + ": " + reason);
+                    if (candidate.notifyOnFailure)
+                    {
+                        if (candidate.sourceUri)
+                            reason += " at " + candidate.sourceUri->fsPath();
+                        platformDefinitionWarnings.push_back(environment.environmentName + ": " + reason);
+                    }
+                    continue;
+                }
+
+                if (candidate.sourceUri)
+                    if (auto it = definitionsFileState.find(environment.packageName); it != definitionsFileState.end())
+                        it->second.textDocument = TextDocument(*candidate.sourceUri, "luau", 0, *candidate.source);
+                client->sendLogMessage(
+                    lsp::MessageType::Info, "Loaded " + candidate.label + " for " + environment.environmentName);
+                loaded = true;
+                break;
+            }
+
+            if (!loaded)
+            {
+                loadedAllPlatformEnvironments = false;
+                client->sendWindowMessage(
+                    lsp::MessageType::Error, "Could not load any usable platform definitions for " + environment.environmentName + ".");
+                continue;
+            }
+            platformDefinitionScopes.push_back(targetScope);
+        }
+    }
+
+    if (definitionConfiguration.globalPolicy == PlatformGlobalDefinitionsPolicy::Combine)
+    {
+        std::vector<DefinitionScopeSnapshot> platformSnapshots;
+        if (definitionConfiguration.conflictWinner == PlatformDefinitionConflictWinner::Platform)
+        {
+            platformSnapshots.reserve(platformDefinitionScopes.size());
+            for (const auto& targetScope : platformDefinitionScopes)
+                platformSnapshots.push_back(snapshotDefinitionScope(targetScope));
         }
 
-        // Parse definitions file metadata
-        client->sendTrace("workspace initialization: parsing definitions file metadata");
-        auto metadata = types::parseDefinitionsFileMetadata(*definitionsContents);
-        if (!definitionsFileMetadata)
-            definitionsFileMetadata = metadata;
-        client->sendTrace("workspace initialization: parsing definitions file metadata COMPLETED", json(definitionsFileMetadata).dump());
-
-        client->sendTrace("workspace initialization: registering types definition");
-        auto result = loadDefinitionFile(packageName, *definitionsContents, metadata);
-        client->sendTrace("workspace initialization: registering types definition COMPLETED");
-
-        auto uri = Uri::file(resolvedFilePath);
-
-        if (result.success)
+        loadConfiguredDefinitionFiles();
+        if (loadedDefinitionFiles > 0 && definitionConfiguration.conflictWinner == PlatformDefinitionConflictWinner::Platform)
         {
-            // Clear any set diagnostics
-            client->publishDiagnostics({uri, std::nullopt, {}});
+            // Luau combines same-named declarations from an environment scope and its parent globals.
+            // Remove only configured definition-file bindings that collide with the selected platform bindings,
+            // restoring any binding that existed before configured definitions were loaded.
+            for (const auto& snapshot : platformSnapshots)
+            {
+                for (const auto& [name, _] : snapshot.bindings)
+                {
+                    const auto current = frontend.globals.globalScope->bindings.find(name);
+                    if (current == frontend.globals.globalScope->bindings.end())
+                        continue;
 
-            // Update the text document URI to point to the actual file on disk
-            if (auto it = definitionsFileState.find(packageName); it != definitionsFileState.end())
-                it->second.textDocument = TextDocument(uri, "luau", 0, *definitionsContents);
+                    const auto original = baseBindings.find(name);
+                    if (original == baseBindings.end())
+                        frontend.globals.globalScope->bindings.erase(current);
+                    else if (original->second.typeId != current->second.typeId)
+                        current->second = original->second;
+                }
+                for (const auto& [name, _] : snapshot.exportedTypeBindings)
+                {
+                    const auto current = frontend.globals.globalScope->exportedTypeBindings.find(name);
+                    if (current == frontend.globals.globalScope->exportedTypeBindings.end())
+                        continue;
+
+                    const auto original = baseTypeBindings.find(name);
+                    if (original == baseTypeBindings.end())
+                        frontend.globals.globalScope->exportedTypeBindings.erase(current);
+                    else if (original->second.type != current->second.type)
+                        current->second = original->second;
+                }
+            }
+
+            for (size_t index = 0; index < platformDefinitionScopes.size(); ++index)
+            {
+                platformDefinitionScopes[index]->bindings = std::move(platformSnapshots[index].bindings);
+                platformDefinitionScopes[index]->exportedTypeBindings = std::move(platformSnapshots[index].exportedTypeBindings);
+            }
         }
-        else
+        else if (loadedDefinitionFiles > 0 &&
+                 definitionConfiguration.conflictWinner == PlatformDefinitionConflictWinner::DefinitionFiles)
         {
-            client->sendWindowMessage(
-                lsp::MessageType::Error, "Failed to read definitions file " + resolvedFilePath + ". Extended types will not be provided");
-
-            // Display relevant diagnostics
-            std::vector<lsp::Diagnostic> diagnostics;
-            for (auto& error : result.parseResult.errors)
-                diagnostics.emplace_back(createParseErrorDiagnostic(error));
-
-            if (result.module)
-                for (auto& error : result.module->errors)
-                    diagnostics.emplace_back(createTypeErrorDiagnostic(error, &fileResolver));
-
-            client->publishDiagnostics({uri, std::nullopt, diagnostics});
+            const DefinitionScopeSnapshot definitionFilesSnapshot =
+                snapshotDefinitionScope(frontend.globals.globalScope);
+            for (const auto& targetScope : platformDefinitionScopes)
+            {
+                for (const auto& [name, binding] : definitionFilesSnapshot.bindings)
+                {
+                    const auto original = baseBindings.find(name);
+                    const auto current = frontend.globals.globalScope->bindings.find(name);
+                    if (current != frontend.globals.globalScope->bindings.end() &&
+                        (original == baseBindings.end() || original->second.typeId != current->second.typeId))
+                        targetScope->bindings[name] = binding;
+                }
+                for (const auto& [name, binding] : definitionFilesSnapshot.exportedTypeBindings)
+                {
+                    const auto original = baseTypeBindings.find(name);
+                    const auto current = frontend.globals.globalScope->exportedTypeBindings.find(name);
+                    if (current != frontend.globals.globalScope->exportedTypeBindings.end() &&
+                        (original == baseTypeBindings.end() || original->second.type != current->second.type))
+                        targetScope->exportedTypeBindings[name] = binding;
+                }
+            }
         }
+    }
+
+    if (!loadedAllPlatformEnvironments)
+        platformDefinitionsActive = false;
+    platform->setDefinitionEnvironmentsActive(platformDefinitionsActive);
+
+    if (definitionConfiguration.globalPolicy == PlatformGlobalDefinitionsPolicy::PreferPlatform && !platformDefinitionsActive)
+        loadConfiguredDefinitionFiles();
+
+    if (!platformDefinitionWarnings.empty())
+    {
+        std::string message = "Could not load the active platform API definitions and used a fallback. "
+                              "Check luau-lsp.platform.luduvo.dataDirectory, then reload the workspace.";
+        for (const auto& warning : platformDefinitionWarnings)
+            message += "\n" + warning;
+
+        client->sendWindowMessageRequest(lsp::MessageType::Warning, message, {{"Open Luduvo Settings"}},
+            [client = client](const JsonRpcMessage& response)
+            {
+                if (!response.result || response.result->is_null())
+                    return;
+                const auto action = response.result->get<lsp::MessageActionItem>();
+                if (action.title == "Open Luduvo Settings")
+                    client->sendNotification("$/command",
+                        json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo.dataDirectory"}});
+            });
     }
 
     if (!disabledGlobals.empty())

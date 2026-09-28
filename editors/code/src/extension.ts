@@ -552,6 +552,25 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
 
   clientDisposables.push(
     vscode.commands.registerCommand(
+      "luau-lsp.updateSettingAndReload",
+      async (params: { key: string; value: unknown }) => {
+        const prefix = "luau-lsp.";
+        if (!params?.key?.startsWith(prefix)) {
+          throw new Error(`Invalid Luau LSP setting key: ${params?.key}`);
+        }
+        const target = vscode.workspace.workspaceFolders
+          ? vscode.ConfigurationTarget.Workspace
+          : vscode.ConfigurationTarget.Global;
+        await vscode.workspace
+          .getConfiguration("luau-lsp")
+          .update(params.key.substring(prefix.length), params.value, target);
+        await startLanguageServer(context);
+      },
+    ),
+  );
+
+  clientDisposables.push(
+    vscode.commands.registerCommand(
       "luau-lsp.rename",
       async (
         uriString: string,
@@ -649,7 +668,8 @@ export async function activate(context: vscode.ExtensionContext) {
       } else if (
         e.affectsConfiguration("luau-lsp.types") ||
         e.affectsConfiguration("luau-lsp.platform.type") ||
-        e.affectsConfiguration("luau-lsp.analyzeLuaFiles")
+        e.affectsConfiguration("luau-lsp.analyzeLuaFiles") ||
+        e.affectsConfiguration("luau-lsp.platform.luduvo")
       ) {
         vscode.window
           .showInformationMessage(

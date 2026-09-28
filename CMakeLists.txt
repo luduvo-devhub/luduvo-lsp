@@ -7,7 +7,7 @@ option(LSP_STATIC_CRT "Link with the static CRT (/MT)" OFF)
 option(LSP_BUILD_WITH_SENTRY "Build with Sentry (crash reporting)" OFF)
 option(LSP_WERROR "Warnings as errors" ON)
 
-set(LSP_VERSION "1.69.1L-alpha")
+set(LSP_VERSION "1.70.1L-alpha")
 set(LSP_NAME "Luduvo Luau")
 
 if (LSP_STATIC_CRT)
@@ -44,8 +44,10 @@ add_library(Luau.LanguageServer STATIC)
 # Bundle Luduvo-specific declarations into the executable
 set(LUDUVO_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/luduvo")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.d.luau")
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.d.luau" LUDUVO_DEFINITIONS)
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.server.d.luau"
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.client.d.luau")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.server.d.luau" LUDUVO_SERVER_DEFINITIONS)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.client.d.luau" LUDUVO_CLIENT_DEFINITIONS)
 configure_file(src/include/Platform/LuduvoDefinitions.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDefinitions.hpp" @ONLY)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/documentation.luduvo.json")
@@ -56,6 +58,9 @@ add_executable(Luau.LanguageServer.CLI)
 add_executable(Luau.LanguageServer.Test)
 
 if (MINGW)
+    # Luduvo Luau has gotten big enough to make the compiler choke on the default object limit
+    target_compile_options(Luau.LanguageServer PRIVATE -Wa,-mbig-obj)
+
     # Need to keep the Windows binaries usable outside the compiler's PATH
     target_link_options(Luau.LanguageServer.CLI PRIVATE -static)
 endif ()
@@ -80,6 +85,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/AutoImports.cpp
         src/platform/LSPPlatform.cpp
         src/platform/luduvo/LuduvoPlatform.cpp
+        src/platform/luduvo/LuduvoDefinitionResolver.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
         src/platform/roblox/InstanceRequireAutoImporter.cpp

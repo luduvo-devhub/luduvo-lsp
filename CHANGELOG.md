@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Luduvo LSP now dynamically switches between client-specific or server-specific global type files in accordance to the file extension of the file being checked
+- Upon load, Luduvo LSP now checks your active Luduvo directory for any global type files and uses those instead of purely relying on the global type files baked into it. Theoretically, Luduvo LSP autocomplete will never be unsynced from the actual state of the Luduvo API ever again
+- Luduvo definitions are now loaded using the following priority:
+  1. Explicit client or server override file
+  2. The active Luduvo installation's per-user data directory
+  3. Definitions bundled with Luduvo LSP
+- Added 7 Luduvo settings:
+  - `luduvo.dataDirectory`, which tells Luduvo LSP where to find the Luduvo data directory that contains the official global type files
+  - `luduvo.definitions.serverOverride`, which tells Luduvo LSP where to find the server script definition file
+  - `luduvo.definitions.clientOverride`, which tells Luduvo LSP where to find the client script definition file
+  - `luduvo.definitions.defaultScriptSide`, which handles which script side (server or client) to use when the luau file being analysed is not explicitly marked as a server script or a client script
+  - `luduvo.definitions.globalPolicy`, which defines how Luduvo LSP's client/server definition files should interact with the more global `luau-lsp.definitionFiles` setting
+  - `luduvo.definitions.conflictWinner`, which defines which definition file should win in case of a conflict if `globalPolicy` is set to `combine`
+  - `luau-lsp.platform.luduvo.definitions.exposePrivateTypes`, which defines whether private types should be forced to be exposed in the definition files that is fed into Luduvo LSP. Note that this doesn not expose every private type in every file, but specifically the client and server definition files that Luduvo LSP uses during its operation
+- A general purpose platform fflag dependancy system that any future platform can use if they need it (no one other than me will need it)
+- Definition-loading failures and unmet platform requirements are now reported through upstream's editor messages system where supported
+
+### Changed
+
+- Upstream's `.client.luau` and `.server.luau` classification code ([#1594](https://github.com/JohnnyMorganz/luau-lsp/issues/1594)) has been generalized so that it can be used independently of the selected platform (since I needed a system like it too and like consistency)
+- `Luduvo` is now the default platform. I realized how little sense it makes to have Roblox be the default platform in a repo called "luduvo lsp"
+- Global type/definition updater Python scripts have been rewritten for a third time to instead use luduvo's own provided global type files instead of purely trying to derrive them soley from the website. I am legit an idiot for ever doing that in the first place WHEN THE DEF FILES WERE LITERALLY RIGHT THERE SINCE FREAKING LAUNCH. Words cannot describe how dumb I feel from this. The website scrape is still mainly in charge of doc strings and source linking since they will likely have better doc string descriptions for the LSP to use
+- Comments from Luduvo's declaration files now provide fallback hover documentation when corresponding website documentation is unavailable
+- When using official Luduvo definition files, it is now required that the SolverV2 fflag is enabled since Luduvo's global type files use features specific to it. The SolverV2 requirement is not enforced when `types.definitionFiles` is set as the only definition source
+- The VSCode extension becomes more luduvo-ified as I toy with the idea of releasing it as a standalone extension
+- Definition conflicts between official Luduvo definitions and `types.definitionFiles` now follow the configured global policy and conflict winner.
+- Github actions now download the latest release of Luduvo to extract Luduvo's latest global type files for updates
+
+### Fixed
+
+- User-provided `types.documentationFiles` are no longer accidentally overwritten by bundled Luduvo documentation
+
 ## [1.70.1] - 2026-09-27
 
 ### Added

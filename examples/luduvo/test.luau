@@ -1,5 +1,5 @@
 --!strict
--- Tested in Zed. Complete game.Physics. or hover Vector3.new.
+-- Tested in Zed. Complete the unfinished game. on line 10 or try hovering any of the luduvo-speciifc data types.
 local part = game.Prefabs.Spawn("Part")
 if part then
     part.Position = Vector3.new(0, 10, 0)
@@ -25,7 +25,7 @@ local ET = game.EventTable
 local damage = ET("Damage", ET.ToServer, {{"target", ET.Entity}, {"amount", ET.F32}})
 damage:Push(self, 10)
 
-local camera = game.World.Camera
+local camera = game.World.Camera -- Should be red if this is running on a server
 if camera then
     camera.CameraLens.fovY = math.rad(90)
     camera.CameraOrbit.distance = 8

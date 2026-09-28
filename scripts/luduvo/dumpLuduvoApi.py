@@ -8,35 +8,36 @@ the current file from /reference instead of hard-coding a particular build.
 from __future__ import annotations
 
 import argparse
-import base64
 import concurrent.futures
-import hashlib
 import html
-import io
 import json
 import math
-import os
 import re
-import struct
 import subprocess
 import sys
 import tempfile
 import urllib.parse
 import urllib.request
-import zipfile
 from pathlib import Path
 
+from dumpLuduvoTypes import (
+    CONTENT_BASE_URL,
+    CONTENT_MANIFEST_URL,
+    DefinitionsError,
+    OUTPUTS,
+    default_data_directory,
+    installed_definitions,
+    remote_definitions,
+    write_text,
+)
+from luduvo_declarations import merge_surfaces, parse_declarations
 
 REFERENCE_URL = "https://docs.luduvo.com/reference"
-STABLE_MANIFEST_URL = "https://assets.luduvo.com/channels/stable/windows-x86_64.txt"
 ROOT = Path(__file__).resolve().parent
 USER_AGENT = "luduvo-lsp catalog dumper"
 CATALOG_MARKER = re.compile(r"version\s*:\s*\d+\s*,\s*strings\s*:\s*\[")
 SCRIPT_URL = re.compile(r"(?:src|href)=[\"']([^\"']+\.js(?:\?[^\"']*)?)[\"']")
 NUMBER = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
-COMPONENT_NAME = re.compile(rb"[A-Za-z][A-Za-z0-9_]{1,95}\Z")
-COMPONENT_ANCHOR = ("Position", "Rotation", "Scale", "Name", "Velocity")
-COMPONENT_SUFFIX = ("LocalTransform", "TargetYaw", "ScriptHandles", "ScriptRef")
 
 
 class CatalogError(RuntimeError):
@@ -251,9 +252,13 @@ def decode_catalog(source: str, include_docs: bool) -> tuple[int, list[dict]]:
     )
 
     if len(symbols) % 5:
-        raise CatalogError("catalog symbols array is not a sequence of five-value records")
+        raise CatalogError(
+            "catalog symbols array is not a sequence of five-value records"
+        )
     if len(component_data) % 3:
-        raise CatalogError("catalog components array is not a sequence of three-value records")
+        raise CatalogError(
+            "catalog components array is not a sequence of three-value records"
+        )
 
     symbol_count = len(symbols) // 5
     component_count = len(component_data) // 3
@@ -264,7 +269,9 @@ def decode_catalog(source: str, include_docs: bool) -> tuple[int, list[dict]]:
 
     rows = []
     for symbol_index in range(symbol_count):
-        name, type_name, doc, flags, parent = symbols[symbol_index * 5 : symbol_index * 5 + 5]
+        name, type_name, doc, flags, parent = symbols[
+            symbol_index * 5 : symbol_index * 5 + 5
+        ]
         component = symbol_components[symbol_index]
         if parent < 0 or parent > symbol_count:
             raise CatalogError(f"symbol {symbol_index + 1} has invalid parent {parent}")
@@ -286,191 +293,6 @@ def decode_catalog(source: str, include_docs: bool) -> tuple[int, list[dict]]:
     return version, rows
 
 
-def pe_layout(executable: bytes) -> tuple[int, list[tuple[int, int, int, int]]]:
-    """Return the image base and (RVA, virtual size, raw offset, raw size) sections."""
-    try:
-        pe_offset = struct.unpack_from("<I", executable, 0x3C)[0]
-        if executable[pe_offset : pe_offset + 4] != b"PE\0\0":
-            raise CatalogError("component source is not a PE executable")
-        section_count = struct.unpack_from("<H", executable, pe_offset + 6)[0]
-        optional_size = struct.unpack_from("<H", executable, pe_offset + 20)[0]
-        optional_offset = pe_offset + 24
-        magic = struct.unpack_from("<H", executable, optional_offset)[0]
-        if magic == 0x20B:
-            image_base = struct.unpack_from("<Q", executable, optional_offset + 24)[0]
-        elif magic == 0x10B:
-            image_base = struct.unpack_from("<I", executable, optional_offset + 28)[0]
-        else:
-            raise CatalogError(f"unsupported PE optional-header magic 0x{magic:x}")
-        section_offset = optional_offset + optional_size
-        sections = []
-        for index in range(section_count):
-            offset = section_offset + index * 40
-            virtual_size, rva, raw_size, raw_offset = struct.unpack_from(
-                "<IIII", executable, offset + 8
-            )
-            sections.append((rva, virtual_size, raw_offset, raw_size))
-    except (IndexError, struct.error) as error:
-        raise CatalogError("component source has a truncated PE header") from error
-    return image_base, sections
-
-
-def component_names_from_executable(executable: bytes) -> list[str]:
-    image_base, sections = pe_layout(executable)
-
-    def offset_pointer(offset: int) -> int | None:
-        for section_rva, _virtual_size, raw_offset, raw_size in sections:
-            if raw_offset <= offset < raw_offset + raw_size:
-                return image_base + section_rva + offset - raw_offset
-        return None
-
-    def pointer_string(pointer: int) -> bytes | None:
-        rva = pointer - image_base
-        for section_rva, virtual_size, raw_offset, raw_size in sections:
-            span = max(virtual_size, raw_size)
-            if section_rva <= rva < section_rva + span:
-                offset = raw_offset + rva - section_rva
-                if offset < 0 or offset >= len(executable):
-                    return None
-                end = executable.find(b"\0", offset, min(offset + 97, len(executable)))
-                if end < 0:
-                    return None
-                value = executable[offset:end]
-                return value if COMPONENT_NAME.fullmatch(value) else None
-        return None
-
-    pointer_size = 8 if image_base > 0xFFFFFFFF else 4
-    pointer_format = "<Q" if pointer_size == 8 else "<I"
-    anchor = tuple(name.encode("ascii") for name in COMPONENT_ANCHOR)
-    candidates = []
-    position = 0
-    while True:
-        position = executable.find(anchor[0] + b"\0", position)
-        if position < 0:
-            break
-        pointer = offset_pointer(position)
-        position += 1
-        if pointer is None:
-            continue
-        packed_pointer = struct.pack(pointer_format, pointer)
-        pointer_offset = 0
-        while True:
-            pointer_offset = executable.find(packed_pointer, pointer_offset)
-            if pointer_offset < 0:
-                break
-            if pointer_offset % pointer_size == 0:
-                names = []
-                for index in range(len(anchor)):
-                    item = struct.unpack_from(
-                        pointer_format, executable, pointer_offset + index * pointer_size
-                    )[0]
-                    names.append(pointer_string(item))
-                if tuple(names) == anchor:
-                    candidates.append(pointer_offset)
-            pointer_offset += 1
-
-    if len(candidates) != 1:
-        raise CatalogError(
-            "expected exactly one Position/Rotation/Scale/Name/Velocity component "
-            f"registry in LuduvoGame.exe, found {len(candidates)}"
-        )
-
-    components = []
-    offset = candidates[0]
-    while offset + pointer_size <= len(executable):
-        pointer = struct.unpack_from(pointer_format, executable, offset)[0]
-        value = pointer_string(pointer)
-        if value is None:
-            break
-        components.append(value.decode("ascii"))
-        offset += pointer_size
-
-    if len(components) < len(anchor) or tuple(components[: len(anchor)]) != COMPONENT_ANCHOR:
-        raise CatalogError("component registry failed its prefix validation")
-    if tuple(components[-len(COMPONENT_SUFFIX) :]) != COMPONENT_SUFFIX:
-        raise CatalogError("component registry failed its suffix validation")
-    if len(set(components)) != len(components):
-        raise CatalogError("component registry contains duplicate identifiers")
-    return sorted(components, key=str.casefold)
-
-
-def default_bundle_dir() -> Path:
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        return Path(local_app_data) / "Luduvo" / "bundle"
-    return Path.home() / "AppData" / "Local" / "Luduvo" / "bundle"
-
-
-def download_stable_game() -> tuple[str, bytes]:
-    manifest_text = fetch_text(STABLE_MANIFEST_URL)
-    lines = manifest_text.splitlines()
-    if len(lines) != 3 or lines[0] != "LDV1":
-        raise CatalogError("stable release manifest has an unrecognized format")
-    try:
-        payload = json.loads(base64.b64decode(lines[2], validate=True))
-        platform = payload["platforms"]["windows-x86_64"]
-        bundle = platform["bundle"]
-        game_name = platform["game_exe"]
-        bundle_url = bundle["url"]
-        expected_size = int(bundle["size"])
-        expected_hash = bundle["sha256"].lower()
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
-        raise CatalogError("stable release manifest is missing bundle metadata") from error
-
-    if expected_size <= 0 or expected_size > 2_000_000_000:
-        raise CatalogError(f"stable bundle has unreasonable size {expected_size}")
-    print(
-        f"LuduvoGame.exe was not found locally; downloading stable release "
-        f"{payload.get('version', '?')} ({expected_size / 1_000_000:.1f} MB)..."
-    )
-    request = urllib.request.Request(bundle_url, headers={"User-Agent": USER_AGENT})
-    try:
-        with urllib.request.urlopen(request, timeout=120) as response:
-            archive = response.read(expected_size + 1)
-    except OSError as error:
-        raise CatalogError(f"could not download {bundle_url}: {error}") from error
-    if len(archive) != expected_size:
-        raise CatalogError(
-            f"stable bundle size mismatch: expected {expected_size}, got {len(archive)}"
-        )
-    actual_hash = hashlib.sha256(archive).hexdigest()
-    if actual_hash != expected_hash:
-        raise CatalogError(
-            f"stable bundle SHA-256 mismatch: expected {expected_hash}, got {actual_hash}"
-        )
-
-    try:
-        with zipfile.ZipFile(io.BytesIO(archive)) as bundle_zip:
-            matches = [
-                name
-                for name in bundle_zip.namelist()
-                if Path(name).name.casefold() == game_name.casefold()
-            ]
-            if len(matches) != 1:
-                raise CatalogError(
-                    f"stable bundle contains {len(matches)} files named {game_name}"
-                )
-            return f"{bundle_url}!/{matches[0]}", bundle_zip.read(matches[0])
-    except zipfile.BadZipFile as error:
-        raise CatalogError("stable bundle is not a valid ZIP archive") from error
-
-
-def load_game_executable(
-    game_exe: Path | None, bundle_dir: Path, allow_download: bool
-) -> tuple[str, bytes]:
-    path = game_exe.expanduser().resolve() if game_exe else bundle_dir / "LuduvoGame.exe"
-    if path.is_file():
-        try:
-            return str(path), path.read_bytes()
-        except OSError as error:
-            raise CatalogError(f"could not read {path}: {error}") from error
-    if allow_download and game_exe is None:
-        return download_stable_game()
-    raise CatalogError(
-        f"could not find {path}; pass --game-exe or allow the stable release download"
-    )
-
-
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(value, indent=2, ensure_ascii=False) + "\n"
@@ -482,9 +304,88 @@ def write_json(path: Path, value: object) -> None:
     temporary.replace(path)
 
 
+def website_link(rows: list[dict], index: int) -> str:
+    row = rows[index]
+    if row["parent"]:
+        parent = rows[row["parent"] - 1]
+        return f"{REFERENCE_URL}/{parent['name']}#{row['name']}"
+    kind = row["flags"] & 7
+    if kind == 6:
+        return f"{REFERENCE_URL}/types/{row['name']}"
+    return f"{REFERENCE_URL}/{row['name']}"
+
+
+def enrich_from_website(
+    api: list[dict], rows: list[dict], overrides: list[dict]
+) -> None:
+    """Fill declaration records with website prose and links, never website types."""
+    by_key: dict[tuple[str | None, str], tuple[str, str]] = {}
+    by_name: dict[str, list[tuple[str, str]]] = {}
+    for index, row in enumerate(rows):
+        owner = rows[row["parent"] - 1]["name"] if row["parent"] else None
+        value = (row["doc"].strip(), website_link(rows, index))
+        by_key[(owner, row["name"])] = value
+        by_name.setdefault(row["name"], []).append(value)
+    for row in overrides:
+        by_key[(row.get("owner"), row["name"])] = (row.get("doc", "").strip(), "")
+
+    for record in api:
+        owner = record["owner"]
+        owner_tail = owner.rsplit(".", 1)[-1] if owner else None
+        value = by_key.get((owner_tail, record["name"]))
+        if value is None and owner == "game":
+            value = by_key.get((None, record["name"]))
+        if value is None and owner is None:
+            value = by_key.get((None, record["name"]))
+        if value is None and len(by_name.get(record["name"], [])) == 1:
+            value = by_name[record["name"]][0]
+        if value is None:
+            continue
+        documentation, link = value
+        if not record["documentation"] and documentation:
+            record["documentation"] = documentation
+        if link:
+            record["learn_more_link"] = link
+
+
+def load_definition_sources(
+    arguments: argparse.Namespace,
+) -> dict[str, tuple[str, str, str | None]]:
+    if arguments.content_manifest_url:
+        return remote_definitions(
+            arguments.content_manifest_url, arguments.content_base_url
+        )
+
+    result = {}
+    for surface in ("server", "client"):
+        explicit_path = getattr(arguments, f"{surface}_definitions")
+        if explicit_path:
+            path = explicit_path.expanduser().resolve()
+            result[surface] = (str(path), path.read_text(encoding="utf-8"), None)
+        else:
+            path, source, version = installed_definitions(
+                arguments.content_root, surface
+            )
+            result[surface] = (str(path), source, version)
+    return result
+
+
+def load_local_api(sources: dict[str, tuple[str, str, str | None]]) -> list[dict]:
+    parsed = {
+        surface: parse_declarations(source, surface)
+        for surface, (_, source, _) in sources.items()
+    }
+    for surface, records in parsed.items():
+        if not records:
+            raise CatalogError(
+                f"{surface} declarations at {sources[surface][0]} contained no API records"
+            )
+    return merge_surfaces(parsed["server"], parsed["client"])
+
+
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Dump Luduvo's generated API and component catalogs as JSON."
+        description="Dump Luduvo's website documentation catalog as JSON."
     )
     parser.add_argument(
         "--reference-url",
@@ -499,28 +400,36 @@ def parse_arguments() -> argparse.Namespace:
         "--output-dir",
         type=Path,
         default=ROOT,
-        help="directory for luduvo-api.json and luduvo-components.json",
+        help="directory for luduvo-api.json",
     )
+    parser.add_argument(
+        "--data-directory",
+        type=Path,
+        help="Luduvo Client data directory (defaults to the platform roaming location)",
+    )
+    parser.add_argument(
+        "--content-root",
+        type=Path,
+        help="Luduvo content directory containing current and versions/",
+    )
+    parser.add_argument(
+        "--content-manifest-url",
+        help=(
+            "download authoritative declarations from Luduvo's content manifest; "
+            f"the official URL is {CONTENT_MANIFEST_URL}"
+        ),
+    )
+    parser.add_argument(
+        "--content-base-url",
+        default=CONTENT_BASE_URL,
+        help="base URL for content objects referenced by --content-manifest-url",
+    )
+    parser.add_argument("--server-definitions", type=Path)
+    parser.add_argument("--client-definitions", type=Path)
     parser.add_argument(
         "--no-docs",
         action="store_true",
         help="leave every API doc field empty",
-    )
-    parser.add_argument(
-        "--bundle-dir",
-        type=Path,
-        default=default_bundle_dir(),
-        help="installed Luduvo bundle directory containing LuduvoGame.exe",
-    )
-    parser.add_argument(
-        "--game-exe",
-        type=Path,
-        help="read component identifiers from this LuduvoGame.exe",
-    )
-    parser.add_argument(
-        "--no-download",
-        action="store_true",
-        help="fail instead of downloading the current stable bundle when the game executable is absent",
     )
     parser.add_argument(
         "--generate",
@@ -530,12 +439,14 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def run_generators() -> None:
-    for script in ("dumpLuduvoTypes.py", "dumpLuduvoDocs.py"):
-        try:
-            subprocess.run([sys.executable, str(ROOT / script)], check=True)
-        except subprocess.CalledProcessError as error:
-            raise CatalogError(f"{script} failed with exit code {error.returncode}") from error
+def run_documentation_generator() -> None:
+    script = "dumpLuduvoDocs.py"
+    try:
+        subprocess.run([sys.executable, str(ROOT / script)], check=True)
+    except subprocess.CalledProcessError as error:
+        raise CatalogError(
+            f"{script} failed with exit code {error.returncode}"
+        ) from error
 
 
 def main() -> int:
@@ -543,27 +454,53 @@ def main() -> int:
     try:
         output_dir = arguments.output_dir.expanduser().resolve()
         if arguments.generate and output_dir != ROOT.resolve():
-            raise CatalogError("--generate can only be used with the default --output-dir")
+            raise CatalogError(
+                "--generate can only be used with the default --output-dir"
+            )
+
+        if arguments.content_manifest_url and any(
+            (
+                arguments.content_root,
+                arguments.data_directory,
+                arguments.server_definitions,
+                arguments.client_definitions,
+            )
+        ):
+            raise CatalogError(
+                "--content-manifest-url cannot be combined with local definition sources"
+            )
+
+        if arguments.content_manifest_url:
+            arguments.content_root = None
+        elif arguments.content_root:
+            arguments.content_root = arguments.content_root.expanduser().resolve()
+        else:
+            data_directory = (
+                arguments.data_directory.expanduser().resolve()
+                if arguments.data_directory
+                else default_data_directory().expanduser().resolve()
+            )
+            arguments.content_root = data_directory / "content"
 
         source_name, source = load_source(arguments.source, arguments.reference_url)
         version, rows = decode_catalog(source, not arguments.no_docs)
-        game_source, executable = load_game_executable(
-            arguments.game_exe,
-            arguments.bundle_dir.expanduser().resolve(),
-            not arguments.no_download,
-        )
-        components = component_names_from_executable(executable)
-        write_json(output_dir / "api-docs" / "en-us" / "luduvo-api.json", rows)
-        write_json(output_dir / "api-docs" / "en-us" / "luduvo-components.json", components)
+        definition_sources = load_definition_sources(arguments)
+        api = load_local_api(definition_sources)
+        overrides_path = ROOT / "api-docs" / "en-us" / "luduvo-api-overrides.json"
+        overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
+        enrich_from_website(api, rows, overrides)
+        write_json(output_dir / "api-docs" / "en-us" / "luduvo-api.json", api)
         if arguments.generate:
-            run_generators()
-    except CatalogError as error:
+            for surface, (_, declaration_source, _) in definition_sources.items():
+                write_text(OUTPUTS[surface], declaration_source)
+            run_documentation_generator()
+    except (CatalogError, DefinitionsError, OSError, UnicodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
 
     print(
-        f"Dumped catalog version {version}: {len(rows)} API symbols and "
-        f"{len(components)} components from {game_source}; API source: {source_name}"
+        f"Dumped {len(api)} local API declarations and enriched them from "
+        f"website catalog version {version} at {source_name}"
     )
     return 0
 

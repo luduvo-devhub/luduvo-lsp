@@ -5,34 +5,38 @@
 #include <regex>
 #include <algorithm>
 
+static void parseOptionalString(const json& source, const char* key, std::string& destination)
+{
+    if (auto value = source.find(key); value != source.end() && !value->is_null())
+        value->get_to(destination);
+}
+
 Luau::FunctionParameterDocumentation parseDocumentationParameter(const json& j)
 {
     std::string name;
     std::string documentation;
-    if (j.contains("name"))
-        j.at("name").get_to(name);
-    if (j.contains("documentation"))
-        j.at("documentation").get_to(documentation);
+    parseOptionalString(j, "name", name);
+    parseOptionalString(j, "documentation", documentation);
     return Luau::FunctionParameterDocumentation{name, documentation};
 }
 
 void parseDocumentationContents(
-    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, const Client* client)
+    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, const Client* client, bool overwriteExisting)
 {
     try
     {
         auto docs = json::parse(contents);
         for (auto& [symbol, info] : docs.items())
         {
+            if (!overwriteExisting && database.find(symbol))
+                continue;
+
             std::string documentation;
             std::string learnMoreLink;
             std::string codeSample;
-            if (info.contains("documentation"))
-                info.at("documentation").get_to(documentation);
-            if (info.contains("learn_more_link"))
-                info.at("learn_more_link").get_to(learnMoreLink);
-            if (info.contains("code_sample"))
-                info.at("code_sample").get_to(codeSample);
+            parseOptionalString(info, "documentation", documentation);
+            parseOptionalString(info, "learn_more_link", learnMoreLink);
+            parseOptionalString(info, "code_sample", codeSample);
             if (info.contains("keys"))
             {
                 Luau::DenseHashMap<std::string, Luau::DocumentationSymbol> keys{};

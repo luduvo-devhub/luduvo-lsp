@@ -33,7 +33,10 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
 
       - name: Refresh Luduvo API, types, and documentation
-        run: python scripts/luduvo/dumpLuduvoApi.py --generate
+        run: |
+          python scripts/luduvo/dumpLuduvoApi.py \
+            --content-manifest-url https://api.luduvo.com/content/manifest \
+            --generate
 
       - name: Create Pull Request
         id: create_pull_request

@@ -17,7 +17,8 @@ const std::string kDocumentationBreaker = "\n----------\n";
 
 Luau::FunctionParameterDocumentation parseDocumentationParameter(const json& j);
 void parseDocumentationContents(
-    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, const Client* client);
+    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, const Client* client,
+    bool overwriteExisting = true);
 void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau::DocumentationDatabase& database, const Client* client);
 
 /// Returns a markdown string of the provided documentation

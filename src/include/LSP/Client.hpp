@@ -47,6 +47,11 @@ struct Client
 
     virtual void sendWindowMessage(const lsp::MessageType& type, const std::string& message) const {}
 
+    virtual void sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message,
+        const std::vector<lsp::MessageActionItem>& actions, const std::optional<ResponseHandler>& handler = std::nullopt)
+    {
+    }
+
     virtual void registerCapability(const std::string& registrationId, const std::string& method, const json& registerOptions) {}
 
     virtual void unregisterCapability(const std::string& registrationId, const std::string& method) {}
@@ -125,6 +130,8 @@ public:
     void sendLogMessage(const lsp::MessageType& type, const std::string& message) const override;
     void sendTrace(const std::string& message, const std::optional<std::string>& verbose = std::nullopt) const override;
     void sendWindowMessage(const lsp::MessageType& type, const std::string& message) const override;
+    void sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message,
+        const std::vector<lsp::MessageActionItem>& actions, const std::optional<ResponseHandler>& handler = std::nullopt) override;
 
     void registerCapability(const std::string& registrationId, const std::string& method, const json& registerOptions) override;
     void unregisterCapability(const std::string& registrationId, const std::string& method) override;

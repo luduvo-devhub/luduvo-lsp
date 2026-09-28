@@ -126,7 +126,8 @@ public:
     /// Applies platform mutations and stores the checked module in definitionsFileState.
     /// Callers are responsible for unfreezing/freezing the global type arenas.
     Luau::LoadDefinitionFileResult loadDefinitionFile(
-        const std::string& packageName, const std::string& source, std::optional<nlohmann::json> metadata = std::nullopt);
+        const std::string& packageName, const std::string& source, std::optional<nlohmann::json> metadata = std::nullopt,
+        std::optional<Luau::ScopePtr> targetScope = std::nullopt, bool exposePrivateTypes = false);
 
 private:
     void registerTypes(const std::vector<std::string>& disabledGlobals);

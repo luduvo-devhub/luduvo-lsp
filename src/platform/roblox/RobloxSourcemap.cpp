@@ -485,9 +485,9 @@ static std::optional<ScriptContext> scriptContextFromFilePathSuffix(const Source
 {
     if (auto filePath = node->getScriptFilePath())
     {
-        if (endsWith(*filePath, ".client.lua") || endsWith(*filePath, ".client.luau"))
+        if (scriptSideFromPath(*filePath) == ScriptSide::Client)
             return ScriptContext::Client;
-        if (endsWith(*filePath, ".server.lua") || endsWith(*filePath, ".server.luau"))
+        if (scriptSideFromPath(*filePath) == ScriptSide::Server)
             return ScriptContext::Server;
     }
     return std::nullopt;

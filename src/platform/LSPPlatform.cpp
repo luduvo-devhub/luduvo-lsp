@@ -13,6 +13,15 @@
 #include <memory>
 #include <unordered_set>
 
+std::optional<ScriptSide> scriptSideFromPath(std::string_view path)
+{
+    if (endsWith(path, ".client.lua") || endsWith(path, ".client.luau"))
+        return ScriptSide::Client;
+    if (endsWith(path, ".server.lua") || endsWith(path, ".server.luau"))
+        return ScriptSide::Server;
+    return std::nullopt;
+}
+
 LSPPlatform::LSPPlatform(WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder)
     : fileResolver(fileResolver)
     , workspaceFolder(workspaceFolder)
@@ -23,7 +32,7 @@ std::unique_ptr<LSPPlatform> LSPPlatform::getPlatform(
     const ClientConfiguration& config, WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder)
 {
     if (config.platform.type == LSPPlatformConfig::Luduvo)
-        return std::make_unique<LuduvoPlatform>(fileResolver, workspaceFolder);
+        return std::make_unique<LuduvoPlatform>(config.platform.luduvo, fileResolver, workspaceFolder);
 
     if (config.types.roblox && config.platform.type == LSPPlatformConfig::Roblox)
         return std::make_unique<RobloxPlatform>(fileResolver, workspaceFolder);

@@ -34,6 +34,7 @@ TEST_CASE("language_server_lazily_initializes_workspace_folders")
 
     // Indexing throws errors as the workspace doesn't exist
     client.globalConfig.index.enabled = false;
+    client.globalConfig.platform.type = LSPPlatformConfig::Roblox;
 
     auto workspaceUri = Uri::file("project");
 

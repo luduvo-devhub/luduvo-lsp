@@ -302,12 +302,75 @@ NLOHMANN_JSON_SERIALIZE_ENUM(LSPPlatformConfig, {
                                                     {LSPPlatformConfig::Roblox, "roblox"},
                                                 })
 
+enum struct LuduvoScriptSide
+{
+    Server,
+    Client,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(LuduvoScriptSide, {
+                                                  {LuduvoScriptSide::Server, "server"},
+                                                  {LuduvoScriptSide::Client, "client"},
+                                              })
+
+enum struct LuduvoGlobalDefinitionsPolicy
+{
+    LuduvoOnly,
+    DefinitionFilesOnly,
+    PreferLuduvo,
+    PreferDefinitionFiles,
+    Combine,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(LuduvoGlobalDefinitionsPolicy, {
+                                                               {LuduvoGlobalDefinitionsPolicy::LuduvoOnly, "luduvoOnly"},
+                                                               {LuduvoGlobalDefinitionsPolicy::DefinitionFilesOnly, "definitionFilesOnly"},
+                                                               {LuduvoGlobalDefinitionsPolicy::PreferLuduvo, "preferLuduvo"},
+                                                               {LuduvoGlobalDefinitionsPolicy::PreferDefinitionFiles, "preferDefinitionFiles"},
+                                                               {LuduvoGlobalDefinitionsPolicy::Combine, "combine"},
+                                                           })
+
+enum struct LuduvoDefinitionConflictWinner
+{
+    Luduvo,
+    DefinitionFiles,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(LuduvoDefinitionConflictWinner, {
+                                                               {LuduvoDefinitionConflictWinner::Luduvo, "luduvo"},
+                                                               {LuduvoDefinitionConflictWinner::DefinitionFiles, "definitionFiles"},
+                                                           })
+
+struct ClientLuduvoDefinitionsConfiguration
+{
+    /// Optional server declaration file. Takes precedence over the installed content store.
+    std::string serverOverride{};
+    /// Optional client declaration file. Takes precedence over the installed content store.
+    std::string clientOverride{};
+    /// Script side used for files without an exact .client.lua[u] or .server.lua[u] suffix.
+    LuduvoScriptSide defaultScriptSide = LuduvoScriptSide::Server;
+    /// Controls whether Luduvo definitions and types.definitionFiles load together, exclusively, or as fallbacks.
+    LuduvoGlobalDefinitionsPolicy globalPolicy = LuduvoGlobalDefinitionsPolicy::Combine;
+    /// Selects which source wins collisions when globalPolicy is combine.
+    LuduvoDefinitionConflictWinner conflictWinner = LuduvoDefinitionConflictWinner::Luduvo;
+    /// Exposes plain top-level `type` aliases from Luduvo definition files as global types.
+    bool exposePrivateTypes = false;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
+    ClientLuduvoDefinitionsConfiguration, serverOverride, clientOverride, defaultScriptSide, globalPolicy, conflictWinner, exposePrivateTypes)
+
+struct ClientLuduvoConfiguration
+{
+    /// Luduvo's per-user Client directory. The content store lives below this directory.
+    std::string dataDirectory{};
+    ClientLuduvoDefinitionsConfiguration definitions{};
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions)
+
 struct ClientPlatformConfiguration
 {
-    LSPPlatformConfig type = LSPPlatformConfig::Roblox;
+    LSPPlatformConfig type = LSPPlatformConfig::Luduvo;
+    ClientLuduvoConfiguration luduvo{};
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientPlatformConfiguration, type);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientPlatformConfiguration, type, luduvo);
 
 // These are the passed configuration options by the client, prefixed with `luau-lsp.`
 // Here we also define the default settings

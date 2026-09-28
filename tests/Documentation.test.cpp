@@ -647,4 +647,22 @@ end
     CHECK(comments[0] == "Does physics simulation");
 }
 
+TEST_CASE("documentation_parser_accepts_null_optional_links")
+{
+    TestClient client;
+    Luau::DocumentationDatabase database;
+
+    parseDocumentationContents(
+        R"({"@test/global/example":{"documentation":"Example documentation","learn_more_link":null}})",
+        "test documentation", database, &client);
+
+    auto documentation = database.find("@test/global/example");
+    REQUIRE(documentation);
+    auto basic = documentation->get_if<Luau::BasicDocumentation>();
+    REQUIRE(basic);
+    CHECK_EQ(basic->documentation, "Example documentation");
+    CHECK(basic->learnMoreLink.empty());
+    CHECK(client.notificationQueue.empty());
+}
+
 TEST_SUITE_END();
