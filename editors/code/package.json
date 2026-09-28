@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/luduvo-devhub/luduvo-lsp/issues"
   },
-  "version": "1.70.1-L-alpha",
+  "version": "1.70.1L-alpha",
   "engines": {
     "vscode": "^1.82.0"
   },

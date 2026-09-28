@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.70.1L-alpha] - 2026-09-28
+
 ### Added
 
 - Luduvo LSP now dynamically switches between client-specific or server-specific global type files in accordance to the file extension of the file being checked
