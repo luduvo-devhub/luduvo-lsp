@@ -1011,8 +1011,6 @@ declare game: {
 		ButtonPressed: (button: number) -> boolean,
 		-- camera ray through the cursor
 		PointerRay: () -> (vector?, vector?),
-		-- cursor position in window points
-		MousePosition: () -> vector,
 		-- mouse lock behavior: 0 Default, 1 LockCenter
 		MouseBehavior: number,
 		-- mouse behavior enum values

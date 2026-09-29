@@ -15118,26 +15118,6 @@
     "scope": "shared"
   },
   {
-    "name": "MousePosition",
-    "owner": "game.Input",
-    "kind": "global_member",
-    "type": "() -> vector",
-    "documentation": "cursor position in window points",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.Input.MousePosition",
-      "@luduvo/server/global/game.Input.MousePosition"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
     "name": "PointerRay",
     "owner": "game.Input",
     "kind": "global_member",
