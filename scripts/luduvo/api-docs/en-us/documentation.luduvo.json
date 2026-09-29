@@ -159,10 +159,6 @@
     "documentation": "mouse lock behavior: 0 Default, 1 LockCenter",
     "learn_more_link": null
   },
-  "@luduvo/client/global/game.Input.MousePosition": {
-    "documentation": "cursor position in window points",
-    "learn_more_link": null
-  },
   "@luduvo/client/global/game.Input.PointerRay": {
     "documentation": "camera ray through the cursor",
     "learn_more_link": "https://docs.luduvo.com/reference/Input#PointerRay"
@@ -3477,10 +3473,6 @@
   },
   "@luduvo/server/global/game.Input.MouseBehavior": {
     "documentation": "mouse lock behavior: 0 Default, 1 LockCenter",
-    "learn_more_link": null
-  },
-  "@luduvo/server/global/game.Input.MousePosition": {
-    "documentation": "cursor position in window points",
     "learn_more_link": null
   },
   "@luduvo/server/global/game.Input.PointerRay": {
