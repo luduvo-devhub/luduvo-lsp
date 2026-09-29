@@ -21,6 +21,15 @@ void parseDocumentationContents(
     bool overwriteExisting = true);
 void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau::DocumentationDatabase& database, const Client* client);
 
+struct PrintedDocumentation
+{
+    std::string markdown;
+    std::optional<std::string> learnMoreLink;
+};
+
+/// Returns documentation content with its link kept separate for clients that need custom presentation.
+std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol);
+
 /// Returns a markdown string of the provided documentation
 /// If we can't find any documentation for the given symbol, then we return nullopt
 std::optional<std::string> printDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol);

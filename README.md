@@ -126,6 +126,9 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `luau-lsp.platform.luduvo.definitions.globalPolicy` | `"luduvoOnly"`, `"definitionFilesOnly"`, `"preferLuduvo"`, `"preferDefinitionFiles"`, or `"combine"` | `"combine"` | Controls how official Luduvo declarations interact with `types.definitionFiles`. |
 | `luau-lsp.platform.luduvo.definitions.conflictWinner` | `"luduvo"` or `"definitionFiles"` | `"luduvo"` | Chooses which source owns a duplicate global when `globalPolicy` is `combine`. |
 | `luau-lsp.platform.luduvo.definitions.exposePrivateTypes` | boolean | `false` | For some reason, official Luduvo definition files purposely hides certain types. If you enable this, Luduvo LSP will force all top-level `type` aliases from Luduvo definition files into exported globals. May cause issues with type checking and Luduvo's own type checker likely won't like that you are using, so it's disabled by default. |
+| `luau-lsp.platform.luduvo.hover.presentation` | `"rich"` or `"standard"` | `"rich"` | Selects Luduvo's API-aware hover layout or the upstream-compatible hover layout. Standard hovers keep documentation above the type definition. |
+| `luau-lsp.platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits visible rich-hover title length while preserving provenance text. URLs do not count toward the limit; `null` disables truncation. |
+| `luau-lsp.platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
 
 ## Building
 

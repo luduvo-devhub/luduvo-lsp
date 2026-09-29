@@ -90,6 +90,397 @@ TEST_CASE("luduvo_hover_preserves_named_extern_type_documentation_symbols")
     CHECK(result->contents.value.find("Name documentation") != std::string::npos);
 }
 
+TEST_CASE("luduvo_rich_hover_identifies_server_read_only_unlintable_members")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_member");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare game: {
+            read World: {
+                Camera: any,
+            },
+        }
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_MEMBER", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    client.documentation["@luduvo/server/global/game.World"] =
+        Luau::BasicDocumentation{"The entity world", "https://docs.luduvo.com/reference/World", ""};
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "member.server.luau", "local world = game.World");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 20};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# [game.World ](https://docs.luduvo.com/reference/World)↗ (Server Version)\n"
+                                     "`read-only` · `unlintable`\n\n"
+                                     "The entity world\n\n___\n\n" +
+                                         codeBlock("luau", "{\n    Camera: any\n}"));
+}
+
+TEST_CASE("luduvo_rich_hover_preserves_direct_member_identity_for_unlintable_locals")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_unlintable_local");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare game: {
+            read World: {
+                Camera: any,
+            },
+        }
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(
+        &client, "$LUDUVO_RICH_HOVER_UNLINTABLE_LOCAL", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    client.documentation["@luduvo/client/global/game.World.Camera"] =
+        Luau::BasicDocumentation{"The active camera", "https://docs.luduvo.com/reference/Camera", ""};
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "camera.client.luau", "local camera = game.World.Camera\nprint(camera)");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{1, 7};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# [Camera ](https://docs.luduvo.com/reference/Camera)↗ (Client Version)\n"
+                                     "`unlintable`\n\n"
+                                     "The active camera\n\n___\n\n" +
+                                         codeBlock("luau", "any"));
+}
+
+TEST_CASE("luduvo_rich_hover_uses_the_named_type_for_optional_locals")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_optional_local");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare extern type RaycastResult with
+            Position: vector
+        end
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_OPTIONAL", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    client.documentation["@luduvo/client/globaltype/RaycastResult"] =
+        Luau::BasicDocumentation{"The result of a raycast", "https://docs.luduvo.com/reference/RaycastResult", ""};
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "optional.client.luau", "local hit: RaycastResult? = nil");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 7};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# [RaycastResult ](https://docs.luduvo.com/reference/RaycastResult)↗ (Client Version)\n\n"
+                                     "The result of a raycast\n\n___\n\n" +
+                                         codeBlock("luau", "RaycastResult?"));
+}
+
+TEST_CASE("luduvo_standard_hover_keeps_documentation_above_the_type_definition")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_standard_hover");
+    const std::string definitions = temp.write_child("luduvo.d.luau", "declare documentedValue: string");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    config.platform.luduvo.hover.presentation = LuduvoHoverPresentation::Standard;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_STANDARD_HOVER", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    client.documentation["@luduvo/server/global/documentedValue"] =
+        Luau::BasicDocumentation{"Value documentation", "https://docs.luduvo.com/reference/Value", ""};
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "standard.server.luau", "local value = documentedValue");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 15};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "Value documentation\n\n[Learn More](https://docs.luduvo.com/reference/Value)\n\n___\n\n" +
+                                         codeBlock("luau", "type documentedValue = string"));
+}
+
+TEST_CASE("luduvo_rich_hover_does_not_decorate_literals")
+{
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.globalPolicy = LuduvoGlobalDefinitionsPolicy::DefinitionFilesOnly;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_LITERAL_HOVER", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "literal.server.luau", "local value = 42\nprint(value)");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 15};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, codeBlock("luau", "number"));
+
+    params.position = lsp::Position{1, 7};
+    result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# number\n\n___\n\n" + codeBlock("luau", "number"));
+}
+
+TEST_CASE("luduvo_rich_hover_uses_declaration_comments_when_website_docs_are_missing")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_fallback_docs");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        --- A value documented by the declaration file.
+        declare fallbackValue: {}
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_FALLBACK_DOCS", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "fallback.server.luau", "local value = fallbackValue");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 16};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# fallbackValue (Server Version)\n\n"
+                                     "A value documented by the declaration file.\n\n___\n\n" +
+                                         codeBlock("luau", "{  }"));
+}
+
+TEST_CASE("luduvo_rich_hover_truncates_titles_without_hiding_the_version")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_title_limit");
+    const std::string definitions = temp.write_child("luduvo.d.luau", "declare extremelyLongGlobalName: number");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    config.platform.luduvo.hover.maxTitleLength = 24;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_TITLE_LIMIT", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "limit.server.luau", "local value = extremelyLongGlobalName");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 20};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# extr... (Server Version)\n\n___\n\n" + codeBlock("luau", "number"));
+}
+
+TEST_CASE("luduvo_rich_hover_truncates_type_definitions_independently")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_definition_limit");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare shape: {
+            Alpha: number,
+            Beta: string,
+        }
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    config.platform.luduvo.hover.maxTypeDefinitionLength = 12;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(
+        &client, "$LUDUVO_RICH_HOVER_DEFINITION_LIMIT", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "limit.server.luau", "local value = shape");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 15};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# shape (Server Version)\n\n___\n\n" + codeBlock("luau", "{\n    Alp..."));
+}
+
+TEST_CASE("luduvo_rich_hover_keeps_short_union_titles_and_aggregates_their_side")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_union");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare extern type Camera with end
+        declare extern type RaycastResult with end
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_UNION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "union.client.luau", "local result: Camera | RaycastResult = nil :: any");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 7};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# Camera | RaycastResult (Client Version)\n\n___\n\n" + codeBlock("luau", "Camera | RaycastResult"));
+}
+
+TEST_CASE("luduvo_rich_hover_summarizes_long_union_titles")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_long_union");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare extern type Camera with end
+        declare extern type RaycastResult with end
+        declare extern type ExtremelyVerbosePhysicsQueryResponse with end
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    config.platform.luduvo.hover.maxTitleLength = 40;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_LONG_UNION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(
+        workspace, "union.client.luau", "local result: Camera | RaycastResult | ExtremelyVerbosePhysicsQueryResponse = nil :: any");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 7};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value,
+        "# Camera +2 union members (Client Version)\n\n___\n\n" + codeBlock("luau", "Camera | ExtremelyVerbosePhysicsQueryResponse | RaycastResult"));
+}
+
+TEST_CASE("luduvo_rich_hover_tags_deprecated_members")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_write_only");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare extern type Api with
+            @deprecated
+            function Secret(self): any
+        end
+        declare api: Api
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    config.platform.luduvo.definitions.exposePrivateTypes = true;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_WRITE_ONLY", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "write.server.luau", "local secret = api.Secret");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 20};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK(result->contents.value.find("# Api.Secret (Server Version)\n`deprecated` · `unlintable`") == 0);
+}
+
+TEST_CASE("luduvo_rich_hover_tags_write_only_members")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_hover_write_only");
+    const std::string definitions = temp.write_child("luduvo.d.luau", "declare api: { write Secret: any }");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_HOVER_WRITE_ONLY", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto uri = Luau::LanguageServer::newDocument(workspace, "write.server.luau", "api.Secret = 5");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{0, 5};
+
+    auto result = workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, "# api.Secret (Server Version)\n"
+                                     "`write-only` · `unlintable`\n\n___\n\n" +
+                                         codeBlock("luau", "any"));
+}
+
 TEST_CASE_FIXTURE(Fixture, "hover_shows_const_for_a_const_local")
 {
     auto source = R"(

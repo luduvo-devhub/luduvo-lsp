@@ -245,7 +245,8 @@ TEST_CASE("luduvo_platform_ignores_unused_lifecycle_functions")
 
 TEST_CASE("luduvo_platform_configuration_round_trips")
 {
-    auto config = json::parse(R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false}}}})")
+    auto config = json::parse(
+        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096}}}})")
                       .get<ClientConfiguration>();
     CHECK(config.platform.type == LSPPlatformConfig::Luduvo);
     CHECK_EQ(config.platform.luduvo.dataDirectory, "data");
@@ -255,9 +256,26 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
     CHECK(config.platform.luduvo.definitions.globalPolicy == LuduvoGlobalDefinitionsPolicy::PreferDefinitionFiles);
     CHECK(config.platform.luduvo.definitions.conflictWinner == LuduvoDefinitionConflictWinner::DefinitionFiles);
     CHECK_FALSE(config.platform.luduvo.definitions.exposePrivateTypes);
+    CHECK(config.platform.luduvo.hover.presentation == LuduvoHoverPresentation::Standard);
+    CHECK_FALSE(config.platform.luduvo.hover.maxTitleLength);
+    REQUIRE(config.platform.luduvo.hover.maxTypeDefinitionLength);
+    CHECK_EQ(*config.platform.luduvo.hover.maxTypeDefinitionLength, 4096);
     CHECK(json(config)["platform"]["type"] == "luduvo");
     CHECK(json(config)["platform"]["luduvo"]["definitions"]["defaultScriptSide"] == "client");
     CHECK(json(config)["platform"]["luduvo"]["definitions"]["globalPolicy"] == "preferDefinitionFiles");
+    CHECK(json(config)["platform"]["luduvo"]["hover"]["presentation"] == "standard");
+    CHECK(json(config)["platform"]["luduvo"]["hover"]["maxTitleLength"].is_null());
+    CHECK(json(config)["platform"]["luduvo"]["hover"]["maxTypeDefinitionLength"] == 4096);
+}
+
+TEST_CASE("luduvo_rich_hover_configuration_defaults")
+{
+    ClientConfiguration config;
+    CHECK(config.platform.luduvo.hover.presentation == LuduvoHoverPresentation::Rich);
+    REQUIRE(config.platform.luduvo.hover.maxTitleLength);
+    CHECK_EQ(*config.platform.luduvo.hover.maxTitleLength, 96);
+    REQUIRE(config.platform.luduvo.hover.maxTypeDefinitionLength);
+    CHECK_EQ(*config.platform.luduvo.hover.maxTypeDefinitionLength, 2000);
 }
 
 TEST_CASE("luduvo_is_the_default_platform")

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Added opt-out rich Luduvo hovers with canonical API/type headings, client/server definition provenance, access/deprecation/unlintable tags, compact union titles, and independently configurable title and type-definition limits
+- Added `luduvo.hover.presentation`, `luduvo.hover.maxTitleLength`, and `luduvo.hover.maxTypeDefinitionLength` settings
+
 ## [1.70.1L-alpha] - 2026-09-28
 
 ### Added

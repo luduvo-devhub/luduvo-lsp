@@ -97,53 +97,64 @@ void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau
     }
 }
 
-/// Returns a markdown string of the provided documentation
-/// If we can't find any documentation for the given symbol, then we return nullopt
-std::optional<std::string> printDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol)
+std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol)
 {
     if (auto documentation = database.find(symbol))
     {
-        std::string result;
+        PrintedDocumentation result;
         if (auto* basic = documentation->get_if<Luau::BasicDocumentation>())
         {
-            result = basic->documentation;
+            result.markdown = basic->documentation;
             if (!basic->learnMoreLink.empty())
-                result += "\n\n[Learn More](" + basic->learnMoreLink + ")";
+                result.learnMoreLink = basic->learnMoreLink;
             if (!basic->codeSample.empty())
-                result += "\n\n" + codeBlock("luau", basic->codeSample);
+                result.markdown += "\n\n" + codeBlock("luau", basic->codeSample);
         }
         else if (auto* func = documentation->get_if<Luau::FunctionDocumentation>())
         {
-            result = func->documentation;
+            result.markdown = func->documentation;
             if (!func->learnMoreLink.empty())
-                result += "\n\n[Learn More](" + func->learnMoreLink + ")";
+                result.learnMoreLink = func->learnMoreLink;
             if (!func->codeSample.empty())
-                result += "\n\n" + codeBlock("luau", func->codeSample);
+                result.markdown += "\n\n" + codeBlock("luau", func->codeSample);
         }
         else if (auto* overloaded = documentation->get_if<Luau::OverloadedFunctionDocumentation>())
         {
             if (overloaded->overloads.size() > 0)
             {
                 // Use the first overload
-                if (auto firstOverloadDocs = printDocumentation(database, overloaded->overloads.begin()->second))
+                if (auto firstOverloadDocs = getDocumentation(database, overloaded->overloads.begin()->second))
                     result = *firstOverloadDocs;
 
                 auto remainingOverloads = overloaded->overloads.size() - 1;
-                result += "\n\n*+" + std::to_string(remainingOverloads) + " overload" + (remainingOverloads == 1 ? "*" : "s*");
+                result.markdown += "\n\n*+" + std::to_string(remainingOverloads) + " overload" + (remainingOverloads == 1 ? "*" : "s*");
             }
         }
         else if (auto* tbl = documentation->get_if<Luau::TableDocumentation>())
         {
-            result = tbl->documentation;
+            result.markdown = tbl->documentation;
             if (!tbl->learnMoreLink.empty())
-                result += "\n\n[Learn More](" + tbl->learnMoreLink + ")";
+                result.learnMoreLink = tbl->learnMoreLink;
             if (!tbl->codeSample.empty())
-                result += "\n\n" + codeBlock("luau", tbl->codeSample);
+                result.markdown += "\n\n" + codeBlock("luau", tbl->codeSample);
         }
         return result;
     }
 
     return std::nullopt;
+}
+
+/// Returns a markdown string of the provided documentation
+/// If we can't find any documentation for the given symbol, then we return nullopt
+std::optional<std::string> printDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol)
+{
+    auto documentation = getDocumentation(database, symbol);
+    if (!documentation)
+        return std::nullopt;
+
+    if (documentation->learnMoreLink)
+        documentation->markdown += "\n\n[Learn More](" + *documentation->learnMoreLink + ")";
+    return documentation->markdown;
 }
 
 std::string printMoonwaveDocumentation(const std::vector<std::string>& comments)
