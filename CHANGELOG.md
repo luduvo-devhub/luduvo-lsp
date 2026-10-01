@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added opt-out rich Luduvo hovers with canonical API/type headings, client/server definition provenance, access/deprecation/unlintable tags, compact union titles, and independently configurable title and type-definition limits
+- Experimental opt-out "rich" hover/autocomplete mode that tells you API/type headings, whether the API in use is the client or server version, tags, and everything else I thought you might find usful while you're coding.  
 - Added `luduvo.hover.presentation`, `luduvo.hover.maxTitleLength`, and `luduvo.hover.maxTypeDefinitionLength` settings
 
 ## [1.70.1L-alpha] - 2026-09-28

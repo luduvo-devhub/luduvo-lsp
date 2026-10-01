@@ -1,6 +1,6 @@
 --!strict
 -- Tested in Zed. Complete the unfinished game. on line 11 or try hovering any of the luduvo-speciifc data types.
-local part = game.Prefabs.Spawn("Part")
+local part: Instance? = game.Prefabs.Spawn("Part")
 if part then
     part.Position = Vector3.new(0, 10, 0)
     part.Anchored = true
@@ -8,11 +8,23 @@ if part then
     game.Tags.Add(part, "Example")
 end
 
-local finishMe = game.
+local finishMe = game
 
-local query = world.Query("Position")
+math.abs(n)
+
+local function test()
+    return "hello"
+end
+
+local newFunc = test
+
+local query = world.
+
+
+Query("Position")
 query:With("Health"):Without("Invulnerable")
-local count: number = query:Refresh()
+local count = query:Refresh()
+
 for i = 1, count do
     local entity: Instance = query.Entity[i]
     print(entity.Name)
@@ -27,12 +39,28 @@ local ET = game.EventTable
 local damage = ET("Damage", ET.ToServer, {{"target", ET.Entity}, {"amount", ET.F32}})
 damage:Push(self, 10)
 
-local camera = game.World.Camera -- Should be red if this is running on a server
+local camera = game.World.Camera -- Should error if this is running on a server
+local playerData = game.CloudStore -- Should error if this is running on a client
+
 if camera then
     camera.CameraLens.fovY = math.rad(90)
     camera.CameraOrbit.distance = 8
 end
 
+if playerData then
+    local data = playerData.open("name")
+
+    data:fetch("yolo", function(value, ver, err)
+        print(value, ver, err)
+    end)
+end
+
 function Update(dt: number)
     print(dt)
 end
+
+self.Touched:Connect(function(instance: Instance)
+    if instance:HasComponent("Health") then
+        instance:TakeDamage(instance.MaxHealth, self)
+    end
+end)

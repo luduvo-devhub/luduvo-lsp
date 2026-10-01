@@ -126,7 +126,7 @@ std::vector<Luau::ModuleName> WorkspaceFolder::findReverseDependencies(const Lua
 
         dependents.push_back(next);
 
-        const Luau::DenseHashSet<Luau::ModuleName>& localDependents = sourceNode.dependents;
+        const auto& localDependents = sourceNode.dependents;
         queue.insert(queue.end(), localDependents.begin(), localDependents.end());
     }
 

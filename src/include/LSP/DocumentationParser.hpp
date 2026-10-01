@@ -17,18 +17,20 @@ const std::string kDocumentationBreaker = "\n\n___\n\n";
 
 Luau::FunctionParameterDocumentation parseDocumentationParameter(const json& j);
 void parseDocumentationContents(
-    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, const Client* client,
+    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, Client* client,
     bool overwriteExisting = true);
-void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau::DocumentationDatabase& database, const Client* client);
+void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau::DocumentationDatabase& database, Client* client);
 
 struct PrintedDocumentation
 {
     std::string markdown;
     std::optional<std::string> learnMoreLink;
+    bool readOnly = false;
 };
 
 /// Returns documentation content with its link kept separate for clients that need custom presentation.
-std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol);
+std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol,
+    const std::unordered_map<Luau::DocumentationSymbol, DocumentationMetadata>* metadata = nullptr);
 
 /// Returns a markdown string of the provided documentation
 /// If we can't find any documentation for the given symbol, then we return nullopt

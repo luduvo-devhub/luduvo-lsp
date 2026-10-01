@@ -5,6 +5,7 @@
 #include "LSP/IostreamHelpers.hpp"
 #include "LSP/Completion.hpp"
 #include "Platform/InstanceRequireAutoImporter.hpp"
+#include "LuauFileUtils.hpp"
 
 std::optional<lsp::CompletionItem> getItem(const std::vector<lsp::CompletionItem>& items, const std::string& label)
 {
@@ -61,6 +62,73 @@ struct FragmentAutocompleteFixture : Fixture
 };
 
 TEST_SUITE_BEGIN("Autocomplete");
+
+TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_completion_docs");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare game: {
+            read World: {
+                Camera: any,
+            },
+            read Prefabs: {
+                Spawn: (name: string) -> {}?,
+            },
+        }
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_COMPLETION_DOCS", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    client.documentation["@luduvo/server/global/game.World"] =
+        Luau::BasicDocumentation{"The entity world", "https://docs.luduvo.com/reference/World", ""};
+    client.documentation["@luduvo/server/global/game.World.Camera"] =
+        Luau::BasicDocumentation{"The active camera", "https://docs.luduvo.com/reference/Camera", ""};
+    client.documentation["@luduvo/server/global/game.Prefabs.Spawn"] =
+        Luau::BasicDocumentation{"Spawn a prefab", "https://docs.luduvo.com/reference/Prefabs#Spawn", ""};
+
+    auto [worldSource, worldMarker] = sourceWithMarker("local world = game.|");
+    auto worldUri = Luau::LanguageServer::newDocument(workspace, "world.server.luau", worldSource);
+    lsp::CompletionParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{worldUri};
+    params.position = worldMarker;
+
+    auto world = requireItem(workspace.completion(params, nullptr), "World");
+    REQUIRE(world.documentation);
+    CHECK_EQ(world.documentation->value, "# [game.World ](https://docs.luduvo.com/reference/World)↗ (Server Version)\n"
+                                         "`read-only`\n\n"
+                                         "The entity world");
+
+    auto [cameraSource, cameraMarker] = sourceWithMarker("local camera = game.World.|");
+    auto cameraUri = Luau::LanguageServer::newDocument(workspace, "camera.server.luau", cameraSource);
+    params.textDocument = lsp::TextDocumentIdentifier{cameraUri};
+    params.position = cameraMarker;
+
+    auto camera = requireItem(workspace.completion(params, nullptr), "Camera");
+    REQUIRE(camera.documentation);
+    CHECK_EQ(camera.documentation->value, "# [game.World.Camera ](https://docs.luduvo.com/reference/Camera)↗ (Server Version)\n"
+                                          "`uncheckable`\n\n"
+                                          "The active camera");
+
+    auto [prefabSource, prefabMarker] = sourceWithMarker("local prefab = game.Prefabs.|");
+    auto prefabUri = Luau::LanguageServer::newDocument(workspace, "prefab.server.luau", prefabSource);
+    params.textDocument = lsp::TextDocumentIdentifier{prefabUri};
+    params.position = prefabMarker;
+
+    auto spawn = requireItem(workspace.completion(params, nullptr), "Spawn");
+    REQUIRE(spawn.documentation);
+    CHECK_EQ(spawn.documentation->value, "# [game.Prefabs.Spawn ](https://docs.luduvo.com/reference/Prefabs#Spawn)↗ (Server Version)\n"
+                                         "`resource-constrained`\n\n"
+                                         "Spawn a prefab");
+}
 
 TEST_CASE_FIXTURE(Fixture, "function_autocomplete_has_documentation")
 {

@@ -5,7 +5,6 @@
 #include "Luau/ToString.h"
 #include "LSP/LuauExt.hpp"
 #include "LSP/DocumentationParser.hpp"
-#include "Platform/LuduvoHover.hpp"
 
 // Lifted from lutf8lib.cpp
 /*
@@ -100,43 +99,60 @@ static std::string toStringTypeFun(const std::string typeName, const Luau::TypeF
 }
 
 
-struct DocumentationLocation
+static bool isBetween(const Luau::Position& position, const Luau::Position& left, const Luau::Position& right)
 {
-    Luau::ModuleName moduleName;
-    Luau::Location location;
-};
+    return left <= position && position <= right;
+}
 
-struct FindDirectLocalInitializer : Luau::AstVisitor
+static bool isOperatorPosition(const Luau::SourceModule& sourceModule, const Luau::Position& position)
 {
-    const Luau::AstLocal* target;
-    Luau::AstExpr* result = nullptr;
-
-    explicit FindDirectLocalInitializer(const Luau::AstLocal* target)
-        : target(target)
+    for (Luau::AstNode* ancestor : Luau::findAstAncestryOfPosition(sourceModule, position))
     {
+        if (auto binary = ancestor->as<Luau::AstExprBinary>(); binary && isBetween(position, binary->left->location.end, binary->right->location.begin))
+            return true;
+        if (auto unary = ancestor->as<Luau::AstExprUnary>(); unary && isBetween(position, unary->location.begin, unary->expr->location.begin))
+            return true;
+        if (auto local = ancestor->as<Luau::AstStatLocal>(); local && local->equalsSignLocation && local->equalsSignLocation->containsClosed(position))
+            return true;
+        if (auto assignment = ancestor->as<Luau::AstStatAssign>(); assignment && assignment->vars.size > 0 && assignment->values.size > 0 &&
+            isBetween(position, assignment->vars.data[assignment->vars.size - 1]->location.end, assignment->values.data[0]->location.begin))
+            return true;
+        if (auto assignment = ancestor->as<Luau::AstStatCompoundAssign>(); assignment &&
+            isBetween(position, assignment->var->location.end, assignment->value->location.begin))
+            return true;
+    }
+    return false;
+}
+
+static bool isHoverableTokenPosition(
+    const Luau::SourceModule& sourceModule, Luau::ExprOrLocal& exprOrLocal, Luau::AstNode* node, const Luau::Position& position)
+{
+    if (const Luau::AstLocal* local = exprOrLocal.getLocal(); local && local->location.containsClosed(position))
+        return true;
+
+    for (const Luau::AstNode* ancestor : Luau::findAstAncestryOfPosition(sourceModule, position))
+    {
+        if ((ancestor->is<Luau::AstExprLocal>() || ancestor->is<Luau::AstExprGlobal>() || ancestor->is<Luau::AstExprConstantNil>() ||
+                ancestor->is<Luau::AstExprConstantBool>() || ancestor->is<Luau::AstExprConstantNumber>() ||
+                ancestor->is<Luau::AstExprConstantInteger>() || ancestor->is<Luau::AstExprConstantString>()) &&
+            ancestor->location.containsClosed(position))
+            return true;
+        if (auto index = ancestor->as<Luau::AstExprIndexName>(); index && index->indexLocation.containsClosed(position))
+            return true;
+        if (auto reference = ancestor->as<Luau::AstTypeReference>(); reference &&
+            (reference->nameLocation.containsClosed(position) || (reference->prefixLocation && reference->prefixLocation->containsClosed(position))))
+            return true;
+        if (auto alias = ancestor->as<Luau::AstStatTypeAlias>(); alias && alias->nameLocation.containsClosed(position))
+            return true;
+        if (auto typeFunction = ancestor->as<Luau::AstStatTypeFunction>(); typeFunction && typeFunction->nameLocation.containsClosed(position))
+            return true;
+        if (auto declaredGlobal = ancestor->as<Luau::AstStatDeclareGlobal>(); declaredGlobal && declaredGlobal->nameLocation.containsClosed(position))
+            return true;
+        if (auto declaredFunction = ancestor->as<Luau::AstStatDeclareFunction>(); declaredFunction && declaredFunction->nameLocation.containsClosed(position))
+            return true;
     }
 
-    bool visit(Luau::AstStatLocal* local) override
-    {
-        for (size_t index = 0; index < local->vars.size && index < local->values.size; ++index)
-        {
-            if (local->vars.data[index] == target)
-            {
-                result = local->values.data[index];
-                return false;
-            }
-        }
-        return result == nullptr;
-    }
-};
-
-static bool localHasDirectMemberInitializer(const Luau::SourceModule& sourceModule, const Luau::AstLocal* local)
-{
-    if (!local)
-        return false;
-    FindDirectLocalInitializer finder{local};
-    sourceModule.root->visit(&finder);
-    return finder.result && finder.result->is<Luau::AstExprIndexName>();
+    return node->asType() && node->location.containsClosed(position);
 }
 
 std::optional<lsp::Hover> WorkspaceFolder::hover(const lsp::HoverParams& params, const LSPCancellationToken& cancellationToken)
@@ -174,11 +190,15 @@ std::optional<lsp::Hover> WorkspaceFolder::hover(const lsp::HoverParams& params,
     auto scope = Luau::findScopeAtPosition(*module, position);
     if (!node || !scope)
         return std::nullopt;
+    if (isOperatorPosition(*sourceModule, position))
+        return std::nullopt;
+    if (!isHoverableTokenPosition(*sourceModule, exprOrLocal, node, position))
+        return std::nullopt;
 
     std::optional<std::pair<std::string, Luau::TypeFun>> typeAliasInformation = std::nullopt;
     std::optional<Luau::TypeId> type = std::nullopt;
     std::optional<std::string> documentationSymbol = getDocumentationSymbolAtPosition(*sourceModule, *module, position);
-    std::optional<DocumentationLocation> documentationLocation = std::nullopt;
+    std::optional<PlatformDocumentationLocation> documentationLocation = std::nullopt;
     std::optional<Luau::Property> hoveredProperty = std::nullopt;
 
     if (auto ref = node->as<Luau::AstTypeReference>())
@@ -335,46 +355,9 @@ std::optional<lsp::Hover> WorkspaceFolder::hover(const lsp::HoverParams& params,
     std::string typeString = Luau::toString(*type, opts);
     const std::string rawTypeString = typeString;
 
-    const bool isLiteral = node->is<Luau::AstExprConstantNil>() || node->is<Luau::AstExprConstantBool>() || node->is<Luau::AstExprConstantNumber>() ||
-                           node->is<Luau::AstExprConstantInteger>() || node->is<Luau::AstExprConstantString>();
-    if (config.platform.type == LSPPlatformConfig::Luduvo && config.platform.luduvo.hover.presentation == LuduvoHoverPresentation::Rich && !isLiteral)
-    {
-        documentationSymbol = resolveLuduvoHoverDocumentationSymbol(*type, documentationSymbol, platform->getEnvironmentForModule(moduleName));
-        std::optional<PrintedDocumentation> documentation;
-        if (documentationSymbol)
-            documentation = getDocumentation(client->documentation, *documentationSymbol);
-        if (!documentation)
-        {
-            if (auto fallback = getDocumentationForType(*type); fallback && !fallback->empty())
-                documentation = PrintedDocumentation{*fallback, std::nullopt};
-            else if (fallback = getDocumentationForAstNode(moduleName, node, scope); fallback && !fallback->empty())
-                documentation = PrintedDocumentation{*fallback, std::nullopt};
-            else if (documentationLocation)
-            {
-                auto fallbackComments = printMoonwaveDocumentation(getComments(documentationLocation->moduleName, documentationLocation->location));
-                if (!fallbackComments.empty())
-                    documentation = PrintedDocumentation{std::move(fallbackComments), std::nullopt};
-            }
-        }
-
-        std::optional<std::string> fallbackTitle = types::getTypeName(*type);
-        if (!fallbackTitle && Luau::is<Luau::PrimitiveType, Luau::SingletonType, Luau::UnionType, Luau::IntersectionType>(*type))
-            fallbackTitle = rawTypeString;
-        if (!fallbackTitle && exprOrLocal.getName())
-            fallbackTitle = exprOrLocal.getName()->value;
-
-        const Luau::AstLocal* hoveredLocal = exprOrLocal.getLocal();
-        if (!hoveredLocal)
-        {
-            if (auto localExpression = node->as<Luau::AstExprLocal>())
-                hoveredLocal = localExpression->local;
-        }
-
-        return lsp::Hover{
-            {lsp::MarkupKind::Markdown, renderLuduvoRichHover(config.platform.luduvo.hover,
-                                            LuduvoRichHoverContext{*type, rawTypeString, documentationSymbol, hoveredProperty, documentation,
-                                                fallbackTitle, localHasDirectMemberInitializer(*sourceModule, hoveredLocal)})}};
-    }
+    if (auto platformHover = platform->handleTypeHover(PlatformHoverContext{moduleName, *sourceModule, module, scope, exprOrLocal, node, position,
+            *type, documentationSymbol, hoveredProperty ? &*hoveredProperty : nullptr, documentationLocation, config.hover.showTableKinds}))
+        return platformHover;
 
     // If we have a function and its corresponding name
     if (typeAliasInformation)

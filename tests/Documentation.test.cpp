@@ -665,4 +665,20 @@ TEST_CASE("documentation_parser_accepts_null_optional_links")
     CHECK(client.notificationQueue.empty());
 }
 
+TEST_CASE("documentation_parser_preserves_structured_read_only_metadata")
+{
+    TestClient client;
+    Luau::DocumentationDatabase database;
+
+    parseDocumentationContents(
+        R"({"@test/global/example":{"documentation":"Example documentation\n\nRead only at runtime.","read_only":true}})",
+        "test documentation", database, &client);
+
+    auto documentation = getDocumentation(database, "@test/global/example", &client.documentationMetadata);
+    REQUIRE(documentation);
+    CHECK(documentation->readOnly);
+    CHECK_EQ(documentation->markdown, "Example documentation");
+    CHECK_EQ(printDocumentation(database, "@test/global/example"), "Example documentation\n\nRead only at runtime.");
+}
+
 TEST_SUITE_END();

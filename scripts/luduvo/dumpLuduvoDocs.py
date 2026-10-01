@@ -34,6 +34,8 @@ def main() -> None:
             "documentation": description(record),
             "learn_more_link": record.get("learn_more_link"),
         }
+        if record.get("read_only"):
+            entry["read_only"] = True
         for symbol in record["documentation_symbols"]:
             docs[symbol] = entry
 

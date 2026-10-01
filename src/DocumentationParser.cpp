@@ -21,7 +21,7 @@ Luau::FunctionParameterDocumentation parseDocumentationParameter(const json& j)
 }
 
 void parseDocumentationContents(
-    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, const Client* client, bool overwriteExisting)
+    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, Client* client, bool overwriteExisting)
 {
     try
     {
@@ -37,6 +37,9 @@ void parseDocumentationContents(
             parseOptionalString(info, "documentation", documentation);
             parseOptionalString(info, "learn_more_link", learnMoreLink);
             parseOptionalString(info, "code_sample", codeSample);
+            client->documentationMetadata.erase(symbol);
+            if (auto readOnly = info.find("read_only"); readOnly != info.end() && readOnly->is_boolean())
+                client->documentationMetadata[symbol].readOnly = readOnly->get<bool>();
             if (info.contains("keys"))
             {
                 Luau::DenseHashMap<std::string, Luau::DocumentationSymbol> keys{};
@@ -75,7 +78,7 @@ void parseDocumentationContents(
     }
 }
 
-void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau::DocumentationDatabase& database, const Client* client)
+void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau::DocumentationDatabase& database, Client* client)
 {
     if (documentationFiles.empty())
     {
@@ -97,11 +100,15 @@ void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau
     }
 }
 
-std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol)
+std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol,
+    const std::unordered_map<Luau::DocumentationSymbol, DocumentationMetadata>* metadata)
 {
     if (auto documentation = database.find(symbol))
     {
         PrintedDocumentation result;
+        if (metadata)
+            if (auto entry = metadata->find(symbol); entry != metadata->end())
+                result.readOnly = entry->second.readOnly;
         if (auto* basic = documentation->get_if<Luau::BasicDocumentation>())
         {
             result.markdown = basic->documentation;
@@ -123,7 +130,7 @@ std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDa
             if (overloaded->overloads.size() > 0)
             {
                 // Use the first overload
-                if (auto firstOverloadDocs = getDocumentation(database, overloaded->overloads.begin()->second))
+                if (auto firstOverloadDocs = getDocumentation(database, overloaded->overloads.begin()->second, metadata))
                     result = *firstOverloadDocs;
 
                 auto remainingOverloads = overloaded->overloads.size() - 1;
@@ -137,6 +144,16 @@ std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDa
                 result.learnMoreLink = tbl->learnMoreLink;
             if (!tbl->codeSample.empty())
                 result.markdown += "\n\n" + codeBlock("luau", tbl->codeSample);
+        }
+        if (result.readOnly)
+        {
+            constexpr std::string_view readOnlyParagraph = "Read only at runtime.";
+            if (result.markdown == readOnlyParagraph)
+                result.markdown.clear();
+            else if (result.markdown.size() >= readOnlyParagraph.size() + 2 &&
+                     result.markdown.compare(result.markdown.size() - readOnlyParagraph.size(), readOnlyParagraph.size(), readOnlyParagraph) == 0 &&
+                     result.markdown.compare(result.markdown.size() - readOnlyParagraph.size() - 2, 2, "\n\n") == 0)
+                result.markdown.erase(result.markdown.size() - readOnlyParagraph.size() - 2);
         }
         return result;
     }
