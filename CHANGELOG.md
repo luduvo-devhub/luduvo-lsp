@@ -19,10 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Created a tag system, so that autocomplete can show things about the API without needing a type block in the way. The current tag types are:
   - read only
   - write only
-  - uncheckable
-  - uncheckable fields
-  - uncheckable arguments
   - deprecated
+  - uncheckable, which is for general use of any
+  - uncheckable fields, which are for fields that either have any or has an type index with any somewhere in it (it checks nests)
+  - uncheckable arguments, which are for function arguments that have an any type
+  - unresolvable, which is just when finding a type for said hover errors for whatever reason
   - "resource constrained", which designates that the API endpoint has checks outside of the linted type that aren't known to the LSP (for example, `instance:AddComponent(name: string` is marked as "resource constrained" because while its reported type is when in actuality, the API endpoint only accepts string names of very specific components). This was the best name I could come up with, so if you have better name suggestions let me know through the forums/bug reports/etc. This was done in anticipation for the component autocomplete rewrite coming either in the next version or the version after that (since its a lot more general in its use now)
 
 ### Changed
