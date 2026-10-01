@@ -4,6 +4,7 @@
 #include "LSP/TextDocument.hpp"
 #include "Platform/StringRequireTypes.hpp"
 #include "Luau/Ast.h"
+#include "Luau/AstQuery.h"
 #include "Luau/Autocomplete.h"
 #include "Luau/Error.h"
 #include "Luau/FileResolver.h"
@@ -93,6 +94,36 @@ struct UnknownSymbolFixContext
     Luau::NotNull<const TextDocument> textDocument;
     Luau::NotNull<const Luau::SourceModule> sourceModule;
     Luau::NotNull<const WorkspaceFolder> workspaceFolder;
+};
+
+struct PlatformDocumentationLocation
+{
+    Luau::ModuleName moduleName;
+    Luau::Location location;
+};
+
+struct PlatformHoverContext
+{
+    const Luau::ModuleName& moduleName;
+    const Luau::SourceModule& sourceModule;
+    const Luau::ModulePtr& module;
+    const Luau::ScopePtr& scope;
+    Luau::ExprOrLocal& exprOrLocal;
+    Luau::AstNode* node;
+    Luau::Position position;
+    Luau::TypeId type;
+    std::optional<std::string> documentationSymbol;
+    const Luau::Property* hoveredProperty;
+    std::optional<PlatformDocumentationLocation> documentationLocation;
+    bool showTableKinds;
+};
+
+struct PlatformCompletionDocumentationContext
+{
+    const Luau::ModuleName& moduleName;
+    const std::string& name;
+    const Luau::AutocompleteEntry& entry;
+    const std::optional<std::string>& fallbackDocumentation;
 };
 
 class LSPPlatform
@@ -230,6 +261,18 @@ public:
     }
 
     virtual std::optional<lsp::Hover> handleHover(const TextDocument& textDocument, const Luau::SourceModule& module, Luau::Position position)
+    {
+        return std::nullopt;
+    }
+
+    /// Optionally replace the standard presentation after hover type resolution.
+    virtual std::optional<lsp::Hover> handleTypeHover(const PlatformHoverContext& context)
+    {
+        return std::nullopt;
+    }
+
+    /// Optionally replace the standard documentation presentation for one completion item.
+    virtual std::optional<lsp::MarkupContent> handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context)
     {
         return std::nullopt;
     }

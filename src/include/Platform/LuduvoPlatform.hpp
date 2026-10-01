@@ -15,4 +15,6 @@ public:
     std::optional<std::string> getEnvironmentForModule(const Luau::ModuleName& moduleName) const override;
     void setupWithConfiguration(const ClientConfiguration& config) override;
     bool isLintIgnored(const Luau::LintWarning& lint) const override;
+    std::optional<lsp::Hover> handleTypeHover(const PlatformHoverContext& context) override;
+    std::optional<lsp::MarkupContent> handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context) override;
 };

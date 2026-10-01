@@ -15,6 +15,11 @@ using namespace json_rpc;
 using ResponseHandler = std::function<void(const JsonRpcMessage&)>;
 using ConfigChangedCallback = std::function<void(const lsp::DocumentUri&, const ClientConfiguration&, /* oldConfig: */ const ClientConfiguration*)>;
 
+struct DocumentationMetadata
+{
+    bool readOnly = false;
+};
+
 /// Base client interface. LSPClient provides a full LSP implementation;
 /// other subclasses (e.g. CliClient) can override only what they need.
 /// Virtual methods with empty bodies are no-ops by default.
@@ -29,6 +34,8 @@ struct Client
     std::vector<std::string> documentationFiles{};
     /// Parsed documentation database
     Luau::DocumentationDatabase documentation{};
+    /// Presentation metadata that the upstream Luau documentation model cannot represent.
+    std::unordered_map<Luau::DocumentationSymbol, DocumentationMetadata> documentationMetadata{};
     /// Global configuration. These are the default settings that we will use if we don't have the workspace stored in configStore
     ClientConfiguration globalConfig{};
 

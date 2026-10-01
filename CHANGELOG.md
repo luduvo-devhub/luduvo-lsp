@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Experimental "rich" hover/autocomplete mode that tells you API/type headings, whether the API in use is the client or server version, tags, and everything else I thought you might find useful while you're coding.  
+- 3 new settings: 
+  - `luduvo.hover.presentation`, which controls whether the rich hover mode is enabled or not
+  - `luduvo.hover.maxTitleLength`, which controls the max length of the hover title before it truncates
+  - `luduvo.hover.maxTypeDefinitionLength`, which controls the max length of the hover type block before it truncates
+I may consider generalizing these settings to be enableable outside the luduvo platform since most of this isn't Luduvo-specific, but not right now
+- Created a tag system, so that autocomplete can show things about the API without needing a type block in the way. The current tag types are:
+  - read only
+  - write only
+  - uncheckable
+  - uncheckable fields
+  - uncheckable arguments
+  - deprecated
+  - "resource constrained", which designates that the API endpoint has checks outside of the linted type that aren't known to the LSP (for example, `instance:AddComponent(name: string` is marked as "resource constrained" because while its reported type is when in actuality, the API endpoint only accepts string names of very specific components). This was the best name I could come up with, so if you have better name suggestions let me know through the forums/bug reports/etc. This was done in anticipation for the component autocomplete rewrite coming either in the next version or the version after that (since its a lot more general in its use now)
+
+### Changed
+- Luduvo-specific features are now more constrained to the Luduvo platform instead of being referenced in files that are supposed to be for generic LSP things
+ 
 ## [1.70.1L-alpha] - 2026-09-28
 
 ### Added

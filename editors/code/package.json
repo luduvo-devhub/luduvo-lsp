@@ -305,6 +305,36 @@
           "default": false,
           "scope": "window"
         },
+        "luduvo-lsp.platform.luduvo.hover.presentation": {
+          "markdownDescription": "Controls Luduvo-specific hover presentation. `rich` adds canonical API/type headings, definition-side provenance, and tags; `standard` preserves upstream hover presentation",
+          "type": "string",
+          "enum": [
+            "rich",
+            "standard"
+          ],
+          "default": "rich",
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.hover.maxTitleLength": {
+          "markdownDescription": "Maximum visible length of rich-hover titles, including provenance text but excluding hidden link URLs. Set to `null` to disable title truncation",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 4,
+          "default": 96,
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.hover.maxTypeDefinitionLength": {
+          "markdownDescription": "Maximum visible length of the Luau type definition in rich hovers. Set to `null` to disable definition truncation",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 4,
+          "default": 2000,
+          "scope": "resource"
+        },
         "luduvo-lsp.sourcemap.enabled": {
           "markdownDescription": "Whether Rojo sourcemap parsing is enabled",
           "type": "boolean",

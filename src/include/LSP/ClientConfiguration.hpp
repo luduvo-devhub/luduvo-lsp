@@ -1,5 +1,7 @@
 #pragma once
+#include <optional>
 #include <vector>
+#include "Protocol/Base.hpp"
 #include "nlohmann/json.hpp"
 
 struct ClientDiagnosticsConfiguration
@@ -356,13 +358,35 @@ struct ClientLuduvoDefinitionsConfiguration
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     ClientLuduvoDefinitionsConfiguration, serverOverride, clientOverride, defaultScriptSide, globalPolicy, conflictWinner, exposePrivateTypes)
 
+enum struct LuduvoHoverPresentation
+{
+    Standard,
+    Rich,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(LuduvoHoverPresentation, {
+                                                          {LuduvoHoverPresentation::Rich, "rich"},
+                                                          {LuduvoHoverPresentation::Standard, "standard"},
+                                                      })
+
+struct ClientLuduvoHoverConfiguration
+{
+    /// Selects between upstream-compatible hovers and Luduvo's richer API hovers.
+    LuduvoHoverPresentation presentation = LuduvoHoverPresentation::Rich;
+    /// Maximum visible heading length. A null value disables title truncation.
+    std::optional<size_t> maxTitleLength = 96;
+    /// Maximum type-definition length. A null value disables definition truncation.
+    std::optional<size_t> maxTypeDefinitionLength = 2000;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoHoverConfiguration, presentation, maxTitleLength, maxTypeDefinitionLength)
+
 struct ClientLuduvoConfiguration
 {
     /// Luduvo's per-user Client directory. The content store lives below this directory.
     std::string dataDirectory{};
     ClientLuduvoDefinitionsConfiguration definitions{};
+    ClientLuduvoHoverConfiguration hover{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, hover)
 
 struct ClientPlatformConfiguration
 {

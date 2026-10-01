@@ -65,23 +65,28 @@
   },
   "@luduvo/client/global/Vector3.one": {
     "documentation": "the all-ones vector\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#one"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#one",
+    "read_only": true
   },
   "@luduvo/client/global/Vector3.xAxis": {
     "documentation": "the x axis\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#xAxis"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#xAxis",
+    "read_only": true
   },
   "@luduvo/client/global/Vector3.yAxis": {
     "documentation": "the y axis\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#yAxis"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#yAxis",
+    "read_only": true
   },
   "@luduvo/client/global/Vector3.zAxis": {
     "documentation": "the z axis\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zAxis"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zAxis",
+    "read_only": true
   },
   "@luduvo/client/global/Vector3.zero": {
     "documentation": "the zero vector\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zero"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zero",
+    "read_only": true
   },
   "@luduvo/client/global/game": {
     "documentation": "",
@@ -89,27 +94,33 @@
   },
   "@luduvo/client/global/game.Animation": {
     "documentation": "clip markers of the bound rig\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Animation"
+    "learn_more_link": "https://docs.luduvo.com/reference/Animation",
+    "read_only": true
   },
   "@luduvo/client/global/game.Animation.Part": {
     "documentation": "body part mask bits for AnimLayers rows\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Animation#Part"
+    "learn_more_link": "https://docs.luduvo.com/reference/Animation#Part",
+    "read_only": true
   },
   "@luduvo/client/global/game.Bool": {
     "documentation": "boolean field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Bool"
+    "learn_more_link": "https://docs.luduvo.com/reference/Bool",
+    "read_only": true
   },
   "@luduvo/client/global/game.CloudStore": {
     "documentation": "persistent cloud stores for cross-server player data\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/types/CloudStore"
+    "learn_more_link": "https://docs.luduvo.com/reference/types/CloudStore",
+    "read_only": true
   },
   "@luduvo/client/global/game.Color": {
     "documentation": "color field, stored as bytes\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Color"
+    "learn_more_link": "https://docs.luduvo.com/reference/Color",
+    "read_only": true
   },
   "@luduvo/client/global/game.Content": {
     "documentation": "fetch, validate, and spawn remote assets\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Content.Fetch": {
     "documentation": "fetch an asset by id into the validated cache; the callback runs on a later frame with a handle Spawn and AddAccessory take",
@@ -117,27 +128,33 @@
   },
   "@luduvo/client/global/game.Entity": {
     "documentation": "Instance reference field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Entity"
+    "learn_more_link": "https://docs.luduvo.com/reference/Entity",
+    "read_only": true
   },
   "@luduvo/client/global/game.EventTable": {
     "documentation": "networked event tables\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/types/EventTable"
+    "learn_more_link": "https://docs.luduvo.com/reference/types/EventTable",
+    "read_only": true
   },
   "@luduvo/client/global/game.F32": {
     "documentation": "32-bit float field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/F32"
+    "learn_more_link": "https://docs.luduvo.com/reference/F32",
+    "read_only": true
   },
   "@luduvo/client/global/game.I32": {
     "documentation": "32-bit integer field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/I32"
+    "learn_more_link": "https://docs.luduvo.com/reference/I32",
+    "read_only": true
   },
   "@luduvo/client/global/game.Input": {
     "documentation": "client input reads and pointer ray\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Input"
+    "learn_more_link": "https://docs.luduvo.com/reference/Input",
+    "read_only": true
   },
   "@luduvo/client/global/game.Input.Behavior": {
     "documentation": "mouse behavior enum values\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Input.ButtonDown": {
     "documentation": "whether a mouse button is down: 0 left, 1 right, 2 middle, 3 X1, 4 X2",
@@ -165,7 +182,8 @@
   },
   "@luduvo/client/global/game.Input.Rotation": {
     "documentation": "rotation type enum values\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Input.RotationType": {
     "documentation": "camera rotation mode: 0 MovementRelative, 1 CameraRelative",
@@ -173,59 +191,73 @@
   },
   "@luduvo/client/global/game.Items": {
     "documentation": "item facts for the platform rules\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Items"
+    "learn_more_link": "https://docs.luduvo.com/reference/Items",
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting": {
     "documentation": "sun, sky, and exposure\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting",
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Ambient": {
     "documentation": "ambient light tint, strength, source, and sky contribution\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Ambient"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Ambient",
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.AtmosphereSky": {
     "documentation": "atmosphere sun disk scale, night sky texture, and star luminance\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Background": {
     "documentation": "background mode, color, and energy multiplier\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Exposure": {
     "documentation": "auto exposure bounds\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Exposure"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Exposure",
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Flare": {
     "documentation": "lens flare, intensity 0 disables it\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Flare"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Flare",
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Fog": {
     "documentation": "distance fog color, mode, density, and linear start and end\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.PanoramaSky": {
     "documentation": "panorama texture, rotation, and energy multiplier\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Shadows": {
     "documentation": "shadow mode, the light level inside shadows, and how far from the camera shadows reach\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Shadows"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Shadows",
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.SixSidedSky": {
     "documentation": "cubemap sky faces, rotation, and energy multiplier\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Stars": {
     "documentation": "night sky star brightness\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Stars"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Stars",
+    "read_only": true
   },
   "@luduvo/client/global/game.Lighting.Sun": {
     "documentation": "sun direction, tint, and strength\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Sun"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Sun",
+    "read_only": true
   },
   "@luduvo/client/global/game.Locale": {
     "documentation": "locale and translation\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Locale"
+    "learn_more_link": "https://docs.luduvo.com/reference/Locale",
+    "read_only": true
   },
   "@luduvo/client/global/game.Locale.Get": {
     "documentation": "the current locale tag",
@@ -241,7 +273,8 @@
   },
   "@luduvo/client/global/game.Materials": {
     "documentation": "material rows for parts\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Materials"
+    "learn_more_link": "https://docs.luduvo.com/reference/Materials",
+    "read_only": true
   },
   "@luduvo/client/global/game.Materials.GetMaterial": {
     "documentation": "read one material. An absent dataset is nil, never a flag",
@@ -253,7 +286,8 @@
   },
   "@luduvo/client/global/game.Physics": {
     "documentation": "physics configuration, collision groups, and queries\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics"
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics",
+    "read_only": true
   },
   "@luduvo/client/global/game.Physics.DrainTouchEvents": {
     "documentation": "drain the buffered touch begin and end events, second result reports lost events",
@@ -261,11 +295,13 @@
   },
   "@luduvo/client/global/game.Physics.FallenPartsDestroyHeight": {
     "documentation": "height where fallen parts vanish\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#FallenPartsDestroyHeight"
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics#FallenPartsDestroyHeight",
+    "read_only": true
   },
   "@luduvo/client/global/game.Physics.Gravity": {
     "documentation": "downward acceleration\n\nWritable only on the server.\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity"
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity",
+    "read_only": true
   },
   "@luduvo/client/global/game.Physics.IsSleeping": {
     "documentation": "whether the physics body of an entity sleeps",
@@ -289,7 +325,8 @@
   },
   "@luduvo/client/global/game.Players": {
     "documentation": "the players of the session and their characters\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Players.All": {
     "documentation": "every player in the session",
@@ -297,11 +334,13 @@
   },
   "@luduvo/client/global/game.Players.CharacterAdded": {
     "documentation": "fires with the player and the character bound to it\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Players.CharacterDied": {
     "documentation": "fires with the player, the character, and the attacker\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied",
+    "read_only": true
   },
   "@luduvo/client/global/game.Players.CharacterOf": {
     "documentation": "the character bound to a player",
@@ -329,27 +368,33 @@
   },
   "@luduvo/client/global/game.Players.LocalPlayer": {
     "documentation": "the player of the local client\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Players.PlayerAdded": {
     "documentation": "fires with the player that joined\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Players.PlayerChatted": {
     "documentation": "fires with the player and the chat message\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Players.PlayerRemoving": {
     "documentation": "fires with the player that is leaving\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Prefab": {
     "documentation": "prefab name field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Prefab"
+    "learn_more_link": "https://docs.luduvo.com/reference/Prefab",
+    "read_only": true
   },
   "@luduvo/client/global/game.Prefabs": {
     "documentation": "prefab spawning\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Prefabs"
+    "learn_more_link": "https://docs.luduvo.com/reference/Prefabs",
+    "read_only": true
   },
   "@luduvo/client/global/game.Prefabs.Exists": {
     "documentation": "whether a prefab exists",
@@ -377,7 +422,8 @@
   },
   "@luduvo/client/global/game.Profiler": {
     "documentation": "frame and script timings\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Profiler"
+    "learn_more_link": "https://docs.luduvo.com/reference/Profiler",
+    "read_only": true
   },
   "@luduvo/client/global/game.Profiler.Dropped": {
     "documentation": "scripts dropped from the profile",
@@ -393,11 +439,13 @@
   },
   "@luduvo/client/global/game.Session": {
     "documentation": "players and their characters\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session",
+    "read_only": true
   },
   "@luduvo/client/global/game.Session.CharacterDied": {
     "documentation": "fires with the character, the user id, and the attacker\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied",
+    "read_only": true
   },
   "@luduvo/client/global/game.Session.CharacterOf": {
     "documentation": "the character bound to a user",
@@ -409,23 +457,28 @@
   },
   "@luduvo/client/global/game.Session.PlayerJoined": {
     "documentation": "fires when a player joins\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerJoined"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerJoined",
+    "read_only": true
   },
   "@luduvo/client/global/game.Session.PlayerLeft": {
     "documentation": "fires when a player leaves\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerLeft"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerLeft",
+    "read_only": true
   },
   "@luduvo/client/global/game.Settings": {
     "documentation": "player and device settings\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Settings.ShiftLock": {
     "documentation": "whether shift lock toggle is allowed by player setting\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Sound": {
     "documentation": "sound configuration\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Sound"
+    "learn_more_link": "https://docs.luduvo.com/reference/Sound",
+    "read_only": true
   },
   "@luduvo/client/global/game.Sound.GetBusVolumeDb": {
     "documentation": "get audio bus volume in decibels",
@@ -441,19 +494,23 @@
   },
   "@luduvo/client/global/game.Sound.SurfaceSoundsVolume": {
     "documentation": "volume of surface contact sounds, 0 to 1\n\nWritable only on the server.\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume"
+    "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume",
+    "read_only": true
   },
   "@luduvo/client/global/game.Store": {
     "documentation": "saved key stores for player data\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/types/Store"
+    "learn_more_link": "https://docs.luduvo.com/reference/types/Store",
+    "read_only": true
   },
   "@luduvo/client/global/game.String": {
     "documentation": "text field, interned into the name table, 64 characters or less\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/String"
+    "learn_more_link": "https://docs.luduvo.com/reference/String",
+    "read_only": true
   },
   "@luduvo/client/global/game.Tags": {
     "documentation": "entity tags and queries\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Tags"
+    "learn_more_link": "https://docs.luduvo.com/reference/Tags",
+    "read_only": true
   },
   "@luduvo/client/global/game.Tags.Add": {
     "documentation": "add a tag to an entity",
@@ -485,15 +542,18 @@
   },
   "@luduvo/client/global/game.ToClients": {
     "documentation": "the server pushes rows, clients read them\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/ToClients"
+    "learn_more_link": "https://docs.luduvo.com/reference/ToClients",
+    "read_only": true
   },
   "@luduvo/client/global/game.ToServer": {
     "documentation": "clients push rows, the server reads them\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/ToServer"
+    "learn_more_link": "https://docs.luduvo.com/reference/ToServer",
+    "read_only": true
   },
   "@luduvo/client/global/game.Tween": {
     "documentation": "property tweens\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Tween.TweenProperty": {
     "documentation": "animate the property from its value on the first update tick to final over duration seconds",
@@ -501,15 +561,18 @@
   },
   "@luduvo/client/global/game.U8": {
     "documentation": "byte field, 0 to 255\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/U8"
+    "learn_more_link": "https://docs.luduvo.com/reference/U8",
+    "read_only": true
   },
   "@luduvo/client/global/game.Vec3": {
     "documentation": "vector field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vec3"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vec3",
+    "read_only": true
   },
   "@luduvo/client/global/game.World": {
     "documentation": "the entity world\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/World"
+    "learn_more_link": "https://docs.luduvo.com/reference/World",
+    "read_only": true
   },
   "@luduvo/client/global/game.World.DumpAttributes": {
     "documentation": "print attribute usage to the output",
@@ -837,7 +900,8 @@
   },
   "@luduvo/client/globaltype/Instance.Activated": {
     "documentation": "fires when the pointer clicks this element, client side only\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Activated"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Activated",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Active": {
     "documentation": "Prefab id of the currently held item",
@@ -869,7 +933,8 @@
   },
   "@luduvo/client/globaltype/Instance.AirJumps": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.AirMaxWishSpeed": {
     "documentation": "",
@@ -921,7 +986,8 @@
   },
   "@luduvo/client/globaltype/Instance.AnimLayers": {
     "documentation": "animation layer rows of a character, indexed by layer\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#AnimLayers"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#AnimLayers",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.AnimationPreview": {
     "documentation": "state of the animation preview, nil when no preview runs",
@@ -957,11 +1023,13 @@
   },
   "@luduvo/client/globaltype/Instance.Asset": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Attacker": {
     "documentation": "The entity that dealt the last damage\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Attacker"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Attacker",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.AutoLocomotion": {
     "documentation": "Automatic walk/idle/jump clip selection from velocity and state",
@@ -1149,7 +1217,8 @@
   },
   "@luduvo/client/globaltype/Instance.Canceled": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.CanvasSize": {
     "documentation": "Scrollable canvas size, a fraction of the frame plus pixels",
@@ -1173,7 +1242,8 @@
   },
   "@luduvo/client/globaltype/Instance.Changed": {
     "documentation": "fires after a property of the entity changes\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Changed"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Changed",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Character": {
     "documentation": "Marks the root entity of a humanoid character",
@@ -1197,7 +1267,8 @@
   },
   "@luduvo/client/globaltype/Instance.Chatted": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.CheckColor3": {
     "documentation": "",
@@ -1333,7 +1404,8 @@
   },
   "@luduvo/client/globaltype/Instance.Confirmed": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.ConnectedAnchor": {
     "documentation": "",
@@ -1433,11 +1505,13 @@
   },
   "@luduvo/client/globaltype/Instance.DragEnded": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.DragMoved": {
     "documentation": "fires while the pointer drags this element, client side only\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#DragMoved"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#DragMoved",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Emissive": {
     "documentation": "Emissive color texture added to the lighting; 0 adds none",
@@ -1501,7 +1575,8 @@
   },
   "@luduvo/client/globaltype/Instance.FocusLost": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.FogColor": {
     "documentation": "",
@@ -1717,7 +1792,8 @@
   },
   "@luduvo/client/globaltype/Instance.Hovered": {
     "documentation": "fires when the pointer enters this element, client side only\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Hovered"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Hovered",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Hue": {
     "documentation": "",
@@ -1805,7 +1881,8 @@
   },
   "@luduvo/client/globaltype/Instance.ItemShown": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Joint": {
     "documentation": "Offset in the torso frame",
@@ -1889,7 +1966,8 @@
   },
   "@luduvo/client/globaltype/Instance.LinkRequested": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.LinkTo": {
     "documentation": "",
@@ -2029,7 +2107,8 @@
   },
   "@luduvo/client/globaltype/Instance.MouseClick": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.MultiSelectColor3": {
     "documentation": "",
@@ -2089,7 +2168,8 @@
   },
   "@luduvo/client/globaltype/Instance.Occupant": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.OffColor3": {
     "documentation": "Track color while the switch is off",
@@ -2149,7 +2229,8 @@
   },
   "@luduvo/client/globaltype/Instance.OwnerUserId": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Page": {
     "documentation": "Core menu page this subtree belongs to",
@@ -2265,7 +2346,8 @@
   },
   "@luduvo/client/globaltype/Instance.Pressed": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.PressedImage": {
     "documentation": "",
@@ -2313,7 +2395,8 @@
   },
   "@luduvo/client/globaltype/Instance.Released": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Remaining": {
     "documentation": "Seconds left before the server destroys the entity and its children",
@@ -2593,11 +2676,13 @@
   },
   "@luduvo/client/globaltype/Instance.State": {
     "documentation": "Current state of the character state machine\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#State"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#State",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Steer": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Steps": {
     "documentation": "How many places the track holds",
@@ -2785,7 +2870,8 @@
   },
   "@luduvo/client/globaltype/Instance.Throttle": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.ThumbColor3": {
     "documentation": "Color of the draggable thumb",
@@ -2821,11 +2907,13 @@
   },
   "@luduvo/client/globaltype/Instance.TimeLeft": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Timeout": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.TimerAutostart": {
     "documentation": "",
@@ -2845,11 +2933,13 @@
   },
   "@luduvo/client/globaltype/Instance.TouchEnded": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Touched": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.TrackAxis": {
     "documentation": "",
@@ -2937,7 +3027,8 @@
   },
   "@luduvo/client/globaltype/Instance.UserId": {
     "documentation": "Account id of the player who controls this character\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#UserId"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#UserId",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Value": {
     "documentation": "The place the thumb shows",
@@ -3005,7 +3096,8 @@
   },
   "@luduvo/client/globaltype/Instance.attr": {
     "documentation": "attribute table of the entity, read and write as e.attr.Name\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#attr"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#attr",
+    "read_only": true
   },
   "@luduvo/client/globaltype/MoveIntent": {
     "documentation": "where a character wants to move, and which way it should face",
@@ -3361,23 +3453,28 @@
   },
   "@luduvo/server/global/Vector3.one": {
     "documentation": "the all-ones vector\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#one"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#one",
+    "read_only": true
   },
   "@luduvo/server/global/Vector3.xAxis": {
     "documentation": "the x axis\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#xAxis"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#xAxis",
+    "read_only": true
   },
   "@luduvo/server/global/Vector3.yAxis": {
     "documentation": "the y axis\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#yAxis"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#yAxis",
+    "read_only": true
   },
   "@luduvo/server/global/Vector3.zAxis": {
     "documentation": "the z axis\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zAxis"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zAxis",
+    "read_only": true
   },
   "@luduvo/server/global/Vector3.zero": {
     "documentation": "the zero vector\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zero"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zero",
+    "read_only": true
   },
   "@luduvo/server/global/game": {
     "documentation": "",
@@ -3385,7 +3482,8 @@
   },
   "@luduvo/server/global/game.Animation": {
     "documentation": "clip markers of the bound rig\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Animation"
+    "learn_more_link": "https://docs.luduvo.com/reference/Animation",
+    "read_only": true
   },
   "@luduvo/server/global/game.Animation.DrainMarkers": {
     "documentation": "drain the clip markers the sampler crossed, second result reports lost markers\n\nServer only.",
@@ -3393,15 +3491,18 @@
   },
   "@luduvo/server/global/game.Animation.Part": {
     "documentation": "body part mask bits for AnimLayers rows\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Animation#Part"
+    "learn_more_link": "https://docs.luduvo.com/reference/Animation#Part",
+    "read_only": true
   },
   "@luduvo/server/global/game.Bool": {
     "documentation": "boolean field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Bool"
+    "learn_more_link": "https://docs.luduvo.com/reference/Bool",
+    "read_only": true
   },
   "@luduvo/server/global/game.CloudStore": {
     "documentation": "persistent cloud stores for cross-server player data\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/types/CloudStore"
+    "learn_more_link": "https://docs.luduvo.com/reference/types/CloudStore",
+    "read_only": true
   },
   "@luduvo/server/global/game.CloudStore.open": {
     "documentation": "open the persistent cloud store with that name\n\nServer only.",
@@ -3413,11 +3514,13 @@
   },
   "@luduvo/server/global/game.Color": {
     "documentation": "color field, stored as bytes\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Color"
+    "learn_more_link": "https://docs.luduvo.com/reference/Color",
+    "read_only": true
   },
   "@luduvo/server/global/game.Content": {
     "documentation": "fetch, validate, and spawn remote assets\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Content.Avatar": {
     "documentation": "look up the avatar a player wears; the callback runs on a later frame\n\nServer only.",
@@ -3433,27 +3536,33 @@
   },
   "@luduvo/server/global/game.Entity": {
     "documentation": "Instance reference field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Entity"
+    "learn_more_link": "https://docs.luduvo.com/reference/Entity",
+    "read_only": true
   },
   "@luduvo/server/global/game.EventTable": {
     "documentation": "networked event tables\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/types/EventTable"
+    "learn_more_link": "https://docs.luduvo.com/reference/types/EventTable",
+    "read_only": true
   },
   "@luduvo/server/global/game.F32": {
     "documentation": "32-bit float field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/F32"
+    "learn_more_link": "https://docs.luduvo.com/reference/F32",
+    "read_only": true
   },
   "@luduvo/server/global/game.I32": {
     "documentation": "32-bit integer field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/I32"
+    "learn_more_link": "https://docs.luduvo.com/reference/I32",
+    "read_only": true
   },
   "@luduvo/server/global/game.Input": {
     "documentation": "client input reads and pointer ray\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Input"
+    "learn_more_link": "https://docs.luduvo.com/reference/Input",
+    "read_only": true
   },
   "@luduvo/server/global/game.Input.Behavior": {
     "documentation": "mouse behavior enum values\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Input.ButtonDown": {
     "documentation": "whether a mouse button is down: 0 left, 1 right, 2 middle, 3 X1, 4 X2",
@@ -3481,7 +3590,8 @@
   },
   "@luduvo/server/global/game.Input.Rotation": {
     "documentation": "rotation type enum values\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Input.RotationType": {
     "documentation": "camera rotation mode: 0 MovementRelative, 1 CameraRelative",
@@ -3489,7 +3599,8 @@
   },
   "@luduvo/server/global/game.Items": {
     "documentation": "item facts for the platform rules\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Items"
+    "learn_more_link": "https://docs.luduvo.com/reference/Items",
+    "read_only": true
   },
   "@luduvo/server/global/game.Items.Examine": {
     "documentation": "load item bytes in a scratch world and answer the facts\n\nServer only.",
@@ -3497,55 +3608,68 @@
   },
   "@luduvo/server/global/game.Lighting": {
     "documentation": "sun, sky, and exposure\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting",
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Ambient": {
     "documentation": "ambient light tint, strength, source, and sky contribution\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Ambient"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Ambient",
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.AtmosphereSky": {
     "documentation": "atmosphere sun disk scale, night sky texture, and star luminance\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Background": {
     "documentation": "background mode, color, and energy multiplier\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Exposure": {
     "documentation": "auto exposure bounds\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Exposure"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Exposure",
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Flare": {
     "documentation": "lens flare, intensity 0 disables it\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Flare"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Flare",
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Fog": {
     "documentation": "distance fog color, mode, density, and linear start and end\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.PanoramaSky": {
     "documentation": "panorama texture, rotation, and energy multiplier\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Shadows": {
     "documentation": "shadow mode, the light level inside shadows, and how far from the camera shadows reach\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Shadows"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Shadows",
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.SixSidedSky": {
     "documentation": "cubemap sky faces, rotation, and energy multiplier\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Stars": {
     "documentation": "night sky star brightness\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Stars"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Stars",
+    "read_only": true
   },
   "@luduvo/server/global/game.Lighting.Sun": {
     "documentation": "sun direction, tint, and strength\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Sun"
+    "learn_more_link": "https://docs.luduvo.com/reference/Lighting#Sun",
+    "read_only": true
   },
   "@luduvo/server/global/game.Locale": {
     "documentation": "locale and translation\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Locale"
+    "learn_more_link": "https://docs.luduvo.com/reference/Locale",
+    "read_only": true
   },
   "@luduvo/server/global/game.Locale.Get": {
     "documentation": "the current locale tag",
@@ -3561,7 +3685,8 @@
   },
   "@luduvo/server/global/game.Materials": {
     "documentation": "material rows for parts\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Materials"
+    "learn_more_link": "https://docs.luduvo.com/reference/Materials",
+    "read_only": true
   },
   "@luduvo/server/global/game.Materials.DefineMaterial": {
     "documentation": "write the material file, define the material, and answer its asset id. An absent Name takes the next free store name\n\nServer only.",
@@ -3589,7 +3714,8 @@
   },
   "@luduvo/server/global/game.Physics": {
     "documentation": "physics configuration, collision groups, and queries\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics"
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics",
+    "read_only": true
   },
   "@luduvo/server/global/game.Physics.DrainTouchEvents": {
     "documentation": "drain the buffered touch begin and end events, second result reports lost events",
@@ -3605,11 +3731,13 @@
   },
   "@luduvo/server/global/game.Physics.FallenPartsDestroyHeight": {
     "documentation": "height where fallen parts vanish\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#FallenPartsDestroyHeight"
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics#FallenPartsDestroyHeight",
+    "read_only": true
   },
   "@luduvo/server/global/game.Physics.Gravity": {
     "documentation": "downward acceleration\n\nWritable only on the server.\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity"
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity",
+    "read_only": true
   },
   "@luduvo/server/global/game.Physics.IsSleeping": {
     "documentation": "whether the physics body of an entity sleeps",
@@ -3645,7 +3773,8 @@
   },
   "@luduvo/server/global/game.Players": {
     "documentation": "the players of the session and their characters\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Players.All": {
     "documentation": "every player in the session",
@@ -3657,11 +3786,13 @@
   },
   "@luduvo/server/global/game.Players.CharacterAdded": {
     "documentation": "fires with the player and the character bound to it\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Players.CharacterDied": {
     "documentation": "fires with the player, the character, and the attacker\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied",
+    "read_only": true
   },
   "@luduvo/server/global/game.Players.CharacterOf": {
     "documentation": "the character bound to a player",
@@ -3693,27 +3824,33 @@
   },
   "@luduvo/server/global/game.Players.LocalPlayer": {
     "documentation": "the player of the local client\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Players.PlayerAdded": {
     "documentation": "fires with the player that joined\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Players.PlayerChatted": {
     "documentation": "fires with the player and the chat message\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Players.PlayerRemoving": {
     "documentation": "fires with the player that is leaving\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Prefab": {
     "documentation": "prefab name field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Prefab"
+    "learn_more_link": "https://docs.luduvo.com/reference/Prefab",
+    "read_only": true
   },
   "@luduvo/server/global/game.Prefabs": {
     "documentation": "prefab spawning\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Prefabs"
+    "learn_more_link": "https://docs.luduvo.com/reference/Prefabs",
+    "read_only": true
   },
   "@luduvo/server/global/game.Prefabs.Exists": {
     "documentation": "whether a prefab exists",
@@ -3741,7 +3878,8 @@
   },
   "@luduvo/server/global/game.Profiler": {
     "documentation": "frame and script timings\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Profiler"
+    "learn_more_link": "https://docs.luduvo.com/reference/Profiler",
+    "read_only": true
   },
   "@luduvo/server/global/game.Profiler.Dropped": {
     "documentation": "scripts dropped from the profile",
@@ -3757,7 +3895,8 @@
   },
   "@luduvo/server/global/game.Session": {
     "documentation": "players and their characters\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session",
+    "read_only": true
   },
   "@luduvo/server/global/game.Session.BindCharacter": {
     "documentation": "bind a character entity to a user\n\nServer only.",
@@ -3765,7 +3904,8 @@
   },
   "@luduvo/server/global/game.Session.CharacterDied": {
     "documentation": "fires with the character, the user id, and the attacker\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterDied",
+    "read_only": true
   },
   "@luduvo/server/global/game.Session.CharacterOf": {
     "documentation": "the character bound to a user",
@@ -3781,23 +3921,28 @@
   },
   "@luduvo/server/global/game.Session.PlayerJoined": {
     "documentation": "fires when a player joins\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerJoined"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerJoined",
+    "read_only": true
   },
   "@luduvo/server/global/game.Session.PlayerLeft": {
     "documentation": "fires when a player leaves\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerLeft"
+    "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerLeft",
+    "read_only": true
   },
   "@luduvo/server/global/game.Settings": {
     "documentation": "player and device settings\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Settings.ShiftLock": {
     "documentation": "whether shift lock toggle is allowed by player setting\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Sound": {
     "documentation": "sound configuration\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Sound"
+    "learn_more_link": "https://docs.luduvo.com/reference/Sound",
+    "read_only": true
   },
   "@luduvo/server/global/game.Sound.GetBusVolumeDb": {
     "documentation": "get audio bus volume in decibels",
@@ -3813,11 +3958,13 @@
   },
   "@luduvo/server/global/game.Sound.SurfaceSoundsVolume": {
     "documentation": "volume of surface contact sounds, 0 to 1\n\nWritable only on the server.\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume"
+    "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume",
+    "read_only": true
   },
   "@luduvo/server/global/game.Store": {
     "documentation": "saved key stores for player data\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/types/Store"
+    "learn_more_link": "https://docs.luduvo.com/reference/types/Store",
+    "read_only": true
   },
   "@luduvo/server/global/game.Store.open": {
     "documentation": "open the saved key store with that name\n\nServer only.",
@@ -3825,11 +3972,13 @@
   },
   "@luduvo/server/global/game.String": {
     "documentation": "text field, interned into the name table, 64 characters or less\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/String"
+    "learn_more_link": "https://docs.luduvo.com/reference/String",
+    "read_only": true
   },
   "@luduvo/server/global/game.Tags": {
     "documentation": "entity tags and queries\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Tags"
+    "learn_more_link": "https://docs.luduvo.com/reference/Tags",
+    "read_only": true
   },
   "@luduvo/server/global/game.Tags.Add": {
     "documentation": "add a tag to an entity",
@@ -3861,15 +4010,18 @@
   },
   "@luduvo/server/global/game.ToClients": {
     "documentation": "the server pushes rows, clients read them\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/ToClients"
+    "learn_more_link": "https://docs.luduvo.com/reference/ToClients",
+    "read_only": true
   },
   "@luduvo/server/global/game.ToServer": {
     "documentation": "clients push rows, the server reads them\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/ToServer"
+    "learn_more_link": "https://docs.luduvo.com/reference/ToServer",
+    "read_only": true
   },
   "@luduvo/server/global/game.Tween": {
     "documentation": "property tweens\n\nRead only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/global/game.Tween.TweenProperty": {
     "documentation": "animate the property from its value on the first update tick to final over duration seconds",
@@ -3877,15 +4029,18 @@
   },
   "@luduvo/server/global/game.U8": {
     "documentation": "byte field, 0 to 255\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/U8"
+    "learn_more_link": "https://docs.luduvo.com/reference/U8",
+    "read_only": true
   },
   "@luduvo/server/global/game.Vec3": {
     "documentation": "vector field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Vec3"
+    "learn_more_link": "https://docs.luduvo.com/reference/Vec3",
+    "read_only": true
   },
   "@luduvo/server/global/game.World": {
     "documentation": "the entity world\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/World"
+    "learn_more_link": "https://docs.luduvo.com/reference/World",
+    "read_only": true
   },
   "@luduvo/server/global/game.World.DumpAttributes": {
     "documentation": "print attribute usage to the output",
@@ -4213,7 +4368,8 @@
   },
   "@luduvo/server/globaltype/Instance.Activated": {
     "documentation": "fires when the pointer clicks this element, client side only\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Activated"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Activated",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Active": {
     "documentation": "Prefab id of the currently held item",
@@ -4245,7 +4401,8 @@
   },
   "@luduvo/server/globaltype/Instance.AirJumps": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.AirMaxWishSpeed": {
     "documentation": "",
@@ -4297,7 +4454,8 @@
   },
   "@luduvo/server/globaltype/Instance.AnimLayers": {
     "documentation": "animation layer rows of a character, indexed by layer\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#AnimLayers"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#AnimLayers",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.AnimationPreview": {
     "documentation": "state of the animation preview, nil when no preview runs",
@@ -4333,11 +4491,13 @@
   },
   "@luduvo/server/globaltype/Instance.Asset": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Attacker": {
     "documentation": "The entity that dealt the last damage\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Attacker"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Attacker",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.AutoLocomotion": {
     "documentation": "Automatic walk/idle/jump clip selection from velocity and state",
@@ -4525,7 +4685,8 @@
   },
   "@luduvo/server/globaltype/Instance.Canceled": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.CanvasSize": {
     "documentation": "Scrollable canvas size, a fraction of the frame plus pixels",
@@ -4549,7 +4710,8 @@
   },
   "@luduvo/server/globaltype/Instance.Changed": {
     "documentation": "fires after a property of the entity changes\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Changed"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Changed",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Character": {
     "documentation": "Marks the root entity of a humanoid character",
@@ -4573,7 +4735,8 @@
   },
   "@luduvo/server/globaltype/Instance.Chatted": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.CheckColor3": {
     "documentation": "",
@@ -4709,7 +4872,8 @@
   },
   "@luduvo/server/globaltype/Instance.Confirmed": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.ConnectedAnchor": {
     "documentation": "",
@@ -4809,11 +4973,13 @@
   },
   "@luduvo/server/globaltype/Instance.DragEnded": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.DragMoved": {
     "documentation": "fires while the pointer drags this element, client side only\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#DragMoved"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#DragMoved",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Emissive": {
     "documentation": "Emissive color texture added to the lighting; 0 adds none",
@@ -4877,7 +5043,8 @@
   },
   "@luduvo/server/globaltype/Instance.FocusLost": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.FogColor": {
     "documentation": "",
@@ -5093,7 +5260,8 @@
   },
   "@luduvo/server/globaltype/Instance.Hovered": {
     "documentation": "fires when the pointer enters this element, client side only\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Hovered"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Hovered",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Hue": {
     "documentation": "",
@@ -5181,7 +5349,8 @@
   },
   "@luduvo/server/globaltype/Instance.ItemShown": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Joint": {
     "documentation": "Offset in the torso frame",
@@ -5265,7 +5434,8 @@
   },
   "@luduvo/server/globaltype/Instance.LinkRequested": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.LinkTo": {
     "documentation": "",
@@ -5405,7 +5575,8 @@
   },
   "@luduvo/server/globaltype/Instance.MouseClick": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.MultiSelectColor3": {
     "documentation": "",
@@ -5465,7 +5636,8 @@
   },
   "@luduvo/server/globaltype/Instance.Occupant": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.OffColor3": {
     "documentation": "Track color while the switch is off",
@@ -5525,7 +5697,8 @@
   },
   "@luduvo/server/globaltype/Instance.OwnerUserId": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Page": {
     "documentation": "Core menu page this subtree belongs to",
@@ -5641,7 +5814,8 @@
   },
   "@luduvo/server/globaltype/Instance.Pressed": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.PressedImage": {
     "documentation": "",
@@ -5689,7 +5863,8 @@
   },
   "@luduvo/server/globaltype/Instance.Released": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Remaining": {
     "documentation": "Seconds left before the server destroys the entity and its children",
@@ -5969,11 +6144,13 @@
   },
   "@luduvo/server/globaltype/Instance.State": {
     "documentation": "Current state of the character state machine\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#State"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#State",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Steer": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Steps": {
     "documentation": "How many places the track holds",
@@ -6161,7 +6338,8 @@
   },
   "@luduvo/server/globaltype/Instance.Throttle": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.ThumbColor3": {
     "documentation": "Color of the draggable thumb",
@@ -6197,11 +6375,13 @@
   },
   "@luduvo/server/globaltype/Instance.TimeLeft": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Timeout": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.TimerAutostart": {
     "documentation": "",
@@ -6221,11 +6401,13 @@
   },
   "@luduvo/server/globaltype/Instance.TouchEnded": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Touched": {
     "documentation": "Read only at runtime.",
-    "learn_more_link": null
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.TrackAxis": {
     "documentation": "",
@@ -6313,7 +6495,8 @@
   },
   "@luduvo/server/globaltype/Instance.UserId": {
     "documentation": "Account id of the player who controls this character\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#UserId"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#UserId",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Value": {
     "documentation": "The place the thumb shows",
@@ -6381,7 +6564,8 @@
   },
   "@luduvo/server/globaltype/Instance.attr": {
     "documentation": "attribute table of the entity, read and write as e.attr.Name\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#attr"
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#attr",
+    "read_only": true
   },
   "@luduvo/server/globaltype/MoveIntent": {
     "documentation": "where a character wants to move, and which way it should face",

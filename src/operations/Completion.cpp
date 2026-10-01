@@ -827,8 +827,12 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
         }
 
         const auto localModule = fragmentWasSuccessful ? fragmentStatusResult.result->incrementalModule : getModule(moduleName, forAutocomplete);
-        if (auto documentationString = getDocumentationForAutocompleteEntry(name, entry, result.ancestry, localModule, position))
-            item.documentation = {lsp::MarkupKind::Markdown, documentationString.value()};
+        auto documentationString = getDocumentationForAutocompleteEntry(name, entry, result.ancestry, localModule, position);
+        if (auto platformDocumentation = platform->handleCompletionDocumentation(
+                PlatformCompletionDocumentationContext{moduleName, name, entry, documentationString}))
+            item.documentation = std::move(*platformDocumentation);
+        else if (documentationString)
+            item.documentation = {lsp::MarkupKind::Markdown, *documentationString};
 
         item.deprecated = deprecated(entry, item.documentation);
 

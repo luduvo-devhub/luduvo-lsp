@@ -86,6 +86,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/LSPPlatform.cpp
         src/platform/luduvo/LuduvoPlatform.cpp
         src/platform/luduvo/LuduvoDefinitionResolver.cpp
+        src/platform/luduvo/LuduvoHover.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
         src/platform/roblox/InstanceRequireAutoImporter.cpp
