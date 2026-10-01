@@ -406,8 +406,6 @@ bool isUncheckableArgumentType(
 {
     if (std::find(functionGenerics.begin(), functionGenerics.end(), type) != functionGenerics.end())
         return false;
-    if (Luau::is<Luau::GenericType>(type) || Luau::is<Luau::FreeType>(type))
-        return false;
     type = Luau::follow(type);
     if (std::find(functionGenerics.begin(), functionGenerics.end(), type) != functionGenerics.end())
         return false;
@@ -1035,9 +1033,10 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
         }
     }
 
-    std::optional<std::string> fallbackTitle = types::getTypeName(context.type);
+    const Luau::TypeId resolvedType = Luau::follow(context.type);
+    std::optional<std::string> fallbackTitle = types::getTypeName(resolvedType);
     if (!fallbackTitle &&
-        Luau::is<Luau::PrimitiveType, Luau::SingletonType, Luau::UnionType, Luau::IntersectionType>(context.type))
+        Luau::is<Luau::PrimitiveType, Luau::SingletonType, Luau::UnionType, Luau::IntersectionType>(resolvedType))
         fallbackTitle = rawType;
     if (!fallbackTitle && context.exprOrLocal.getName())
         fallbackTitle = context.exprOrLocal.getName()->value;
