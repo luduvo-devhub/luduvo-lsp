@@ -1076,3 +1076,65 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(
             LuduvoRichHoverContext{*context.entry.type, Luau::toString(Luau::follow(*context.entry.type)), documentationSymbol,
                 std::move(property), documentation, context.name, false, false})};
 }
+
+std::optional<lsp::MarkupContent> LuduvoPlatform::handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context)
+{
+    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich || !workspaceFolder)
+        return std::nullopt;
+
+    auto documentationSymbol =
+        resolveLuduvoHoverDocumentationSymbol(context.type, context.documentationSymbol, getEnvironmentForModule(context.moduleName));
+    if (!getLuduvoSymbolIdentity(documentationSymbol))
+        return std::nullopt;
+
+    std::optional<PrintedDocumentation> documentation;
+    if (documentationSymbol)
+        documentation =
+            getDocumentation(workspaceFolder->client->documentation, *documentationSymbol, &workspaceFolder->client->documentationMetadata);
+    if (!documentation && !context.fallbackDocumentation.empty())
+        documentation = PrintedDocumentation{context.fallbackDocumentation, std::nullopt};
+
+    return lsp::MarkupContent{lsp::MarkupKind::Markdown,
+        renderLuduvoRichHover(configuration.hover,
+            LuduvoRichHoverContext{context.type, Luau::toString(Luau::follow(context.type)), documentationSymbol, std::nullopt,
+                documentation, std::nullopt, false, false})};
+}
+
+void LuduvoPlatform::handleSignatureHelp(const PlatformSignatureHelpContext& context)
+{
+    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich)
+        return;
+
+    auto documentationSymbol =
+        resolveLuduvoHoverDocumentationSymbol(context.type, context.documentationSymbol, getEnvironmentForModule(context.moduleName));
+    if (!getLuduvoSymbolIdentity(documentationSymbol))
+        return;
+
+    for (lsp::SignatureInformation& signature : context.signatureHelp.signatures)
+    {
+        const size_t activeParameter = signature.activeParameter.value_or(context.signatureHelp.activeParameter);
+        std::optional<std::string> activeParameterDocumentation;
+
+        if (signature.parameters)
+        {
+            if (activeParameter < signature.parameters->size())
+            {
+                const auto& documentation = signature.parameters->at(activeParameter).documentation;
+                if (documentation && !documentation->value.empty())
+                    activeParameterDocumentation = documentation->value;
+            }
+
+            for (lsp::ParameterInformation& parameter : *signature.parameters)
+                parameter.documentation = std::nullopt;
+        }
+
+        if (!activeParameterDocumentation)
+            continue;
+
+        if (!signature.documentation)
+            signature.documentation = lsp::MarkupContent{lsp::MarkupKind::Markdown, ""};
+        if (!signature.documentation->value.empty())
+            signature.documentation->value += "\n\n";
+        signature.documentation->value += "**Active parameter**\n\n" + *activeParameterDocumentation;
+    }
+}

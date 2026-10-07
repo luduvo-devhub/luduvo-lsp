@@ -126,6 +126,25 @@ struct PlatformCompletionDocumentationContext
     const std::optional<std::string>& fallbackDocumentation;
 };
 
+struct PlatformSignatureHelpDocumentationContext
+{
+    const Luau::ModuleName& moduleName;
+    Luau::TypeId type;
+    const std::optional<std::string>& documentationSymbol;
+    const std::string& fallbackDocumentation;
+};
+
+struct PlatformSignatureHelpContext
+{
+    const Luau::ModuleName& moduleName;
+    const TextDocument& textDocument;
+    const Luau::SourceModule& sourceModule;
+    Luau::Position position;
+    Luau::TypeId type;
+    const std::optional<std::string>& documentationSymbol;
+    lsp::SignatureHelp& signatureHelp;
+};
+
 class LSPPlatform
 {
 protected:
@@ -235,8 +254,7 @@ public:
     virtual void handleSuggestImports(const TextDocument& textDocument, const Luau::SourceModule& module, const ClientConfiguration& config,
         size_t hotCommentsLineNumber, bool completingTypeReferencePrefix, std::vector<lsp::CompletionItem>& items);
 
-    virtual void handleSignatureHelp(
-        const TextDocument& textDocument, const Luau::SourceModule& module, Luau::Position position, lsp::SignatureHelp& signatureHelp)
+    virtual void handleSignatureHelp(const PlatformSignatureHelpContext& context)
     {
     }
 
@@ -273,6 +291,12 @@ public:
 
     /// Optionally replace the standard documentation presentation for one completion item.
     virtual std::optional<lsp::MarkupContent> handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context)
+    {
+        return std::nullopt;
+    }
+
+    /// Optionally replace the standard documentation presentation for one callable signature.
+    virtual std::optional<lsp::MarkupContent> handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context)
     {
         return std::nullopt;
     }

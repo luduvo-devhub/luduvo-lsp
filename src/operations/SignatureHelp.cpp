@@ -145,6 +145,10 @@ std::optional<lsp::SignatureHelp> WorkspaceFolder::signatureHelp(
             documentation.value =
                 printMoonwaveDocumentation(getComments(ftv->definition->definitionModuleName.value(), ftv->definition->definitionLocation));
 
+        if (auto platformDocumentation = platform->handleSignatureHelpDocumentation(
+                PlatformSignatureHelpDocumentationContext{moduleName, ty, baseDocumentationSymbol, documentation.value}))
+            documentation = std::move(*platformDocumentation);
+
         // Create each parameter label
         std::vector<lsp::ParameterInformation> parameters{};
         auto it = Luau::begin(ftv->argTypes);
@@ -168,10 +172,11 @@ std::optional<lsp::SignatureHelp> WorkspaceFolder::signatureHelp(
 
             // Show parameter documentation
             // TODO: parse moonwave docs for param documentation?
-            lsp::MarkupContent parameterDocumentation{lsp::MarkupKind::Markdown, ""};
+            std::optional<lsp::MarkupContent> parameterDocumentation;
             if (baseDocumentationSymbol)
                 if (auto docs = printDocumentation(client->documentation, *baseDocumentationSymbol + "/param/" + std::to_string(idx)))
-                    parameterDocumentation.value = *docs;
+                    if (!docs->empty())
+                        parameterDocumentation = lsp::MarkupContent{lsp::MarkupKind::Markdown, *docs};
 
             // Compute the label
             // We attempt to search for the position in the string for this label, and if we don't find it,
@@ -202,10 +207,11 @@ std::optional<lsp::SignatureHelp> WorkspaceFolder::signatureHelp(
             {
                 // Show parameter documentation
                 // TODO: parse moonwave docs for param documentation?
-                lsp::MarkupContent parameterDocumentation{lsp::MarkupKind::Markdown, ""};
+                std::optional<lsp::MarkupContent> parameterDocumentation;
                 if (baseDocumentationSymbol)
                     if (auto docs = printDocumentation(client->documentation, *baseDocumentationSymbol + "/param/" + std::to_string(idx)))
-                        parameterDocumentation.value = *docs;
+                        if (!docs->empty())
+                            parameterDocumentation = lsp::MarkupContent{lsp::MarkupKind::Markdown, *docs};
 
                 // Compute the label
                 // We attempt to search for the position in the string for this label, and if we don't find it,
@@ -236,8 +242,8 @@ std::optional<lsp::SignatureHelp> WorkspaceFolder::signatureHelp(
         if (!activeSignature && checkOverloadMatch(subTp, ftv->argTypes, Luau::NotNull{&*scope}, &typeArena, frontend.builtinTypes))
             activeSignature = signatures.size();
 
-        signatures.push_back(lsp::SignatureInformation{
-            label, documentation, parameters, std::min(activeParameter, parameters.size() == 0 ? 0 : parameters.size() - 1)});
+        signatures.push_back(lsp::SignatureInformation{label, documentation.value.empty() ? std::nullopt : std::optional{documentation}, parameters,
+            std::min(activeParameter, parameters.size() == 0 ? 0 : parameters.size() - 1)});
     };
 
     // Handle single function
@@ -262,7 +268,8 @@ std::optional<lsp::SignatureHelp> WorkspaceFolder::signatureHelp(
     }
 
     lsp::SignatureHelp help = lsp::SignatureHelp{signatures, activeSignature.value_or(0), activeParameter};
-    platform->handleSignatureHelp(*textDocument, *sourceModule, position, help);
+    platform->handleSignatureHelp(
+        PlatformSignatureHelpContext{moduleName, *textDocument, *sourceModule, position, followedId, documentationSymbol, help});
 
     return help;
 }

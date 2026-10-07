@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+
+### Fixed
+
+- Rich hover mode now applies in active paramater tooltips. Unfortunately it won't be able to be displayed on the top, since I can't control where it shows up...
+- Fixed duplicate lines appearing in the hover/tooltip during active paramater tooltip hover
+
 ## [1.70.2L] - 2026-10-01
 
 ### Added

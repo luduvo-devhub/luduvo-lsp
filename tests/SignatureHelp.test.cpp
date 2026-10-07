@@ -1,8 +1,57 @@
 #include "doctest.h"
 #include "Fixture.h"
 #include "Platform/RobloxPlatform.hpp"
+#include "LuauFileUtils.hpp"
 
 TEST_SUITE_BEGIN("SignatureHelp");
+
+TEST_CASE("luduvo_rich_signature_help_documentation_matches_hover_presentation")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_rich_signature_help_docs");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare game: {
+            World: {
+                Query: (component: string, required: boolean) -> (),
+            },
+        }
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_SIGNATURE_HELP_DOCS", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+    client.documentation["@luduvo/server/global/game.World.Query"] =
+        Luau::BasicDocumentation{"Find entities with a component", "https://docs.luduvo.com/reference/World#Query", ""};
+    client.documentation["@luduvo/server/global/game.World.Query/param/0"] =
+        Luau::BasicDocumentation{"The component name to require", "", ""};
+
+    auto [source, marker] = sourceWithMarker("game.World.Query(|)");
+    auto uri = Luau::LanguageServer::newDocument(workspace, "query.server.luau", source);
+    lsp::SignatureHelpParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = marker;
+
+    auto result = workspace.signatureHelp(params, nullptr);
+    REQUIRE(result);
+    REQUIRE_EQ(result->signatures.size(), 1);
+    REQUIRE(result->signatures[0].documentation);
+    CHECK_EQ(result->signatures[0].documentation->value, "# [game.World.Query ](https://docs.luduvo.com/reference/World#Query)↗ (Server Version)\n"
+                                                         "`resource-constrained`\n\n"
+                                                         "Find entities with a component\n\n"
+                                                         "**Active parameter**\n\n"
+                                                         "The component name to require");
+    REQUIRE(result->signatures[0].parameters);
+    REQUIRE_EQ(result->signatures[0].parameters->size(), 2);
+    CHECK_FALSE(result->signatures[0].parameters->at(0).documentation);
+    CHECK_FALSE(result->signatures[0].parameters->at(1).documentation);
+}
 
 TEST_CASE_FIXTURE(Fixture, "signature_help_handles_overloaded_functions_and_picks_best_overload_1")
 {
