@@ -44,7 +44,7 @@ jobs:
         with:
           title: Update Luduvo API types and documentation
           body: |
-            Refreshes the Luduvo API snapshot, component names, generated Luau types, and documentation.
+            Refreshes the Luduvo API snapshot, resource names, generated Luau types, and documentation.
             - This pull request is **auto-generated**
           branch: auto/update-luduvo-api
           commit-message: Update Luduvo API types and documentation

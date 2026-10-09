@@ -14,11 +14,12 @@ static constexpr const char* kClientEnvironment = "LuduvoClient";
 
 LUAU_FASTFLAG(LuauSolverV2)
 
-LuduvoPlatform::LuduvoPlatform(
-    const ClientLuduvoConfiguration& configuration, WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder)
+LuduvoPlatform::LuduvoPlatform(const ClientLuduvoConfiguration& configuration, WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder)
     : LSPPlatform(fileResolver, workspaceFolder)
     , configuration(configuration)
 {
+    resourceCatalog.configure(configuration);
+    resourceBindings.configure(configuration);
 }
 
 const char* LuduvoPlatform::getBuiltinDocumentation() const
@@ -26,8 +27,8 @@ const char* LuduvoPlatform::getBuiltinDocumentation() const
     return LUDUVO_DOCUMENTATION;
 }
 
-static PlatformDefinitionEnvironment definitionEnvironment(const char* environmentName, const char* packageName,
-    LuduvoDefinitionKind kind, const ClientLuduvoConfiguration& configuration, std::string_view embeddedDefinitions)
+static PlatformDefinitionEnvironment definitionEnvironment(const char* environmentName, const char* packageName, LuduvoDefinitionKind kind,
+    const ClientLuduvoConfiguration& configuration, std::string_view embeddedDefinitions)
 {
     PlatformDefinitionEnvironment environment{environmentName, packageName};
     // Luduvo's official global type files declare table aliases with plain `type`
@@ -35,9 +36,8 @@ static PlatformDefinitionEnvironment definitionEnvironment(const char* environme
     environment.exposePrivateTypes = configuration.definitions.exposePrivateTypes;
     for (auto& candidate : resolveLuduvoDefinitionCandidates(kind, configuration, embeddedDefinitions))
     {
-        environment.candidates.push_back(
-            {std::move(candidate.label), std::move(candidate.sourceUri), std::move(candidate.source), std::move(candidate.error),
-                candidate.notifyOnFailure});
+        environment.candidates.push_back({std::move(candidate.label), std::move(candidate.sourceUri), std::move(candidate.source),
+            std::move(candidate.error), candidate.notifyOnFailure});
     }
     return environment;
 }
@@ -45,10 +45,10 @@ static PlatformDefinitionEnvironment definitionEnvironment(const char* environme
 std::vector<PlatformDefinitionEnvironment> LuduvoPlatform::getDefinitionEnvironments() const
 {
     std::vector<PlatformDefinitionEnvironment> environments;
-    environments.push_back(definitionEnvironment(
-        kServerEnvironment, "@luduvo/server", LuduvoDefinitionKind::Server, configuration, LUDUVO_SERVER_DEFINITIONS));
-    environments.push_back(definitionEnvironment(
-        kClientEnvironment, "@luduvo/client", LuduvoDefinitionKind::Client, configuration, LUDUVO_CLIENT_DEFINITIONS));
+    environments.push_back(
+        definitionEnvironment(kServerEnvironment, "@luduvo/server", LuduvoDefinitionKind::Server, configuration, LUDUVO_SERVER_DEFINITIONS));
+    environments.push_back(
+        definitionEnvironment(kClientEnvironment, "@luduvo/client", LuduvoDefinitionKind::Client, configuration, LUDUVO_CLIENT_DEFINITIONS));
     return environments;
 }
 
@@ -74,8 +74,8 @@ PlatformDefinitionConfiguration LuduvoPlatform::getDefinitionConfiguration() con
         break;
     }
     result.conflictWinner = configuration.definitions.conflictWinner == LuduvoDefinitionConflictWinner::DefinitionFiles
-                              ? PlatformDefinitionConflictWinner::DefinitionFiles
-                              : PlatformDefinitionConflictWinner::Platform;
+                                ? PlatformDefinitionConflictWinner::DefinitionFiles
+                                : PlatformDefinitionConflictWinner::Platform;
     return result;
 }
 
@@ -85,7 +85,8 @@ std::vector<PlatformRequirement> LuduvoPlatform::getRequirements(bool platformDe
         return {};
 
     return {{"SolverV2", false,
-        "Official Luduvo global definitions require SolverV2. Enable luau-lsp.fflags.enableNewSolver and restart the language server, or use types.definitionFiles instead.",
+        "Official Luduvo global definitions require SolverV2. Enable luau-lsp.fflags.enableNewSolver and restart the language server, or use "
+        "types.definitionFiles instead.",
         "luau-lsp.fflags.enableNewSolver", "luau-lsp.platform.luduvo.definitions.globalPolicy", "definitionFilesOnly"}};
 }
 
@@ -110,6 +111,8 @@ void LuduvoPlatform::setupWithConfiguration(const ClientConfiguration& config)
 {
     const bool defaultChanged = configuration.definitions.defaultScriptSide != config.platform.luduvo.definitions.defaultScriptSide;
     configuration = config.platform.luduvo;
+    resourceCatalog.configure(configuration);
+    resourceBindings.configure(configuration);
 
     if (defaultChanged && workspaceFolder)
     {

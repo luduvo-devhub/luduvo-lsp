@@ -335,6 +335,74 @@
           "default": 2000,
           "scope": "resource"
         },
+        "luduvo-lsp.platform.luduvo.resources.overrides": {
+          "markdownDescription": "Replacement resource-name catalogs keyed by a singular resource kind such as `component` or `prefab`. A missing kind uses names discovered from Luduvo when that resource has a live provider, or the bundled fallback otherwise. A present empty list intentionally disables names for that kind",
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.resources.bindings": {
+          "markdownDescription": "Additional function parameters that consume named Luduvo resources. Bindings also supply resource metadata to rich hovers and signature help, so they remain active when resource completion is disabled",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "symbol",
+              "parameter",
+              "kind"
+            ],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Canonical function symbol, such as game.World.Query or MyLibrary.Spawn"
+              },
+              "parameter": {
+                "type": "string",
+                "description": "Name of the string parameter constrained to a resource kind"
+              },
+              "kind": {
+                "type": "string",
+                "description": "Singular resource kind identifier, such as component or prefab"
+              }
+            },
+            "additionalProperties": false
+          },
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.resources.completion.enabled": {
+          "markdownDescription": "Whether Luduvo resource names are suggested for resource-constrained function arguments. This does not hide resource metadata from rich hovers or signature help",
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.resources.completion.disabledKinds": {
+          "markdownDescription": "Resource kinds that should not provide argument completions",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.resources.completion.disabledApis": {
+          "markdownDescription": "Canonical API symbols whose resource-constrained arguments should not provide completions, such as `game.World.Query`",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "scope": "resource"
+        },
         "luduvo-lsp.sourcemap.enabled": {
           "markdownDescription": "Whether Rojo sourcemap parsing is enabled",
           "type": "boolean",

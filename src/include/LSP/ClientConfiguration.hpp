@@ -379,14 +379,47 @@ struct ClientLuduvoHoverConfiguration
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoHoverConfiguration, presentation, maxTitleLength, maxTypeDefinitionLength)
 
+struct ClientLuduvoResourceBindingConfiguration
+{
+    /// Canonical function symbol, such as game.World.Query or MyLibrary.Spawn.
+    std::string symbol{};
+    /// Name of the string parameter constrained to a resource kind.
+    std::string parameter{};
+    /// Singular resource kind identifier, such as component or prefab.
+    std::string kind{};
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourceBindingConfiguration, symbol, parameter, kind)
+
+struct ClientLuduvoResourceCompletionConfiguration
+{
+    /// Whether resource-name completions are offered.
+    bool enabled = true;
+    /// Resource kinds whose names should not be completed.
+    std::vector<std::string> disabledKinds{};
+    /// Canonical API symbols whose resource arguments should not be completed.
+    std::vector<std::string> disabledApis{};
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourceCompletionConfiguration, enabled, disabledKinds, disabledApis)
+
+struct ClientLuduvoResourcesConfiguration
+{
+    /// Per-kind replacement catalogs. A missing key uses discovered names; an empty list intentionally supplies no names.
+    std::unordered_map<std::string, std::vector<std::string>> overrides{};
+    /// Additional function-parameter resource bindings used by completion, hover, and signature help.
+    std::vector<ClientLuduvoResourceBindingConfiguration> bindings{};
+    ClientLuduvoResourceCompletionConfiguration completion{};
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration, overrides, bindings, completion)
+
 struct ClientLuduvoConfiguration
 {
     /// Luduvo's per-user Client directory. The content store lives below this directory.
     std::string dataDirectory{};
     ClientLuduvoDefinitionsConfiguration definitions{};
     ClientLuduvoHoverConfiguration hover{};
+    ClientLuduvoResourcesConfiguration resources{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, hover)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, hover, resources)
 
 struct ClientPlatformConfiguration
 {

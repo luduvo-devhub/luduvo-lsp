@@ -53,6 +53,10 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/documentation.luduvo.json")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/documentation.luduvo.json" LUDUVO_DOCUMENTATION)
 configure_file(src/include/Platform/LuduvoDocumentation.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDocumentation.hpp" @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/resources.luduvo.json")
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/resources.luduvo.json" LUDUVO_RESOURCES)
+configure_file(src/include/Platform/LuduvoResources.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoResources.hpp" @ONLY)
 target_include_directories(Luau.LanguageServer PRIVATE "${LUDUVO_GENERATED_INCLUDE_DIR}")
 add_executable(Luau.LanguageServer.CLI)
 add_executable(Luau.LanguageServer.Test)
@@ -87,6 +91,9 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/LuduvoPlatform.cpp
         src/platform/luduvo/LuduvoDefinitionResolver.cpp
         src/platform/luduvo/LuduvoHover.cpp
+        src/platform/luduvo/LuduvoCompletion.cpp
+        src/platform/luduvo/LuduvoResourceBindings.cpp
+        src/platform/luduvo/LuduvoResourceCatalog.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
         src/platform/roblox/InstanceRequireAutoImporter.cpp

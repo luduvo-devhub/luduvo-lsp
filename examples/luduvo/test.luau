@@ -8,7 +8,11 @@ if part then
     game.Tags.Add(part, "Example")
 end
 
-local finishMe = game.
+local blah = game
+
+self.conf
+
+local finishMe = game.Input.KeyPressed()
 
 math.abs(3-2)
 

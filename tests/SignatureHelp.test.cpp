@@ -10,9 +10,13 @@ TEST_CASE("luduvo_rich_signature_help_documentation_matches_hover_presentation")
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
     TempDir temp("luduvo_rich_signature_help_docs");
     const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare extern type Pair with
+        end
+        declare extern type Query with
+        end
         declare game: {
             World: {
-                Query: (component: string, required: boolean) -> (),
+                Query: (...string | Pair) -> Query,
             },
         }
     )");
@@ -29,8 +33,7 @@ TEST_CASE("luduvo_rich_signature_help_documentation_matches_hover_presentation")
     workspace.isReady = true;
     client.documentation["@luduvo/server/global/game.World.Query"] =
         Luau::BasicDocumentation{"Find entities with a component", "https://docs.luduvo.com/reference/World#Query", ""};
-    client.documentation["@luduvo/server/global/game.World.Query/param/0"] =
-        Luau::BasicDocumentation{"The component name to require", "", ""};
+    client.documentation["@luduvo/server/global/game.World.Query/param/0"] = Luau::BasicDocumentation{"The component name to require", "", ""};
 
     auto [source, marker] = sourceWithMarker("game.World.Query(|)");
     auto uri = Luau::LanguageServer::newDocument(workspace, "query.server.luau", source);
@@ -45,12 +48,12 @@ TEST_CASE("luduvo_rich_signature_help_documentation_matches_hover_presentation")
     CHECK_EQ(result->signatures[0].documentation->value, "# [game.World.Query ](https://docs.luduvo.com/reference/World#Query)↗ (Server Version)\n"
                                                          "`resource-constrained`\n\n"
                                                          "Find entities with a component\n\n"
+                                                         "`components: string` expects Luduvo component names.\n\n"
                                                          "**Active parameter**\n\n"
                                                          "The component name to require");
     REQUIRE(result->signatures[0].parameters);
-    REQUIRE_EQ(result->signatures[0].parameters->size(), 2);
+    REQUIRE_EQ(result->signatures[0].parameters->size(), 1);
     CHECK_FALSE(result->signatures[0].parameters->at(0).documentation);
-    CHECK_FALSE(result->signatures[0].parameters->at(1).documentation);
 }
 
 TEST_CASE_FIXTURE(Fixture, "signature_help_handles_overloaded_functions_and_picks_best_overload_1")

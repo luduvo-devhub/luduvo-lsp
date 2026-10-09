@@ -1,0 +1,205 @@
+#include "Platform/LuduvoPlatform.hpp"
+
+#include "LSP/LuauExt.hpp"
+#include "LSP/TextDocument.hpp"
+#include "LSP/Workspace.hpp"
+#include "Luau/AstQuery.h"
+#include "Luau/StringUtils.h"
+#include "Luau/Type.h"
+
+#include <algorithm>
+#include <unordered_set>
+
+namespace
+{
+std::optional<std::string> expressionPath(const Luau::AstExpr* expression)
+{
+    if (const auto global = expression->as<Luau::AstExprGlobal>())
+        return global->name.value;
+    if (const auto member = expression->as<Luau::AstExprIndexName>())
+    {
+        if (auto owner = expressionPath(member->expr))
+            return *owner + "." + member->index.value;
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> callableDocumentationSymbol(
+    const Luau::SourceModule& sourceModule, const Luau::Module& module, const Luau::AstExprCall& call, Luau::TypeId callableType)
+{
+    Luau::Location documentationLocation = call.func->location;
+    if (const auto member = call.func->as<Luau::AstExprIndexName>())
+        documentationLocation = member->indexLocation;
+
+    Luau::Position documentationPosition = documentationLocation.end;
+    if (documentationPosition.column > 0)
+        --documentationPosition.column;
+    if (auto direct = Luau::getDocumentationSymbolAtPosition(sourceModule, module, documentationPosition))
+        return direct;
+
+    if (const auto member = call.func->as<Luau::AstExprIndexName>())
+    {
+        if (const Luau::TypeId* owner = module.astTypes.find(member->expr))
+        {
+            Luau::TypeId ownerType = Luau::follow(*owner);
+            if (const auto table = Luau::get<Luau::TableType>(ownerType))
+            {
+                if (auto property = table->props.find(member->index.value); property != table->props.end())
+                {
+                    if (property->second.documentationSymbol)
+                        return property->second.documentationSymbol;
+                    if (auto path = expressionPath(call.func))
+                        return path;
+                }
+            }
+            else if (const Luau::ExternType* external = Luau::get<Luau::ExternType>(ownerType))
+            {
+                while (external)
+                {
+                    if (auto property = external->props.find(member->index.value); property != external->props.end())
+                    {
+                        if (property->second.documentationSymbol)
+                            return property->second.documentationSymbol;
+                        return external->name + "." + member->index.value;
+                    }
+                    external = external->parent ? Luau::get<Luau::ExternType>(*external->parent) : nullptr;
+                }
+            }
+            if (ownerType->documentationSymbol)
+                return *ownerType->documentationSymbol + "." + member->index.value;
+        }
+    }
+
+    callableType = Luau::follow(callableType);
+    if (callableType->documentationSymbol)
+        return callableType->documentationSymbol;
+    if (const auto intersection = Luau::get<Luau::IntersectionType>(callableType))
+    {
+        for (Luau::TypeId part : intersection->parts)
+        {
+            part = Luau::follow(part);
+            if (part->documentationSymbol)
+                return part->documentationSymbol;
+        }
+    }
+    return std::nullopt;
+}
+
+Luau::AstExprCall* callFromAncestry(const std::vector<Luau::AstNode*>& ancestry)
+{
+    for (auto it = ancestry.rbegin(); it != ancestry.rend(); ++it)
+        if (auto call = (*it)->as<Luau::AstExprCall>())
+            return call;
+    return nullptr;
+}
+
+size_t activeArgument(const Luau::AstExprCall& call, const Luau::Position& position)
+{
+    size_t result = 0;
+    for (Luau::AstExpr* argument : call.args)
+    {
+        if (argument->location.containsClosed(position) || argument->location.begin > position)
+            break;
+        ++result;
+    }
+    return result;
+}
+
+std::optional<lsp::Range> resourceCompletionRange(
+    const TextDocument& textDocument, const Luau::AstExprCall& call, size_t argumentIndex, const Luau::Position& position)
+{
+    const lsp::Position cursor = textDocument.convertPosition(position);
+    if (argumentIndex >= call.args.size)
+        return lsp::Range{cursor, cursor};
+
+    Luau::AstExpr* argument = call.args.data[argumentIndex];
+    if (auto string = argument->as<Luau::AstExprConstantString>())
+        return textDocument.convertLocation(string->location);
+
+    if (auto error = argument->as<Luau::AstExprError>())
+    {
+        lsp::Range range = textDocument.convertLocation(error->location);
+        if (range.start > cursor)
+            return std::nullopt;
+        if (range.end > cursor)
+            range.end = cursor;
+
+        const std::string current = textDocument.getText(range);
+        if (!current.empty() && current.front() != '"' && current.front() != '\'' && current.front() != '`')
+            return std::nullopt;
+        return range;
+    }
+
+    return std::nullopt;
+}
+
+bool contains(const std::vector<std::string>& values, std::string_view wanted)
+{
+    return std::find(values.begin(), values.end(), wanted) != values.end();
+}
+} // namespace
+
+void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
+    const std::vector<Luau::AstNode*>& ancestry, Luau::Position position, std::vector<lsp::CompletionItem>& items)
+{
+    if (!configuration.resources.completion.enabled || !typedModule)
+        return;
+
+    Luau::AstExprCall* call = callFromAncestry(ancestry);
+    if (!call)
+        return;
+
+    Luau::TypeId* callable = typedModule->astTypes.find(call->func);
+    if (!callable)
+        return;
+
+    Luau::TypeId callableType = Luau::follow(*callable);
+    const std::optional<std::string> documentationSymbol = callableDocumentationSymbol(sourceModule, *typedModule, *call, callableType);
+    const std::optional<std::string> canonicalSymbol = canonicalLuduvoResourceSymbol(documentationSymbol);
+    if (!canonicalSymbol || contains(configuration.resources.completion.disabledApis, *canonicalSymbol))
+        return;
+
+    const size_t argumentIndex = activeArgument(*call, position);
+    const bool implicitSelf = call->self || findCallMetamethod(callableType).has_value();
+    const size_t typeParameterIndex = argumentIndex + (implicitSelf ? 1 : 0);
+
+    std::optional<LuduvoResolvedResourceBinding> activeBinding;
+    for (const LuduvoResolvedResourceBinding& binding : resourceBindings.resolve(documentationSymbol, callableType))
+    {
+        const bool matches = binding.variadic ? typeParameterIndex >= binding.typeParameterIndex : typeParameterIndex == binding.typeParameterIndex;
+        if (matches)
+        {
+            activeBinding = binding;
+            break;
+        }
+    }
+    if (!activeBinding || contains(configuration.resources.completion.disabledKinds, activeBinding->kind))
+        return;
+
+    const auto replacementRange = resourceCompletionRange(textDocument, *call, argumentIndex, position);
+    if (!replacementRange)
+        return;
+
+    std::unordered_set<std::string> existingLabels;
+    existingLabels.reserve(items.size());
+    for (const lsp::CompletionItem& item : items)
+        existingLabels.insert(item.label);
+
+    std::vector<std::string> names = resourceCatalog.names(activeBinding->kind);
+    std::sort(names.begin(), names.end());
+    names.erase(std::unique(names.begin(), names.end()), names.end());
+    for (const std::string& name : names)
+    {
+        if (name.empty() || !existingLabels.insert(name).second)
+            continue;
+
+        lsp::CompletionItem item;
+        item.label = name;
+        item.kind = lsp::CompletionItemKind::Constant;
+        item.detail = "Luduvo " + activeBinding->kind;
+        item.sortText = name;
+        item.filterText = name;
+        item.textEdit = lsp::TextEdit{*replacementRange, "\"" + Luau::escape(name) + "\""};
+        items.push_back(std::move(item));
+    }
+}

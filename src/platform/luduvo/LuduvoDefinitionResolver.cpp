@@ -54,6 +54,37 @@ static bool isSafeVersionName(std::string_view version)
         });
 }
 
+std::optional<LuduvoActiveContent> resolveActiveLuduvoContent(const ClientLuduvoConfiguration& configuration, std::string* error)
+{
+    auto fail = [error](std::string message) -> std::optional<LuduvoActiveContent>
+    {
+        if (error)
+            *error = std::move(message);
+        return std::nullopt;
+    };
+
+    std::optional<std::string> dataDirectory;
+    if (!configuration.dataDirectory.empty())
+        dataDirectory = resolvePath(configuration.dataDirectory);
+    else
+        dataDirectory = getDefaultLuduvoDataDirectory();
+
+    if (!dataDirectory)
+        return fail("could not determine Luduvo's data directory");
+
+    const std::string contentRoot = joinPath(*dataDirectory, "content");
+    const std::string currentPath = joinPath(contentRoot, "current");
+    auto current = Luau::FileUtils::readFile(currentPath);
+    if (!current)
+        return fail("could not read " + currentPath);
+
+    trim(*current);
+    if (!isSafeVersionName(*current))
+        return fail("invalid content version " + *current);
+
+    return LuduvoActiveContent{contentRoot, joinPath(joinPath(contentRoot, "versions"), *current), *current};
+}
+
 static LuduvoDefinitionCandidate readCandidate(std::string label, const std::string& path)
 {
     LuduvoDefinitionCandidate candidate{std::move(label), Uri::file(path)};
@@ -63,46 +94,30 @@ static LuduvoDefinitionCandidate readCandidate(std::string label, const std::str
     return candidate;
 }
 
-static LuduvoDefinitionCandidate installedCandidate(
-    LuduvoDefinitionKind kind, const ClientLuduvoConfiguration& configuration)
+static LuduvoDefinitionCandidate installedCandidate(LuduvoDefinitionKind kind, const ClientLuduvoConfiguration& configuration)
 {
-    std::optional<std::string> dataDirectory;
-    if (!configuration.dataDirectory.empty())
-        dataDirectory = resolvePath(configuration.dataDirectory);
-    else
-        dataDirectory = getDefaultLuduvoDataDirectory();
-
-    if (!dataDirectory)
-        return {"installed Luduvo definitions", std::nullopt, std::nullopt, "could not determine Luduvo's data directory"};
-
-    const std::string contentRoot = joinPath(*dataDirectory, "content");
-    const std::string currentPath = joinPath(contentRoot, "current");
-    auto current = Luau::FileUtils::readFile(currentPath);
-    if (!current)
-        return {"installed Luduvo definitions", Uri::file(currentPath), std::nullopt, "could not read " + currentPath};
-
-    trim(*current);
-    if (!isSafeVersionName(*current))
-        return {"installed Luduvo definitions", Uri::file(currentPath), std::nullopt, "invalid content version " + *current};
+    std::string error;
+    auto content = resolveActiveLuduvoContent(configuration, &error);
+    if (!content)
+        return {"installed Luduvo definitions", std::nullopt, std::nullopt, std::move(error)};
 
     const char* relativePath = kind == LuduvoDefinitionKind::Server ? "defs/luduvo.d.luau" : "defs/luduvo.client.d.luau";
-    const std::string path = joinPath(joinPath(joinPath(contentRoot, "versions"), *current), relativePath);
+    const std::string path = joinPath(content->versionRoot, relativePath);
     return readCandidate("installed Luduvo definitions", path);
 }
 
-std::vector<LuduvoDefinitionCandidate> resolveLuduvoDefinitionCandidates(LuduvoDefinitionKind kind,
-    const ClientLuduvoConfiguration& configuration, std::string_view embeddedDefinitions)
+std::vector<LuduvoDefinitionCandidate> resolveLuduvoDefinitionCandidates(
+    LuduvoDefinitionKind kind, const ClientLuduvoConfiguration& configuration, std::string_view embeddedDefinitions)
 {
     std::vector<LuduvoDefinitionCandidate> candidates;
-    const std::string& overridePath = kind == LuduvoDefinitionKind::Server ? configuration.definitions.serverOverride
-                                                                           : configuration.definitions.clientOverride;
+    const std::string& overridePath =
+        kind == LuduvoDefinitionKind::Server ? configuration.definitions.serverOverride : configuration.definitions.clientOverride;
     if (!overridePath.empty())
         candidates.push_back(readCandidate("configured Luduvo definitions", resolvePath(overridePath)));
 
     auto installed = installedCandidate(kind, configuration);
     installed.notifyOnFailure = true;
     candidates.push_back(std::move(installed));
-    candidates.push_back(
-        {"embedded Luduvo definitions", std::nullopt, std::string(embeddedDefinitions), std::nullopt});
+    candidates.push_back({"embedded Luduvo definitions", std::nullopt, std::string(embeddedDefinitions), std::nullopt});
     return candidates;
 }

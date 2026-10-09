@@ -1,6 +1,7 @@
 #include "doctest.h"
 #include "Fixture.h"
 #include "Platform/RobloxPlatform.hpp"
+#include "Platform/LuduvoResourceCatalog.hpp"
 #include "TempDir.h"
 #include "LuauFileUtils.hpp"
 #include "Luau/Parser.h"
@@ -10,6 +11,35 @@
 using namespace Luau::LanguageServer;
 
 TEST_SUITE_BEGIN("Definitions");
+
+TEST_CASE("luduvo_resource_catalog_uses_installed_prefabs_and_independent_overrides")
+{
+    TempDir temp("luduvo_resource_catalog");
+    temp.write_child("content/current", "42\n");
+    temp.touch_child("content/versions/42/prefabs/Installed.ldv");
+    temp.touch_child("content/versions/42/prefabs/Another.LDV");
+    temp.touch_child("content/versions/42/prefabs/ignored.txt");
+
+    LuduvoResourceCatalog catalog(R"({
+        "formatVersion": 1,
+        "resources": {
+            "component": ["Position", "Health", "Position"],
+            "prefab": ["Bundled"]
+        }
+    })");
+    ClientLuduvoConfiguration config;
+    config.dataDirectory = temp.path();
+    catalog.configure(config);
+
+    CHECK_EQ(catalog.names("component"), std::vector<std::string>({"Health", "Position"}));
+    CHECK_EQ(catalog.names("prefab"), std::vector<std::string>({"Another", "Installed"}));
+
+    config.resources.overrides["prefab"] = {};
+    config.resources.overrides["component"] = {"Custom", "Custom"};
+    catalog.configure(config);
+    CHECK(catalog.names("prefab").empty());
+    CHECK_EQ(catalog.names("component"), std::vector<std::string>({"Custom"}));
+}
 
 TEST_CASE("use_platform_metadata_from_first_registered_definitions_file")
 {
@@ -246,7 +276,7 @@ TEST_CASE("luduvo_platform_ignores_unused_lifecycle_functions")
 TEST_CASE("luduvo_platform_configuration_round_trips")
 {
     auto config = json::parse(
-        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096}}}})")
+        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096},"resources":{"overrides":{"component":["Health","Position"],"prefab":[]},"bindings":[{"symbol":"MyLibrary.Spawn","parameter":"name","kind":"prefab"}],"completion":{"enabled":false,"disabledKinds":["component"],"disabledApis":["game.World.Query"]}}}}})")
                       .get<ClientConfiguration>();
     CHECK(config.platform.type == LSPPlatformConfig::Luduvo);
     CHECK_EQ(config.platform.luduvo.dataDirectory, "data");
@@ -260,12 +290,38 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
     CHECK_FALSE(config.platform.luduvo.hover.maxTitleLength);
     REQUIRE(config.platform.luduvo.hover.maxTypeDefinitionLength);
     CHECK_EQ(*config.platform.luduvo.hover.maxTypeDefinitionLength, 4096);
+    const std::vector<std::string> expectedComponents{"Health", "Position"};
+    REQUIRE(config.platform.luduvo.resources.overrides.find("component") != config.platform.luduvo.resources.overrides.end());
+    CHECK_EQ(config.platform.luduvo.resources.overrides.at("component"), expectedComponents);
+    REQUIRE(config.platform.luduvo.resources.overrides.find("prefab") != config.platform.luduvo.resources.overrides.end());
+    CHECK(config.platform.luduvo.resources.overrides.at("prefab").empty());
+    REQUIRE_EQ(config.platform.luduvo.resources.bindings.size(), 1);
+    CHECK_EQ(config.platform.luduvo.resources.bindings[0].symbol, "MyLibrary.Spawn");
+    CHECK_EQ(config.platform.luduvo.resources.bindings[0].parameter, "name");
+    CHECK_EQ(config.platform.luduvo.resources.bindings[0].kind, "prefab");
+    CHECK_FALSE(config.platform.luduvo.resources.completion.enabled);
+    CHECK_EQ(config.platform.luduvo.resources.completion.disabledKinds, std::vector<std::string>{"component"});
+    CHECK_EQ(config.platform.luduvo.resources.completion.disabledApis, std::vector<std::string>{"game.World.Query"});
     CHECK(json(config)["platform"]["type"] == "luduvo");
     CHECK(json(config)["platform"]["luduvo"]["definitions"]["defaultScriptSide"] == "client");
     CHECK(json(config)["platform"]["luduvo"]["definitions"]["globalPolicy"] == "preferDefinitionFiles");
     CHECK(json(config)["platform"]["luduvo"]["hover"]["presentation"] == "standard");
     CHECK(json(config)["platform"]["luduvo"]["hover"]["maxTitleLength"].is_null());
     CHECK(json(config)["platform"]["luduvo"]["hover"]["maxTypeDefinitionLength"] == 4096);
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["overrides"]["component"] == json::array({"Health", "Position"}));
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["overrides"]["prefab"] == json::array());
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["parameter"] == "name");
+    CHECK_FALSE(json(config)["platform"]["luduvo"]["resources"]["completion"]["enabled"]);
+}
+
+TEST_CASE("luduvo_resource_configuration_defaults")
+{
+    ClientConfiguration config;
+    CHECK(config.platform.luduvo.resources.overrides.empty());
+    CHECK(config.platform.luduvo.resources.bindings.empty());
+    CHECK(config.platform.luduvo.resources.completion.enabled);
+    CHECK(config.platform.luduvo.resources.completion.disabledKinds.empty());
+    CHECK(config.platform.luduvo.resources.completion.disabledApis.empty());
 }
 
 TEST_CASE("luduvo_rich_hover_configuration_defaults")
@@ -346,8 +402,8 @@ TEST_CASE("luduvo_platform_can_leave_private_definition_types_private")
 {
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
     TempDir temp("luduvo_private_definition_types");
-    const std::string serverDefinitions = temp.write_child(
-        "server.luau", "type PrivateAlias = string\ndeclare valueUsingPrivateAlias: PrivateAlias\n");
+    const std::string serverDefinitions =
+        temp.write_child("server.luau", "type PrivateAlias = string\ndeclare valueUsingPrivateAlias: PrivateAlias\n");
 
     TestClient client;
     auto config = defaultTestClientConfiguration();
@@ -472,7 +528,8 @@ TEST_CASE("luduvo_platform_prefers_configured_definitions_over_installed_definit
     workspace.setupWithConfiguration(config);
     workspace.isReady = true;
 
-    auto document = newDocument(workspace, "configured.server.luau", "--!strict\nlocal value: string = configuredServerOnly\nlocal absent = installedServerOnly");
+    auto document =
+        newDocument(workspace, "configured.server.luau", "--!strict\nlocal value: string = configuredServerOnly\nlocal absent = installedServerOnly");
     auto result = workspace.frontend.check(workspace.fileResolver.getModuleName(document));
     REQUIRE_EQ(result.errors.size(), 1);
     auto unknown = Luau::get<Luau::UnknownSymbol>(result.errors[0]);
@@ -562,8 +619,7 @@ TEST_CASE("luduvo_official_definitions_report_an_unmet_solver_requirement")
     config.platform.type = LSPPlatformConfig::Luduvo;
     config.platform.luduvo.definitions.globalPolicy = LuduvoGlobalDefinitionsPolicy::LuduvoOnly;
     client.globalConfig = config;
-    WorkspaceFolder workspace(
-        &client, "$LUDUVO_SOLVER_REQUIREMENT", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    WorkspaceFolder workspace(&client, "$LUDUVO_SOLVER_REQUIREMENT", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
     workspace.setupWithConfiguration(config);
     workspace.isReady = true;
 

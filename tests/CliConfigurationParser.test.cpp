@@ -23,4 +23,28 @@ TEST_CASE("convert dotted dictionary")
     CHECK_EQ(output["bar"], "testing");
 }
 
+TEST_CASE("convert dotted Luduvo resource configuration")
+{
+    auto output = parseDottedConfiguration(R"DOTTED_CONFIG(
+        {
+            "luau-lsp.platform.luduvo.resources.overrides": {
+                "component": ["Health"],
+                "prefab": []
+            },
+            "luau-lsp.platform.luduvo.resources.bindings": [
+                {"symbol": "MyLibrary.Spawn", "parameter": "name", "kind": "prefab"}
+            ],
+            "luau-lsp.platform.luduvo.resources.completion.enabled": false
+        }
+    )DOTTED_CONFIG");
+
+    const auto& resources = output["platform"]["luduvo"]["resources"];
+    REQUIRE(resources["overrides"].contains("component"));
+    CHECK(resources["overrides"]["component"] == json::array({"Health"}));
+    REQUIRE(resources["overrides"].contains("prefab"));
+    CHECK(resources["overrides"]["prefab"].empty());
+    CHECK(resources["bindings"][0]["parameter"] == "name");
+    CHECK_FALSE(resources["completion"]["enabled"]);
+}
+
 TEST_SUITE_END();

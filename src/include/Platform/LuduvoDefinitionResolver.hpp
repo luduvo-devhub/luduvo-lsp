@@ -23,9 +23,19 @@ struct LuduvoDefinitionCandidate
     bool notifyOnFailure = false;
 };
 
+struct LuduvoActiveContent
+{
+    std::string contentRoot;
+    std::string versionRoot;
+    std::string version;
+};
+
 /// Returns Luduvo's per-user Client directory for the current operating system.
 std::optional<std::string> getDefaultLuduvoDataDirectory();
 
+/// Resolves and validates the installed content version selected by `content/current`.
+std::optional<LuduvoActiveContent> resolveActiveLuduvoContent(const ClientLuduvoConfiguration& configuration, std::string* error = nullptr);
+
 /// Resolves override, installed, and embedded definition candidates in priority order.
-std::vector<LuduvoDefinitionCandidate> resolveLuduvoDefinitionCandidates(LuduvoDefinitionKind kind,
-    const ClientLuduvoConfiguration& configuration, std::string_view embeddedDefinitions);
+std::vector<LuduvoDefinitionCandidate> resolveLuduvoDefinitionCandidates(
+    LuduvoDefinitionKind kind, const ClientLuduvoConfiguration& configuration, std::string_view embeddedDefinitions);

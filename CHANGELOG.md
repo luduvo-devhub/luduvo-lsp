@@ -7,6 +7,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 
+### Added
+
+- A new resources system that inserts autocomplete suggestions without needing to modify the global types file. Doesn't seem like much, but the system its built in such a way that I'll be able to (somewhat easily) extend it to include support for future resource types (events, user-defined prefabs/components, signals, etc.) without needing to rewrite any of it. Probably. Hopefully.
+- 4 new settings come with the resource system:
+  - `luau-lsp.platform.luduvo.resources.overrides`, which allows you to override resource autocorrect options or add your own
+  - `luau-lsp.platform.luduvo.resources.bindings`, which allows you to add resource autocorrect to custom function parameters
+  - `luau-lsp.platform.luduvo.resources.completion.enabled`, which globally enables/disables resource-name suggestions to arguments marked with the "resource-constrained" tag
+  - `luau-lsp.platform.luduvo.resources.completion.disabledKinds`, which allows you to disable resource-name autocomplete for the listed resource kinds
+  - `luau-lsp.platform.luduvo.resources.completion.disabledApis`, which allows you to disable resource-name autocomplete for specific API endpoints
+- Component autocomplete is back and it comes with Prefab autocomplete as a neat bonus. Core Prefabs/Components only for now, but the Prefabs are dynamically read from Luduvo's roaming so it'll remain accurate when Luduvo updates.
+- Hover/Autocomplete/Paramater tooltips report which variables/types that are resource contrained in its markdown menu
+
+### Changed
+
+- `luau-lsp.platform.luduvo.definitions.defaultScriptSide` got renamed to `luau-lsp.platform.luduvo.definitions.defaultScriptScope`
+
 ### Fixed
 
 - Rich hover mode now applies in active paramater tooltips. Unfortunately it won't be able to be displayed on the top, since I can't control where it shows up...

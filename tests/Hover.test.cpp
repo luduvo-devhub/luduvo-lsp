@@ -449,8 +449,7 @@ TEST_CASE("luduvo_rich_hover_truncates_titles_without_hiding_the_version")
 
     auto result = workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value,
-        "# extr... (Server Version)\n\n___\n\n" + codeBlock("luau", "declare extremelyLongGlobalName: number"));
+    CHECK_EQ(result->contents.value, "# extr... (Server Version)\n\n___\n\n" + codeBlock("luau", "declare extremelyLongGlobalName: number"));
 }
 
 TEST_CASE("luduvo_rich_hover_truncates_type_definitions_independently")
@@ -514,8 +513,8 @@ TEST_CASE("luduvo_rich_hover_keeps_short_union_titles_and_aggregates_their_side"
 
     auto result = workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value,
-        "# Camera | RaycastResult (Client Version)\n\n___\n\n" + codeBlock("luau", "local result: Camera | RaycastResult"));
+    CHECK_EQ(
+        result->contents.value, "# Camera | RaycastResult (Client Version)\n\n___\n\n" + codeBlock("luau", "local result: Camera | RaycastResult"));
 }
 
 TEST_CASE("luduvo_rich_hover_summarizes_long_union_titles")
@@ -548,9 +547,8 @@ TEST_CASE("luduvo_rich_hover_summarizes_long_union_titles")
 
     auto result = workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value,
-        "# Camera +2 union members (Client Version)\n\n___\n\n" +
-            codeBlock("luau", "local result: Camera | ExtremelyVerbosePhysicsQueryResponse | RaycastResult"));
+    CHECK_EQ(result->contents.value, "# Camera +2 union members (Client Version)\n\n___\n\n" +
+                                         codeBlock("luau", "local result: Camera | ExtremelyVerbosePhysicsQueryResponse | RaycastResult"));
 }
 
 TEST_CASE("luduvo_rich_hover_tags_deprecated_members")
@@ -691,6 +689,9 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
                 Echo: (text: string) -> string,
             },
         }
+        declare MyLibrary: {
+            Spawn: (asset: string) -> Instance?,
+        }
     )");
 
     TestClient client;
@@ -699,6 +700,8 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
     config.platform.luduvo.definitions.serverOverride = definitions;
     config.platform.luduvo.definitions.clientOverride = definitions;
     config.platform.luduvo.definitions.exposePrivateTypes = true;
+    config.platform.luduvo.resources.bindings.push_back({"MyLibrary.Spawn", "asset", "prefab"});
+    config.platform.luduvo.resources.completion.enabled = false;
     client.globalConfig = config;
 
     WorkspaceFolder workspace(
@@ -718,8 +721,15 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
         return result->contents.value;
     };
 
-    CHECK(hover("local add = instance.AddComponent", {0, 23}).find("`resource-constrained`") != std::string::npos);
-    CHECK(hover("local spawn = game.Prefabs.Spawn", {0, 28}).find("`resource-constrained`") != std::string::npos);
+    const std::string add = hover("local add = instance.AddComponent", {0, 23});
+    CHECK(add.find("`resource-constrained`") != std::string::npos);
+    CHECK(add.find("`name: string` expects a Luduvo component name.") != std::string::npos);
+    const std::string spawn = hover("local spawn = game.Prefabs.Spawn", {0, 28});
+    CHECK(spawn.find("`resource-constrained`") != std::string::npos);
+    CHECK(spawn.find("`name: string` expects a Luduvo prefab name.") != std::string::npos);
+    const std::string custom = hover("local spawnCustom = MyLibrary.Spawn", {0, 31});
+    CHECK(custom.find("`resource-constrained`") != std::string::npos);
+    CHECK(custom.find("`asset: string` expects a Luduvo prefab name.") != std::string::npos);
     CHECK(hover("local rename = instance.Rename", {0, 25}).find("resource-constrained") == std::string::npos);
     CHECK(hover("local echo = game.Prefabs.Echo", {0, 27}).find("resource-constrained") == std::string::npos);
 }
@@ -935,7 +945,8 @@ TEST_CASE("luduvo_hover_only_describes_real_source_tokens")
     WorkspaceFolder workspace(&client, "$LUDUVO_HOVER_TOKENS", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
     workspace.setupWithConfiguration(config);
     workspace.isReady = true;
-    auto uri = Luau::LanguageServer::newDocument(workspace, "keywords.client.luau", "local function run()\n    if true then\n        return\n    end\nend");
+    auto uri =
+        Luau::LanguageServer::newDocument(workspace, "keywords.client.luau", "local function run()\n    if true then\n        return\n    end\nend");
 
     lsp::HoverParams params;
     params.textDocument = lsp::TextDocumentIdentifier{uri};
@@ -1118,8 +1129,7 @@ TEST_CASE("luduvo_rich_hover_does_not_inherit_global_member_documentation_for_ca
     config.platform.luduvo.definitions.clientOverride = definitions;
     config.platform.luduvo.definitions.serverOverride = definitions;
     client.globalConfig = config;
-    WorkspaceFolder workspace(
-        &client, "$LUDUVO_CALLBACK_DOCUMENTATION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    WorkspaceFolder workspace(&client, "$LUDUVO_CALLBACK_DOCUMENTATION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
     workspace.setupWithConfiguration(config);
     workspace.isReady = true;
     client.documentation["@luduvo/server/globaltype/Instance.Action"] = Luau::BasicDocumentation{"Action documentation"};

@@ -90,8 +90,7 @@ DeclarationTarget getDeclarationTarget(
     return {};
 }
 
-std::string makeDeclaration(
-    Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target)
+std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target)
 {
     auto declarationFor = [&](const std::string& typeText)
     {
@@ -140,9 +139,8 @@ std::string makeDeclaration(
 bool isLiteralPosition(const Luau::SourceModule& sourceModule, const Luau::Position& position)
 {
     for (const Luau::AstNode* ancestor : Luau::findAstAncestryOfPosition(sourceModule, position))
-        if ((ancestor->is<Luau::AstExprConstantNil>() || ancestor->is<Luau::AstExprConstantBool>() ||
-                ancestor->is<Luau::AstExprConstantNumber>() || ancestor->is<Luau::AstExprConstantInteger>() ||
-                ancestor->is<Luau::AstExprConstantString>()) &&
+        if ((ancestor->is<Luau::AstExprConstantNil>() || ancestor->is<Luau::AstExprConstantBool>() || ancestor->is<Luau::AstExprConstantNumber>() ||
+                ancestor->is<Luau::AstExprConstantInteger>() || ancestor->is<Luau::AstExprConstantString>()) &&
             ancestor->location.containsClosed(position))
             return true;
     return false;
@@ -181,19 +179,6 @@ bool localHasDirectMemberInitializer(const Luau::SourceModule& sourceModule, con
     return finder.result && finder.result->is<Luau::AstExprIndexName>();
 }
 
-enum struct LuduvoDefinitionSide
-{
-    None,
-    Server,
-    Client,
-};
-
-struct LuduvoSymbolIdentity
-{
-    std::string title;
-    LuduvoDefinitionSide side = LuduvoDefinitionSide::None;
-};
-
 struct LuduvoTypeProvenance
 {
     bool server = false;
@@ -207,84 +192,6 @@ enum struct LuduvoTypeCheckability
     Uncheckable,
     Unresolved,
 };
-
-enum struct LuduvoResourceKind
-{
-    Component,
-    Prefab,
-};
-
-struct LuduvoResourceArgumentApi
-{
-    std::string_view symbol;
-    LuduvoResourceKind resourceKind;
-};
-
-constexpr LuduvoResourceArgumentApi kLuduvoResourceArgumentApis[] = {
-    {"Instance.AddComponent", LuduvoResourceKind::Component},
-    {"Instance.FindAncestorWithComponent", LuduvoResourceKind::Component},
-    {"Instance.HasComponent", LuduvoResourceKind::Component},
-    {"Instance.RemoveComponent", LuduvoResourceKind::Component},
-    {"Query.With", LuduvoResourceKind::Component},
-    {"Query.Without", LuduvoResourceKind::Component},
-    {"game.Prefabs.Exists", LuduvoResourceKind::Prefab},
-    {"game.Prefabs.Id", LuduvoResourceKind::Prefab},
-    {"game.Prefabs.RevertAddedComponent", LuduvoResourceKind::Component},
-    {"game.Prefabs.Spawn", LuduvoResourceKind::Prefab},
-    {"game.World.Each", LuduvoResourceKind::Component},
-    {"game.World.Pair", LuduvoResourceKind::Component},
-    {"game.World.Query", LuduvoResourceKind::Component},
-};
-
-std::optional<LuduvoSymbolIdentity> getLuduvoSymbolIdentity(const std::optional<std::string>& documentationSymbol)
-{
-    if (!documentationSymbol)
-        return std::nullopt;
-
-    constexpr std::string_view serverPrefix = "@luduvo/server/";
-    constexpr std::string_view clientPrefix = "@luduvo/client/";
-    std::string_view symbol = *documentationSymbol;
-    LuduvoDefinitionSide side = LuduvoDefinitionSide::None;
-
-    if (symbol.substr(0, serverPrefix.size()) == serverPrefix)
-    {
-        symbol.remove_prefix(serverPrefix.size());
-        side = LuduvoDefinitionSide::Server;
-    }
-    else if (symbol.substr(0, clientPrefix.size()) == clientPrefix)
-    {
-        symbol.remove_prefix(clientPrefix.size());
-        side = LuduvoDefinitionSide::Client;
-    }
-    else
-        return std::nullopt;
-
-    constexpr std::string_view globalPrefix = "global/";
-    constexpr std::string_view globalTypePrefix = "globaltype/";
-    if (symbol.substr(0, globalPrefix.size()) == globalPrefix)
-        symbol.remove_prefix(globalPrefix.size());
-    else if (symbol.substr(0, globalTypePrefix.size()) == globalTypePrefix)
-        symbol.remove_prefix(globalTypePrefix.size());
-    else
-        return std::nullopt;
-
-    if (size_t overload = symbol.find("/overload/"); overload != std::string_view::npos)
-        symbol = symbol.substr(0, overload);
-
-    return LuduvoSymbolIdentity{std::string(symbol), side};
-}
-
-std::optional<LuduvoResourceKind> getLuduvoResourceArgumentKind(const std::optional<std::string>& documentationSymbol)
-{
-    auto identity = getLuduvoSymbolIdentity(documentationSymbol);
-    if (!identity)
-        return std::nullopt;
-
-    for (const LuduvoResourceArgumentApi& api : kLuduvoResourceArgumentApis)
-        if (api.symbol == identity->title)
-            return api.resourceKind;
-    return std::nullopt;
-}
 
 std::string versionLabel(LuduvoDefinitionSide side)
 {
@@ -401,8 +308,7 @@ LuduvoTypeCheckability getCheckability(Luau::TypeId type)
     return getCheckability(type, false, visited);
 }
 
-bool isUncheckableArgumentType(
-    Luau::TypeId type, const std::vector<Luau::TypeId>& functionGenerics, std::vector<Luau::TypeId>& visited)
+bool isUncheckableArgumentType(Luau::TypeId type, const std::vector<Luau::TypeId>& functionGenerics, std::vector<Luau::TypeId>& visited)
 {
     if (std::find(functionGenerics.begin(), functionGenerics.end(), type) != functionGenerics.end())
         return false;
@@ -867,7 +773,24 @@ std::optional<std::string> resolveLuduvoHoverDocumentationSymbol(
     return retargetDocumentationSymbol(resolved, environmentName);
 }
 
-std::string renderLuduvoRichHover(const ClientLuduvoHoverConfiguration& config, const LuduvoRichHoverContext& context)
+std::string renderResourceConstraints(const std::vector<LuduvoResolvedResourceBinding>& bindings)
+{
+    std::string result;
+    for (const LuduvoResolvedResourceBinding& binding : bindings)
+    {
+        if (!result.empty())
+            result += "\n\n";
+        result += "`" + binding.parameter + ": string` expects ";
+        if (binding.pluralResourceNoun)
+            result += "Luduvo " + binding.kind + " names.";
+        else
+            result += "a Luduvo " + binding.kind + " name.";
+    }
+    return result;
+}
+
+std::string renderLuduvoRichHover(
+    const ClientLuduvoHoverConfiguration& config, const LuduvoResourceBindingRegistry& resourceBindings, const LuduvoRichHoverContext& context)
 {
     auto identity = getLuduvoSymbolIdentity(context.documentationSymbol);
     std::string title = normalizeDisplayedType(identity ? identity->title : context.fallbackTitle.value_or(context.typeDefinition));
@@ -886,7 +809,8 @@ std::string renderLuduvoRichHover(const ClientLuduvoHoverConfiguration& config, 
     {
         const size_t fixedLength = visibleLength(provenance) + (linked ? 2 : 0); // Linked headings render a space and ↗ after the title.
         const size_t titleBudget = *config.maxTitleLength > fixedLength ? *config.maxTitleLength - fixedLength : 3;
-        const bool complexMultilineUnion = Luau::is<Luau::UnionType>(Luau::follow(context.type)) && context.typeDefinition.find('\n') != std::string::npos;
+        const bool complexMultilineUnion =
+            Luau::is<Luau::UnionType>(Luau::follow(context.type)) && context.typeDefinition.find('\n') != std::string::npos;
         if (auto summary = getUnionSummary(context.type); summary && (complexMultilineUnion || visibleLength(title) > titleBudget))
         {
             const std::string countSuffix = " +" + std::to_string(summary->second) + " union member" + (summary->second == 1 ? "" : "s");
@@ -905,6 +829,7 @@ std::string renderLuduvoRichHover(const ClientLuduvoHoverConfiguration& config, 
 
     heading += provenance;
 
+    const std::vector<LuduvoResolvedResourceBinding> constrainedResources = resourceBindings.resolve(context.documentationSymbol, context.type);
     std::vector<std::string> tags;
     bool deprecated = false;
     if (context.property)
@@ -915,12 +840,11 @@ std::string renderLuduvoRichHover(const ClientLuduvoHoverConfiguration& config, 
             tags.emplace_back("write-only");
         deprecated = context.property->deprecated;
     }
-    if (context.documentation && context.documentation->readOnly &&
-        std::find(tags.begin(), tags.end(), "read-only") == tags.end())
+    if (context.documentation && context.documentation->readOnly && std::find(tags.begin(), tags.end(), "read-only") == tags.end())
         tags.emplace_back("read-only");
     if (deprecated || isDeprecated(context.type))
         tags.emplace_back("deprecated");
-    if (getLuduvoResourceArgumentKind(context.documentationSymbol))
+    if (!constrainedResources.empty())
         tags.emplace_back("resource-constrained");
     if (hasUncheckableArguments(context.type))
         tags.emplace_back("uncheckable arguments");
@@ -943,9 +867,9 @@ std::string renderLuduvoRichHover(const ClientLuduvoHoverConfiguration& config, 
     if (config.maxTypeDefinitionLength)
         typeDefinition = truncateTypeDefinition(typeDefinition, *config.maxTypeDefinitionLength);
 
-    const bool hasVisibleDocumentation = context.documentation &&
-                                         (!context.documentation->markdown.empty() || context.documentation->learnMoreLink.has_value());
-    if (context.showTypeDefinition && tags.empty() && !hasVisibleDocumentation && provenance.empty())
+    const bool hasVisibleDocumentation =
+        context.documentation && (!context.documentation->markdown.empty() || context.documentation->learnMoreLink.has_value());
+    if (context.showTypeDefinition && tags.empty() && !hasVisibleDocumentation && constrainedResources.empty() && provenance.empty())
         return codeBlock("luau", typeDefinition);
 
     std::string result = heading;
@@ -969,6 +893,10 @@ std::string renderLuduvoRichHover(const ClientLuduvoHoverConfiguration& config, 
             result += "\n\n" + documentation;
     }
 
+    const std::string resourceConstraints = renderResourceConstraints(constrainedResources);
+    if (!resourceConstraints.empty())
+        result += "\n\n" + resourceConstraints;
+
     if (!context.showTypeDefinition)
         return result;
 
@@ -991,8 +919,7 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     options.maxTypeLength = 0;
 
     const std::string rawType = Luau::toString(context.type, options);
-    const DeclarationTarget declarationTarget =
-        getDeclarationTarget(context.sourceModule, context.exprOrLocal, context.node, context.position);
+    const DeclarationTarget declarationTarget = getDeclarationTarget(context.sourceModule, context.exprOrLocal, context.node, context.position);
     const Luau::AstLocal* hoveredLocal = context.exprOrLocal.getLocal();
     if (!hoveredLocal)
         if (auto localExpression = context.node->as<Luau::AstExprLocal>())
@@ -1004,13 +931,12 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
         !((declarationTarget.kind == DeclarationKind::Local && !directMemberInitializer) || context.node->asType());
     if (!directIdentityBelongsToHover)
         documentationSymbol = std::nullopt;
-    documentationSymbol =
-        resolveLuduvoHoverDocumentationSymbol(context.type, documentationSymbol, getEnvironmentForModule(context.moduleName));
+    documentationSymbol = resolveLuduvoHoverDocumentationSymbol(context.type, documentationSymbol, getEnvironmentForModule(context.moduleName));
 
     std::optional<PrintedDocumentation> documentation;
     if (workspaceFolder && documentationSymbol)
-        documentation = getDocumentation(
-            workspaceFolder->client->documentation, *documentationSymbol, &workspaceFolder->client->documentationMetadata);
+        documentation =
+            getDocumentation(workspaceFolder->client->documentation, *documentationSymbol, &workspaceFolder->client->documentationMetadata);
     if (!documentation && workspaceFolder)
     {
         if (directIdentityBelongsToHover)
@@ -1035,8 +961,7 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
 
     const Luau::TypeId resolvedType = Luau::follow(context.type);
     std::optional<std::string> fallbackTitle = types::getTypeName(resolvedType);
-    if (!fallbackTitle &&
-        Luau::is<Luau::PrimitiveType, Luau::SingletonType, Luau::UnionType, Luau::IntersectionType>(resolvedType))
+    if (!fallbackTitle && Luau::is<Luau::PrimitiveType, Luau::SingletonType, Luau::UnionType, Luau::IntersectionType>(resolvedType))
         fallbackTitle = rawType;
     if (!fallbackTitle && context.exprOrLocal.getName())
         fallbackTitle = context.exprOrLocal.getName()->value;
@@ -1047,34 +972,32 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     std::optional<Luau::Property> property;
     if (context.hoveredProperty)
         property = *context.hoveredProperty;
-    return lsp::Hover{{lsp::MarkupKind::Markdown,
-        renderLuduvoRichHover(configuration.hover,
-            LuduvoRichHoverContext{context.type, declaration, documentationSymbol, std::move(property), documentation, fallbackTitle,
-                directMemberInitializer, true})}};
+    return lsp::Hover{{lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, resourceBindings,
+                                                      LuduvoRichHoverContext{context.type, declaration, documentationSymbol, std::move(property),
+                                                          documentation, fallbackTitle, directMemberInitializer, true})}};
 }
 
-std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(
-    const PlatformCompletionDocumentationContext& context)
+std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context)
 {
     if (configuration.hover.presentation != LuduvoHoverPresentation::Rich || !context.entry.type || !workspaceFolder)
         return std::nullopt;
 
-    auto documentationSymbol = resolveLuduvoHoverDocumentationSymbol(
-        *context.entry.type, context.entry.documentationSymbol, getEnvironmentForModule(context.moduleName));
+    auto documentationSymbol =
+        resolveLuduvoHoverDocumentationSymbol(*context.entry.type, context.entry.documentationSymbol, getEnvironmentForModule(context.moduleName));
     std::optional<PrintedDocumentation> documentation;
     if (documentationSymbol)
-        documentation = getDocumentation(
-            workspaceFolder->client->documentation, *documentationSymbol, &workspaceFolder->client->documentationMetadata);
+        documentation =
+            getDocumentation(workspaceFolder->client->documentation, *documentationSymbol, &workspaceFolder->client->documentationMetadata);
     if (!documentation && context.fallbackDocumentation && !context.fallbackDocumentation->empty())
         documentation = PrintedDocumentation{*context.fallbackDocumentation, std::nullopt};
 
     std::optional<Luau::Property> property;
     if (context.entry.prop)
         property = **context.entry.prop;
-    return lsp::MarkupContent{lsp::MarkupKind::Markdown,
-        renderLuduvoRichHover(configuration.hover,
-            LuduvoRichHoverContext{*context.entry.type, Luau::toString(Luau::follow(*context.entry.type)), documentationSymbol,
-                std::move(property), documentation, context.name, false, false})};
+    return lsp::MarkupContent{
+        lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, resourceBindings,
+                                       LuduvoRichHoverContext{*context.entry.type, Luau::toString(Luau::follow(*context.entry.type)),
+                                           documentationSymbol, std::move(property), documentation, context.name, false, false})};
 }
 
 std::optional<lsp::MarkupContent> LuduvoPlatform::handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context)
@@ -1094,10 +1017,9 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleSignatureHelpDocumentati
     if (!documentation && !context.fallbackDocumentation.empty())
         documentation = PrintedDocumentation{context.fallbackDocumentation, std::nullopt};
 
-    return lsp::MarkupContent{lsp::MarkupKind::Markdown,
-        renderLuduvoRichHover(configuration.hover,
-            LuduvoRichHoverContext{context.type, Luau::toString(Luau::follow(context.type)), documentationSymbol, std::nullopt,
-                documentation, std::nullopt, false, false})};
+    return lsp::MarkupContent{lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, resourceBindings,
+                                                             LuduvoRichHoverContext{context.type, Luau::toString(Luau::follow(context.type)),
+                                                                 documentationSymbol, std::nullopt, documentation, std::nullopt, false, false})};
 }
 
 void LuduvoPlatform::handleSignatureHelp(const PlatformSignatureHelpContext& context)

@@ -797,6 +797,8 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
         result = Luau::autocomplete(frontend, moduleName, position, stringCompletionCB);
     }
 
+    const auto localModule = fragmentWasSuccessful ? fragmentStatusResult.result->incrementalModule : getModule(moduleName, forAutocomplete);
+
     std::vector<lsp::CompletionItem> items{};
 
     for (auto& [name, entry] : result.entryMap)
@@ -826,7 +828,6 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
                 item.label = ".";
         }
 
-        const auto localModule = fragmentWasSuccessful ? fragmentStatusResult.result->incrementalModule : getModule(moduleName, forAutocomplete);
         auto documentationString = getDocumentationForAutocompleteEntry(name, entry, result.ancestry, localModule, position);
         if (auto platformDocumentation = platform->handleCompletionDocumentation(
                 PlatformCompletionDocumentationContext{moduleName, name, entry, documentationString}))
@@ -998,8 +999,8 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
         items.emplace_back(item);
     }
 
-    if (auto module = frontend.getSourceModule(moduleName))
-        platform->handleCompletion(*textDocument, *module, position, items);
+    if (auto sourceModule = frontend.getSourceModule(moduleName))
+        platform->handleCompletion(*textDocument, *sourceModule, localModule, result.ancestry, position, items);
 
     if (config.completion.suggestImports || config.completion.imports.enabled)
     {

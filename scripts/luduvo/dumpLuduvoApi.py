@@ -30,6 +30,7 @@ from dumpLuduvoTypes import (
     remote_definitions,
     write_text,
 )
+from dumpLuduvoResources import ResourceCatalogError, generate_from_content_root, generate_from_manifest
 from luduvo_declarations import merge_surfaces, parse_declarations
 
 REFERENCE_URL = "https://docs.luduvo.com/reference"
@@ -493,8 +494,12 @@ def main() -> int:
         if arguments.generate:
             for surface, (_, declaration_source, _) in definition_sources.items():
                 write_text(OUTPUTS[surface], declaration_source)
+            if arguments.content_manifest_url:
+                generate_from_manifest(arguments.content_manifest_url)
+            else:
+                generate_from_content_root(arguments.content_root)
             run_documentation_generator()
-    except (CatalogError, DefinitionsError, OSError, UnicodeError) as error:
+    except (CatalogError, DefinitionsError, ResourceCatalogError, OSError, UnicodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
 

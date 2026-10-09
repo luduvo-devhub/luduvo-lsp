@@ -1,0 +1,3 @@
+#pragma once
+
+inline constexpr const char* LUDUVO_RESOURCES = R"LUDUVO(@LUDUVO_RESOURCES@)LUDUVO";
