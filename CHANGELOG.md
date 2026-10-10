@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hover/Autocomplete/Paramater tooltips report which variables/types that are resource contrained in its markdown menu
 - Releases now (hopefully) support VSCode extension builds that put them in different release channels depending on the suffix I give releases. Not actually tested yet
 
+### Changed
+
+- Sync to upstream Luau 0.742
+
 ### Fixed
 
 - Stopped adding the "L-alpha" suffix to the end of VSCode extension releases so they compile again

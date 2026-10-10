@@ -14602,7 +14602,7 @@
     "documentation": "The function to bind the close button to. If no function is specified then any previously specified function will be unbound."
   },
   "@roblox/globaltype/PluginGui.BindToClose": {
-    "documentation": "Binds a function to the <code>PluginGui</code> close button, overriding the default behavior.",
+    "documentation": "Binds a function that runs when the user closes the <code>PluginGui</code>.",
     "params": [
       {
         "name": "self",
@@ -41417,6 +41417,7 @@
     "documentation": "Abstract intermediate class that manages physical geometry properties for PartOperations and MeshParts.",
     "keys": {
       "CollisionFidelity": "@roblox/globaltype/TriangleMeshPart.CollisionFidelity",
+      "CollisionPrecision": "@roblox/globaltype/TriangleMeshPart.CollisionPrecision",
       "FluidFidelity": "@roblox/globaltype/TriangleMeshPart.FluidFidelity",
       "MeshSize": "@roblox/globaltype/TriangleMeshPart.MeshSize"
     },
@@ -41426,6 +41427,11 @@
   "@roblox/globaltype/TriangleMeshPart.CollisionFidelity": {
     "documentation": "Determines the level of detail the part's physics will adhere to its mesh.",
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/TriangleMeshPart#CollisionFidelity",
+    "code_sample": ""
+  },
+  "@roblox/globaltype/TriangleMeshPart.CollisionPrecision": {
+    "documentation": "Quantifies how precise or performant a <code>CollisionFidelity.Tunable</code> collision geometry is, from <code>0</code> to <code>1</code>.",
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/TriangleMeshPart#CollisionPrecision",
     "code_sample": ""
   },
   "@roblox/globaltype/TriangleMeshPart.FluidFidelity": {
@@ -47176,6 +47182,7 @@
       "DevTouchMovementMode": "@roblox/globaltype/Player.DevTouchMovementMode",
       "DisplayName": "@roblox/globaltype/Player.DisplayName",
       "FollowUserId": "@roblox/globaltype/Player.FollowUserId",
+      "FrustumStreaming": "@roblox/globaltype/Player.FrustumStreaming",
       "GameplayPaused": "@roblox/globaltype/Player.GameplayPaused",
       "HasRobloxSubscription": "@roblox/globaltype/Player.HasRobloxSubscription",
       "HasVerifiedBadge": "@roblox/globaltype/Player.HasVerifiedBadge",
@@ -47351,6 +47358,11 @@
     "documentation": "Describes the user ID of the player who was followed into an experience by a player.",
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/Player#FollowUserId",
     "code_sample": "local Players = game:GetService(\"Players\")\n\nlocal player = Players.LocalPlayer\n\nlocal screenGui = Instance.new(\"ScreenGui\")\nscreenGui.Parent = player:WaitForChild(\"PlayerGui\")\n\nlocal function onPlayerAdded(newPlayer)\n\tif newPlayer.FollowUserId == player.UserId then\n\t\tlocal textLabel = Instance.new(\"TextLabel\")\n\t\ttextLabel.Parent = screenGui\n\t\ttextLabel.Text = \"You were followed to this game by \" .. newPlayer.Name .. \"!\"\n\t\ttask.delay(3, function()\n\t\t\tif textLabel then\n\t\t\t\ttextLabel:Destroy()\n\t\t\tend\n\t\tend)\n\tend\nend\n\nPlayers.PlayerAdded:Connect(onPlayerAdded)"
+  },
+  "@roblox/globaltype/Player.FrustumStreaming": {
+    "documentation": "Controls the engine's instance streaming behavior for the player's camera view.",
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/Player#FrustumStreaming",
+    "code_sample": ""
   },
   "@roblox/globaltype/Player.GameplayPaused": {
     "documentation": "Whether player client-side gameplay is currently paused.",
@@ -67156,6 +67168,7 @@
       "FixedSize": "@roblox/globaltype/EditableMesh.FixedSize",
       "AddBone": "@roblox/globaltype/EditableMesh.AddBone",
       "AddColor": "@roblox/globaltype/EditableMesh.AddColor",
+      "AddFace": "@roblox/globaltype/EditableMesh.AddFace",
       "AddNormal": "@roblox/globaltype/EditableMesh.AddNormal",
       "AddTriangle": "@roblox/globaltype/EditableMesh.AddTriangle",
       "AddUV": "@roblox/globaltype/EditableMesh.AddUV",
@@ -67318,6 +67331,33 @@
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/EditableMesh#AddColor",
     "code_sample": ""
   },
+  "@roblox/globaltype/EditableMesh.AddFace/param/0": {
+    "documentation": "Object which allows for the runtime creation and manipulation of meshes."
+  },
+  "@roblox/globaltype/EditableMesh.AddFace/param/1": {
+    "documentation": "Array of the new face's vertex IDs, in order around the face. Provide 3 IDs to create a triangle or 4 IDs to create a quad."
+  },
+  "@roblox/globaltype/EditableMesh.AddFace/return/0": {
+    "documentation": "Face ID of the new face."
+  },
+  "@roblox/globaltype/EditableMesh.AddFace": {
+    "documentation": "Adds a new triangle or quad face to the mesh and returns a face ID.",
+    "params": [
+      {
+        "name": "self",
+        "documentation": "@roblox/globaltype/EditableMesh.AddFace/param/0"
+      },
+      {
+        "name": "vertexIds",
+        "documentation": "@roblox/globaltype/EditableMesh.AddFace/param/1"
+      }
+    ],
+    "returns": [
+      "@roblox/globaltype/EditableMesh.AddFace/return/0"
+    ],
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/EditableMesh#AddFace",
+    "code_sample": ""
+  },
   "@roblox/globaltype/EditableMesh.AddNormal/param/0": {
     "documentation": "Object which allows for the runtime creation and manipulation of meshes."
   },
@@ -67358,7 +67398,7 @@
     "documentation": "ID of the third vertex of the triangle."
   },
   "@roblox/globaltype/EditableMesh.AddTriangle/return/0": {
-    "documentation": "Face ID of the new face."
+    "documentation": "Stable face ID of the new face."
   },
   "@roblox/globaltype/EditableMesh.AddTriangle": {
     "documentation": "Adds a new triangle to the mesh and returns a face ID.",
@@ -67763,7 +67803,7 @@
     "documentation": "Point position in the mesh's local object space."
   },
   "@roblox/globaltype/EditableMesh.FindClosestPointOnSurface/return/0": {
-    "documentation": "Tuple of the face ID, point on the mesh in local object space, and the barycentric coordinate of the position within the face."
+    "documentation": "Tuple of the face ID, point on the mesh in local object space, the barycentric coordinate of the position within the face, and the 3 vertex IDs that the barycentric coordinate weights."
   },
   "@roblox/globaltype/EditableMesh.FindClosestPointOnSurface": {
     "documentation": "Finds the closest point on the mesh's surface.",
@@ -69074,7 +69114,7 @@
     "documentation": "Direction of the ray."
   },
   "@roblox/globaltype/EditableMesh.RaycastLocal/return/0": {
-    "documentation": "Tuple of the point of intersection, face ID, and barycentric coordinates."
+    "documentation": "Tuple of the face ID, point of intersection, barycentric coordinates, and the 3 vertex IDs that the barycentric coordinates weight."
   },
   "@roblox/globaltype/EditableMesh.RaycastLocal": {
     "documentation": "Casts a ray and returns the intersection point, face ID, and barycentric coordinates.",
@@ -71749,7 +71789,7 @@
     "documentation": "The <code>Translator</code> instance for the specified locale."
   },
   "@roblox/globaltype/LocalizationService.GetTranslatorForPlayer": {
-    "documentation": "Returns a <code>Translator</code> to be used for translations using the locale data loaded.",
+    "documentation": "<strong>Deprecated:</strong> This function has been deprecated by <code>LocalizationService:GetTranslatorForPlayerAsync()</code>, which functions similarly except that it yields until the cloud table has loaded. Please use it in new work instead.<br>Returns a <code>Translator</code> to be used for translations using the locale data loaded.",
     "params": [
       {
         "name": "self",
@@ -91778,6 +91818,7 @@
       "Direction1DState": "@roblox/globaltype/InputAction.Direction1DState",
       "Direction2DState": "@roblox/globaltype/InputAction.Direction2DState",
       "Direction3DState": "@roblox/globaltype/InputAction.Direction3DState",
+      "DisplayName": "@roblox/globaltype/InputAction.DisplayName",
       "Enabled": "@roblox/globaltype/InputAction.Enabled",
       "PreferredBinding": "@roblox/globaltype/InputAction.PreferredBinding",
       "Type": "@roblox/globaltype/InputAction.Type",
@@ -91806,6 +91847,11 @@
   "@roblox/globaltype/InputAction.Direction3DState": {
     "documentation": "Non-scriptable read-only property useful for debugging <code>Direction3D</code> input actions.",
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/InputAction#Direction3DState",
+    "code_sample": ""
+  },
+  "@roblox/globaltype/InputAction.DisplayName": {
+    "documentation": "Localized display name for this action.",
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/classes/InputAction#DisplayName",
     "code_sample": ""
   },
   "@roblox/globaltype/InputAction.Enabled": {
@@ -98507,7 +98553,7 @@
     "code_sample": ""
   },
   "@roblox/globaltype/SlidingBallConstraint": {
-    "documentation": "The base class for constraints that allow their attachments to slide along an axis but not rotate.",
+    "documentation": "The base class for constraints that allow their attachments to slide along an axis.",
     "keys": {
       "ActuatorType": "@roblox/globaltype/SlidingBallConstraint.ActuatorType",
       "CurrentPosition": "@roblox/globaltype/SlidingBallConstraint.CurrentPosition",
@@ -106533,6 +106579,16 @@
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/AnimationNodeType#OneShotNode",
     "code_sample": ""
   },
+  "@roblox/enum/AnimationNodeType.StateMachineNode": {
+    "documentation": "A node that selects and transitions between animation states according to a state machine definition.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/AnimationNodeType#StateMachineNode",
+    "code_sample": ""
+  },
   "@roblox/global/Enum.AnimationNodeType": {
     "documentation": "Specifies the type of an animation graph node, determining how it processes or combines animation data.",
     "keys": {
@@ -106550,7 +106606,8 @@
       "SequenceNode": "@roblox/enum/AnimationNodeType.SequenceNode",
       "SpeedNode": "@roblox/enum/AnimationNodeType.SpeedNode",
       "SubtractNode": "@roblox/enum/AnimationNodeType.SubtractNode",
-      "OneShotNode": "@roblox/enum/AnimationNodeType.OneShotNode"
+      "OneShotNode": "@roblox/enum/AnimationNodeType.OneShotNode",
+      "StateMachineNode": "@roblox/enum/AnimationNodeType.StateMachineNode"
     },
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/AnimationNodeType",
     "code_sample": ""
@@ -106964,6 +107021,46 @@
       "Always": "@roblox/enum/AssetTypeVerification.Always"
     },
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/AssetTypeVerification",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserNewReturningStatus.Unknown": {
+    "documentation": "Segment data is unavailable.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserNewReturningStatus#Unknown",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserNewReturningStatus.New": {
+    "documentation": "The player is playing the experience for the first time.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserNewReturningStatus#New",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserNewReturningStatus.Returning": {
+    "documentation": "The player has played the experience before.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserNewReturningStatus#Returning",
+    "code_sample": ""
+  },
+  "@roblox/global/Enum.UserNewReturningStatus": {
+    "documentation": "Describes whether a player is new to the current experience or has played it before.",
+    "keys": {
+      "Unknown": "@roblox/enum/UserNewReturningStatus.Unknown",
+      "New": "@roblox/enum/UserNewReturningStatus.New",
+      "Returning": "@roblox/enum/UserNewReturningStatus.Returning"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserNewReturningStatus",
     "code_sample": ""
   },
   "@roblox/enum/AvatarSettingsScaleMode.PlayerChoice": {
@@ -107904,6 +108001,68 @@
       "PauseEventTriggered": "@roblox/enum/AdUIEventType.PauseEventTriggered"
     },
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/AdUIEventType",
+    "code_sample": ""
+  },
+  "@roblox/enum/EngagementLevel.Unknown": {
+    "documentation": "Segment data is unavailable.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/EngagementLevel#Unknown",
+    "code_sample": ""
+  },
+  "@roblox/enum/EngagementLevel.Inactive": {
+    "documentation": "The player did not play the experience in the last 7 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/EngagementLevel#Inactive",
+    "code_sample": ""
+  },
+  "@roblox/enum/EngagementLevel.Low": {
+    "documentation": "The player played the experience on 1 of the last 7 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/EngagementLevel#Low",
+    "code_sample": ""
+  },
+  "@roblox/enum/EngagementLevel.Medium": {
+    "documentation": "The player played the experience on 2 or 3 of the last 7 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/EngagementLevel#Medium",
+    "code_sample": ""
+  },
+  "@roblox/enum/EngagementLevel.High": {
+    "documentation": "The player played the experience on 4 to 7 of the last 7 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/EngagementLevel#High",
+    "code_sample": ""
+  },
+  "@roblox/global/Enum.EngagementLevel": {
+    "documentation": "Describes how many days a player played the current experience in the last 7 days, represented as a bucket.",
+    "keys": {
+      "Unknown": "@roblox/enum/EngagementLevel.Unknown",
+      "Inactive": "@roblox/enum/EngagementLevel.Inactive",
+      "Low": "@roblox/enum/EngagementLevel.Low",
+      "Medium": "@roblox/enum/EngagementLevel.Medium",
+      "High": "@roblox/enum/EngagementLevel.High"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/EngagementLevel",
     "code_sample": ""
   },
   "@roblox/enum/StartCorner.TopLeft": {
@@ -112608,6 +112767,57 @@
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PositionAlignmentMode",
     "code_sample": ""
   },
+  "@roblox/enum/FrustumStreamingMode.Default": {
+    "documentation": "Default behavior, currently equivalent to <code>Disabled</code>.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/FrustumStreamingMode#Default",
+    "code_sample": ""
+  },
+  "@roblox/enum/FrustumStreamingMode.Enabled": {
+    "documentation": "Always stream camera view.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/FrustumStreamingMode#Enabled",
+    "code_sample": ""
+  },
+  "@roblox/enum/FrustumStreamingMode.Disabled": {
+    "documentation": "Disable camera view streaming.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/FrustumStreamingMode#Disabled",
+    "code_sample": ""
+  },
+  "@roblox/enum/FrustumStreamingMode.Automatic": {
+    "documentation": "Allow the engine to decide when to stream the camera view based client ability and gameplay factors.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/FrustumStreamingMode#Automatic",
+    "code_sample": ""
+  },
+  "@roblox/global/Enum.FrustumStreamingMode": {
+    "documentation": "Used with <code>Player.FrustumStreaming</code> to control the engine's instance streaming behavior for their camera view",
+    "keys": {
+      "Default": "@roblox/enum/FrustumStreamingMode.Default",
+      "Enabled": "@roblox/enum/FrustumStreamingMode.Enabled",
+      "Disabled": "@roblox/enum/FrustumStreamingMode.Disabled",
+      "Automatic": "@roblox/enum/FrustumStreamingMode.Automatic"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/FrustumStreamingMode",
+    "code_sample": ""
+  },
   "@roblox/enum/AssetCreatorType.User": {
     "documentation": "The asset is owned by an individual user; the accompanying creator ID is a user ID.",
     "keys": {
@@ -113719,7 +113929,7 @@
     "code_sample": ""
   },
   "@roblox/enum/ImageCombineType.Add": {
-    "documentation": "Adds pixels from the source and pixels from the destination together.",
+    "documentation": "Adds pixels from the source and pixels from the destination together. Source RGB values are scaled by the source alpha, while source alpha is added directly to destination alpha.",
     "keys": {
       "Name": "@roblox/globaltype/EnumItem.Name",
       "Value": "@roblox/globaltype/EnumItem.Value",
@@ -113759,7 +113969,7 @@
     "code_sample": ""
   },
   "@roblox/enum/ImageCombineType.Subtract": {
-    "documentation": "Subtracts pixels of the source from pixels of the destination.",
+    "documentation": "Subtracts pixels of the source from pixels of the destination. Source RGB values are scaled by the source alpha, while source alpha is subtracted directly from destination alpha.",
     "keys": {
       "Name": "@roblox/globaltype/EnumItem.Name",
       "Value": "@roblox/globaltype/EnumItem.Value",
@@ -116226,6 +116436,134 @@
       "High": "@roblox/enum/VerifiedLevel.High"
     },
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/VerifiedLevel",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.Unknown": {
+    "documentation": "Segment data is unavailable.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#Unknown",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.PendingAttribution": {
+    "documentation": "The player started playing recently, and their acquisition source is not available yet.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#PendingAttribution",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.HomeRecommendation": {
+    "documentation": "The player first joined from a recommendation on the Home page.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#HomeRecommendation",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.ContinueToPlay": {
+    "documentation": "The player first joined from the Continue section.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#ContinueToPlay",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.Curation": {
+    "documentation": "The player first joined from content curated by Roblox, such as featured experiences or events.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#Curation",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.Friends": {
+    "documentation": "The player first joined through a friend.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#Friends",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.Search": {
+    "documentation": "The player first joined from search results.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#Search",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.Teleport": {
+    "documentation": "The player first joined by teleporting from another experience.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#Teleport",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.Ads": {
+    "documentation": "The player first joined from an ad, such as a sponsored ad, search ad, or portal ad.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#Ads",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.HomeOther": {
+    "documentation": "The player first joined from a part of the Roblox app other than Home recommendations, such as Charts or Favorites.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#HomeOther",
+    "code_sample": ""
+  },
+  "@roblox/enum/UserAcquisitionSource.Other": {
+    "documentation": "The player first joined from another source, such as a share link, chat, or a notification.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource#Other",
+    "code_sample": ""
+  },
+  "@roblox/global/Enum.UserAcquisitionSource": {
+    "documentation": "Describes how a player first found the current experience.",
+    "keys": {
+      "Unknown": "@roblox/enum/UserAcquisitionSource.Unknown",
+      "PendingAttribution": "@roblox/enum/UserAcquisitionSource.PendingAttribution",
+      "HomeRecommendation": "@roblox/enum/UserAcquisitionSource.HomeRecommendation",
+      "ContinueToPlay": "@roblox/enum/UserAcquisitionSource.ContinueToPlay",
+      "Curation": "@roblox/enum/UserAcquisitionSource.Curation",
+      "Friends": "@roblox/enum/UserAcquisitionSource.Friends",
+      "Search": "@roblox/enum/UserAcquisitionSource.Search",
+      "Teleport": "@roblox/enum/UserAcquisitionSource.Teleport",
+      "Ads": "@roblox/enum/UserAcquisitionSource.Ads",
+      "HomeOther": "@roblox/enum/UserAcquisitionSource.HomeOther",
+      "Other": "@roblox/enum/UserAcquisitionSource.Other"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/UserAcquisitionSource",
     "code_sample": ""
   },
   "@roblox/enum/ChatCallbackType.OnCreatingChatWindow": {
@@ -136297,6 +136635,68 @@
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/SafeAreaCompatibility",
     "code_sample": ""
   },
+  "@roblox/enum/PlayerPlatformActivationStatus.Unknown": {
+    "documentation": "Segment data is unavailable.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PlayerPlatformActivationStatus#Unknown",
+    "code_sample": ""
+  },
+  "@roblox/enum/PlayerPlatformActivationStatus.New": {
+    "documentation": "The player signed up for Roblox within the last 60 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PlayerPlatformActivationStatus#New",
+    "code_sample": ""
+  },
+  "@roblox/enum/PlayerPlatformActivationStatus.Active": {
+    "documentation": "The player played on Roblox in the last 60 days and is not <code>New</code> or <code>Reactivated</code>.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PlayerPlatformActivationStatus#Active",
+    "code_sample": ""
+  },
+  "@roblox/enum/PlayerPlatformActivationStatus.Lapsed": {
+    "documentation": "The player has not played on Roblox in the last 60 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PlayerPlatformActivationStatus#Lapsed",
+    "code_sample": ""
+  },
+  "@roblox/enum/PlayerPlatformActivationStatus.Reactivated": {
+    "documentation": "The player returned to Roblox within the last 60 days after being <code>Lapsed</code>.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PlayerPlatformActivationStatus#Reactivated",
+    "code_sample": ""
+  },
+  "@roblox/global/Enum.PlayerPlatformActivationStatus": {
+    "documentation": "Describes whether a player is new, active, lapsed, or reactivated on Roblox.",
+    "keys": {
+      "Unknown": "@roblox/enum/PlayerPlatformActivationStatus.Unknown",
+      "New": "@roblox/enum/PlayerPlatformActivationStatus.New",
+      "Active": "@roblox/enum/PlayerPlatformActivationStatus.Active",
+      "Lapsed": "@roblox/enum/PlayerPlatformActivationStatus.Lapsed",
+      "Reactivated": "@roblox/enum/PlayerPlatformActivationStatus.Reactivated"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PlayerPlatformActivationStatus",
+    "code_sample": ""
+  },
   "@roblox/enum/ModelLevelOfDetail.Automatic": {
     "documentation": "Default behavior, currently equivalent to <code>Disabled</code>.",
     "keys": {
@@ -139668,6 +140068,68 @@
       "MicroGamepad": "@roblox/enum/PreferredInput.MicroGamepad"
     },
     "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/PreferredInput",
+    "code_sample": ""
+  },
+  "@roblox/enum/ExperienceActivationStatus.Unknown": {
+    "documentation": "Segment data is unavailable.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/ExperienceActivationStatus#Unknown",
+    "code_sample": ""
+  },
+  "@roblox/enum/ExperienceActivationStatus.New": {
+    "documentation": "The player first played the experience within the last 30 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/ExperienceActivationStatus#New",
+    "code_sample": ""
+  },
+  "@roblox/enum/ExperienceActivationStatus.Active": {
+    "documentation": "The player played the experience in the last 30 days and is not <code>New</code> or <code>Reactivated</code>.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/ExperienceActivationStatus#Active",
+    "code_sample": ""
+  },
+  "@roblox/enum/ExperienceActivationStatus.Lapsed": {
+    "documentation": "The player has not played the experience in the last 30 days.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/ExperienceActivationStatus#Lapsed",
+    "code_sample": ""
+  },
+  "@roblox/enum/ExperienceActivationStatus.Reactivated": {
+    "documentation": "The player returned to the experience within the last 30 days after being <code>Lapsed</code>.",
+    "keys": {
+      "Name": "@roblox/globaltype/EnumItem.Name",
+      "Value": "@roblox/globaltype/EnumItem.Value",
+      "EnumType": "@roblox/globaltype/EnumItem.EnumType"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/ExperienceActivationStatus#Reactivated",
+    "code_sample": ""
+  },
+  "@roblox/global/Enum.ExperienceActivationStatus": {
+    "documentation": "Describes whether a player is new, active, lapsed, or reactivated in the current experience.",
+    "keys": {
+      "Unknown": "@roblox/enum/ExperienceActivationStatus.Unknown",
+      "New": "@roblox/enum/ExperienceActivationStatus.New",
+      "Active": "@roblox/enum/ExperienceActivationStatus.Active",
+      "Lapsed": "@roblox/enum/ExperienceActivationStatus.Lapsed",
+      "Reactivated": "@roblox/enum/ExperienceActivationStatus.Reactivated"
+    },
+    "learn_more_link": "https://create.roblox.com/docs/reference/engine/enums/ExperienceActivationStatus",
     "code_sample": ""
   },
   "@roblox/enum/AvatarItemType.Asset": {
