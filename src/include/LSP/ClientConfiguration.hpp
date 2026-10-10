@@ -387,8 +387,13 @@ struct ClientLuduvoResourceBindingConfiguration
     std::string parameter{};
     /// Singular resource kind identifier, such as component or prefab.
     std::string kind{};
+    /// Whether the binding targets the function's variadic argument tail.
+    bool variadic = false;
+    /// Whether hover and signature documentation should describe multiple resource names.
+    bool pluralResourceNoun = false;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourceBindingConfiguration, symbol, parameter, kind)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
+    ClientLuduvoResourceBindingConfiguration, symbol, parameter, kind, variadic, pluralResourceNoun)
 
 struct ClientLuduvoResourceCompletionConfiguration
 {
@@ -403,13 +408,35 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourceCompletionCo
 
 struct ClientLuduvoResourcesConfiguration
 {
-    /// Per-kind replacement catalogs. A missing key uses discovered names; an empty list intentionally supplies no names.
-    std::unordered_map<std::string, std::vector<std::string>> overrides{};
+    struct Group
+    {
+        /// Luau type accepted by this group. Only string is currently supported.
+        std::string dataType = "string";
+        /// Whether the active Luduvo built-in source for this group is included.
+        bool includeBuiltins = false;
+        /// Names of configured sources included in this group.
+        std::vector<std::string> sources{};
+    };
+
+    struct Source
+    {
+        /// Source provider. Only static is currently supported.
+        std::string provider = "static";
+        /// Values supplied by the static provider.
+        std::vector<std::string> values{};
+    };
+
+    /// Resource groups keyed by kind. Missing built-in groups implicitly contain their active built-ins.
+    std::unordered_map<std::string, Group> groups{};
+    /// Reusable value sources referenced by groups.
+    std::unordered_map<std::string, Source> sources{};
     /// Additional function-parameter resource bindings used by completion, hover, and signature help.
     std::vector<ClientLuduvoResourceBindingConfiguration> bindings{};
     ClientLuduvoResourceCompletionConfiguration completion{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration, overrides, bindings, completion)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Group, dataType, includeBuiltins, sources)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Source, provider, values)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration, groups, sources, bindings, completion)
 
 struct ClientLuduvoConfiguration
 {

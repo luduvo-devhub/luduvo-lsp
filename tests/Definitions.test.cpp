@@ -12,7 +12,7 @@ using namespace Luau::LanguageServer;
 
 TEST_SUITE_BEGIN("Definitions");
 
-TEST_CASE("luduvo_resource_catalog_uses_installed_prefabs_and_independent_overrides")
+TEST_CASE("luduvo_resource_catalog_resolves_group_sources")
 {
     TempDir temp("luduvo_resource_catalog");
     temp.write_child("content/current", "42\n");
@@ -33,12 +33,37 @@ TEST_CASE("luduvo_resource_catalog_uses_installed_prefabs_and_independent_overri
 
     CHECK_EQ(catalog.names("component"), std::vector<std::string>({"Health", "Position"}));
     CHECK_EQ(catalog.names("prefab"), std::vector<std::string>({"Another", "Installed"}));
+    REQUIRE(catalog.group("component"));
+    CHECK_EQ(catalog.group("component")->kind, "component");
+    REQUIRE_EQ(catalog.group("component")->resources.size(), 2);
+    CHECK(catalog.group("component")->resources[0].builtIn);
+    REQUIRE(catalog.group("prefab"));
+    REQUIRE_EQ(catalog.group("prefab")->resources.size(), 2);
+    CHECK(catalog.group("prefab")->resources[0].builtIn);
 
-    config.resources.overrides["prefab"] = {};
-    config.resources.overrides["component"] = {"Custom", "Custom"};
+    config.resources.sources["custom-components"].values = {"Custom"};
+    config.resources.sources["default-states"].values = {"Running", "Idle"};
+    config.resources.groups["component"] = {"string", true, {"custom-components"}};
+    config.resources.groups["animation-state"] = {"string", false, {"default-states"}};
+    catalog.configure(config);
+    CHECK_EQ(catalog.names("component"), std::vector<std::string>({"Custom", "Health", "Position"}));
+    REQUIRE(catalog.group("animation-state"));
+    CHECK_EQ(catalog.names("animation-state"), std::vector<std::string>({"Idle", "Running"}));
+    CHECK_FALSE(catalog.group("animation-state")->resources[0].builtIn);
+
+    config.resources.groups["prefab"] = {"string", false, {}};
+    config.resources.groups["component"] = {"string", false, {"custom-components"}};
     catalog.configure(config);
     CHECK(catalog.names("prefab").empty());
     CHECK_EQ(catalog.names("component"), std::vector<std::string>({"Custom"}));
+    REQUIRE(catalog.group("component"));
+    REQUIRE_EQ(catalog.group("component")->resources.size(), 1);
+    CHECK_FALSE(catalog.group("component")->resources[0].builtIn);
+
+    config.resources.groups["missing-group"] = {"string", false, {"missing-source"}};
+    catalog.configure(config);
+    REQUIRE_EQ(catalog.configurationWarnings().size(), 1);
+    CHECK(catalog.configurationWarnings()[0].find("missing-source") != std::string::npos);
 }
 
 TEST_CASE("use_platform_metadata_from_first_registered_definitions_file")
@@ -276,7 +301,7 @@ TEST_CASE("luduvo_platform_ignores_unused_lifecycle_functions")
 TEST_CASE("luduvo_platform_configuration_round_trips")
 {
     auto config = json::parse(
-        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096},"resources":{"overrides":{"component":["Health","Position"],"prefab":[]},"bindings":[{"symbol":"MyLibrary.Spawn","parameter":"name","kind":"prefab"}],"completion":{"enabled":false,"disabledKinds":["component"],"disabledApis":["game.World.Query"]}}}}})")
+        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096},"resources":{"groups":{"component":{"dataType":"string","includeBuiltins":false,"sources":["test-components"]},"prefab":{"dataType":"string","includeBuiltins":false,"sources":[]}},"sources":{"test-components":{"provider":"static","values":["Health","Position"]}},"bindings":[{"symbol":"MyLibrary.Query","parameter":"components","kind":"component","variadic":true,"pluralResourceNoun":true}],"completion":{"enabled":false,"disabledKinds":["component"],"disabledApis":["game.World.Query"]}}}}})")
                       .get<ClientConfiguration>();
     CHECK(config.platform.type == LSPPlatformConfig::Luduvo);
     CHECK_EQ(config.platform.luduvo.dataDirectory, "data");
@@ -291,14 +316,18 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
     REQUIRE(config.platform.luduvo.hover.maxTypeDefinitionLength);
     CHECK_EQ(*config.platform.luduvo.hover.maxTypeDefinitionLength, 4096);
     const std::vector<std::string> expectedComponents{"Health", "Position"};
-    REQUIRE(config.platform.luduvo.resources.overrides.find("component") != config.platform.luduvo.resources.overrides.end());
-    CHECK_EQ(config.platform.luduvo.resources.overrides.at("component"), expectedComponents);
-    REQUIRE(config.platform.luduvo.resources.overrides.find("prefab") != config.platform.luduvo.resources.overrides.end());
-    CHECK(config.platform.luduvo.resources.overrides.at("prefab").empty());
+    CHECK_EQ(config.platform.luduvo.resources.groups.at("component").dataType, "string");
+    CHECK_FALSE(config.platform.luduvo.resources.groups.at("component").includeBuiltins);
+    CHECK_EQ(config.platform.luduvo.resources.groups.at("component").sources, std::vector<std::string>({"test-components"}));
+    CHECK(config.platform.luduvo.resources.groups.at("prefab").sources.empty());
+    CHECK_EQ(config.platform.luduvo.resources.sources.at("test-components").provider, "static");
+    CHECK_EQ(config.platform.luduvo.resources.sources.at("test-components").values, expectedComponents);
     REQUIRE_EQ(config.platform.luduvo.resources.bindings.size(), 1);
-    CHECK_EQ(config.platform.luduvo.resources.bindings[0].symbol, "MyLibrary.Spawn");
-    CHECK_EQ(config.platform.luduvo.resources.bindings[0].parameter, "name");
-    CHECK_EQ(config.platform.luduvo.resources.bindings[0].kind, "prefab");
+    CHECK_EQ(config.platform.luduvo.resources.bindings[0].symbol, "MyLibrary.Query");
+    CHECK_EQ(config.platform.luduvo.resources.bindings[0].parameter, "components");
+    CHECK_EQ(config.platform.luduvo.resources.bindings[0].kind, "component");
+    CHECK(config.platform.luduvo.resources.bindings[0].variadic);
+    CHECK(config.platform.luduvo.resources.bindings[0].pluralResourceNoun);
     CHECK_FALSE(config.platform.luduvo.resources.completion.enabled);
     CHECK_EQ(config.platform.luduvo.resources.completion.disabledKinds, std::vector<std::string>{"component"});
     CHECK_EQ(config.platform.luduvo.resources.completion.disabledApis, std::vector<std::string>{"game.World.Query"});
@@ -308,16 +337,24 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
     CHECK(json(config)["platform"]["luduvo"]["hover"]["presentation"] == "standard");
     CHECK(json(config)["platform"]["luduvo"]["hover"]["maxTitleLength"].is_null());
     CHECK(json(config)["platform"]["luduvo"]["hover"]["maxTypeDefinitionLength"] == 4096);
-    CHECK(json(config)["platform"]["luduvo"]["resources"]["overrides"]["component"] == json::array({"Health", "Position"}));
-    CHECK(json(config)["platform"]["luduvo"]["resources"]["overrides"]["prefab"] == json::array());
-    CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["parameter"] == "name");
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["groups"]["component"]["dataType"] == "string");
+    CHECK_FALSE(json(config)["platform"]["luduvo"]["resources"]["groups"]["component"]["includeBuiltins"]);
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["groups"]["component"]["sources"] == json::array({"test-components"}));
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["groups"]["prefab"]["sources"] == json::array());
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["sources"]["test-components"]["provider"] == "static");
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["sources"]["test-components"]["values"] ==
+          json::array({"Health", "Position"}));
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["parameter"] == "components");
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["variadic"]);
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["pluralResourceNoun"]);
     CHECK_FALSE(json(config)["platform"]["luduvo"]["resources"]["completion"]["enabled"]);
 }
 
 TEST_CASE("luduvo_resource_configuration_defaults")
 {
     ClientConfiguration config;
-    CHECK(config.platform.luduvo.resources.overrides.empty());
+    CHECK(config.platform.luduvo.resources.groups.empty());
+    CHECK(config.platform.luduvo.resources.sources.empty());
     CHECK(config.platform.luduvo.resources.bindings.empty());
     CHECK(config.platform.luduvo.resources.completion.enabled);
     CHECK(config.platform.luduvo.resources.completion.disabledKinds.empty());

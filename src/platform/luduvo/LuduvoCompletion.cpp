@@ -133,10 +133,6 @@ std::optional<lsp::Range> resourceCompletionRange(
     return std::nullopt;
 }
 
-bool contains(const std::vector<std::string>& values, std::string_view wanted)
-{
-    return std::find(values.begin(), values.end(), wanted) != values.end();
-}
 } // namespace
 
 void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
@@ -164,7 +160,7 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
     const size_t typeParameterIndex = argumentIndex + (implicitSelf ? 1 : 0);
 
     std::optional<LuduvoResolvedResourceBinding> activeBinding;
-    for (const LuduvoResolvedResourceBinding& binding : resourceBindings.resolve(documentationSymbol, callableType))
+    for (const LuduvoResolvedResourceBinding& binding : resolveResourceBindings(documentationSymbol, callableType))
     {
         const bool matches = binding.variadic ? typeParameterIndex >= binding.typeParameterIndex : typeParameterIndex == binding.typeParameterIndex;
         if (matches)
@@ -185,18 +181,20 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
     for (const lsp::CompletionItem& item : items)
         existingLabels.insert(item.label);
 
-    std::vector<std::string> names = resourceCatalog.names(activeBinding->kind);
-    std::sort(names.begin(), names.end());
-    names.erase(std::unique(names.begin(), names.end()), names.end());
-    for (const std::string& name : names)
+    const LuduvoResourceGroup* resourceGroup = resourceCatalog.group(activeBinding->kind);
+    if (!resourceGroup)
+        return;
+
+    for (const LuduvoResourceName& resource : resourceGroup->resources)
     {
+        const std::string& name = resource.name;
         if (name.empty() || !existingLabels.insert(name).second)
             continue;
 
         lsp::CompletionItem item;
         item.label = name;
         item.kind = lsp::CompletionItemKind::Constant;
-        item.detail = "Luduvo " + activeBinding->kind;
+        item.detail = resource.builtIn ? "Luduvo " + resourceGroup->kind + " (built-in)" : resourceGroup->kind;
         item.sortText = name;
         item.filterText = name;
         item.textEdit = lsp::TextEdit{*replacementRange, "\"" + Luau::escape(name) + "\""};

@@ -789,8 +789,8 @@ std::string renderResourceConstraints(const std::vector<LuduvoResolvedResourceBi
     return result;
 }
 
-std::string renderLuduvoRichHover(
-    const ClientLuduvoHoverConfiguration& config, const LuduvoResourceBindingRegistry& resourceBindings, const LuduvoRichHoverContext& context)
+std::string renderLuduvoRichHover(const ClientLuduvoHoverConfiguration& config,
+    const std::vector<LuduvoResolvedResourceBinding>& constrainedResources, const LuduvoRichHoverContext& context)
 {
     auto identity = getLuduvoSymbolIdentity(context.documentationSymbol);
     std::string title = normalizeDisplayedType(identity ? identity->title : context.fallbackTitle.value_or(context.typeDefinition));
@@ -829,7 +829,6 @@ std::string renderLuduvoRichHover(
 
     heading += provenance;
 
-    const std::vector<LuduvoResolvedResourceBinding> constrainedResources = resourceBindings.resolve(context.documentationSymbol, context.type);
     std::vector<std::string> tags;
     bool deprecated = false;
     if (context.property)
@@ -972,7 +971,8 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     std::optional<Luau::Property> property;
     if (context.hoveredProperty)
         property = *context.hoveredProperty;
-    return lsp::Hover{{lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, resourceBindings,
+    const auto constrainedResources = resolveResourceBindings(documentationSymbol, context.type);
+    return lsp::Hover{{lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, constrainedResources,
                                                       LuduvoRichHoverContext{context.type, declaration, documentationSymbol, std::move(property),
                                                           documentation, fallbackTitle, directMemberInitializer, true})}};
 }
@@ -994,8 +994,9 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(
     std::optional<Luau::Property> property;
     if (context.entry.prop)
         property = **context.entry.prop;
+    const auto constrainedResources = resolveResourceBindings(documentationSymbol, *context.entry.type);
     return lsp::MarkupContent{
-        lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, resourceBindings,
+        lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, constrainedResources,
                                        LuduvoRichHoverContext{*context.entry.type, Luau::toString(Luau::follow(*context.entry.type)),
                                            documentationSymbol, std::move(property), documentation, context.name, false, false})};
 }
@@ -1017,7 +1018,8 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleSignatureHelpDocumentati
     if (!documentation && !context.fallbackDocumentation.empty())
         documentation = PrintedDocumentation{context.fallbackDocumentation, std::nullopt};
 
-    return lsp::MarkupContent{lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, resourceBindings,
+    const auto constrainedResources = resolveResourceBindings(documentationSymbol, context.type);
+    return lsp::MarkupContent{lsp::MarkupKind::Markdown, renderLuduvoRichHover(configuration.hover, constrainedResources,
                                                              LuduvoRichHoverContext{context.type, Luau::toString(Luau::follow(context.type)),
                                                                  documentationSymbol, std::nullopt, documentation, std::nullopt, false, false})};
 }

@@ -7,6 +7,19 @@
 #include <unordered_map>
 #include <vector>
 
+struct LuduvoResourceName
+{
+    std::string name;
+    bool builtIn = false;
+};
+
+struct LuduvoResourceGroup
+{
+    std::string kind;
+    std::string dataType = "string";
+    std::vector<LuduvoResourceName> resources;
+};
+
 class LuduvoResourceCatalog
 {
 public:
@@ -14,9 +27,12 @@ public:
     explicit LuduvoResourceCatalog(std::string embeddedResources);
 
     void configure(const ClientLuduvoConfiguration& configuration);
-    const std::vector<std::string>& names(std::string_view kind) const;
+    const LuduvoResourceGroup* group(std::string_view kind) const;
+    std::vector<std::string> names(std::string_view kind) const;
+    const std::vector<std::string>& configurationWarnings() const;
 
 private:
-    std::unordered_map<std::string, std::vector<std::string>> embeddedNames;
-    std::unordered_map<std::string, std::vector<std::string>> configuredNames;
+    std::unordered_map<std::string, LuduvoResourceGroup> embeddedGroups;
+    std::unordered_map<std::string, LuduvoResourceGroup> configuredGroups;
+    std::vector<std::string> configuredWarnings;
 };

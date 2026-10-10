@@ -27,23 +27,42 @@ TEST_CASE("convert dotted Luduvo resource configuration")
 {
     auto output = parseDottedConfiguration(R"DOTTED_CONFIG(
         {
-            "luau-lsp.platform.luduvo.resources.overrides": {
-                "component": ["Health"],
-                "prefab": []
+            "luau-lsp.platform.luduvo.resources.groups": {
+                "animation-state": {
+                    "dataType": "string",
+                    "sources": ["default-states"]
+                },
+                "prefab": {
+                    "dataType": "string",
+                    "includeBuiltins": true,
+                    "sources": ["project-prefabs"]
+                }
+            },
+            "luau-lsp.platform.luduvo.resources.sources": {
+                "default-states": {"provider": "static", "values": ["Idle", "Running"]},
+                "project-prefabs": {"provider": "static", "values": ["Test"]}
             },
             "luau-lsp.platform.luduvo.resources.bindings": [
-                {"symbol": "MyLibrary.Spawn", "parameter": "name", "kind": "prefab"}
+                {
+                    "symbol": "MyLibrary.Query",
+                    "parameter": "components",
+                    "kind": "component",
+                    "variadic": true,
+                    "pluralResourceNoun": true
+                }
             ],
             "luau-lsp.platform.luduvo.resources.completion.enabled": false
         }
     )DOTTED_CONFIG");
 
     const auto& resources = output["platform"]["luduvo"]["resources"];
-    REQUIRE(resources["overrides"].contains("component"));
-    CHECK(resources["overrides"]["component"] == json::array({"Health"}));
-    REQUIRE(resources["overrides"].contains("prefab"));
-    CHECK(resources["overrides"]["prefab"].empty());
-    CHECK(resources["bindings"][0]["parameter"] == "name");
+    REQUIRE(resources["groups"].contains("animation-state"));
+    CHECK(resources["groups"]["animation-state"]["sources"] == json::array({"default-states"}));
+    CHECK(resources["groups"]["prefab"]["includeBuiltins"]);
+    CHECK(resources["sources"]["default-states"]["values"] == json::array({"Idle", "Running"}));
+    CHECK(resources["bindings"][0]["parameter"] == "components");
+    CHECK(resources["bindings"][0]["variadic"]);
+    CHECK(resources["bindings"][0]["pluralResourceNoun"]);
     CHECK_FALSE(resources["completion"]["enabled"]);
 }
 

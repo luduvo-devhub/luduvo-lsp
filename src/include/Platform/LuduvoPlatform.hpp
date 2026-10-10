@@ -8,6 +8,11 @@ class LuduvoPlatform : public LSPPlatform
     ClientLuduvoConfiguration configuration;
     LuduvoResourceCatalog resourceCatalog;
     LuduvoResourceBindingRegistry resourceBindings;
+    std::unordered_set<std::string> reportedResourceWarnings;
+
+    std::vector<LuduvoResolvedResourceBinding> resolveResourceBindings(
+        const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType);
+    void reportResourceConfigurationWarnings(const std::vector<std::string>& warnings);
 
 public:
     LuduvoPlatform(const ClientLuduvoConfiguration& configuration, WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder);

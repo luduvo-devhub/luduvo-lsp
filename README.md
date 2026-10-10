@@ -129,24 +129,42 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `luau-lsp.platform.luduvo.hover.presentation` | `"rich"` or `"standard"` | `"rich"` | Selects Luduvo's API-aware hover layout or the upstream-compatible hover layout. Standard hovers keep documentation above the type definition. |
 | `luau-lsp.platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits visible rich-hover title length while preserving provenance text. URLs do not count toward the limit; `null` disables truncation. |
 | `luau-lsp.platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
-| `luau-lsp.platform.luduvo.resources.overrides` | map of resource kinds to string arrays | `{}` | Replaces discovered names for each configured resource kind. Kind identifiers are singular, such as `component` and `prefab`. |
-| `luau-lsp.platform.luduvo.resources.bindings` | array of `{ symbol, parameter, kind }` | `[]` | Adds resource constraints for custom function parameters. The metadata is shared by completion, rich hovers, and signature help. |
+| `luau-lsp.platform.luduvo.resources.groups` | map of resource-group names to group objects | `{}` | Each group defines `dataType`, `includeBuiltins`, and a list of source names. Missing built-in groups implicitly use their active Luduvo built-ins. Only the `string` data type is supported in this release. |
+| `luau-lsp.platform.luduvo.resources.sources` | map of source names to source objects | `{}` | Defines reusable value sources. Static sources use `provider: "static"` and a `values` array; a source may be shared by multiple groups. |
+| `luau-lsp.platform.luduvo.resources.bindings` | array of binding objects | `[]` | Adds resource constraints for custom function parameters. `kind` selects a resource group (such as `component` or `prefab`); the other fields are `symbol`, `parameter`, `variadic`, and `pluralResourceNoun`. The metadata is shared by completion, rich hovers, and signature help. |
 | `luau-lsp.platform.luduvo.resources.completion.enabled` | boolean | `true` | Enables resource-name suggestions in resource-constrained arguments. Disabling it does not hide resource metadata from hovers or signature help. |
 | `luau-lsp.platform.luduvo.resources.completion.disabledKinds` | string array | `[]` | Disables resource-name completion for the listed resource kinds. |
 | `luau-lsp.platform.luduvo.resources.completion.disabledApis` | string array | `[]` | Disables resource-name completion for the listed canonical API symbols. |
 
-Resource overrides are replacements, not additions. An absent `prefab` kind uses names found in the active Luduvo installation and then the bundled fallback. Components currently use the generated bundled catalog because Luduvo does not expose an equivalent live component-name source. A present empty list intentionally provides no names for that kind. Each kind is independent, so overriding `component` does not prevent normal prefab discovery.
+Resource groups collect reusable value sources by kind. A group omitted from configuration uses its active Luduvo built-ins. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. An empty source list with built-ins disabled intentionally provides no names. Prefab built-ins come from the active Luduvo installation and then the bundled fallback. Components currently use the generated bundled catalog because Luduvo does not expose an equivalent live component-name source.
 
-For example, this replaces component names, intentionally removes prefab suggestions, and marks a custom function parameter as accepting prefab names:
+For example, this combines built-in and project prefabs, creates a custom animation-state group, and marks a custom function parameter as accepting prefab names:
 
 ```jsonc
 {
   "platform": {
     "luduvo": {
       "resources": {
-        "overrides": {
-          "component": ["Health", "Position"],
-          "prefab": []
+        "groups": {
+          "prefab": {
+            "dataType": "string",
+            "includeBuiltins": true,
+            "sources": ["project-prefabs"]
+          },
+          "animation-state": {
+            "dataType": "string",
+            "sources": ["default-states"]
+          }
+        },
+        "sources": {
+          "project-prefabs": {
+            "provider": "static",
+            "values": ["MyProjectPrefab"]
+          },
+          "default-states": {
+            "provider": "static",
+            "values": ["Idle", "Running"]
+          }
         },
         "bindings": [
           {
@@ -175,6 +193,6 @@ I was able to build successfully on both Windows and Linux (via WSL). Using MSVC
 
 ## Current limitations
 
-Resource-name completion does not yet discover custom components or prefabs from the current workspace. You can provide project-specific names through `resources.overrides`. Workspace and sourcemap-backed discovery will be handled separately so it can update as project files change.
+Resource-name completion does not yet discover custom components or prefabs from the current workspace. You can define project-specific static sources through `resources.sources` and attach them through `resources.groups`. Workspace and sourcemap-backed providers will be handled separately so they can update as project files change.
 
 Dynamic component fields and event columns are currently `any` instead of a more specific type. While queryable component names are generated from the current engine snapshot, there's no smart detection for any column to hone type detection to only the components you queried for. Same goes for event column fields. I'm aiming to improve this in a later version, but it'll take more work because I have to reverse engineer Luduvo's `.ldv` file format first. If you want to help, do this for me!

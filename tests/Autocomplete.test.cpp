@@ -156,6 +156,9 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
         }
         declare MyLibrary: {
             SpawnNamed: (asset: string) -> Instance?,
+            QueryMany: (...string) -> Query,
+            SetCount: (count: number) -> (),
+            SetState: (state: "Idle" | "Running") -> (),
         }
     )");
 
@@ -164,9 +167,13 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     config.platform.type = LSPPlatformConfig::Luduvo;
     config.platform.luduvo.definitions.serverOverride = definitions;
     config.platform.luduvo.definitions.clientOverride = definitions;
-    config.platform.luduvo.resources.overrides["component"] = {"Position", "Health", "Health"};
-    config.platform.luduvo.resources.overrides["prefab"] = {"Crate", "Folder/Enemy"};
+    config.platform.luduvo.resources.sources["test-components"].values = {"Position", "Health", "Health"};
+    config.platform.luduvo.resources.sources["test-prefabs"].values = {"Crate", "Folder/Enemy"};
+    config.platform.luduvo.resources.groups["component"] = {"string", false, {"test-components"}};
+    config.platform.luduvo.resources.groups["prefab"] = {"string", false, {"test-prefabs"}};
     config.platform.luduvo.resources.bindings.push_back({"MyLibrary.SpawnNamed", "asset", "prefab"});
+    config.platform.luduvo.resources.bindings.push_back({"MyLibrary.QueryMany", "components", "component", true, true});
+    config.platform.luduvo.resources.bindings.push_back({"MyLibrary.SetCount", "count", "component"});
     client.globalConfig = config;
 
     WorkspaceFolder workspace(&client, "$LUDUVO_RESOURCE_COMPLETION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
@@ -188,6 +195,8 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     auto crate = requireItem(prefabItems, "Crate");
     REQUIRE(crate.textEdit);
     CHECK_EQ(crate.textEdit->newText, "\"Crate\"");
+    CHECK_EQ(crate.labelDetails, std::nullopt);
+    CHECK_EQ(crate.detail, "prefab");
     auto slash = requireItem(prefabItems, "Folder/Enemy");
     REQUIRE(slash.textEdit);
     CHECK_EQ(slash.textEdit->newText, "\"Folder/Enemy\"");
@@ -212,6 +221,19 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     CHECK_FALSE(getItem(complete("instance.AddComponent(\"|\")"), "Health"));
 
     CHECK(getItem(complete("MyLibrary.SpawnNamed(\"|\")"), "Crate"));
+    CHECK(getItem(complete("MyLibrary.QueryMany(\"Health\", \"|\")"), "Position"));
+    CHECK_FALSE(getItem(complete("MyLibrary.SetCount(|)"), "Health"));
+    auto invalidBindingWarning = std::find_if(client.requestQueue.begin(), client.requestQueue.end(),
+        [](const std::pair<std::string, std::optional<json>>& request)
+        {
+            return request.first == "window/showMessageRequest" && request.second &&
+                   (*request.second)["message"].get<std::string>().find("MyLibrary.SetCount") != std::string::npos;
+        });
+    REQUIRE(invalidBindingWarning != client.requestQueue.end());
+    CHECK((*invalidBindingWarning->second)["message"].get<std::string>().find("does not accept string resource names") != std::string::npos);
+    CHECK((*invalidBindingWarning->second)["actions"][0]["title"] == "Open Resource Settings");
+    CHECK(getItem(complete("MyLibrary.SetState(|)"), "\"Idle\""));
+    CHECK(getItem(complete("MyLibrary.SetState(\"|\")"), "Running"));
     CHECK_FALSE(getItem(complete("game.Prefabs.Echo(\"|\")"), "Crate"));
 }
 
@@ -231,7 +253,8 @@ TEST_CASE("luduvo_resource_completion_uses_fragment_type_information")
     config.platform.type = LSPPlatformConfig::Luduvo;
     config.platform.luduvo.definitions.serverOverride = definitions;
     config.platform.luduvo.definitions.clientOverride = definitions;
-    config.platform.luduvo.resources.overrides["prefab"] = {"Crate"};
+    config.platform.luduvo.resources.sources["test-prefabs"].values = {"Crate"};
+    config.platform.luduvo.resources.groups["prefab"] = {"string", false, {"test-prefabs"}};
     client.globalConfig = config;
     client.capabilities.textDocument = lsp::TextDocumentClientCapabilities{};
     client.capabilities.textDocument->diagnostic = lsp::DiagnosticClientCapabilities{};
@@ -261,7 +284,46 @@ TEST_CASE("luduvo_resource_completion_uses_fragment_type_information")
     CHECK(workspace.frontend.isDirty(moduleName, /* forAutocomplete: */ false));
 }
 
-TEST_CASE("luduvo_resource_completion_honors_empty_overrides_and_disables")
+TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
+{
+    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_resource_group_completion");
+    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare game: {
+            Prefabs: { Spawn: (name: string) -> {}? },
+        }
+    )");
+
+    TestClient client;
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
+    config.platform.luduvo.definitions.serverOverride = definitions;
+    config.platform.luduvo.definitions.clientOverride = definitions;
+    config.platform.luduvo.resources.sources["project-prefabs"].values = {"MyProjectPrefab"};
+    config.platform.luduvo.resources.groups["prefab"] = {"string", true, {"project-prefabs"}};
+    client.globalConfig = config;
+
+    WorkspaceFolder workspace(&client, "$LUDUVO_RESOURCE_GROUP_COMPLETION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
+    workspace.setupWithConfiguration(config);
+    workspace.isReady = true;
+
+    auto [source, marker] = sourceWithMarker("game.Prefabs.Spawn(\"|\")");
+    auto uri = Luau::LanguageServer::newDocument(workspace, "resource-groups.server.luau", source);
+    lsp::CompletionParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = marker;
+    auto items = workspace.completion(params, nullptr);
+
+    const auto builtIn = requireItem(items, "Character");
+    CHECK_EQ(builtIn.labelDetails, std::nullopt);
+    CHECK_EQ(builtIn.detail, "Luduvo prefab (built-in)");
+    const auto custom = requireItem(items, "MyProjectPrefab");
+    CHECK_EQ(custom.labelDetails, std::nullopt);
+    CHECK_EQ(custom.detail, "prefab");
+}
+
+TEST_CASE("luduvo_resource_completion_honors_empty_groups_and_disables")
 {
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
     TempDir temp("luduvo_resource_completion_disabled");
@@ -277,8 +339,9 @@ TEST_CASE("luduvo_resource_completion_honors_empty_overrides_and_disables")
     config.platform.type = LSPPlatformConfig::Luduvo;
     config.platform.luduvo.definitions.serverOverride = definitions;
     config.platform.luduvo.definitions.clientOverride = definitions;
-    config.platform.luduvo.resources.overrides["component"] = {"Health"};
-    config.platform.luduvo.resources.overrides["prefab"] = {};
+    config.platform.luduvo.resources.sources["test-components"].values = {"Health"};
+    config.platform.luduvo.resources.groups["component"] = {"string", false, {"test-components"}};
+    config.platform.luduvo.resources.groups["prefab"] = {"string", false, {}};
     config.platform.luduvo.resources.completion.disabledApis = {"game.World.Each"};
     client.globalConfig = config;
 

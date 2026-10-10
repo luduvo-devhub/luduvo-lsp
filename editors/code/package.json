@@ -335,16 +335,63 @@
           "default": 2000,
           "scope": "resource"
         },
-        "luduvo-lsp.platform.luduvo.resources.overrides": {
-          "markdownDescription": "Replacement resource-name catalogs keyed by a singular resource kind such as `component` or `prefab`. A missing kind uses names discovered from Luduvo when that resource has a live provider, or the bundled fallback otherwise. A present empty list intentionally disables names for that kind",
+        "luduvo-lsp.platform.luduvo.resources.groups": {
+          "markdownDescription": "Resource groups keyed by a singular kind such as `component` or `prefab`. Missing built-in groups implicitly use their active Luduvo built-ins. Configuring a group controls whether built-ins and named sources participate",
           "type": "object",
           "default": {},
           "additionalProperties": {
-            "type": "array",
-            "items": {
-              "type": "string"
+            "type": "object",
+            "properties": {
+              "dataType": {
+                "type": "string",
+                "default": "string",
+                "description": "Luau data type accepted by this group. Only string is supported in this release"
+              },
+              "includeBuiltins": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to include the active Luduvo built-in source for this group"
+              },
+              "sources": {
+                "type": "array",
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true,
+                "description": "Configured source names included in this group"
+              }
             },
-            "uniqueItems": true
+            "additionalProperties": false
+          },
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.resources.sources": {
+          "markdownDescription": "Reusable value sources. A source only participates in completion when a resource group names it",
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "static"
+                ],
+                "default": "static",
+                "description": "How values are obtained. Only static sources are supported in this release"
+              },
+              "values": {
+                "type": "array",
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true,
+                "description": "Values supplied by a static source"
+              }
+            },
+            "additionalProperties": false
           },
           "scope": "resource"
         },
@@ -371,6 +418,16 @@
               "kind": {
                 "type": "string",
                 "description": "Singular resource kind identifier, such as component or prefab"
+              },
+              "variadic": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether this binding targets the function's variadic argument tail"
+              },
+              "pluralResourceNoun": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether hover and signature documentation should refer to multiple resource names"
               }
             },
             "additionalProperties": false

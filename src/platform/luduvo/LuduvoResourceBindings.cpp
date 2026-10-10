@@ -4,6 +4,7 @@
 #include "Luau/TypePack.h"
 
 #include <algorithm>
+#include <unordered_set>
 
 namespace
 {
@@ -65,6 +66,35 @@ std::optional<std::string> canonicalDocumentationSymbol(const std::optional<std:
 
     return symbol.empty() ? std::nullopt : std::optional<std::string>{std::string(symbol)};
 }
+
+bool containsStringType(Luau::TypeId type, std::unordered_set<Luau::TypeId>& visited)
+{
+    type = Luau::follow(type);
+    if (!visited.insert(type).second)
+        return false;
+
+    if (const auto primitive = Luau::get<Luau::PrimitiveType>(type))
+        return primitive->type == Luau::PrimitiveType::String;
+    if (const auto unionType = Luau::get<Luau::UnionType>(type))
+        return std::any_of(unionType->options.begin(), unionType->options.end(),
+            [&](Luau::TypeId option)
+            {
+                return containsStringType(option, visited);
+            });
+    if (const auto intersection = Luau::get<Luau::IntersectionType>(type))
+        return std::any_of(intersection->parts.begin(), intersection->parts.end(),
+            [&](Luau::TypeId part)
+            {
+                return containsStringType(part, visited);
+            });
+    return false;
+}
+
+bool containsStringType(Luau::TypeId type)
+{
+    std::unordered_set<Luau::TypeId> visited;
+    return containsStringType(type, visited);
+}
 } // namespace
 
 std::optional<LuduvoSymbolIdentity> getLuduvoSymbolIdentity(const std::optional<std::string>& documentationSymbol)
@@ -116,15 +146,20 @@ LuduvoResourceBindingRegistry::LuduvoResourceBindingRegistry()
 void LuduvoResourceBindingRegistry::configure(const ClientLuduvoConfiguration& configuration)
 {
     bindings.clear();
+    configuredWarnings.clear();
     bindings.reserve(std::size(kBuiltinBindings) + configuration.resources.bindings.size());
     for (const BuiltinBinding& binding : kBuiltinBindings)
         bindings.push_back(
             {std::string(binding.symbol), std::string(binding.parameter), std::string(binding.kind), binding.variadic, binding.pluralResourceNoun});
 
-    for (const ClientLuduvoResourceBindingConfiguration& configured : configuration.resources.bindings)
+    for (size_t index = 0; index < configuration.resources.bindings.size(); ++index)
     {
+        const ClientLuduvoResourceBindingConfiguration& configured = configuration.resources.bindings[index];
         if (configured.symbol.empty() || configured.parameter.empty() || configured.kind.empty())
+        {
+            configuredWarnings.push_back("Binding #" + std::to_string(index + 1) + " must define non-empty symbol, parameter, and kind values.");
             continue;
+        }
 
         bindings.erase(std::remove_if(bindings.begin(), bindings.end(),
                            [&](const Binding& existing)
@@ -132,33 +167,55 @@ void LuduvoResourceBindingRegistry::configure(const ClientLuduvoConfiguration& c
                                return existing.symbol == configured.symbol && existing.parameter == configured.parameter;
                            }),
             bindings.end());
-        bindings.push_back({configured.symbol, configured.parameter, configured.kind, false, false});
+        bindings.push_back({configured.symbol, configured.parameter, configured.kind, configured.variadic, configured.pluralResourceNoun});
     }
 }
 
+const std::vector<std::string>& LuduvoResourceBindingRegistry::configurationWarnings() const
+{
+    return configuredWarnings;
+}
+
 std::vector<LuduvoResolvedResourceBinding> LuduvoResourceBindingRegistry::resolve(
-    const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType) const
+    const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType, std::vector<std::string>* warnings) const
 {
     const auto canonicalSymbol = canonicalDocumentationSymbol(documentationSymbol);
     if (!canonicalSymbol)
         return {};
 
-    std::vector<LuduvoResolvedResourceBinding> result;
-    auto resolveFunction = [&](const Luau::FunctionType* function)
+    std::vector<const Luau::FunctionType*> functions;
+    callableType = Luau::follow(callableType);
+    if (const auto function = Luau::get<Luau::FunctionType>(callableType))
+        functions.push_back(function);
+    else if (const auto intersection = Luau::get<Luau::IntersectionType>(callableType))
     {
-        auto [arguments, tail] = Luau::flatten(function->argTypes);
-        for (const Binding& binding : bindings)
-        {
-            if (binding.symbol != *canonicalSymbol)
-                continue;
+        for (Luau::TypeId part : intersection->parts)
+            if (const auto function = Luau::get<Luau::FunctionType>(Luau::follow(part)))
+                functions.push_back(function);
+    }
 
+    std::vector<LuduvoResolvedResourceBinding> result;
+    for (const Binding& binding : bindings)
+    {
+        if (binding.symbol != *canonicalSymbol)
+            continue;
+
+        bool foundParameter = false;
+        bool foundCompatibleParameter = false;
+        for (const Luau::FunctionType* function : functions)
+        {
+            auto [arguments, tail] = Luau::flatten(function->argTypes);
             std::optional<size_t> parameterIndex;
-            bool variadic = binding.variadic;
-            if (variadic)
+            std::optional<Luau::TypeId> parameterType;
+            if (binding.variadic)
             {
-                if (!tail || !Luau::get<Luau::VariadicTypePack>(Luau::follow(*tail)))
+                if (!tail)
+                    continue;
+                const auto variadicType = Luau::get<Luau::VariadicTypePack>(Luau::follow(*tail));
+                if (!variadicType)
                     continue;
                 parameterIndex = arguments.size();
+                parameterType = variadicType->ty;
             }
             else
             {
@@ -167,33 +224,37 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoResourceBindingRegistry::resolv
                     if (function->argNames[index] && function->argNames[index]->name == binding.parameter)
                     {
                         parameterIndex = index;
+                        parameterType = arguments[index];
                         break;
                     }
                 }
             }
 
-            if (!parameterIndex)
+            if (!parameterIndex || !parameterType)
                 continue;
+            foundParameter = true;
+            if (!containsStringType(*parameterType))
+                continue;
+            foundCompatibleParameter = true;
 
             const auto duplicate = std::find_if(result.begin(), result.end(),
                 [&](const LuduvoResolvedResourceBinding& existing)
                 {
                     return existing.parameter == binding.parameter && existing.kind == binding.kind &&
-                           existing.typeParameterIndex == *parameterIndex && existing.variadic == variadic;
+                           existing.typeParameterIndex == *parameterIndex && existing.variadic == binding.variadic;
                 });
             if (duplicate == result.end())
-                result.push_back({binding.parameter, binding.kind, *parameterIndex, variadic, binding.pluralResourceNoun});
+                result.push_back({binding.parameter, binding.kind, *parameterIndex, binding.variadic, binding.pluralResourceNoun});
         }
-    };
 
-    callableType = Luau::follow(callableType);
-    if (const auto function = Luau::get<Luau::FunctionType>(callableType))
-        resolveFunction(function);
-    else if (const auto intersection = Luau::get<Luau::IntersectionType>(callableType))
-    {
-        for (Luau::TypeId part : intersection->parts)
-            if (const auto function = Luau::get<Luau::FunctionType>(Luau::follow(part)))
-                resolveFunction(function);
+        if (warnings && !foundCompatibleParameter)
+        {
+            if (!foundParameter)
+                warnings->push_back(binding.symbol + ": " + (binding.variadic ? "variadic parameter '" : "parameter '") + binding.parameter +
+                                    "' was not found in the callable type.");
+            else
+                warnings->push_back(binding.symbol + ": parameter '" + binding.parameter + "' does not accept string resource names.");
+        }
     }
 
     return result;

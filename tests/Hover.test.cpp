@@ -691,6 +691,7 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
         }
         declare MyLibrary: {
             Spawn: (asset: string) -> Instance?,
+            QueryMany: (...string) -> (),
         }
     )");
 
@@ -701,6 +702,7 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
     config.platform.luduvo.definitions.clientOverride = definitions;
     config.platform.luduvo.definitions.exposePrivateTypes = true;
     config.platform.luduvo.resources.bindings.push_back({"MyLibrary.Spawn", "asset", "prefab"});
+    config.platform.luduvo.resources.bindings.push_back({"MyLibrary.QueryMany", "components", "component", true, true});
     config.platform.luduvo.resources.completion.enabled = false;
     client.globalConfig = config;
 
@@ -730,6 +732,9 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
     const std::string custom = hover("local spawnCustom = MyLibrary.Spawn", {0, 31});
     CHECK(custom.find("`resource-constrained`") != std::string::npos);
     CHECK(custom.find("`asset: string` expects a Luduvo prefab name.") != std::string::npos);
+    const std::string customVariadic = hover("local queryMany = MyLibrary.QueryMany", {0, 32});
+    CHECK(customVariadic.find("`resource-constrained`") != std::string::npos);
+    CHECK(customVariadic.find("`components: string` expects Luduvo component names.") != std::string::npos);
     CHECK(hover("local rename = instance.Rename", {0, 25}).find("resource-constrained") == std::string::npos);
     CHECK(hover("local echo = game.Prefabs.Echo", {0, 27}).find("resource-constrained") == std::string::npos);
 }

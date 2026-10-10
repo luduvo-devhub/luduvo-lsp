@@ -24,6 +24,35 @@ static void normalizeNames(std::vector<std::string>& names)
     names.erase(std::unique(names.begin(), names.end()), names.end());
 }
 
+static std::vector<LuduvoResourceName> resourceEntries(std::vector<std::string> names, bool builtIn)
+{
+    normalizeNames(names);
+    std::vector<LuduvoResourceName> result;
+    result.reserve(names.size());
+    for (std::string& name : names)
+        result.push_back({std::move(name), builtIn});
+    return result;
+}
+
+static void addResourceEntries(LuduvoResourceGroup& group, const std::vector<LuduvoResourceName>& resources)
+{
+    for (const LuduvoResourceName& resource : resources)
+    {
+        const auto existing = std::find_if(group.resources.begin(), group.resources.end(),
+            [&](const LuduvoResourceName& candidate)
+            {
+                return candidate.name == resource.name;
+            });
+        if (existing == group.resources.end())
+            group.resources.push_back(resource);
+    }
+    std::sort(group.resources.begin(), group.resources.end(),
+        [](const LuduvoResourceName& left, const LuduvoResourceName& right)
+        {
+            return left.name < right.name;
+        });
+}
+
 static std::unordered_map<std::string, std::vector<std::string>> parseEmbeddedResources(std::string_view source)
 {
     std::unordered_map<std::string, std::vector<std::string>> result;
@@ -104,31 +133,75 @@ LuduvoResourceCatalog::LuduvoResourceCatalog()
 }
 
 LuduvoResourceCatalog::LuduvoResourceCatalog(std::string embeddedResources)
-    : embeddedNames(parseEmbeddedResources(embeddedResources))
 {
+    for (auto& [kind, names] : parseEmbeddedResources(embeddedResources))
+    {
+        std::string groupKind = kind;
+        embeddedGroups.emplace(std::move(kind), LuduvoResourceGroup{std::move(groupKind), "string", resourceEntries(std::move(names), true)});
+    }
 }
 
 void LuduvoResourceCatalog::configure(const ClientLuduvoConfiguration& configuration)
 {
-    configuredNames = embeddedNames;
+    configuredWarnings.clear();
+    configuredGroups = embeddedGroups;
 
-    if (configuration.resources.overrides.find("prefab") == configuration.resources.overrides.end())
-    {
-        if (auto installed = installedPrefabNames(configuration))
-            configuredNames["prefab"] = std::move(*installed);
-    }
+    if (auto installed = installedPrefabNames(configuration))
+        configuredGroups["prefab"] = LuduvoResourceGroup{"prefab", "string", resourceEntries(std::move(*installed), true)};
 
-    for (const auto& [kind, names] : configuration.resources.overrides)
+    for (const auto& [kind, configuredGroup] : configuration.resources.groups)
     {
-        auto replacement = names;
-        normalizeNames(replacement);
-        configuredNames[kind] = std::move(replacement);
+        LuduvoResourceGroup group{kind, configuredGroup.dataType, {}};
+        if (configuredGroup.dataType != "string")
+            configuredWarnings.push_back("Resource group '" + kind + "' uses unsupported dataType '" + configuredGroup.dataType +
+                                         "'. This version supports only string groups.");
+
+        if (configuredGroup.includeBuiltins)
+        {
+            auto builtins = configuredGroups.find(kind);
+            if (builtins == configuredGroups.end())
+                configuredWarnings.push_back("Resource group '" + kind + "' enables built-ins, but no built-in source exists for that group.");
+            else
+                addResourceEntries(group, builtins->second.resources);
+        }
+
+        for (const std::string& sourceName : configuredGroup.sources)
+        {
+            auto source = configuration.resources.sources.find(sourceName);
+            if (source == configuration.resources.sources.end())
+            {
+                configuredWarnings.push_back("Resource group '" + kind + "' references unknown source '" + sourceName + "'.");
+                continue;
+            }
+            if (source->second.provider != "static")
+            {
+                configuredWarnings.push_back("Resource source '" + sourceName + "' uses unsupported provider '" + source->second.provider + "'.");
+                continue;
+            }
+            addResourceEntries(group, resourceEntries(source->second.values, false));
+        }
+        configuredGroups[kind] = std::move(group);
     }
 }
 
-const std::vector<std::string>& LuduvoResourceCatalog::names(std::string_view kind) const
+const LuduvoResourceGroup* LuduvoResourceCatalog::group(std::string_view kind) const
 {
-    static const std::vector<std::string> empty;
-    auto result = configuredNames.find(std::string(kind));
-    return result == configuredNames.end() ? empty : result->second;
+    auto result = configuredGroups.find(std::string(kind));
+    return result == configuredGroups.end() ? nullptr : &result->second;
+}
+
+std::vector<std::string> LuduvoResourceCatalog::names(std::string_view kind) const
+{
+    std::vector<std::string> result;
+    const LuduvoResourceGroup* resourceGroup = group(kind);
+    if (!resourceGroup)
+        return result;
+    for (const LuduvoResourceName& entry : resourceGroup->resources)
+        result.push_back(entry.name);
+    return result;
+}
+
+const std::vector<std::string>& LuduvoResourceCatalog::configurationWarnings() const
+{
+    return configuredWarnings;
 }

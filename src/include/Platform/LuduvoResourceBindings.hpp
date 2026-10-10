@@ -44,11 +44,14 @@ class LuduvoResourceBindingRegistry
         bool pluralResourceNoun = false;
     };
     std::vector<Binding> bindings;
+    std::vector<std::string> configuredWarnings;
 
 public:
     LuduvoResourceBindingRegistry();
 
     void configure(const ClientLuduvoConfiguration& configuration);
+    const std::vector<std::string>& configurationWarnings() const;
 
-    std::vector<LuduvoResolvedResourceBinding> resolve(const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType) const;
+    std::vector<LuduvoResolvedResourceBinding> resolve(const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType,
+        std::vector<std::string>* warnings = nullptr) const;
 };
