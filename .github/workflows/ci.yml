@@ -110,6 +110,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test release version generation
+        run: python3 -m unittest scripts/test_release.py
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -128,8 +130,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-22.04, windows-latest]
-    name: Test Extension (${{ matrix.os }})
+        include:
+          - os: macos-latest
+            target: darwin-x64
+          - os: ubuntu-22.04
+            target: linux-x64
+          - os: windows-latest
+            target: win32-x64
+    name: Test Extension (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -138,15 +146,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - name: Install dependencies
+        run: npm ci
         working-directory: editors/code
-      - run: xvfb-run -a npm test
+      - name: Compile and test extension
+        run: xvfb-run -a npm test
         working-directory: editors/code
         if: runner.os == 'Linux'
-      - run: npm test
+      - name: Compile and test extension
+        run: npm test
         working-directory: editors/code
         if: runner.os != 'Linux'
-      - run: npx @vscode/vsce package
+      - name: Verify VSIX packaging
+        run: npm exec -- vsce package --target "${{ matrix.target }}" --out "luduvo-lsp-${{ matrix.target }}.vsix"
         working-directory: editors/code
 
   selene:

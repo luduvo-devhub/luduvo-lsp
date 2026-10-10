@@ -11,11 +11,14 @@ export let editor: vscode.TextEditor;
 export let documentEol: string;
 export let platformEol: string;
 
-/**
- * Activates the vscode.lsp-sample extension
- */
+/** Activates the Luduvo extension and opens a test document. */
 export async function activate(docUri: vscode.Uri) {
-  const ext = vscode.extensions.getExtension("johnnymorganz.luau-lsp")!;
+  const ext = vscode.extensions.all.find(
+    (candidate) => candidate.packageJSON.name === "luduvo-lsp",
+  );
+  if (!ext) {
+    throw new Error("Luduvo Language Server extension is not installed");
+  }
   await ext.activate();
   try {
     doc = await vscode.workspace.openTextDocument(docUri);

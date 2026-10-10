@@ -35,8 +35,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          release_flags=()
+          if [[ "$RELEASE_TAG" == *-alpha ]]; then
+            release_flags+=(--prerelease)
+          fi
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "$RELEASE_TAG" --notes-file release-notes.md --draft --verify-tag
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "$RELEASE_TAG" --notes-file release-notes.md --draft --verify-tag "${release_flags[@]}"
           fi
 
   api-docs:
@@ -66,7 +70,7 @@ jobs:
         include:
           - os: windows-latest
             artifact-name: luduvo-lsp-win64
-            code-target: [win32-x64, win32-arm64]
+            code-target: [win32-x64]
             crash-reporting: false
           - os: ubuntu-22.04
             artifact-name: luduvo-lsp-linux-x86_64
@@ -89,6 +93,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ env.RELEASE_TAG }}
           submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Build Server
         shell: bash
@@ -161,6 +170,22 @@ jobs:
           rm -f editors/code/LICENSE.md
           cp LICENSE.md editors/code/LICENSE
 
+      - name: Install extension dependencies
+        run: npm ci
+        working-directory: editors/code
+
+      - name: Package VS Code extension
+        shell: bash
+        working-directory: editors/code
+        run: |
+          package_flags=()
+          if [[ "$RELEASE_TAG" == *-alpha ]]; then
+            package_flags+=(--pre-release)
+          fi
+          for target in ${{ join(matrix.code-target, ' ') }}; do
+            npm exec -- vsce package --target "$target" --out "../../dist/luduvo-lsp-$target.vsix" "${package_flags[@]}"
+          done
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -181,4 +206,43 @@ jobs:
       - name: Upload assets to Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$RELEASE_TAG" ./release-assets/*.zip --clobber --repo "$GITHUB_REPOSITORY"
+        run: gh release upload "$RELEASE_TAG" ./release-assets/*.zip ./release-assets/*.vsix --clobber --repo "$GITHUB_REPOSITORY"
+
+  publish-open-vsx:
+    name: Publish extensions to Open VSX
+    needs: ["dist"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download packaged extensions
+        uses: actions/download-artifact@v7
+        with:
+          pattern: dist-*
+          path: ./release-assets
+          merge-multiple: true
+
+      - name: Publish platform extensions
+        shell: bash
+        env:
+          OVSX_PAT: ${{ secrets.OPEN_VSX_TOKEN }}
+        run: |
+          if [[ -z "$OVSX_PAT" ]]; then
+            echo "::error::OPEN_VSX_TOKEN is not configured"
+            exit 1
+          fi
+          packages=(./release-assets/*.vsix)
+          if [[ ! -e "${packages[0]}" ]]; then
+            echo "::error::No VSIX packages were downloaded"
+            exit 1
+          fi
+          package_flags=(--skip-duplicate)
+          if [[ "$RELEASE_TAG" == *-alpha ]]; then
+            package_flags+=(--pre-release)
+          fi
+          for package in "${packages[@]}"; do
+            npx --yes ovsx@1.2.0 publish "${package_flags[@]}" "$package"
+          done

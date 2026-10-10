@@ -6,25 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-
 ### Added
 
 - A new resources system that inserts autocomplete suggestions without needing to modify the global types file. Doesn't seem like much, but the system its built in such a way that I'll be able to (somewhat easily) extend it to include support for future resource types (events, user-defined prefabs/components, signals, etc.) without needing to rewrite any of it. Probably. Hopefully.
-- 4 new settings come with the resource system:
-  - `luau-lsp.platform.luduvo.resources.overrides`, which allows you to override resource autocorrect options or add your own
+- 6 new settings come with the resource system:
+  - `luau-lsp.platform.luduvo.resources.groups`, which defines all the resource groups Luduvo adds to autocomplete. Each group defines `dataType`, `includeBuiltins` (which decides if this extends or overrides the built-in resource suggestions), and a list of sources that contain the contents of each group's resource autocomplete suggestions. For now, you can only use `string` data types but in the future it'll change
+  - `luau-lsp.platform.luduvo.resources.sources`, which defines all the resource names a specific source takes. There's a `provider` field that determines how the source is loaded, but for now only `provider: "static"` is supported (which just loads a list of values)
   - `luau-lsp.platform.luduvo.resources.bindings`, which allows you to add resource autocorrect to custom function parameters
   - `luau-lsp.platform.luduvo.resources.completion.enabled`, which globally enables/disables resource-name suggestions to arguments marked with the "resource-constrained" tag
   - `luau-lsp.platform.luduvo.resources.completion.disabledKinds`, which allows you to disable resource-name autocomplete for the listed resource kinds
   - `luau-lsp.platform.luduvo.resources.completion.disabledApis`, which allows you to disable resource-name autocomplete for specific API endpoints
 - Component autocomplete is back and it comes with Prefab autocomplete as a neat bonus. Core Prefabs/Components only for now, but the Prefabs are dynamically read from Luduvo's roaming so it'll remain accurate when Luduvo updates.
 - Hover/Autocomplete/Paramater tooltips report which variables/types that are resource contrained in its markdown menu
-
-### Changed
-
-- `luau-lsp.platform.luduvo.definitions.defaultScriptSide` got renamed to `luau-lsp.platform.luduvo.definitions.defaultScriptScope`
+- Releases now (hopefully) support VSCode extension builds that put them in different release channels depending on the suffix I give releases. Not actually tested yet
 
 ### Fixed
 
+- Stopped adding the "L-alpha" suffix to the end of VSCode extension releases so they compile again
 - Rich hover mode now applies in active paramater tooltips. Unfortunately it won't be able to be displayed on the top, since I can't control where it shows up...
 - Fixed duplicate lines appearing in the hover/tooltip during active paramater tooltip hover
 

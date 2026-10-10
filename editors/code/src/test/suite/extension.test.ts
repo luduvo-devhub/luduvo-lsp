@@ -1,15 +1,26 @@
 import * as assert from "assert";
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from "vscode";
-// import * as myExtension from '../../extension';
 
 suite("Extension Test Suite", () => {
-  vscode.window.showInformationMessage("Start all tests.");
+  vscode.window.showInformationMessage("Starting all tests.");
+  test("Luduvo LSP is properly loaded", () => {
+    const extension = vscode.extensions.all.find(
+      (candidate) => candidate.packageJSON.name === "luduvo-lsp",
+    );
 
-  test("Sample test", () => {
-    assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-    assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+    assert.ok(extension, "Luduvo Language Server extension was not loaded");
+    assert.strictEqual(
+      extension.packageJSON.displayName,
+      "Luduvo Language Server",
+    );
+    assert.strictEqual(extension.packageJSON.publisher, "LuduvoDeveloperHub");
+    assert.match(extension.packageJSON.version, /^\d+\.\d+\.\d+$/);
+
+    const configuration = extension.packageJSON.contributes?.configuration;
+    assert.ok(configuration, "extension configuration was not registered");
+    assert.ok(
+      configuration.properties?.["luduvo-lsp.platform.type"],
+      "Luduvo platform setting was not registered",
+    );
   });
 });

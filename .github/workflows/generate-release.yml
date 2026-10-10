@@ -4,9 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "New Version (without leading v)"
+        description: "Semver Base Version (major.minor.patch. The L will be added on its own so don't include it)"
         required: true
         type: string
+      prerelease:
+        description: "Make the release a prerelease and mark it as alpha?"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   generate-release:
@@ -27,4 +32,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - run: "scripts/release.py ${{ github.event.inputs.version }}"
+      - name: Test release version generation
+        run: python3 -m unittest scripts/test_release.py
+      - name: Create release commit and tag
+        env:
+          BASE_VERSION: ${{ inputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          if [[ "$PRERELEASE" == "true" ]]; then
+            scripts/release.py "$BASE_VERSION" --prerelease
+          else
+            scripts/release.py "$BASE_VERSION"
+          fi

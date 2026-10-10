@@ -144,36 +144,7 @@ For example, this combines built-in and project prefabs, creates a custom animat
 {
   "platform": {
     "luduvo": {
-      "resources": {
-        "groups": {
-          "prefab": {
-            "dataType": "string",
-            "includeBuiltins": true,
-            "sources": ["project-prefabs"]
-          },
-          "animation-state": {
-            "dataType": "string",
-            "sources": ["default-states"]
-          }
-        },
-        "sources": {
-          "project-prefabs": {
-            "provider": "static",
-            "values": ["MyProjectPrefab"]
-          },
-          "default-states": {
-            "provider": "static",
-            "values": ["Idle", "Running"]
-          }
-        },
-        "bindings": [
-          {
-            "symbol": "MyLibrary.Spawn",
-            "parameter": "name",
-            "kind": "prefab"
-          }
-        ]
-      }
+      // Put Luduvo settings here
     }
   }
 }

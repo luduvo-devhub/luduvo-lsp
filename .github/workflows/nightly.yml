@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Set Nightly Version
         shell: bash
@@ -118,8 +118,12 @@ jobs:
         working-directory: editors/code
 
       - name: Package Extension
+        shell: bash
         working-directory: editors/code
-        run: npx vsce package -o "../../dist/${{ matrix.artifact-name }}.vsix"
+        run: |
+          for target in ${{ join(matrix.code-target, ' ') }}; do
+            npm exec -- vsce package --pre-release --target "$target" --out "../../dist/luduvo-lsp-$target.vsix"
+          done
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

@@ -8,22 +8,9 @@ if part then
     game.Tags.Add(part, "Example")
 end
 
-for keys, _ in handles do
-    for _, attributes in keys:split('|') do
-        local key, value = attributes:match("([^=]+)=(.*)") -- Looks for key=value pairs in the string
-        if key == nil then -- No value means its probably a flag
-            key = attributes
-            value = "nil"
-        end
-        assert(key ~= nil and value ~= nil) -- needed my linter to shut up. Redundant. Feel free to cut it
+local finishMe = game.
 
-        self.attr[key] = value
-    end
-end
-
-local blah = game.EventTable("neame")
-
-local finishMe = game.Input.KeyPressed()
+local testResourceAutocomplete = game.World.Query("") or self:HasComponent("") or game.Prefabs.Exists("")
 
 math.abs(3-2)
 
