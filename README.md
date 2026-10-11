@@ -136,15 +136,44 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `luau-lsp.platform.luduvo.resources.completion.disabledKinds` | string array | `[]` | Disables resource-name completion for the listed resource kinds. |
 | `luau-lsp.platform.luduvo.resources.completion.disabledApis` | string array | `[]` | Disables resource-name completion for the listed canonical API symbols. |
 
-Resource groups collect reusable value sources by kind. A group omitted from configuration uses its active Luduvo built-ins. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. An empty source list with built-ins disabled intentionally provides no names. Prefab built-ins come from the active Luduvo installation and then the bundled fallback. Components currently use the generated bundled catalog because Luduvo does not expose an equivalent live component-name source.
+Resource groups collect reusable value sources by kind. A group omitted from configuration uses its active Luduvo built-ins. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. An empty source list with built-ins disabled intentionally provides no names. Prefab built-ins come from the active Luduvo installation and then a bundled, precompiled fallback. Components currently use the generated bundled catalog because Luduvo does not expose a live component-name source.
 
-For example, this combines built-in and project prefabs, creates a custom animation-state group, and marks a custom function parameter as accepting prefab names:
+For example, you can extend the built-in prefabs with your own project prefabs, create a custom "animation-state" group, and mark a custom function parameter as accepting prefab names:
 
 ```jsonc
 {
   "platform": {
     "luduvo": {
-      // Put Luduvo settings here
+      "resources": {
+        "groups": {
+          "prefab": {
+            "dataType": "string",
+            "includeBuiltins": true,
+            "sources": ["project-prefabs"]
+          },
+          "animation-state": {
+            "dataType": "string",
+            "sources": ["default-states"]
+          }
+        },
+        "sources": {
+          "project-prefabs": {
+            "provider": "static",
+            "values": ["MyProjectPrefab"]
+          },
+          "default-states": {
+            "provider": "static",
+            "values": ["Idle", "Running"]
+          }
+        },
+        "bindings": [
+          {
+            "symbol": "MyLibrary.Spawn",
+            "parameter": "name",
+            "kind": "prefab"
+          }
+        ]
+      }
     }
   }
 }

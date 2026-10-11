@@ -40,7 +40,7 @@ jobs:
             release_flags+=(--prerelease)
           fi
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "$RELEASE_TAG" --notes-file release-notes.md --draft --verify-tag "${release_flags[@]}"
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "v$RELEASE_TAG" --notes-file release-notes.md --draft --verify-tag "${release_flags[@]}"
           fi
 
   api-docs:
