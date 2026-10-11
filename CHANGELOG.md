@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.70.3L-alpha] - 2026-10-11
+
 ### Added
 
 - A new resources system that inserts autocomplete suggestions without needing to modify the global types file. Doesn't seem like much, but the system its built in such a way that I'll be able to (somewhat easily) extend it to include support for future resource types (events, user-defined prefabs/components, signals, etc.) without needing to rewrite any of it. Probably. Hopefully.
