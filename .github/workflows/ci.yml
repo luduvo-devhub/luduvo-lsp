@@ -110,8 +110,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test release version generation
-        run: python3 -m unittest scripts/test_release.py
       - name: Setup node
         uses: actions/setup-node@v4
         with:

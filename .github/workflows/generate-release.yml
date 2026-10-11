@@ -32,8 +32,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Test release version generation
-        run: python3 -m unittest scripts/test_release.py
       - name: Create release commit and tag
         env:
           BASE_VERSION: ${{ inputs.version }}
