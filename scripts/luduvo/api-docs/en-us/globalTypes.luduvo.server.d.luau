@@ -4,11 +4,13 @@
 type RaycastResult = {
 	Position: vector,
 	Normal: vector,
+	Instance: Instance?,
 	Entity: Instance?,
 	Distance: number,
 }
 
 type ShapecastHit = {
+	Instance: Instance,
 	Entity: Instance,
 	Point: vector,
 	Normal: vector,
@@ -51,6 +53,12 @@ type MoveIntent = {
 	jump: boolean,
 	shiftLock: boolean,
 	targetYaw: number,
+}
+
+type QueryParams = {
+	ExcludeInstances: {Instance}?,
+	IncludeInstances: {Instance}?,
+	CollisionGroup: string?,
 }
 
 type SwingTwistJointDesc = {
@@ -111,6 +119,82 @@ type AvatarManifest = {
 	Accessories: { AvatarAccessory },
 }
 
+type MaterialEntry = {
+	Id: string,
+	Name: string,
+	Pipeline: string,
+	Model: string,
+}
+
+type MaterialSurface = {
+	BaseColor: string?,
+	Normal: string?,
+	Orm: string?,
+	Tint: {r: number, g: number, b: number, a: number}?,
+	TileSize: number?,
+	NormalStrength: number?,
+	RoughnessMult: number?,
+	MetallicMult: number?,
+	AlphaCutoff: number?,
+	Neon: boolean?,
+	TintVertex: boolean?,
+}
+
+type MaterialEmission = {
+	Texture: string?,
+	Tint: {r: number, g: number, b: number}?,
+	Intensity: number?,
+}
+
+type MaterialStuds = {
+	ColorTop: string?,
+	NormalTop: string?,
+	ColorBottom: string?,
+	NormalBottom: string?,
+	StudsPerTile: number?,
+}
+
+type MaterialWater = {
+	Absorption: {r: number, g: number, b: number}?,
+	DepthScale: number?,
+	Refraction: number?,
+	FoamScale: number?,
+	FoamDepth: number?,
+	FlowSpeed: number?,
+	FlowScale: number?,
+	WaveAmplitude: number?,
+	WaveScale: number?,
+	WaveSpeed: number?,
+	FlowMap: string?,
+	Foam: string?,
+}
+
+type MaterialPhysics = {
+	Density: number?,
+	Friction: number?,
+	Restitution: number?,
+}
+
+type MaterialAudio = {
+	Clips: {string},
+	Gain: number?,
+	PitchSpread: number?,
+}
+
+type MaterialSpec = {
+	Id: string,
+	Name: string?,
+	Pipeline: string,
+	Model: string,
+	Surface: MaterialSurface,
+	Emission: MaterialEmission?,
+	Studs: MaterialStuds?,
+	Water: MaterialWater?,
+	Physics: MaterialPhysics?,
+	Footsteps: MaterialAudio?,
+	Impacts: MaterialAudio?,
+}
+
 declare extern type ContentRequest with
 	Pending: boolean
 	Cancel: (self: ContentRequest) -> ()
@@ -131,15 +215,22 @@ declare extern type DynamicMesh with
 end
 
 declare extern type Signal with
-	Connect: (self: Signal, callback: (...any) -> ()) -> ()
+	Connect: (self: Signal, callback: (...any) -> ()) -> SignalConnection
 	Disconnect: (self: Signal, callback: (...any) -> ()) -> ()
 	Emit: (self: Signal, ...any) -> ()
+	Once: (self: Signal, callback: (...any) -> ()) -> SignalConnection
+	Wait: (self: Signal) -> ...any
+end
+
+declare extern type SignalConnection with
+	Connected: boolean
+	Disconnect: (self: SignalConnection) -> ()
 end
 
 declare extern type Tween with
 	Finished: Signal
 	SetTrans: (self: Tween, trans: string) -> Tween
-	SetEase: (self: Tween, ease: string) -> Tween
+	SetEase: (self: Tween, direction: string) -> Tween
 	SetDelay: (self: Tween, seconds: number) -> Tween
 	Pause: (self: Tween) -> ()
 	Play: (self: Tween) -> ()
@@ -148,10 +239,6 @@ declare extern type Tween with
 	IsValid: (self: Tween) -> boolean
 end
 
-declare extern type Component with
-	[string]: any
-	function __iter(self): (Component) -> (string, any)
-end
 declare extern type AnimLayers with
 	[number]: AnimLayerRow?
 end
@@ -167,16 +254,8 @@ declare extern type EventColumn with
 	[number]: any
 end
 
-declare extern type EventTable with
-	count: number
-	sender: EventColumn
-	[string]: EventColumn
-	Push: (self: EventTable, ...any) -> ()
-	PushTo: (self: EventTable, userId: number, ...any) -> ()
-end
-
 declare extern type QueryColumn with
-	[number]: any
+	[number | string]: any
 end
 
 declare extern type Pair with
@@ -184,6 +263,7 @@ end
 
 declare extern type Query with
 	count: number
+	Instance: QueryColumn
 	Entity: QueryColumn
 	[string]: QueryColumn
 	function Refresh(self): number
@@ -191,14 +271,27 @@ declare extern type Query with
 	function Without(self, name: string | Pair): Query
 end
 
-declare extern type UDim2 with
-end
-
-declare extern type Rect with
-	Min: vector
-	Max: vector
-	Width: number
-	Height: number
+declare extern type vector with
+	x: number
+	y: number
+	z: number
+	X: number
+	Y: number
+	Z: number
+	R: number
+	G: number
+	B: number
+	Magnitude: number
+	Unit: vector
+	function Dot(self, other: vector): number
+	function Lerp(self, other: vector, alpha: number): vector
+	function Cross(self, other: vector): vector
+	function __add(self, other: vector): vector
+	function __sub(self, other: vector): vector
+	function __unm(self): vector
+	function __mul(self, other: vector | number): vector
+	function __div(self, other: vector | number): vector
+	function __idiv(self, other: vector | number): vector
 end
 
 declare extern type Store with
@@ -220,14 +313,116 @@ declare extern type OrderedCloudStore with
 	function get_sorted(self, ascending: boolean, limit: number, min_score: number?, max_score: number?, after: {key: string, value: number}?, callback: ({{key: string, value: number}}, string?) -> ()): ()
 end
 
+declare extern type Component with
+	[string]: any
+	__iter: (self: Component) -> (Component) -> (string, any)
+end
+
+declare extern type UDim with
+	Scale: number
+	Offset: number
+	__tostring: (self: UDim) -> string
+	__eq: (self: UDim, other: UDim) -> boolean
+	__add: (self: UDim, other: UDim) -> UDim
+	__sub: (self: UDim, other: UDim) -> UDim
+	__unm: (self: UDim) -> UDim
+end
+
+declare extern type UDim2 with
+	X: UDim
+	Y: UDim
+	__tostring: (self: UDim2) -> string
+	__eq: (self: UDim2, other: UDim2) -> boolean
+	__add: (self: UDim2, other: UDim2) -> UDim2
+	__sub: (self: UDim2, other: UDim2) -> UDim2
+	__unm: (self: UDim2) -> UDim2
+	Lerp: (self: UDim2, goal: UDim2, alpha: number) -> UDim2
+end
+
+declare extern type Rect with
+	Min: vector
+	Max: vector
+	Width: number
+	Height: number
+	__tostring: (self: Rect) -> string
+	__eq: (self: Rect, other: Rect) -> boolean
+end
+
+declare extern type EventTable with
+	[string]: EventColumn
+	count: number
+	sender: EventColumn
+	OnServerEvent: Signal
+	OnClientEvent: Signal
+	FireServer: (self: EventTable, ...any) -> ()
+	FireAllClients: (self: EventTable, ...any) -> ()
+	FireClient: (self: EventTable, player: Instance, ...any) -> ()
+	Push: (self: EventTable, ...any) -> ()
+	PushTo: (self: EventTable, userId: number, ...any) -> ()
+end
+
+declare extern type ToolComponent with
+	equipped: number
+	gripOffset: vector
+	gripHand: number
+	gripRotation: vector
+	icon: string
+	noDrop: number
+end
+
+declare extern type PlayerSpawnerComponent with
+	character: string
+	respawnDelay: number
+end
+
+declare extern type ToolStateComponent with
+	world: number
+end
+
+declare extern type CameraLensComponent with
+	fovY: number
+	nearZ: number
+	farZ: number
+end
+
+declare extern type OrthographicLensComponent with
+	size: number
+end
+
+declare extern type BillboardGuiComponent with
+	adornee: Instance?
+	studsOffset: vector
+	width: number
+	height: number
+	anchorX: number
+	anchorY: number
+	maxDistance: number
+	alwaysOnTop: boolean
+	clampToScreen: boolean
+	edgeFadeStart: number
+	edgeFadeEnd: number
+end
+
+declare extern type UITailComponent with
+	side: number
+	offset: number
+	length: number
+	width: number
+	pointAtAdornee: boolean
+end
+
 declare extern type Instance with
+	-- read-only
+	AbsolutePosition: vector
+	-- read-only
+	AbsoluteSize: vector
 	Action: string
 	-- read-only
 	Activated: Signal
 	Active: number
 	ActiveAnimation: (self: Instance) -> string?
-	AddAccessory: (self: Instance, accessory: Instance | ContentAsset) -> Instance | boolean
-	AddComponent: (self: Instance, name: string) -> Component | Instance
+	AddAccessory: (self: Instance, accessory: Instance | ContentAsset) -> Instance?
+	AddComponent: (self: Instance, ...string | Pair) -> Component | Instance
 	Adornee: Instance?
 	AdvancePreview: (self: Instance) -> boolean
 	AirAccelerate: number
@@ -251,10 +446,10 @@ declare extern type Instance with
 	AnimationWeight: (self: Instance, clip: string) -> number?
 	ApplyForce: (self: Instance, force: vector, at: vector?) -> ()
 	ApplyImpulse: (self: Instance, impulse: vector, at: vector?) -> ()
-	ApplyTorque: (self: Instance, torque: vector) -> ()
+	@[deprecated {use = "World.Query"}] function ApplyTorque(self, torque: vector): ()
 	ApplyTorqueImpulse: (self: Instance, impulse: vector) -> ()
 	Area: number
-	ArrowDirection: number
+	ArrowDirection: string
 	-- read-only
 	Asset: string
 	-- read-only
@@ -270,6 +465,8 @@ declare extern type Instance with
 	BackpackSlot: number
 	BarWidth: number
 	BillboardColor: vector
+	-- read-only
+	read BillboardGui: BillboardGuiComponent
 	BillboardMaxDistance: number
 	BillboardOffset: vector
 	BillboardOnTop: boolean
@@ -304,17 +501,24 @@ declare extern type Instance with
 	BusySpeed: number
 	BusyTransparency: number
 	BusyWidth: number
+	-- read-only
+	read CameraLens: CameraLensComponent
 	CancelText: string
 	-- read-only
 	Canceled: Signal
+	-- read-only
+	CanvasPosition: vector
 	CanvasSize: UDim2
-	CaptureFocus: (self: Instance) -> ()
 	CellPadding: number
 	CellSize: vector
 	CenterOfPressure: vector
+	ChangeState: (self: Instance, state: string) -> ()
 	-- read-only
 	Changed: Signal
-	Character: boolean
+	-- read-only
+	Character: Instance?
+	-- read-only
+	CharacterAdded: Signal
 	CharacterAnimation: boolean
 	CharacterPhysics: boolean
 	CharacterRig: boolean
@@ -363,6 +567,7 @@ declare extern type Instance with
 	ConsoleRowLine: boolean
 	ConsoleRowPrefix: boolean
 	ContinuousCollision: boolean
+	CoreMenuDimmer: boolean
 	CornerRadius: number
 	CorneringStiffness: number
 	CursorColor3: vector
@@ -386,13 +591,16 @@ declare extern type Instance with
 	DragMoved: Signal
 	Emissive: string
 	Emit: (self: Instance, name: string, ...any) -> ()
+	EquipTool: (self: Instance, tool: Instance) -> ()
+	-- read-only
+	Equipped: Signal
 	Face: string
 	FillAmount: number
 	FillColor3: vector
 	FillImage: string
-	FillMode: number
+	FillMode: string
 	FillTransparency: number
-	FindAncestorWithComponent: (self: Instance, name: string) -> Instance?
+	FindAncestorWithComponent: (self: Instance, name: string | Pair) -> Instance?
 	FindFirstChild: (self: Instance, name: string, recursive: boolean?) -> Instance?
 	FitColumns: boolean
 	FlareGhostIntensity: number
@@ -412,19 +620,23 @@ declare extern type Instance with
 	FreezeRows: number
 	Friction: number
 	FrictionTorque: number
-	GetAccessories: (self: Instance) -> {Instance}
-	GetAngularVelocity: (self: Instance) -> vector
+	@[deprecated {use = "World.Each"}] function GetAccessories(self): {Instance}
+	@[deprecated {use = "World.Query"}] function GetAngularVelocity(self): vector
+	GetAttributeChangedSignal: (self: Instance, name: string) -> Signal
 	GetChildren: (self: Instance) -> {Instance}
 	GetDescendants: (self: Instance) -> {Instance}
-	GetHearingSense: (self: Instance) -> (number, number)
-	GetLastHeardStimulus: (self: Instance) -> (Instance?, vector?, number?, number?)
-	GetLinearVelocity: (self: Instance) -> vector
+	@[deprecated {use = "World.Query"}] function GetHearingSense(self): (number, number)
+	@[deprecated {use = "World.Query"}] function GetLastHeardStimulus(self): (Instance?, vector?, number?, number?)
+	@[deprecated {use = "Instance.Velocity"}] function GetLinearVelocity(self): vector
 	GetMass: (self: Instance) -> number?
-	GetMoveIntent: (self: Instance) -> MoveIntent?
-	GetNearestPerceivedTarget: (self: Instance) -> (Instance?, number?)
+	@[deprecated {use = "World.Query"}] function GetMoveIntent(self): MoveIntent?
+	@[deprecated {use = "World.Query"}] function GetNearestPerceivedTarget(self): (Instance?, number?)
+	GetPropertyChangedSignal: (self: Instance, name: string) -> Signal
 	GetSignal: (self: Instance, name: string) -> Signal
-	GetSwingTwistJoint: (self: Instance) -> SwingTwistJointInfo?
-	GetVisionCone: (self: Instance) -> (number, number, number, number)
+	GetStateEnabled: (self: Instance, state: string) -> boolean
+	@[deprecated {use = "Instance.Anchor"}] function GetSwingTwistJoint(self): SwingTwistJointInfo?
+	GetTool: (self: Instance, slot: number?) -> Instance?
+	@[deprecated {use = "World.Query"}] function GetVisionCone(self): (number, number, number, number)
 	GraphOffset: vector
 	GraphZoom: number
 	GraphZoomMax: number
@@ -438,10 +650,10 @@ declare extern type Instance with
 	GripSize: number
 	HandlesColor3: vector
 	HandlesFaces: number
-	HandlesStyle: number
+	HandlesStyle: string
 	HandlesTransparency: number
-	HandlesType: number
-	HasComponent: (self: Instance, name: string) -> boolean
+	HandlesType: string
+	HasComponent: (self: Instance, name: string | Pair) -> boolean
 	HeaderCell: boolean
 	HeaderColor3: vector
 	HeaderHeight: number
@@ -453,27 +665,27 @@ declare extern type Instance with
 	HingeAnchor: vector
 	HingeAxis: vector
 	HipHeight: number
+	-- read-only
+	Hit: Signal
 	HoverImage: string
 	-- read-only
 	Hovered: Signal
 	Hue: number
-	IconAlign: number
+	IconAlign: string
 	IconGap: number
 	IconSize: number
-	Id: number
 	Image: string
 	ImageColor3: vector
 	ImageTransparency: number
 	Indent: number
 	InducedDragFactor: number
 	InnerAngle: number
-	InputMove: boolean
-	InputSteer: boolean
 	Intensity: number
+	InverseTransformDirection: (self: Instance, direction: vector) -> vector
 	InverseTransformPoint: (self: Instance, position: vector) -> vector
 	Invulnerable: boolean
 	IsAlive: (self: Instance) -> boolean
-	IsDescendantOf: (self: Instance, ancestor: Instance) -> boolean
+	IsDescendantOf: (self: Instance, ancestor: Instance | World) -> boolean
 	IsRoot: boolean
 	ItemCount: number
 	ItemHeight: number
@@ -508,12 +720,15 @@ declare extern type Instance with
 	Locked: boolean
 	LongitudinalStiffness: number
 	LookAt: (self: Instance, target: vector, up: vector?, useModelFront: boolean?) -> ()
+	Looped: boolean
 	LowerTranslation: number
 	MarginBottom: number
 	MarginLeft: number
 	MarginRight: number
 	MarginTop: number
 	Margins: Rect
+	-- read-only
+	MarkerReached: Signal
 	Material: string
 	MaxActivationDistance: number
 	MaxDistance: number
@@ -565,9 +780,11 @@ declare extern type Instance with
 	Open: boolean
 	Options: string
 	Orientation: vector
+	-- read-only
+	read OrthographicLens: OrthographicLensComponent
 	Other: Instance?
 	OuterAngle: number
-	-- read-only
+	-- server-only write
 	OwnerUserId: number
 	Page: number
 	PanelColor3: vector
@@ -576,10 +793,13 @@ declare extern type Instance with
 	PanoramaEnergyMultiplier: number
 	PanoramaRotation: number
 	Pants: string
-	Parent: Instance?
+	read Parent: Instance?
+	write Parent: (Instance | World)?
 	Part: string
 	Password: boolean
 	Pause: (self: Instance) -> ()
+	-- read-only
+	Paused: boolean
 	PeakFriction: number
 	Pivot: vector
 	PlaceholderText: string
@@ -588,14 +808,19 @@ declare extern type Instance with
 	Play: (self: Instance) -> ()
 	PlayAnimation: (self: Instance, clip: string, fade: number?, speed: number?) -> ()
 	PlaybackSpeed: number
+	-- read-only
+	read PlayerSpawner: PlayerSpawnerComponent
+	-- read-only
+	Playing: boolean
 	PlotColor3: vector
 	PlotTransparency: number
-	PlotType: number
+	PlotType: string
 	Popup: boolean
 	PopupOpen: boolean
 	PortColor3: vector
 	PortTransparency: number
-	Position: vector | UDim2
+	Position: vector
+	-- read-only
 	PrefabId: number
 	-- read-only
 	Pressed: Signal
@@ -606,14 +831,13 @@ declare extern type Instance with
 	ProgressTrackColor3: vector
 	ProgressTrackTransparency: number
 	ProgressTransparency: number
-	PushSample: (self: Instance, value: number) -> ()
 	Radio: boolean
 	RadioGroup: number
 	Range: number
 	-- read-only
 	Released: Signal
 	Remaining: number
-	RemoveComponent: (self: Instance, name: string) -> ()
+	RemoveComponent: (self: Instance, ...string | Pair) -> ()
 	RenderDisabled: boolean
 	RepeatDelay: number
 	RepeatInterval: number
@@ -627,6 +851,7 @@ declare extern type Instance with
 	RootMotion: boolean
 	RopeAnchor: vector
 	Rotate: (self: Instance, axis: vector, angle: number) -> ()
+	RotationVector: vector
 	SampleCount: number
 	Saturation: number
 	ScaleMax: number
@@ -643,21 +868,22 @@ declare extern type Instance with
 	SelectedTabTransparency: number
 	SelectionColor3: vector
 	SelectionTransparency: number
-	SetAngularVelocity: (self: Instance, velocity: vector) -> ()
-	SetBodyMotion: (self: Instance, type: string) -> ()
-	SetHearingSense: (self: Instance, sensitivity: number, collisionMask: number?) -> ()
-	SetLinearVelocity: (self: Instance, velocity: vector) -> ()
-	SetParent: (self: Instance, parent: Instance?, keepWorld: boolean?) -> ()
-	SetSwingTwistJoint: (self: Instance, joint: SwingTwistJointDesc) -> ()
-	SetVisionCone: (self: Instance, range: number, fieldOfView: number, eyeOffsetY: number?, collisionMask: number?) -> ()
+	@[deprecated {use = "World.Query"}] function SetAngularVelocity(self, velocity: vector): ()
+	@[deprecated {use = "Instance.AddComponent"}] function SetBodyMotion(self, type: string): ()
+	@[deprecated {use = "Instance.AddComponent"}] function SetHearingSense(self, sensitivity: number, collisionMask: number?): ()
+	@[deprecated {use = "Instance.Velocity"}] function SetLinearVelocity(self, velocity: vector): ()
+	SetParent: (self: Instance, parent: (Instance | World)?, keepWorld: boolean?) -> ()
+	SetStateEnabled: (self: Instance, state: string, enabled: boolean) -> ()
+	@[deprecated {use = "Instance.Anchor"}] function SetSwingTwistJoint(self, joint: SwingTwistJointDesc): ()
+	@[deprecated {use = "Instance.AddComponent"}] function SetVisionCone(self, range: number, fieldOfView: number, eyeOffsetY: number?, collisionMask: number?): ()
 	Setting: string
 	ShadowOff: boolean
 	Shirt: string
 	Shortcut: string
 	Side: string
-	Size: vector | UDim2
-	SizeModeX: number
-	SizeModeY: number
+	Size: vector
+	SizeModeX: string
+	SizeModeY: string
 	SkyboxBk: string
 	SkyboxDn: string
 	SkyboxEnergyMultiplier: number
@@ -673,14 +899,11 @@ declare extern type Instance with
 	SortColumn: number
 	SortDescending: boolean
 	SoundId: string
-	SoundLooped: boolean
-	SoundPaused: boolean
-	SoundPlaying: boolean
 	Spacing: number
 	SpawnPoint: boolean
 	StallAngle: number
 	StarLuminance: number
-	StartTimer: (self: Instance, timeSec: number?) -> ()
+	@[deprecated {use = "Instance.AddComponent"}] function StartTimer(self, timeSec: number?): ()
 	-- read-only
 	State: string
 	-- read-only
@@ -689,13 +912,13 @@ declare extern type Instance with
 	StickCenter: vector
 	StickDeadzone: number
 	StickDirection: vector
-	StickMode: number
+	StickMode: string
 	StickRadius: number
 	StickTip: vector
 	Stop: (self: Instance) -> ()
 	StopAnimation: (self: Instance) -> ()
 	StopPreview: (self: Instance) -> boolean
-	StopTimer: (self: Instance) -> ()
+	@[deprecated {use = "Instance.RemoveComponent"}] function StopTimer(self): ()
 	StripeColor3: vector
 	StripeTransparency: number
 	SunDiskScale: number
@@ -714,12 +937,15 @@ declare extern type Instance with
 	SuspensionStiffness: number
 	SuspensionWheelRadius: number
 	SwatchColor3: vector
-	SwatchPreview: number
+	SwatchPreview: string
 	SwatchTransparency: number
 	SwitchWidth: number
 	TabColor3: vector
 	TabTransparency: number
 	TakeDamage: (self: Instance, amount: number, attacker: Instance?) -> ()
+	Team: number
+	TeamColor: vector
+	TeamId: number
 	Text: string
 	TextColor3: vector
 	TextSize: number
@@ -728,8 +954,8 @@ declare extern type Instance with
 	TextStrokeWidth: number
 	TextTransparency: number
 	TextWrapped: boolean
-	TextXAlignment: number
-	TextYAlignment: number
+	TextXAlignment: string
+	TextYAlignment: string
 	Texture: string
 	-- read-only
 	Throttle: number
@@ -750,14 +976,19 @@ declare extern type Instance with
 	TimerPaused: boolean
 	TitleHeight: number
 	-- read-only
+	read Tool: ToolComponent
+	-- read-only
+	read ToolState: ToolStateComponent
+	-- read-only
 	TouchEnded: Signal
 	-- read-only
 	Touched: Signal
-	TrackAxis: number
+	TrackAxis: string
 	TrackColor3: vector
 	TrackImage: string
 	TrackThickness: number
 	TrackTransparency: number
+	TransformDirection: (self: Instance, direction: vector) -> vector
 	TransformPoint: (self: Instance, position: vector) -> vector
 	Transparency: number
 	Trigger: boolean
@@ -766,10 +997,17 @@ declare extern type Instance with
 	TwistMin: number
 	Type: string
 	UIClickable: boolean
+	UIPosition: UDim2
 	UIRoot: boolean
+	UISize: UDim2
 	UISurfaceAlwaysOnTop: boolean
+	-- read-only
+	read UITail: UITailComponent
 	UIToggleButton: boolean
 	Underlay: string
+	UnequipTools: (self: Instance) -> ()
+	-- read-only
+	Unequipped: Signal
 	UpDirection: vector
 	UpperTranslation: number
 	UseLimits: boolean
@@ -783,9 +1021,9 @@ declare extern type Instance with
 	VectorSpeed: number
 	VectorValue: vector
 	Velocity: vector
-	ViewSource: Instance?
 	Visible: boolean
 	Volume: number
+	WaitForChild: (self: Instance, name: string, timeout: number?) -> Instance?
 	WaitTime: number
 	WalkSpeed: number
 	WheelRadius: number
@@ -795,6 +1033,43 @@ declare extern type Instance with
 	-- read-only
 	attr: { [string]: any }
 end
+
+type World = {
+	-- iterate the entities that hold a component
+	Each: ((component: string | Pair) -> () -> Instance?) & ((self: World, component: string | Pair) -> () -> Instance?),
+	-- print attribute usage to the output
+	DumpAttributes: ((entity: Instance?) -> ()) & ((self: World, entity: Instance?) -> ()),
+	-- the first entity at the top of the place with this name
+	FindFirstChild: ((name: string, recursive: boolean?) -> Instance?) & ((self: World, name: string, recursive: boolean?) -> Instance?),
+	-- every entity at the top of the place
+	GetChildren: (() -> {Instance}) & ((self: World) -> {Instance}),
+	-- every entity in the place, top level first
+	GetDescendants: (() -> {Instance}) & ((self: World) -> {Instance}),
+	-- a relationship pair for a query term
+	Pair: ((relation: string, target: Instance | World | string) -> Pair) & ((self: World, relation: string, target: Instance | World | string) -> Pair),
+	-- build a cached multi-component query
+	Query: ((...string | Pair) -> Query) & ((self: World, ...string | Pair) -> Query),
+	-- spawn a root entity with the given components
+	Spawn: ((...string | Pair) -> Instance) & ((self: World, ...string | Pair) -> Instance),
+	-- register a per-tick system over a query
+	System: ((name: string, q: Query, fn: (Query, number) -> (), phase: string?, after: string?) -> ()) & ((self: World, name: string, q: Query, fn: (Query, number) -> (), phase: string?, after: string?) -> ()),
+	-- the root Screen entity of the place
+	read Screen: Instance?,
+	-- the active Camera entity of the place
+	read Camera: Instance?,
+	-- false: the World holds no component
+	HasComponent: ((component: string | Pair) -> boolean) & ((self: World, component: string | Pair) -> boolean),
+	-- true: the World lasts as long as the place
+	IsAlive: (() -> boolean) & ((self: World) -> boolean),
+	-- false: nothing is above the World
+	IsDescendantOf: ((ancestor: Instance | World) -> boolean) & ((self: World, ancestor: Instance | World) -> boolean),
+	-- wait for an entity at the top of the place with this name
+	WaitForChild: ((name: string, timeout: number?) -> Instance?) & ((self: World, name: string, timeout: number?) -> Instance?),
+	-- the name of the World, always "World"
+	read Name: string,
+	-- nil: the World is the top of the place
+	read Parent: nil,
+}
 
 declare game: {
 	-- physics configuration, collision groups, and queries
@@ -809,17 +1084,15 @@ declare game: {
 		-- server-only
 		SetCollisionRule: (a: string, b: string, collidable: boolean) -> (),
 		-- cast a ray and report the first hit
-		Raycast: (origin: vector, dir: vector, maxDist: number, ignore: Instance?, mask: number?) -> RaycastResult?,
+		Raycast: (origin: vector, dir: vector, maxDist: number, params: QueryParams | Instance | nil, mask: number?) -> RaycastResult?,
 		-- collect the entities inside a sphere
-		OverlapSphere: (center: vector, radius: number, out: {Instance}?) -> (number, {Instance}),
+		OverlapSphere: (center: vector, radius: number, out: {Instance} | QueryParams | nil, params: QueryParams?) -> (number, {Instance}),
 		-- whether the physics body of an entity sleeps
 		IsSleeping: (e: Instance) -> boolean,
 		-- collect the entities inside a rotated box
-		OverlapBox: (center: vector, half: vector, rotation: vector?, out: {Instance}?) -> (number, {Instance}),
+		OverlapBox: (center: vector, half: vector, rotation: vector?, out: {Instance} | QueryParams | nil, params: QueryParams?) -> (number, {Instance}),
 		-- sweep a box, a sphere, or a capsule and report every entity in the path, nearest first
-		Shapecast: (shape: string, size: vector, from: vector, to: vector, rotation: vector?, out: {ShapecastHit}?) -> (number, {ShapecastHit}),
-		-- drain the buffered touch begin and end events, second result reports lost events
-		DrainTouchEvents: () -> ({TouchEvent}, boolean),
+		Shapecast: (shape: string, size: vector, from: vector, to: vector, rotation: vector?, out: {ShapecastHit} | QueryParams | nil, params: QueryParams?) -> (number, {ShapecastHit}),
 		-- break the welds inside a sphere and push the bodies out, result counts the bodies pushed
 		-- server-only
 		Explode: (position: vector, radius: number, force: number) -> number,
@@ -833,34 +1106,23 @@ declare game: {
 		read FallenPartsDestroyHeight: number,
 	},
 	-- the entity world
-	read World: {
-		-- iterate the entities that hold a component
-		Each: (component: string) -> () -> Instance?,
-		-- print attribute usage to the output
-		DumpAttributes: (entity: Instance?) -> (),
-		-- a relationship pair for a query term
-		Pair: (relation: string, target: Instance | string) -> Pair,
-		-- build a cached multi-component query
-		Query: (...string | Pair) -> Query,
-		-- register a per-tick system over a query
-		System: (name: string, q: Query, fn: (Query) -> (), phase: string?, after: string?) -> (),
-	},
+	read World: World,
 	-- entity tags and queries
 	read Tags: {
 		-- add a tag to an entity
-		Add: (entity: Instance, tag: string) -> (),
+		Add: @[deprecated {use = "Instance.AddComponent"}] (entity: Instance, tag: string) -> (),
 		-- find all entities with a tag
-		Find: (tag: string) -> {Instance},
+		Find: @[deprecated {use = "World.Each"}] (tag: string) -> {Instance},
 		-- list tags on an entity
-		Get: (entity: Instance) -> {string},
+		Get: @[deprecated {use = "World.Query"}] (entity: Instance) -> {string},
 		-- signal fired with each entity that gains the tag
 		GetInstanceAddedSignal: (tag: string) -> Signal,
 		-- signal fired with each entity that loses the tag or is destroyed holding it
 		GetInstanceRemovedSignal: (tag: string) -> Signal,
 		-- check whether an entity has a tag
-		Has: (entity: Instance, tag: string) -> boolean,
+		Has: @[deprecated {use = "Instance.HasComponent"}] (entity: Instance, tag: string) -> boolean,
 		-- remove a tag from an entity
-		Remove: (entity: Instance, tag: string) -> (),
+		Remove: @[deprecated {use = "Instance.RemoveComponent"}] (entity: Instance, tag: string) -> (),
 	},
 	-- prefab spawning
 	read Prefabs: {
@@ -891,11 +1153,11 @@ declare game: {
 		-- sun direction, tint, and strength
 		read Sun: { Azimuth: number, Elevation: number, Tint: vector, Intensity: number },
 		-- ambient light tint, strength, source, and sky contribution
-		read Ambient: { Tint: vector, Intensity: number, Source: number, Contribution: number },
+		read Ambient: { Tint: vector, Intensity: number, Source: string, Contribution: number },
 		-- background mode, color, and energy multiplier
-		read Background: { Mode: number, Color: vector, Energy: number },
+		read Background: { Mode: string, Color: vector, Energy: number },
 		-- shadow mode, the light level inside shadows, and how far from the camera shadows reach
-		read Shadows: { Mode: number, Fill: number, MaxDistance: number },
+		read Shadows: { Mode: string, Fill: number, MaxDistance: number },
 		-- auto exposure bounds
 		read Exposure: { MinEV: number, MaxEV: number },
 		-- night sky star brightness
@@ -903,7 +1165,7 @@ declare game: {
 		-- lens flare, intensity 0 disables it
 		read Flare: { Intensity: number, Scale: number, Tint: vector, Ghost: number },
 		-- distance fog color, mode, density, and linear start and end
-		read Fog: { Color: vector, Mode: number, Density: number, Start: number, End: number },
+		read Fog: { Color: vector, Mode: string, Density: number, Start: number, End: number },
 		-- atmosphere sun disk scale, night sky texture, and star luminance
 		read AtmosphereSky: { SunDiskScale: number, NightSky: string, StarLuminance: number },
 		-- panorama texture, rotation, and energy multiplier
@@ -913,10 +1175,12 @@ declare game: {
 	},
 	-- clip markers of the bound rig
 	read Animation: {
-		-- drain the clip markers the sampler crossed, second result reports lost markers
+		-- read the clip markers the sampler crossed, second result reports lost markers
 		-- server-only
-		DrainMarkers: () -> ({{Entity: Instance, Clip: string, Marker: string}}, boolean),
-		-- body part mask bits for AnimLayers rows
+		DrainMarkers: @[deprecated {use = "Instance.MarkerReached"}] () -> ({{Entity: Instance, Clip: string, Marker: string}}, boolean),
+		-- lowest index of the AnimLayers rows scripts can write
+		read FirstScriptLayer: number,
+		-- body part mask bits for AnimLayers layers
 		read Part: {Head: number, Torso: number, LeftArm: number, RightArm: number, LeftLeg: number, RightLeg: number},
 	},
 	-- property tweens
@@ -927,11 +1191,11 @@ declare game: {
 	-- sound configuration
 	read Sound: {
 		-- get audio bus volume in decibels
-		GetBusVolumeDb: (bus: number) -> number,
+		GetBusVolumeDb: @[deprecated {use = "World.Query"}] (bus: number) -> number,
 		-- play a cooked sound at a world position for players within 200 studs
 		PlayAt: (assetId: string, position: vector, volume: number?) -> boolean,
 		-- set audio bus volume in decibels
-		SetBusVolumeDb: (bus: number, db: number) -> (),
+		SetBusVolumeDb: @[deprecated {use = "World.Query"}] (bus: number, db: number) -> (),
 		-- volume of surface contact sounds, 0 to 1
 		-- server-only write
 		SurfaceSoundsVolume: number,
@@ -949,14 +1213,12 @@ declare game: {
 	read Session: {
 		-- bind a character entity to a user
 		-- server-only
-		BindCharacter: (userId: number, character: Instance) -> (),
+		BindCharacter: @[deprecated {use = "Instance.OwnerUserId"}] (userId: number, character: Instance) -> (),
 		-- the character bound to a user
-		CharacterOf: (userId: number) -> Instance?,
-		-- the character entity of the local client
-		LocalCharacter: () -> Instance?,
+		CharacterOf: @[deprecated {use = "Instance.Character"}] (userId: number) -> Instance?,
 		-- remove a player from this server
 		-- server-only
-		Kick: (userId: number, reason: string?) -> boolean,
+		Kick: @[deprecated {use = "Players.Kick"}] (userId: number, reason: string?) -> boolean,
 		-- fires when a player joins
 		read PlayerJoined: Signal,
 		-- fires when a player leaves
@@ -967,25 +1229,23 @@ declare game: {
 	-- the players of the session and their characters
 	read Players: {
 		-- every player in the session
-		All: () -> {Instance},
+		All: @[deprecated {use = "World.Each"}] () -> {Instance},
 		-- the player with this user id
 		Get: (userId: number) -> Instance?,
 		-- the player a character is bound to
 		FromCharacter: (character: Instance) -> Instance?,
 		-- the character bound to a player
-		CharacterOf: (player: Instance) -> Instance?,
+		CharacterOf: @[deprecated {use = "Instance.Character"}] (player: Instance) -> Instance?,
 		-- whether a player entity has the Admin tag
-		IsAdmin: (player: Instance) -> boolean,
+		IsAdmin: @[deprecated {use = "Instance.HasComponent"}] (player: Instance) -> boolean,
 		-- the local user's relation to that player
 		FriendStatus: (player: Instance) -> string,
 		-- bind a character entity to a player
 		-- server-only
-		BindCharacter: (player: Instance, character: Instance) -> (),
+		BindCharacter: @[deprecated {use = "Instance.OwnerUserId"}] (player: Instance, character: Instance) -> (),
 		-- remove a player from this server
 		-- server-only
 		Kick: (player: Instance, reason: string?) -> boolean,
-		-- send a chat message as the local player
-		Chat: (message: string) -> (),
 		-- the player of the local client
 		read LocalPlayer: Instance?,
 		-- fires with the player that joined
@@ -1001,29 +1261,9 @@ declare game: {
 	},
 	-- client input reads and pointer ray
 	read Input: {
-		-- whether a key is down
-		KeyDown: (keyCode: number) -> boolean,
-		-- whether a key was pressed this frame
-		KeyPressed: (keyCode: number) -> boolean,
-		-- whether a mouse button is down: 0 left, 1 right, 2 middle, 3 X1, 4 X2
-		ButtonDown: (button: number) -> boolean,
-		-- whether a mouse button was pressed this frame, same index as ButtonDown
-		ButtonPressed: (button: number) -> boolean,
-		-- camera ray through the cursor
-		PointerRay: () -> (vector?, vector?),
-		-- mouse lock behavior: 0 Default, 1 LockCenter
-		MouseBehavior: number,
-		-- mouse behavior enum values
-		read Behavior: {Default: number, LockCenter: number},
-		-- camera rotation mode: 0 MovementRelative, 1 CameraRelative
-		RotationType: number,
-		-- rotation type enum values
-		read Rotation: {MovementRelative: number, CameraRelative: number},
 	},
 	-- player and device settings
 	read Settings: {
-		-- whether shift lock toggle is allowed by player setting
-		read ShiftLock: boolean,
 	},
 	-- item facts for the platform rules
 	read Items: {
@@ -1057,15 +1297,15 @@ declare game: {
 		-- server-only
 		Avatar: (player: Instance, cb: (avatar: AvatarManifest?, err: string?) -> ()) -> ContentRequest,
 	},
-	-- material rows for parts
+	-- the materials of parts
 	read Materials: {
 		-- list every material with its pipeline class and surface model
-		GetMaterials: () -> {{Id: string, Name: string, Pipeline: string, Model: string}},
+		GetMaterials: () -> {MaterialEntry},
 		-- read one material. An absent dataset is nil, never a flag
-		GetMaterial: (idOrName: string) -> {Id: string, Name: string?, Pipeline: string, Model: string, Surface: {BaseColor: string?, Normal: string?, Orm: string?, Tint: {r: number, g: number, b: number, a: number}?, TileSize: number?, NormalStrength: number?, RoughnessMult: number?, MetallicMult: number?, AlphaCutoff: number?, Neon: boolean?, TintVertex: boolean?}, Emission: {Texture: string?, Tint: {r: number, g: number, b: number}?, Intensity: number?}?, Studs: {ColorTop: string?, NormalTop: string?, ColorBottom: string?, NormalBottom: string?, StudsPerTile: number?}?, Water: {Absorption: {r: number, g: number, b: number}?, DepthScale: number?, Refraction: number?, FoamScale: number?, FoamDepth: number?, FlowSpeed: number?, FlowScale: number?, WaveAmplitude: number?, WaveScale: number?, WaveSpeed: number?, FlowMap: string?, Foam: string?}?, Physics: {Density: number?, Friction: number?, Restitution: number?}?, Footsteps: {Clips: {string}, Gain: number?, PitchSpread: number?}?, Impacts: {Clips: {string}, Gain: number?, PitchSpread: number?}?},
+		GetMaterial: (idOrName: string) -> MaterialSpec,
 		-- write the material file, define the material, and answer its asset id. An absent Name takes the next free store name
 		-- server-only
-		DefineMaterial: (spec: {Id: string, Name: string?, Pipeline: string, Model: string, Surface: {BaseColor: string?, Normal: string?, Orm: string?, Tint: {r: number, g: number, b: number, a: number}?, TileSize: number?, NormalStrength: number?, RoughnessMult: number?, MetallicMult: number?, AlphaCutoff: number?, Neon: boolean?, TintVertex: boolean?}, Emission: {Texture: string?, Tint: {r: number, g: number, b: number}?, Intensity: number?}?, Studs: {ColorTop: string?, NormalTop: string?, ColorBottom: string?, NormalBottom: string?, StudsPerTile: number?}?, Water: {Absorption: {r: number, g: number, b: number}?, DepthScale: number?, Refraction: number?, FoamScale: number?, FoamDepth: number?, FlowSpeed: number?, FlowScale: number?, WaveAmplitude: number?, WaveScale: number?, WaveSpeed: number?, FlowMap: string?, Foam: string?}?, Physics: {Density: number?, Friction: number?, Restitution: number?}?, Footsteps: {Clips: {string}, Gain: number?, PitchSpread: number?}?, Impacts: {Clips: {string}, Gain: number?, PitchSpread: number?}?}, parent: string?) -> string,
+		DefineMaterial: (spec: MaterialSpec, parent: string?) -> string,
 		-- delete the material and its file. A material in use needs a replacement
 		-- server-only
 		RemoveMaterial: (idOrName: string, replacementIdOrName: string?) -> boolean,
@@ -1077,10 +1317,10 @@ declare game: {
 		ReloadMaterial: (idOrName: string) -> boolean,
 	},
 	-- networked event tables
-	read EventTable: ((name: string, direction: EventDirection, fields: {{string | EventFieldType}}) -> EventTable) & {
-		-- clients push rows, the server reads them
+	read EventTable: ((name: string, direction: EventDirection?, fields: {{string | EventFieldType}}?) -> EventTable) & {
+		-- clients push events, the server reads them
 		read ToServer: EventDirection,
-		-- the server pushes rows, clients read them
+		-- the server pushes events, clients read them
 		read ToClients: EventDirection,
 		-- 32-bit float field
 		read F32: EventFieldType,
@@ -1095,9 +1335,9 @@ declare game: {
 		-- color field, stored as bytes
 		read Color: EventFieldType,
 		-- Instance reference field
+		read Instance: EventFieldType,
+		-- Instance reference field
 		read Entity: EventFieldType,
-		-- prefab name field
-		read Prefab: EventFieldType,
 		-- text field, interned into the name table, 64 characters or less
 		read String: EventFieldType,
 	},
@@ -1105,14 +1345,14 @@ declare game: {
 
 -- empty Instance constructor
 declare Instance: {
-	-- create an Instance that holds no component row and has no parent
+	-- create a built-in object or an empty Instance at the top of the place
 	new: (name: string?) -> Instance,
 }
 
 -- vector constructor and constants
 declare Vector3: {
 	-- make a vector
-	new: (x: number, y: number, z: number) -> vector,
+	new: (x: number?, y: number?, z: number?) -> vector,
 	-- the zero vector
 	read zero: vector,
 	-- the all-ones vector
@@ -1125,10 +1365,20 @@ declare Vector3: {
 	read zAxis: vector,
 }
 
+-- 1d dimension constructor
+declare UDim: {
+	-- make a 1d dimension of scale and offset
+	new: (scale: number?, offset: number?) -> UDim,
+}
+
 -- 2d dimension constructor
 declare UDim2: {
 	-- make a 2d dimension of scale and offset
 	new: (scaleX: number?, offsetX: number?, scaleY: number?, offsetY: number?) -> UDim2,
+	-- make a 2d dimension of scale alone
+	fromScale: (scaleX: number?, scaleY: number?) -> UDim2,
+	-- make a 2d dimension of pixels alone
+	fromOffset: (offsetX: number?, offsetY: number?) -> UDim2,
 }
 
 -- rectangle constructor
@@ -1140,7 +1390,11 @@ declare Rect: {
 -- color constructor
 declare Color3: {
 	-- make a color
-	new: (r: number, g: number, b: number) -> vector,
+	new: (r: number?, g: number?, b: number?) -> vector,
+	-- make a color from red, green and blue, each 0 to 255
+	fromRGB: (r: number?, g: number?, b: number?) -> vector,
+	-- make a color from six hex digits, with or without a leading #
+	fromHex: (hex: string) -> vector,
 	-- make a color from a hue, a saturation and a value, each 0 to 1
 	fromHSV: (hue: number, saturation: number, value: number) -> vector,
 }
@@ -1148,29 +1402,49 @@ declare Color3: {
 -- 2d vector constructor
 declare Vector2: {
 	-- make a 2d vector
-	new: (x: number, y: number) -> vector,
+	new: (x: number?, y: number?) -> vector,
 }
 
 -- deferred and delayed callbacks
 declare task: {
+	-- stop a suspended or scheduled thread so it never resumes
+	cancel: (thread: thread) -> (),
 	-- run fn with the arguments at the end of this update tick, after every Update
-	defer: (fn: (...any) -> (), ...any) -> (),
+	defer: (fn: ((...any) -> ...any) | thread, ...any) -> thread,
 	-- run fn with the arguments at the end of the first update tick at least seconds later
-	delay: (seconds: number, fn: (...any) -> (), ...any) -> (),
+	delay: (seconds: number, fn: ((...any) -> ...any) | thread, ...any) -> thread,
+	-- run fn immediately with the arguments until it yields or ends, then return the thread
+	spawn: (fn: ((...any) -> ...any) | thread, ...any) -> thread,
 	-- yield the calling task or coroutine until the end of the first update tick at least seconds later, then return the seconds that passed
 	wait: (seconds: number?) -> number,
 }
 
 -- runtime mesh constructor
 declare DynamicMesh: {
-	-- make an empty runtime mesh; SetCounts sizes it
-	new: () -> DynamicMesh,
 }
 
 -- polygon helpers on flat buffers
 declare geometry: {
 	-- ear-clip a simple polygon of count f32 x, y points into u32 triangle indices; returns the index count, 0 on failure
 	triangulate_polygon: (points: buffer, count: number, indices: buffer) -> number,
+}
+
+-- rotation vectors: the axis times the angle in radians
+declare rotation: {
+	-- the rotation that turns by b first, then by a
+	compose: (a: vector, b: vector) -> vector,
+	-- turn the vector v by the rotation r
+	apply: (r: vector, v: vector) -> vector,
+	-- turn from a toward b along the shortest arc; t 0 is a, t 1 is b
+	slerp: (a: vector, b: vector, t: number) -> vector,
+	-- the rotation that points -Z along forward with +Y as close to up as the turn allows; up defaults to +Y
+	look: (forward: vector, up: vector?) -> vector,
+	-- the rotation by angle radians around axis
+	axis: (axis: vector, angle: number) -> vector,
+	-- the rotation of an Orientation in degrees
+	from_euler: (degrees: vector) -> vector,
+	-- the Orientation in degrees of the rotation r
+	to_euler: (r: vector) -> vector,
 }
 
 -- write to the output

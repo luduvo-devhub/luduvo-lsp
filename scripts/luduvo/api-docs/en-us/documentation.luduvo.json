@@ -7,6 +7,14 @@
     "documentation": "make a color from a hue, a saturation and a value, each 0 to 1",
     "learn_more_link": null
   },
+  "@luduvo/client/global/Color3.fromHex": {
+    "documentation": "make a color from six hex digits, with or without a leading #",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/Color3.fromRGB": {
+    "documentation": "make a color from red, green and blue, each 0 to 255",
+    "learn_more_link": null
+  },
   "@luduvo/client/global/Color3.new": {
     "documentation": "make a color",
     "learn_more_link": "https://docs.luduvo.com/reference/Color3#new"
@@ -16,7 +24,7 @@
     "learn_more_link": null
   },
   "@luduvo/client/global/DynamicMesh.new": {
-    "documentation": "make an empty runtime mesh; SetCounts sizes it",
+    "documentation": "make an empty runtime mesh; SetCounts sizes it\n\nClient only.",
     "learn_more_link": null
   },
   "@luduvo/client/global/EventTableDump": {
@@ -28,7 +36,7 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance"
   },
   "@luduvo/client/global/Instance.new": {
-    "documentation": "create an Instance that holds no component row and has no parent",
+    "documentation": "create a built-in object or an empty Instance at the top of the place",
     "learn_more_link": null
   },
   "@luduvo/client/global/Rect": {
@@ -39,9 +47,25 @@
     "documentation": "make a rectangle of two corners",
     "learn_more_link": "https://docs.luduvo.com/reference/Rect#new"
   },
+  "@luduvo/client/global/UDim": {
+    "documentation": "1d dimension constructor",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/UDim.new": {
+    "documentation": "make a 1d dimension of scale and offset",
+    "learn_more_link": null
+  },
   "@luduvo/client/global/UDim2": {
     "documentation": "2d dimension constructor",
     "learn_more_link": "https://docs.luduvo.com/reference/types/UDim2"
+  },
+  "@luduvo/client/global/UDim2.fromOffset": {
+    "documentation": "make a 2d dimension of pixels alone",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/UDim2.fromScale": {
+    "documentation": "make a 2d dimension of scale alone",
+    "learn_more_link": null
   },
   "@luduvo/client/global/UDim2.new": {
     "documentation": "make a 2d dimension of scale and offset",
@@ -97,8 +121,13 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Animation",
     "read_only": true
   },
+  "@luduvo/client/global/game.Animation.FirstScriptLayer": {
+    "documentation": "lowest index of the AnimLayers rows scripts can write\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/global/game.Animation.Part": {
-    "documentation": "body part mask bits for AnimLayers rows\n\nRead only at runtime.",
+    "documentation": "body part mask bits for AnimLayers layers\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Animation#Part",
     "read_only": true
   },
@@ -152,42 +181,72 @@
     "read_only": true
   },
   "@luduvo/client/global/game.Input.Behavior": {
-    "documentation": "mouse behavior enum values\n\nRead only at runtime.",
+    "documentation": "mouse behavior enum values\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/global/game.Input.Button": {
+    "documentation": "mouse button enum values\n\nClient only.\n\nRead only at runtime.",
     "learn_more_link": null,
     "read_only": true
   },
   "@luduvo/client/global/game.Input.ButtonDown": {
-    "documentation": "whether a mouse button is down: 0 left, 1 right, 2 middle, 3 X1, 4 X2",
+    "documentation": "whether a mouse button is down: 0 left, 1 right, 2 middle, 3 X1, 4 X2\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Input#ButtonDown"
   },
   "@luduvo/client/global/game.Input.ButtonPressed": {
-    "documentation": "whether a mouse button was pressed this frame, same index as ButtonDown",
+    "documentation": "whether a mouse button was pressed this frame, same index as ButtonDown\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Input#ButtonPressed"
   },
+  "@luduvo/client/global/game.Input.Key": {
+    "documentation": "keyboard key code enum values\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/global/game.Input.KeyDown": {
-    "documentation": "whether a key is down",
+    "documentation": "whether a key is down\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Input#KeyDown"
   },
   "@luduvo/client/global/game.Input.KeyPressed": {
-    "documentation": "whether a key was pressed this frame",
+    "documentation": "whether a key was pressed this frame\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Input#KeyPressed"
   },
   "@luduvo/client/global/game.Input.MouseBehavior": {
-    "documentation": "mouse lock behavior: 0 Default, 1 LockCenter",
+    "documentation": "mouse lock behavior: 0 Default, 1 LockCenter\n\nClient only.",
     "learn_more_link": null
   },
+  "@luduvo/client/global/game.Input.MouseDelta": {
+    "documentation": "cursor motion this frame in UI units\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/global/game.Input.MousePosition": {
+    "documentation": "cursor position in UI units\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/global/game.Input.PointerRay": {
-    "documentation": "camera ray through the cursor",
+    "documentation": "camera ray through the cursor\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Input#PointerRay"
   },
   "@luduvo/client/global/game.Input.Rotation": {
-    "documentation": "rotation type enum values\n\nRead only at runtime.",
+    "documentation": "rotation type enum values\n\nClient only.\n\nRead only at runtime.",
     "learn_more_link": null,
     "read_only": true
   },
   "@luduvo/client/global/game.Input.RotationType": {
-    "documentation": "camera rotation mode: 0 MovementRelative, 1 CameraRelative",
+    "documentation": "camera rotation mode: 0 MovementRelative, 1 CameraRelative\n\nClient only.",
     "learn_more_link": null
+  },
+  "@luduvo/client/global/game.Input.Scroll": {
+    "documentation": "mouse wheel scroll delta this frame\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/global/game.Instance": {
+    "documentation": "Instance reference field\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance",
+    "read_only": true
   },
   "@luduvo/client/global/game.Items": {
     "documentation": "item facts for the platform rules\n\nRead only at runtime.",
@@ -272,7 +331,7 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Locale#Translate"
   },
   "@luduvo/client/global/game.Materials": {
-    "documentation": "material rows for parts\n\nRead only at runtime.",
+    "documentation": "the materials of parts\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Materials",
     "read_only": true
   },
@@ -288,10 +347,6 @@
     "documentation": "physics configuration, collision groups, and queries\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Physics",
     "read_only": true
-  },
-  "@luduvo/client/global/game.Physics.DrainTouchEvents": {
-    "documentation": "drain the buffered touch begin and end events, second result reports lost events",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#DrainTouchEvents"
   },
   "@luduvo/client/global/game.Physics.FallenPartsDestroyHeight": {
     "documentation": "height where fallen parts vanish\n\nRead only at runtime.",
@@ -347,7 +402,7 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterOf"
   },
   "@luduvo/client/global/game.Players.Chat": {
-    "documentation": "send a chat message as the local player",
+    "documentation": "send a chat message as the local player\n\nClient only.",
     "learn_more_link": null
   },
   "@luduvo/client/global/game.Players.FriendStatus": {
@@ -357,6 +412,11 @@
   "@luduvo/client/global/game.Players.FromCharacter": {
     "documentation": "the player a character is bound to",
     "learn_more_link": null
+  },
+  "@luduvo/client/global/game.Players.GameAnnounce": {
+    "documentation": "fires with a line the server sends only to this player\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/global/game.Players.Get": {
     "documentation": "the player with this user id",
@@ -386,10 +446,9 @@
     "learn_more_link": null,
     "read_only": true
   },
-  "@luduvo/client/global/game.Prefab": {
-    "documentation": "prefab name field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Prefab",
-    "read_only": true
+  "@luduvo/client/global/game.Players.Social": {
+    "documentation": "send a social action for a player\n\nClient only.",
+    "learn_more_link": null
   },
   "@luduvo/client/global/game.Prefabs": {
     "documentation": "prefab spawning\n\nRead only at runtime.",
@@ -452,7 +511,7 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterOf"
   },
   "@luduvo/client/global/game.Session.LocalCharacter": {
-    "documentation": "the character entity of the local client",
+    "documentation": "the character entity of the local client\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Session#LocalCharacter"
   },
   "@luduvo/client/global/game.Session.PlayerJoined": {
@@ -471,7 +530,7 @@
     "read_only": true
   },
   "@luduvo/client/global/game.Settings.ShiftLock": {
-    "documentation": "whether shift lock toggle is allowed by player setting\n\nRead only at runtime.",
+    "documentation": "whether shift lock toggle is allowed by player setting\n\nClient only.\n\nRead only at runtime.",
     "learn_more_link": null,
     "read_only": true
   },
@@ -541,12 +600,12 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Tags#Remove"
   },
   "@luduvo/client/global/game.ToClients": {
-    "documentation": "the server pushes rows, clients read them\n\nRead only at runtime.",
+    "documentation": "the server pushes events, clients read them\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/ToClients",
     "read_only": true
   },
   "@luduvo/client/global/game.ToServer": {
-    "documentation": "clients push rows, the server reads them\n\nRead only at runtime.",
+    "documentation": "clients push events, the server reads them\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/ToServer",
     "read_only": true
   },
@@ -574,26 +633,6 @@
     "learn_more_link": "https://docs.luduvo.com/reference/World",
     "read_only": true
   },
-  "@luduvo/client/global/game.World.DumpAttributes": {
-    "documentation": "print attribute usage to the output",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#DumpAttributes"
-  },
-  "@luduvo/client/global/game.World.Each": {
-    "documentation": "iterate the entities that hold a component",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#Each"
-  },
-  "@luduvo/client/global/game.World.Pair": {
-    "documentation": "a relationship pair for a query term",
-    "learn_more_link": null
-  },
-  "@luduvo/client/global/game.World.Query": {
-    "documentation": "build a cached multi-component query",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#Query"
-  },
-  "@luduvo/client/global/game.World.System": {
-    "documentation": "register a per-tick system over a query",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#System"
-  },
   "@luduvo/client/global/geometry": {
     "documentation": "polygon helpers on flat buffers",
     "learn_more_link": null
@@ -610,6 +649,38 @@
     "documentation": "write to the output",
     "learn_more_link": "https://docs.luduvo.com/reference/print"
   },
+  "@luduvo/client/global/rotation": {
+    "documentation": "rotation vectors: the axis times the angle in radians",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/rotation.apply": {
+    "documentation": "turn the vector v by the rotation r",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/rotation.axis": {
+    "documentation": "the rotation by angle radians around axis",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/rotation.compose": {
+    "documentation": "the rotation that turns by b first, then by a",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/rotation.from_euler": {
+    "documentation": "the rotation of an Orientation in degrees",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/rotation.look": {
+    "documentation": "the rotation that points -Z along forward with +Y as close to up as the turn allows; up defaults to +Y",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/rotation.slerp": {
+    "documentation": "turn from a toward b along the shortest arc; t 0 is a, t 1 is b",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/rotation.to_euler": {
+    "documentation": "the Orientation in degrees of the rotation r",
+    "learn_more_link": null
+  },
   "@luduvo/client/global/self": {
     "documentation": "the entity this script runs on",
     "learn_more_link": "https://docs.luduvo.com/reference/self"
@@ -618,12 +689,20 @@
     "documentation": "deferred and delayed callbacks",
     "learn_more_link": null
   },
+  "@luduvo/client/global/task.cancel": {
+    "documentation": "stop a suspended or scheduled thread so it never resumes",
+    "learn_more_link": null
+  },
   "@luduvo/client/global/task.defer": {
     "documentation": "run fn with the arguments at the end of this update tick, after every Update",
     "learn_more_link": null
   },
   "@luduvo/client/global/task.delay": {
     "documentation": "run fn with the arguments at the end of the first update tick at least seconds later",
+    "learn_more_link": null
+  },
+  "@luduvo/client/global/task.spawn": {
+    "documentation": "run fn immediately with the arguments until it yields or ends, then return the thread",
     "learn_more_link": null
   },
   "@luduvo/client/global/task.wait": {
@@ -746,6 +825,149 @@
     "documentation": "Account id of the player who controls this character",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#UserId"
   },
+  "@luduvo/client/globaltype/BillboardGuiComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.adornee": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.alwaysOnTop": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.anchorX": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.anchorY": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.clampToScreen": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeEnd": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeStart": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.height": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.maxDistance": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.studsOffset": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/BillboardGuiComponent.width": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/CameraFlyComponent": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraFlyComponent.pitch": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraFlyComponent.sensitivity": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraFlyComponent.speed": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraFlyComponent.yaw": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraLensComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraLensComponent.farZ": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraLensComponent.fovY": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraLensComponent.nearZ": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.clearance": {
+    "documentation": "Client only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.distance": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.fade": {
+    "documentation": "Client only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.pitch": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.sensitivity": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.sideOffset": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.smoothDistance": {
+    "documentation": "Client only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.smoothSideOffset": {
+    "documentation": "Client only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.subject": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/CameraOrbitComponent.yaw": {
+    "documentation": "Client only.",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/CloudStore": {
     "documentation": "a store every server of the experience shares, read and written asynchronously",
     "learn_more_link": "https://docs.luduvo.com/reference/types/CloudStore"
@@ -753,6 +975,10 @@
   "@luduvo/client/globaltype/Component": {
     "documentation": "the fields of one component, read and written by name",
     "learn_more_link": "https://docs.luduvo.com/reference/types/Component"
+  },
+  "@luduvo/client/globaltype/Component.__iter": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/ContentAsset": {
     "documentation": "",
@@ -821,6 +1047,26 @@
   "@luduvo/client/globaltype/EventTable": {
     "documentation": "a batch of events the server and its clients send each other",
     "learn_more_link": "https://docs.luduvo.com/reference/types/EventTable"
+  },
+  "@luduvo/client/globaltype/EventTable.FireAllClients": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/EventTable.FireClient": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/EventTable.FireServer": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/EventTable.OnClientEvent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/EventTable.OnServerEvent": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/EventTable.Push": {
     "documentation": "append a new event entry to be broadcast",
@@ -893,6 +1139,16 @@
   "@luduvo/client/globaltype/Instance": {
     "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance"
+  },
+  "@luduvo/client/globaltype/Instance.AbsolutePosition": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/Instance.AbsoluteSize": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Action": {
     "documentation": "Engine action this core menu button triggers",
@@ -1005,10 +1261,6 @@
     "documentation": "kick the physics body with an impulse, optionally at a point",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#ApplyImpulse"
   },
-  "@luduvo/client/globaltype/Instance.ApplyTorque": {
-    "documentation": "spin the physics body with a torque",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#ApplyTorque"
-  },
   "@luduvo/client/globaltype/Instance.ApplyTorqueImpulse": {
     "documentation": "",
     "learn_more_link": null
@@ -1074,6 +1326,11 @@
   "@luduvo/client/globaltype/Instance.BillboardColor": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.BillboardGui": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.BillboardMaxDistance": {
     "documentation": "",
@@ -1211,6 +1468,21 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/client/globaltype/Instance.CameraFly": {
+    "documentation": "free-camera yaw, pitch, and zoom controls\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/Instance.CameraLens": {
+    "documentation": "perspective projection settings for a camera entity\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/Instance.CameraOrbit": {
+    "documentation": "third-person orbit camera controls; smoothed fields are written by the rig\n\nClient only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/globaltype/Instance.CancelText": {
     "documentation": "",
     "learn_more_link": null
@@ -1220,12 +1492,17 @@
     "learn_more_link": null,
     "read_only": true
   },
+  "@luduvo/client/globaltype/Instance.CanvasPosition": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/globaltype/Instance.CanvasSize": {
     "documentation": "Scrollable canvas size, a fraction of the frame plus pixels",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#CanvasSize"
   },
   "@luduvo/client/globaltype/Instance.CaptureFocus": {
-    "documentation": "",
+    "documentation": "Client only.",
     "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.CellPadding": {
@@ -1240,14 +1517,24 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/client/globaltype/Instance.ChangeState": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/Instance.Changed": {
     "documentation": "fires after a property of the entity changes\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Changed",
     "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Character": {
-    "documentation": "Marks the root entity of a humanoid character",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Character"
+    "documentation": "Marks the root entity of a humanoid character\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Character",
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/Instance.CharacterAdded": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.CharacterAnimation": {
     "documentation": "Attaches an Animator once the six body parts exist",
@@ -1435,6 +1722,10 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/client/globaltype/Instance.CoreMenuDimmer": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/Instance.CornerRadius": {
     "documentation": "Pixels",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#CornerRadius"
@@ -1520,6 +1811,15 @@
   "@luduvo/client/globaltype/Instance.Emit": {
     "documentation": "fire the named signal on the entity with the given arguments",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Emit"
+  },
+  "@luduvo/client/globaltype/Instance.EquipTool": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.Equipped": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Face": {
     "documentation": "Texture asset of the face decal",
@@ -1622,13 +1922,9 @@
     "documentation": "Anti-jitter friction torque in Nm once the joint settles",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#FrictionTorque"
   },
-  "@luduvo/client/globaltype/Instance.GetAccessories": {
+  "@luduvo/client/globaltype/Instance.GetAttributeChangedSignal": {
     "documentation": "",
     "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.GetAngularVelocity": {
-    "documentation": "angular velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetAngularVelocity"
   },
   "@luduvo/client/globaltype/Instance.GetChildren": {
     "documentation": "array of the direct children",
@@ -1638,27 +1934,11 @@
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/client/globaltype/Instance.GetHearingSense": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.GetLastHeardStimulus": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.GetLinearVelocity": {
-    "documentation": "linear velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetLinearVelocity"
-  },
   "@luduvo/client/globaltype/Instance.GetMass": {
     "documentation": "mass of the physics body, nil when the entity has none",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetMass"
   },
-  "@luduvo/client/globaltype/Instance.GetMoveIntent": {
-    "documentation": "movement intent of a character, nil when the entity has none",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetMoveIntent"
-  },
-  "@luduvo/client/globaltype/Instance.GetNearestPerceivedTarget": {
+  "@luduvo/client/globaltype/Instance.GetPropertyChangedSignal": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -1666,11 +1946,11 @@
     "documentation": "the named signal of the entity, created on first use",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetSignal"
   },
-  "@luduvo/client/globaltype/Instance.GetSwingTwistJoint": {
-    "documentation": "swing-twist joint parameters, nil when the entity has no joint",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetSwingTwistJoint"
+  "@luduvo/client/globaltype/Instance.GetStateEnabled": {
+    "documentation": "",
+    "learn_more_link": null
   },
-  "@luduvo/client/globaltype/Instance.GetVisionCone": {
+  "@luduvo/client/globaltype/Instance.GetTool": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -1786,6 +2066,11 @@
     "documentation": "Clearance between the floor and the torso in studs",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#HipHeight"
   },
+  "@luduvo/client/globaltype/Instance.Hit": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/globaltype/Instance.HoverImage": {
     "documentation": "",
     "learn_more_link": null
@@ -1810,10 +2095,6 @@
   "@luduvo/client/globaltype/Instance.IconSize": {
     "documentation": "",
     "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.Id": {
-    "documentation": "Team number of this entity. Team 0 means no team",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Id"
   },
   "@luduvo/client/globaltype/Instance.Image": {
     "documentation": "The texture asset this element draws. 0 draws nothing.",
@@ -1840,16 +2121,20 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#InnerAngle"
   },
   "@luduvo/client/globaltype/Instance.InputMove": {
-    "documentation": "whether local movement input drives this camera",
+    "documentation": "whether local movement input drives this camera\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#InputMove"
   },
   "@luduvo/client/globaltype/Instance.InputSteer": {
-    "documentation": "whether local pointer input steers this camera",
+    "documentation": "whether local pointer input steers this camera\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#InputSteer"
   },
   "@luduvo/client/globaltype/Instance.Intensity": {
     "documentation": "Brightness of the emitted light; 0 turns it off",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Intensity"
+  },
+  "@luduvo/client/globaltype/Instance.InverseTransformDirection": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.InverseTransformPoint": {
     "documentation": "",
@@ -1997,6 +2282,10 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/client/globaltype/Instance.Looped": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/Instance.LowerTranslation": {
     "documentation": "",
     "learn_more_link": null
@@ -2020,6 +2309,11 @@
   "@luduvo/client/globaltype/Instance.Margins": {
     "documentation": "Inner margins in pixels: left, top, right, bottom",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Margins"
+  },
+  "@luduvo/client/globaltype/Instance.MarkerReached": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Material": {
     "documentation": "surface material name, empty when none is set",
@@ -2219,6 +2513,11 @@
     "documentation": "world rotation as YXZ Euler degrees",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Orientation"
   },
+  "@luduvo/client/globaltype/Instance.OrthographicLens": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/globaltype/Instance.Other": {
     "documentation": "The second welded entity; the weld holds the relative pose the two bodies had when the joint appeared",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Other"
@@ -2228,9 +2527,8 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#OuterAngle"
   },
   "@luduvo/client/globaltype/Instance.OwnerUserId": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "Writable only on the server.",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.Page": {
     "documentation": "Core menu page this subtree belongs to",
@@ -2261,8 +2559,9 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Pants"
   },
   "@luduvo/client/globaltype/Instance.Parent": {
-    "documentation": "parent entity, nil for a root",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Parent"
+    "documentation": "parent entity, nil for a root\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Parent",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Part": {
     "documentation": "Which body part of the rig this entity is",
@@ -2275,6 +2574,11 @@
   "@luduvo/client/globaltype/Instance.Pause": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.Paused": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.PeakFriction": {
     "documentation": "",
@@ -2307,6 +2611,11 @@
   "@luduvo/client/globaltype/Instance.PlaybackSpeed": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.Playing": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.PlotColor3": {
     "documentation": "",
@@ -2341,8 +2650,9 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Position"
   },
   "@luduvo/client/globaltype/Instance.PrefabId": {
-    "documentation": "Id of the prefab this instance was spawned from",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#PrefabId"
+    "documentation": "Id of the prefab this instance was spawned from\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#PrefabId",
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.Pressed": {
     "documentation": "Read only at runtime.",
@@ -2378,7 +2688,7 @@
     "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.PushSample": {
-    "documentation": "",
+    "documentation": "Client only.",
     "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.Radio": {
@@ -2458,6 +2768,10 @@
     "documentation": "rotate the entity around an axis by an angle in radians",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Rotate"
   },
+  "@luduvo/client/globaltype/Instance.RotationVector": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/Instance.SampleCount": {
     "documentation": "",
     "learn_more_link": null
@@ -2522,31 +2836,11 @@
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/client/globaltype/Instance.SetAngularVelocity": {
-    "documentation": "set the angular velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetAngularVelocity"
-  },
-  "@luduvo/client/globaltype/Instance.SetBodyMotion": {
-    "documentation": "switch the physics body between dynamic and kinematic",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetBodyMotion"
-  },
-  "@luduvo/client/globaltype/Instance.SetHearingSense": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.SetLinearVelocity": {
-    "documentation": "set the linear velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetLinearVelocity"
-  },
   "@luduvo/client/globaltype/Instance.SetParent": {
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/client/globaltype/Instance.SetSwingTwistJoint": {
-    "documentation": "configure the swing-twist joint of the entity",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetSwingTwistJoint"
-  },
-  "@luduvo/client/globaltype/Instance.SetVisionCone": {
+  "@luduvo/client/globaltype/Instance.SetStateEnabled": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -2642,18 +2936,6 @@
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/client/globaltype/Instance.SoundLooped": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.SoundPaused": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.SoundPlaying": {
-    "documentation": "",
-    "learn_more_link": null
-  },
   "@luduvo/client/globaltype/Instance.Spacing": {
     "documentation": "Pixels between children",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Spacing"
@@ -2667,10 +2949,6 @@
     "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.StarLuminance": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/client/globaltype/Instance.StartTimer": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -2723,10 +3001,6 @@
   "@luduvo/client/globaltype/Instance.StopPreview": {
     "documentation": "stop the animation preview, false when no preview ran",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#StopPreview"
-  },
-  "@luduvo/client/globaltype/Instance.StopTimer": {
-    "documentation": "",
-    "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.StripeColor3": {
     "documentation": "",
@@ -2823,6 +3097,18 @@
   "@luduvo/client/globaltype/Instance.TakeDamage": {
     "documentation": "deal damage to the entity and record the attacker",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#TakeDamage"
+  },
+  "@luduvo/client/globaltype/Instance.Team": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.TeamColor": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.TeamId": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.Text": {
     "documentation": "Interned id of the authored text. Set Text through the property panel or a script.",
@@ -2931,6 +3217,11 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/client/globaltype/Instance.Tool": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/globaltype/Instance.TouchEnded": {
     "documentation": "Read only at runtime.",
     "learn_more_link": null,
@@ -2960,6 +3251,10 @@
   "@luduvo/client/globaltype/Instance.TrackTransparency": {
     "documentation": "Transparency of the track, 0 opaque to 1 invisible",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#TrackTransparency"
+  },
+  "@luduvo/client/globaltype/Instance.TransformDirection": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/Instance.TransformPoint": {
     "documentation": "",
@@ -2993,13 +3288,26 @@
     "documentation": "Opts into hit-testing and click/press events",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#UIClickable"
   },
+  "@luduvo/client/globaltype/Instance.UIPosition": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/Instance.UIRoot": {
     "documentation": "ScreenGui: top-level entity whose descendants form one overlay",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#UIRoot"
   },
+  "@luduvo/client/globaltype/Instance.UISize": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/Instance.UISurfaceAlwaysOnTop": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.UITail": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.UIToggleButton": {
     "documentation": "",
@@ -3008,6 +3316,15 @@
   "@luduvo/client/globaltype/Instance.Underlay": {
     "documentation": "Second albedo, alpha-composited under Albedo over the part colour; read only where a BrickColor makes the mesh a decal",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Underlay"
+  },
+  "@luduvo/client/globaltype/Instance.UnequipTools": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.Unequipped": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/client/globaltype/Instance.UpDirection": {
     "documentation": "",
@@ -3059,7 +3376,7 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Velocity"
   },
   "@luduvo/client/globaltype/Instance.ViewSource": {
-    "documentation": "camera entity this screen renders from, nil when none",
+    "documentation": "camera entity this screen renders from, nil when none\n\nClient only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#ViewSource"
   },
   "@luduvo/client/globaltype/Instance.Visible": {
@@ -3067,6 +3384,10 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Visible"
   },
   "@luduvo/client/globaltype/Instance.Volume": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Instance.WaitForChild": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -3099,6 +3420,246 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#attr",
     "read_only": true
   },
+  "@luduvo/client/globaltype/MaterialAudio": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialAudio.Clips": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialAudio.Gain": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialAudio.PitchSpread": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialEmission": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialEmission.Intensity": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialEmission.Texture": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Emission#Texture"
+  },
+  "@luduvo/client/globaltype/MaterialEmission.Tint": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialEntry": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialEntry.Id": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialEntry.Model": {
+    "documentation": "surface model the shader samples with: UV, Triplanar, or Stud",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Model"
+  },
+  "@luduvo/client/globaltype/MaterialEntry.Name": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialEntry.Pipeline": {
+    "documentation": "pipeline class the surfaces draw in: Opaque, Cutout, Transparent, Water, or Decal",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Pipeline"
+  },
+  "@luduvo/client/globaltype/MaterialPhysics": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialPhysics.Density": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialPhysics.Friction": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialPhysics.Restitution": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialSpec": {
+    "documentation": "the textures, pipeline class, and physical terms one material renders with",
+    "learn_more_link": "https://docs.luduvo.com/reference/types/MaterialSpec"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Emission": {
+    "documentation": "emissive texture, and the tint and intensity it radiates at",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Emission"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Footsteps": {
+    "documentation": "clips a character plays walking on the surfaces, and the gain and pitch spread they play at",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Footsteps"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Id": {
+    "documentation": "id the material is defined and looked up under",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Id"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Impacts": {
+    "documentation": "clips a contact plays against the surfaces, and the gain and pitch spread they play at",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Impacts"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Model": {
+    "documentation": "surface model the shader samples with: UV, Triplanar, or Stud",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Model"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Name": {
+    "documentation": "name the material can be looked up under, in place of the id",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Name"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Physics": {
+    "documentation": "density, friction, and restitution the solver gives the surfaces",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Physics"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Pipeline": {
+    "documentation": "pipeline class the surfaces draw in: Opaque, Cutout, Transparent, Water, or Decal",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Pipeline"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Studs": {
+    "documentation": "top and bottom stud textures the Stud surface model draws",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Studs"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Surface": {
+    "documentation": "base color, normal, and ORM textures, with the tint, tiling, and multipliers applied to them",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Surface"
+  },
+  "@luduvo/client/globaltype/MaterialSpec.Water": {
+    "documentation": "absorption, refraction, foam, and wave terms the Water pipeline class solves",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Water"
+  },
+  "@luduvo/client/globaltype/MaterialStuds": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialStuds.ColorBottom": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#ColorBottom"
+  },
+  "@luduvo/client/globaltype/MaterialStuds.ColorTop": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#ColorTop"
+  },
+  "@luduvo/client/globaltype/MaterialStuds.NormalBottom": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#NormalBottom"
+  },
+  "@luduvo/client/globaltype/MaterialStuds.NormalTop": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#NormalTop"
+  },
+  "@luduvo/client/globaltype/MaterialStuds.StudsPerTile": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#StudsPerTile"
+  },
+  "@luduvo/client/globaltype/MaterialSurface": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialSurface.AlphaCutoff": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#AlphaCutoff"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.BaseColor": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#BaseColor"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.MetallicMult": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#MetallicMult"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.Neon": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#Neon"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.Normal": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialSurface.NormalStrength": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#NormalStrength"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.Orm": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#Orm"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.RoughnessMult": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#RoughnessMult"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.TileSize": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#TileSize"
+  },
+  "@luduvo/client/globaltype/MaterialSurface.Tint": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialSurface.TintVertex": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#TintVertex"
+  },
+  "@luduvo/client/globaltype/MaterialWater": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/MaterialWater.Absorption": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Absorption"
+  },
+  "@luduvo/client/globaltype/MaterialWater.DepthScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#DepthScale"
+  },
+  "@luduvo/client/globaltype/MaterialWater.FlowMap": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowMap"
+  },
+  "@luduvo/client/globaltype/MaterialWater.FlowScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowScale"
+  },
+  "@luduvo/client/globaltype/MaterialWater.FlowSpeed": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowSpeed"
+  },
+  "@luduvo/client/globaltype/MaterialWater.Foam": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Foam"
+  },
+  "@luduvo/client/globaltype/MaterialWater.FoamDepth": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FoamDepth"
+  },
+  "@luduvo/client/globaltype/MaterialWater.FoamScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FoamScale"
+  },
+  "@luduvo/client/globaltype/MaterialWater.Refraction": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Refraction"
+  },
+  "@luduvo/client/globaltype/MaterialWater.WaveAmplitude": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveAmplitude"
+  },
+  "@luduvo/client/globaltype/MaterialWater.WaveScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveScale"
+  },
+  "@luduvo/client/globaltype/MaterialWater.WaveSpeed": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveSpeed"
+  },
   "@luduvo/client/globaltype/MoveIntent": {
     "documentation": "where a character wants to move, and which way it should face",
     "learn_more_link": "https://docs.luduvo.com/reference/types/MoveIntent"
@@ -3127,6 +3688,14 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/client/globaltype/OrthographicLensComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/OrthographicLensComponent.size": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/Pair": {
     "documentation": "",
     "learn_more_link": null
@@ -3139,6 +3708,10 @@
     "documentation": "column array of matched entity instances",
     "learn_more_link": "https://docs.luduvo.com/reference/Query#Entity"
   },
+  "@luduvo/client/globaltype/Query.Instance": {
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance"
+  },
   "@luduvo/client/globaltype/Query.count": {
     "documentation": "number of entities currently matching the query criteria",
     "learn_more_link": "https://docs.luduvo.com/reference/Query#count"
@@ -3146,6 +3719,22 @@
   "@luduvo/client/globaltype/QueryColumn": {
     "documentation": "one column a query matched, holding a value per entity",
     "learn_more_link": "https://docs.luduvo.com/reference/types/QueryColumn"
+  },
+  "@luduvo/client/globaltype/QueryParams": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/QueryParams.CollisionGroup": {
+    "documentation": "collision group name, Default when none is set",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#CollisionGroup"
+  },
+  "@luduvo/client/globaltype/QueryParams.ExcludeInstances": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/QueryParams.IncludeInstances": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/RaycastResult": {
     "documentation": "what a ray hit: the entity, the point, the surface normal, and the distance",
@@ -3158,6 +3747,10 @@
   "@luduvo/client/globaltype/RaycastResult.Entity": {
     "documentation": "entity hit by the ray, or nil if none",
     "learn_more_link": "https://docs.luduvo.com/reference/RaycastResult#Entity"
+  },
+  "@luduvo/client/globaltype/RaycastResult.Instance": {
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance"
   },
   "@luduvo/client/globaltype/RaycastResult.Normal": {
     "documentation": "surface normal vector at the hit position",
@@ -3186,6 +3779,14 @@
   "@luduvo/client/globaltype/Rect.Width": {
     "documentation": "width of the rectangle along the horizontal axis",
     "learn_more_link": "https://docs.luduvo.com/reference/Rect#Width"
+  },
+  "@luduvo/client/globaltype/Rect.__eq": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Rect.__tostring": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/ScriptCost": {
     "documentation": "how often one script ran and how long each call took",
@@ -3219,6 +3820,10 @@
     "documentation": "fraction along the sweep path where the collision occurred",
     "learn_more_link": "https://docs.luduvo.com/reference/ShapecastHit#Fraction"
   },
+  "@luduvo/client/globaltype/ShapecastHit.Instance": {
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance"
+  },
   "@luduvo/client/globaltype/ShapecastHit.Normal": {
     "documentation": "surface normal vector at the contact point",
     "learn_more_link": "https://docs.luduvo.com/reference/ShapecastHit#Normal"
@@ -3242,6 +3847,26 @@
   "@luduvo/client/globaltype/Signal.Emit": {
     "documentation": "fire the signal, invoking all connected callbacks with the arguments",
     "learn_more_link": "https://docs.luduvo.com/reference/Signal#Emit"
+  },
+  "@luduvo/client/globaltype/Signal.Once": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/Signal.Wait": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/SignalConnection": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/SignalConnection.Connected": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/SignalConnection.Disconnect": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/client/globaltype/Store": {
     "documentation": "a store kept with the place, so its rows survive a restart",
@@ -3327,6 +3952,40 @@
     "documentation": "minimum twist angle limit in radians",
     "learn_more_link": "https://docs.luduvo.com/reference/SwingTwistJointInfo#TwistMin"
   },
+  "@luduvo/client/globaltype/ToolComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/ToolComponent.equipped": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/ToolComponent.gripHand": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/ToolComponent.gripOffset": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/ToolComponent.gripRotation": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/ToolComponent.icon": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/ToolComponent.noDrop": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/client/globaltype/TouchEvent": {
     "documentation": "two entities starting or stopping contact this frame",
     "learn_more_link": "https://docs.luduvo.com/reference/types/TouchEvent"
@@ -3383,9 +4042,226 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/client/globaltype/UDim": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim.Offset": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim.Scale": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim.__add": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim.__eq": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim.__sub": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim.__tostring": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim.__unm": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/client/globaltype/UDim2": {
     "documentation": "a length on both axes, as a fraction of the parent plus a pixel offset",
     "learn_more_link": "https://docs.luduvo.com/reference/types/UDim2"
+  },
+  "@luduvo/client/globaltype/UDim2.Lerp": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim2.X": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim2.Y": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim2.__add": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim2.__eq": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim2.__sub": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim2.__tostring": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UDim2.__unm": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UITailComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/UITailComponent.length": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/UITailComponent.offset": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/UITailComponent.pointAtAdornee": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/UITailComponent.side": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/UITailComponent.width": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/World": {
+    "documentation": "iterates the entities of the running place and registers the systems that run over them every tick",
+    "learn_more_link": "https://docs.luduvo.com/reference/World"
+  },
+  "@luduvo/client/globaltype/World.Camera": {
+    "documentation": "the active Camera entity of the place\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/World.DumpAttributes": {
+    "documentation": "print attribute usage to the output",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#DumpAttributes"
+  },
+  "@luduvo/client/globaltype/World.Each": {
+    "documentation": "iterate the entities that hold a component",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#Each"
+  },
+  "@luduvo/client/globaltype/World.FindFirstChild": {
+    "documentation": "the first entity at the top of the place with this name",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#FindFirstChild"
+  },
+  "@luduvo/client/globaltype/World.GetChildren": {
+    "documentation": "every entity at the top of the place",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetChildren"
+  },
+  "@luduvo/client/globaltype/World.GetDescendants": {
+    "documentation": "every entity in the place, top level first",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/World.HasComponent": {
+    "documentation": "false: the World holds no component",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#HasComponent"
+  },
+  "@luduvo/client/globaltype/World.IsAlive": {
+    "documentation": "true: the World lasts as long as the place",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#IsAlive"
+  },
+  "@luduvo/client/globaltype/World.IsDescendantOf": {
+    "documentation": "false: nothing is above the World",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#IsDescendantOf"
+  },
+  "@luduvo/client/globaltype/World.Name": {
+    "documentation": "the name of the World, always \"World\"\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/World.Pair": {
+    "documentation": "a relationship pair for a query term",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/World.Parent": {
+    "documentation": "nil: the World is the top of the place\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Parent",
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/World.Query": {
+    "documentation": "build a cached multi-component query",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#Query"
+  },
+  "@luduvo/client/globaltype/World.Screen": {
+    "documentation": "the root Screen entity of the place\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/client/globaltype/World.Spawn": {
+    "documentation": "spawn a root entity with the given components",
+    "learn_more_link": "https://docs.luduvo.com/reference/Prefabs#Spawn"
+  },
+  "@luduvo/client/globaltype/World.System": {
+    "documentation": "register a per-tick system over a query",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#System"
+  },
+  "@luduvo/client/globaltype/World.WaitForChild": {
+    "documentation": "wait for an entity at the top of the place with this name",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.B": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.G": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.Magnitude": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.R": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.Unit": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.X": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.Y": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.Z": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.x": {
+    "documentation": "lateral movement input along the horizontal axis",
+    "learn_more_link": "https://docs.luduvo.com/reference/MoveIntent#x"
+  },
+  "@luduvo/client/globaltype/vector.y": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/client/globaltype/vector.z": {
+    "documentation": "forward and backward movement input",
+    "learn_more_link": "https://docs.luduvo.com/reference/MoveIntent#z"
   },
   "@luduvo/server/global/Color3": {
     "documentation": "color constructor",
@@ -3395,16 +4271,20 @@
     "documentation": "make a color from a hue, a saturation and a value, each 0 to 1",
     "learn_more_link": null
   },
+  "@luduvo/server/global/Color3.fromHex": {
+    "documentation": "make a color from six hex digits, with or without a leading #",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/Color3.fromRGB": {
+    "documentation": "make a color from red, green and blue, each 0 to 255",
+    "learn_more_link": null
+  },
   "@luduvo/server/global/Color3.new": {
     "documentation": "make a color",
     "learn_more_link": "https://docs.luduvo.com/reference/Color3#new"
   },
   "@luduvo/server/global/DynamicMesh": {
     "documentation": "runtime mesh constructor",
-    "learn_more_link": null
-  },
-  "@luduvo/server/global/DynamicMesh.new": {
-    "documentation": "make an empty runtime mesh; SetCounts sizes it",
     "learn_more_link": null
   },
   "@luduvo/server/global/EventTableDump": {
@@ -3416,7 +4296,7 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance"
   },
   "@luduvo/server/global/Instance.new": {
-    "documentation": "create an Instance that holds no component row and has no parent",
+    "documentation": "create a built-in object or an empty Instance at the top of the place",
     "learn_more_link": null
   },
   "@luduvo/server/global/Rect": {
@@ -3427,9 +4307,25 @@
     "documentation": "make a rectangle of two corners",
     "learn_more_link": "https://docs.luduvo.com/reference/Rect#new"
   },
+  "@luduvo/server/global/UDim": {
+    "documentation": "1d dimension constructor",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/UDim.new": {
+    "documentation": "make a 1d dimension of scale and offset",
+    "learn_more_link": null
+  },
   "@luduvo/server/global/UDim2": {
     "documentation": "2d dimension constructor",
     "learn_more_link": "https://docs.luduvo.com/reference/types/UDim2"
+  },
+  "@luduvo/server/global/UDim2.fromOffset": {
+    "documentation": "make a 2d dimension of pixels alone",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/UDim2.fromScale": {
+    "documentation": "make a 2d dimension of scale alone",
+    "learn_more_link": null
   },
   "@luduvo/server/global/UDim2.new": {
     "documentation": "make a 2d dimension of scale and offset",
@@ -3486,11 +4382,16 @@
     "read_only": true
   },
   "@luduvo/server/global/game.Animation.DrainMarkers": {
-    "documentation": "drain the clip markers the sampler crossed, second result reports lost markers\n\nServer only.",
+    "documentation": "read the clip markers the sampler crossed, second result reports lost markers\n\nServer only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Animation#DrainMarkers"
   },
+  "@luduvo/server/global/game.Animation.FirstScriptLayer": {
+    "documentation": "lowest index of the AnimLayers rows scripts can write\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/server/global/game.Animation.Part": {
-    "documentation": "body part mask bits for AnimLayers rows\n\nRead only at runtime.",
+    "documentation": "body part mask bits for AnimLayers layers\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Animation#Part",
     "read_only": true
   },
@@ -3559,43 +4460,10 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Input",
     "read_only": true
   },
-  "@luduvo/server/global/game.Input.Behavior": {
-    "documentation": "mouse behavior enum values\n\nRead only at runtime.",
-    "learn_more_link": null,
+  "@luduvo/server/global/game.Instance": {
+    "documentation": "Instance reference field\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance",
     "read_only": true
-  },
-  "@luduvo/server/global/game.Input.ButtonDown": {
-    "documentation": "whether a mouse button is down: 0 left, 1 right, 2 middle, 3 X1, 4 X2",
-    "learn_more_link": "https://docs.luduvo.com/reference/Input#ButtonDown"
-  },
-  "@luduvo/server/global/game.Input.ButtonPressed": {
-    "documentation": "whether a mouse button was pressed this frame, same index as ButtonDown",
-    "learn_more_link": "https://docs.luduvo.com/reference/Input#ButtonPressed"
-  },
-  "@luduvo/server/global/game.Input.KeyDown": {
-    "documentation": "whether a key is down",
-    "learn_more_link": "https://docs.luduvo.com/reference/Input#KeyDown"
-  },
-  "@luduvo/server/global/game.Input.KeyPressed": {
-    "documentation": "whether a key was pressed this frame",
-    "learn_more_link": "https://docs.luduvo.com/reference/Input#KeyPressed"
-  },
-  "@luduvo/server/global/game.Input.MouseBehavior": {
-    "documentation": "mouse lock behavior: 0 Default, 1 LockCenter",
-    "learn_more_link": null
-  },
-  "@luduvo/server/global/game.Input.PointerRay": {
-    "documentation": "camera ray through the cursor",
-    "learn_more_link": "https://docs.luduvo.com/reference/Input#PointerRay"
-  },
-  "@luduvo/server/global/game.Input.Rotation": {
-    "documentation": "rotation type enum values\n\nRead only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
-  },
-  "@luduvo/server/global/game.Input.RotationType": {
-    "documentation": "camera rotation mode: 0 MovementRelative, 1 CameraRelative",
-    "learn_more_link": null
   },
   "@luduvo/server/global/game.Items": {
     "documentation": "item facts for the platform rules\n\nRead only at runtime.",
@@ -3684,7 +4552,7 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Locale#Translate"
   },
   "@luduvo/server/global/game.Materials": {
-    "documentation": "material rows for parts\n\nRead only at runtime.",
+    "documentation": "the materials of parts\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Materials",
     "read_only": true
   },
@@ -3716,10 +4584,6 @@
     "documentation": "physics configuration, collision groups, and queries\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Physics",
     "read_only": true
-  },
-  "@luduvo/server/global/game.Physics.DrainTouchEvents": {
-    "documentation": "drain the buffered touch begin and end events, second result reports lost events",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#DrainTouchEvents"
   },
   "@luduvo/server/global/game.Physics.EmitAcousticStimulus": {
     "documentation": "make a sound that listeners within radius times loudness times their sensitivity hear, result counts the listeners\n\nServer only.",
@@ -3798,10 +4662,6 @@
     "documentation": "the character bound to a player",
     "learn_more_link": "https://docs.luduvo.com/reference/Session#CharacterOf"
   },
-  "@luduvo/server/global/game.Players.Chat": {
-    "documentation": "send a chat message as the local player",
-    "learn_more_link": null
-  },
   "@luduvo/server/global/game.Players.FriendStatus": {
     "documentation": "the local user's relation to that player",
     "learn_more_link": null
@@ -3840,11 +4700,6 @@
   "@luduvo/server/global/game.Players.PlayerRemoving": {
     "documentation": "fires with the player that is leaving\n\nRead only at runtime.",
     "learn_more_link": null,
-    "read_only": true
-  },
-  "@luduvo/server/global/game.Prefab": {
-    "documentation": "prefab name field\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Prefab",
     "read_only": true
   },
   "@luduvo/server/global/game.Prefabs": {
@@ -3915,10 +4770,6 @@
     "documentation": "remove a player from this server\n\nServer only.",
     "learn_more_link": "https://docs.luduvo.com/reference/Session#Kick"
   },
-  "@luduvo/server/global/game.Session.LocalCharacter": {
-    "documentation": "the character entity of the local client",
-    "learn_more_link": "https://docs.luduvo.com/reference/Session#LocalCharacter"
-  },
   "@luduvo/server/global/game.Session.PlayerJoined": {
     "documentation": "fires when a player joins\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Session#PlayerJoined",
@@ -3931,11 +4782,6 @@
   },
   "@luduvo/server/global/game.Settings": {
     "documentation": "player and device settings\n\nRead only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
-  },
-  "@luduvo/server/global/game.Settings.ShiftLock": {
-    "documentation": "whether shift lock toggle is allowed by player setting\n\nRead only at runtime.",
     "learn_more_link": null,
     "read_only": true
   },
@@ -4009,12 +4855,12 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Tags#Remove"
   },
   "@luduvo/server/global/game.ToClients": {
-    "documentation": "the server pushes rows, clients read them\n\nRead only at runtime.",
+    "documentation": "the server pushes events, clients read them\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/ToClients",
     "read_only": true
   },
   "@luduvo/server/global/game.ToServer": {
-    "documentation": "clients push rows, the server reads them\n\nRead only at runtime.",
+    "documentation": "clients push events, the server reads them\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/ToServer",
     "read_only": true
   },
@@ -4042,26 +4888,6 @@
     "learn_more_link": "https://docs.luduvo.com/reference/World",
     "read_only": true
   },
-  "@luduvo/server/global/game.World.DumpAttributes": {
-    "documentation": "print attribute usage to the output",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#DumpAttributes"
-  },
-  "@luduvo/server/global/game.World.Each": {
-    "documentation": "iterate the entities that hold a component",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#Each"
-  },
-  "@luduvo/server/global/game.World.Pair": {
-    "documentation": "a relationship pair for a query term",
-    "learn_more_link": null
-  },
-  "@luduvo/server/global/game.World.Query": {
-    "documentation": "build a cached multi-component query",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#Query"
-  },
-  "@luduvo/server/global/game.World.System": {
-    "documentation": "register a per-tick system over a query",
-    "learn_more_link": "https://docs.luduvo.com/reference/World#System"
-  },
   "@luduvo/server/global/geometry": {
     "documentation": "polygon helpers on flat buffers",
     "learn_more_link": null
@@ -4078,6 +4904,38 @@
     "documentation": "write to the output",
     "learn_more_link": "https://docs.luduvo.com/reference/print"
   },
+  "@luduvo/server/global/rotation": {
+    "documentation": "rotation vectors: the axis times the angle in radians",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/rotation.apply": {
+    "documentation": "turn the vector v by the rotation r",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/rotation.axis": {
+    "documentation": "the rotation by angle radians around axis",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/rotation.compose": {
+    "documentation": "the rotation that turns by b first, then by a",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/rotation.from_euler": {
+    "documentation": "the rotation of an Orientation in degrees",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/rotation.look": {
+    "documentation": "the rotation that points -Z along forward with +Y as close to up as the turn allows; up defaults to +Y",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/rotation.slerp": {
+    "documentation": "turn from a toward b along the shortest arc; t 0 is a, t 1 is b",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/rotation.to_euler": {
+    "documentation": "the Orientation in degrees of the rotation r",
+    "learn_more_link": null
+  },
   "@luduvo/server/global/self": {
     "documentation": "the entity this script runs on",
     "learn_more_link": "https://docs.luduvo.com/reference/self"
@@ -4086,12 +4944,20 @@
     "documentation": "deferred and delayed callbacks",
     "learn_more_link": null
   },
+  "@luduvo/server/global/task.cancel": {
+    "documentation": "stop a suspended or scheduled thread so it never resumes",
+    "learn_more_link": null
+  },
   "@luduvo/server/global/task.defer": {
     "documentation": "run fn with the arguments at the end of this update tick, after every Update",
     "learn_more_link": null
   },
   "@luduvo/server/global/task.delay": {
     "documentation": "run fn with the arguments at the end of the first update tick at least seconds later",
+    "learn_more_link": null
+  },
+  "@luduvo/server/global/task.spawn": {
+    "documentation": "run fn immediately with the arguments until it yields or ends, then return the thread",
     "learn_more_link": null
   },
   "@luduvo/server/global/task.wait": {
@@ -4214,6 +5080,81 @@
     "documentation": "Account id of the player who controls this character",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#UserId"
   },
+  "@luduvo/server/globaltype/BillboardGuiComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.adornee": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.alwaysOnTop": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.anchorX": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.anchorY": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.clampToScreen": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeEnd": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeStart": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.height": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.maxDistance": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.studsOffset": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/BillboardGuiComponent.width": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/CameraLensComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/CameraLensComponent.farZ": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/CameraLensComponent.fovY": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/CameraLensComponent.nearZ": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/CloudStore": {
     "documentation": "a store every server of the experience shares, read and written asynchronously",
     "learn_more_link": "https://docs.luduvo.com/reference/types/CloudStore"
@@ -4221,6 +5162,10 @@
   "@luduvo/server/globaltype/Component": {
     "documentation": "the fields of one component, read and written by name",
     "learn_more_link": "https://docs.luduvo.com/reference/types/Component"
+  },
+  "@luduvo/server/globaltype/Component.__iter": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ContentAsset": {
     "documentation": "",
@@ -4289,6 +5234,26 @@
   "@luduvo/server/globaltype/EventTable": {
     "documentation": "a batch of events the server and its clients send each other",
     "learn_more_link": "https://docs.luduvo.com/reference/types/EventTable"
+  },
+  "@luduvo/server/globaltype/EventTable.FireAllClients": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/EventTable.FireClient": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/EventTable.FireServer": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/EventTable.OnClientEvent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/EventTable.OnServerEvent": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/EventTable.Push": {
     "documentation": "append a new event entry to be broadcast",
@@ -4361,6 +5326,16 @@
   "@luduvo/server/globaltype/Instance": {
     "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance"
+  },
+  "@luduvo/server/globaltype/Instance.AbsolutePosition": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/Instance.AbsoluteSize": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Action": {
     "documentation": "Engine action this core menu button triggers",
@@ -4473,10 +5448,6 @@
     "documentation": "kick the physics body with an impulse, optionally at a point",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#ApplyImpulse"
   },
-  "@luduvo/server/globaltype/Instance.ApplyTorque": {
-    "documentation": "spin the physics body with a torque",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#ApplyTorque"
-  },
   "@luduvo/server/globaltype/Instance.ApplyTorqueImpulse": {
     "documentation": "",
     "learn_more_link": null
@@ -4542,6 +5513,11 @@
   "@luduvo/server/globaltype/Instance.BillboardColor": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.BillboardGui": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.BillboardMaxDistance": {
     "documentation": "",
@@ -4679,6 +5655,11 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/server/globaltype/Instance.CameraLens": {
+    "documentation": "perspective projection settings for a camera entity\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/server/globaltype/Instance.CancelText": {
     "documentation": "",
     "learn_more_link": null
@@ -4688,13 +5669,14 @@
     "learn_more_link": null,
     "read_only": true
   },
+  "@luduvo/server/globaltype/Instance.CanvasPosition": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/server/globaltype/Instance.CanvasSize": {
     "documentation": "Scrollable canvas size, a fraction of the frame plus pixels",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#CanvasSize"
-  },
-  "@luduvo/server/globaltype/Instance.CaptureFocus": {
-    "documentation": "",
-    "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.CellPadding": {
     "documentation": "Pixels between cells",
@@ -4708,14 +5690,24 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/server/globaltype/Instance.ChangeState": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/Instance.Changed": {
     "documentation": "fires after a property of the entity changes\n\nRead only at runtime.",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Changed",
     "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Character": {
-    "documentation": "Marks the root entity of a humanoid character",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Character"
+    "documentation": "Marks the root entity of a humanoid character\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Character",
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/Instance.CharacterAdded": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.CharacterAnimation": {
     "documentation": "Attaches an Animator once the six body parts exist",
@@ -4903,6 +5895,10 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/server/globaltype/Instance.CoreMenuDimmer": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/Instance.CornerRadius": {
     "documentation": "Pixels",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#CornerRadius"
@@ -4988,6 +5984,15 @@
   "@luduvo/server/globaltype/Instance.Emit": {
     "documentation": "fire the named signal on the entity with the given arguments",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Emit"
+  },
+  "@luduvo/server/globaltype/Instance.EquipTool": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.Equipped": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Face": {
     "documentation": "Texture asset of the face decal",
@@ -5090,13 +6095,9 @@
     "documentation": "Anti-jitter friction torque in Nm once the joint settles",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#FrictionTorque"
   },
-  "@luduvo/server/globaltype/Instance.GetAccessories": {
+  "@luduvo/server/globaltype/Instance.GetAttributeChangedSignal": {
     "documentation": "",
     "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.GetAngularVelocity": {
-    "documentation": "angular velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetAngularVelocity"
   },
   "@luduvo/server/globaltype/Instance.GetChildren": {
     "documentation": "array of the direct children",
@@ -5106,27 +6107,11 @@
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/server/globaltype/Instance.GetHearingSense": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.GetLastHeardStimulus": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.GetLinearVelocity": {
-    "documentation": "linear velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetLinearVelocity"
-  },
   "@luduvo/server/globaltype/Instance.GetMass": {
     "documentation": "mass of the physics body, nil when the entity has none",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetMass"
   },
-  "@luduvo/server/globaltype/Instance.GetMoveIntent": {
-    "documentation": "movement intent of a character, nil when the entity has none",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetMoveIntent"
-  },
-  "@luduvo/server/globaltype/Instance.GetNearestPerceivedTarget": {
+  "@luduvo/server/globaltype/Instance.GetPropertyChangedSignal": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -5134,11 +6119,11 @@
     "documentation": "the named signal of the entity, created on first use",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetSignal"
   },
-  "@luduvo/server/globaltype/Instance.GetSwingTwistJoint": {
-    "documentation": "swing-twist joint parameters, nil when the entity has no joint",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetSwingTwistJoint"
+  "@luduvo/server/globaltype/Instance.GetStateEnabled": {
+    "documentation": "",
+    "learn_more_link": null
   },
-  "@luduvo/server/globaltype/Instance.GetVisionCone": {
+  "@luduvo/server/globaltype/Instance.GetTool": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -5254,6 +6239,11 @@
     "documentation": "Clearance between the floor and the torso in studs",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#HipHeight"
   },
+  "@luduvo/server/globaltype/Instance.Hit": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/server/globaltype/Instance.HoverImage": {
     "documentation": "",
     "learn_more_link": null
@@ -5279,10 +6269,6 @@
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/server/globaltype/Instance.Id": {
-    "documentation": "Team number of this entity. Team 0 means no team",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Id"
-  },
   "@luduvo/server/globaltype/Instance.Image": {
     "documentation": "The texture asset this element draws. 0 draws nothing.",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Image"
@@ -5307,17 +6293,13 @@
     "documentation": "Half-angle in radians with full intensity inside the cone",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#InnerAngle"
   },
-  "@luduvo/server/globaltype/Instance.InputMove": {
-    "documentation": "whether local movement input drives this camera",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#InputMove"
-  },
-  "@luduvo/server/globaltype/Instance.InputSteer": {
-    "documentation": "whether local pointer input steers this camera",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#InputSteer"
-  },
   "@luduvo/server/globaltype/Instance.Intensity": {
     "documentation": "Brightness of the emitted light; 0 turns it off",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Intensity"
+  },
+  "@luduvo/server/globaltype/Instance.InverseTransformDirection": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.InverseTransformPoint": {
     "documentation": "",
@@ -5465,6 +6447,10 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/server/globaltype/Instance.Looped": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/Instance.LowerTranslation": {
     "documentation": "",
     "learn_more_link": null
@@ -5488,6 +6474,11 @@
   "@luduvo/server/globaltype/Instance.Margins": {
     "documentation": "Inner margins in pixels: left, top, right, bottom",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Margins"
+  },
+  "@luduvo/server/globaltype/Instance.MarkerReached": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Material": {
     "documentation": "surface material name, empty when none is set",
@@ -5687,6 +6678,11 @@
     "documentation": "world rotation as YXZ Euler degrees",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Orientation"
   },
+  "@luduvo/server/globaltype/Instance.OrthographicLens": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/server/globaltype/Instance.Other": {
     "documentation": "The second welded entity; the weld holds the relative pose the two bodies had when the joint appeared",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Other"
@@ -5696,9 +6692,8 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#OuterAngle"
   },
   "@luduvo/server/globaltype/Instance.OwnerUserId": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "Writable only on the server.",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.Page": {
     "documentation": "Core menu page this subtree belongs to",
@@ -5729,8 +6724,9 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Pants"
   },
   "@luduvo/server/globaltype/Instance.Parent": {
-    "documentation": "parent entity, nil for a root",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Parent"
+    "documentation": "parent entity, nil for a root\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Parent",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Part": {
     "documentation": "Which body part of the rig this entity is",
@@ -5743,6 +6739,11 @@
   "@luduvo/server/globaltype/Instance.Pause": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.Paused": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.PeakFriction": {
     "documentation": "",
@@ -5775,6 +6776,16 @@
   "@luduvo/server/globaltype/Instance.PlaybackSpeed": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.PlayerSpawner": {
+    "documentation": "Server only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/Instance.Playing": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.PlotColor3": {
     "documentation": "",
@@ -5809,8 +6820,9 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Position"
   },
   "@luduvo/server/globaltype/Instance.PrefabId": {
-    "documentation": "Id of the prefab this instance was spawned from",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#PrefabId"
+    "documentation": "Id of the prefab this instance was spawned from\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#PrefabId",
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.Pressed": {
     "documentation": "Read only at runtime.",
@@ -5842,10 +6854,6 @@
     "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.ProgressTransparency": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.PushSample": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -5926,6 +6934,10 @@
     "documentation": "rotate the entity around an axis by an angle in radians",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Rotate"
   },
+  "@luduvo/server/globaltype/Instance.RotationVector": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/Instance.SampleCount": {
     "documentation": "",
     "learn_more_link": null
@@ -5990,31 +7002,11 @@
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/server/globaltype/Instance.SetAngularVelocity": {
-    "documentation": "set the angular velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetAngularVelocity"
-  },
-  "@luduvo/server/globaltype/Instance.SetBodyMotion": {
-    "documentation": "switch the physics body between dynamic and kinematic",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetBodyMotion"
-  },
-  "@luduvo/server/globaltype/Instance.SetHearingSense": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.SetLinearVelocity": {
-    "documentation": "set the linear velocity of the physics body",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetLinearVelocity"
-  },
   "@luduvo/server/globaltype/Instance.SetParent": {
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/server/globaltype/Instance.SetSwingTwistJoint": {
-    "documentation": "configure the swing-twist joint of the entity",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetSwingTwistJoint"
-  },
-  "@luduvo/server/globaltype/Instance.SetVisionCone": {
+  "@luduvo/server/globaltype/Instance.SetStateEnabled": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -6110,18 +7102,6 @@
     "documentation": "",
     "learn_more_link": null
   },
-  "@luduvo/server/globaltype/Instance.SoundLooped": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.SoundPaused": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.SoundPlaying": {
-    "documentation": "",
-    "learn_more_link": null
-  },
   "@luduvo/server/globaltype/Instance.Spacing": {
     "documentation": "Pixels between children",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Spacing"
@@ -6135,10 +7115,6 @@
     "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.StarLuminance": {
-    "documentation": "",
-    "learn_more_link": null
-  },
-  "@luduvo/server/globaltype/Instance.StartTimer": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -6191,10 +7167,6 @@
   "@luduvo/server/globaltype/Instance.StopPreview": {
     "documentation": "stop the animation preview, false when no preview ran",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#StopPreview"
-  },
-  "@luduvo/server/globaltype/Instance.StopTimer": {
-    "documentation": "",
-    "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.StripeColor3": {
     "documentation": "",
@@ -6291,6 +7263,18 @@
   "@luduvo/server/globaltype/Instance.TakeDamage": {
     "documentation": "deal damage to the entity and record the attacker",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#TakeDamage"
+  },
+  "@luduvo/server/globaltype/Instance.Team": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.TeamColor": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.TeamId": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.Text": {
     "documentation": "Interned id of the authored text. Set Text through the property panel or a script.",
@@ -6399,6 +7383,16 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/server/globaltype/Instance.Tool": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/Instance.ToolState": {
+    "documentation": "Server only.\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
   "@luduvo/server/globaltype/Instance.TouchEnded": {
     "documentation": "Read only at runtime.",
     "learn_more_link": null,
@@ -6428,6 +7422,10 @@
   "@luduvo/server/globaltype/Instance.TrackTransparency": {
     "documentation": "Transparency of the track, 0 opaque to 1 invisible",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#TrackTransparency"
+  },
+  "@luduvo/server/globaltype/Instance.TransformDirection": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/Instance.TransformPoint": {
     "documentation": "",
@@ -6461,13 +7459,26 @@
     "documentation": "Opts into hit-testing and click/press events",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#UIClickable"
   },
+  "@luduvo/server/globaltype/Instance.UIPosition": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/Instance.UIRoot": {
     "documentation": "ScreenGui: top-level entity whose descendants form one overlay",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#UIRoot"
   },
+  "@luduvo/server/globaltype/Instance.UISize": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/Instance.UISurfaceAlwaysOnTop": {
     "documentation": "",
     "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.UITail": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.UIToggleButton": {
     "documentation": "",
@@ -6476,6 +7487,15 @@
   "@luduvo/server/globaltype/Instance.Underlay": {
     "documentation": "Second albedo, alpha-composited under Albedo over the part colour; read only where a BrickColor makes the mesh a decal",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Underlay"
+  },
+  "@luduvo/server/globaltype/Instance.UnequipTools": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.Unequipped": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
   },
   "@luduvo/server/globaltype/Instance.UpDirection": {
     "documentation": "",
@@ -6526,15 +7546,15 @@
     "documentation": "Linear velocity in studs/s; live while the world simulates",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Velocity"
   },
-  "@luduvo/server/globaltype/Instance.ViewSource": {
-    "documentation": "camera entity this screen renders from, nil when none",
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#ViewSource"
-  },
   "@luduvo/server/globaltype/Instance.Visible": {
     "documentation": "Draws the entity and its subtree; false hides them",
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Visible"
   },
   "@luduvo/server/globaltype/Instance.Volume": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Instance.WaitForChild": {
     "documentation": "",
     "learn_more_link": null
   },
@@ -6567,6 +7587,246 @@
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#attr",
     "read_only": true
   },
+  "@luduvo/server/globaltype/MaterialAudio": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialAudio.Clips": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialAudio.Gain": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialAudio.PitchSpread": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialEmission": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialEmission.Intensity": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialEmission.Texture": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Emission#Texture"
+  },
+  "@luduvo/server/globaltype/MaterialEmission.Tint": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialEntry": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialEntry.Id": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialEntry.Model": {
+    "documentation": "surface model the shader samples with: UV, Triplanar, or Stud",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Model"
+  },
+  "@luduvo/server/globaltype/MaterialEntry.Name": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialEntry.Pipeline": {
+    "documentation": "pipeline class the surfaces draw in: Opaque, Cutout, Transparent, Water, or Decal",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Pipeline"
+  },
+  "@luduvo/server/globaltype/MaterialPhysics": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialPhysics.Density": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialPhysics.Friction": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialPhysics.Restitution": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialSpec": {
+    "documentation": "the textures, pipeline class, and physical terms one material renders with",
+    "learn_more_link": "https://docs.luduvo.com/reference/types/MaterialSpec"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Emission": {
+    "documentation": "emissive texture, and the tint and intensity it radiates at",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Emission"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Footsteps": {
+    "documentation": "clips a character plays walking on the surfaces, and the gain and pitch spread they play at",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Footsteps"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Id": {
+    "documentation": "id the material is defined and looked up under",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Id"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Impacts": {
+    "documentation": "clips a contact plays against the surfaces, and the gain and pitch spread they play at",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Impacts"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Model": {
+    "documentation": "surface model the shader samples with: UV, Triplanar, or Stud",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Model"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Name": {
+    "documentation": "name the material can be looked up under, in place of the id",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Name"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Physics": {
+    "documentation": "density, friction, and restitution the solver gives the surfaces",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Physics"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Pipeline": {
+    "documentation": "pipeline class the surfaces draw in: Opaque, Cutout, Transparent, Water, or Decal",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Pipeline"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Studs": {
+    "documentation": "top and bottom stud textures the Stud surface model draws",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Studs"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Surface": {
+    "documentation": "base color, normal, and ORM textures, with the tint, tiling, and multipliers applied to them",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Surface"
+  },
+  "@luduvo/server/globaltype/MaterialSpec.Water": {
+    "documentation": "absorption, refraction, foam, and wave terms the Water pipeline class solves",
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Water"
+  },
+  "@luduvo/server/globaltype/MaterialStuds": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialStuds.ColorBottom": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#ColorBottom"
+  },
+  "@luduvo/server/globaltype/MaterialStuds.ColorTop": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#ColorTop"
+  },
+  "@luduvo/server/globaltype/MaterialStuds.NormalBottom": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#NormalBottom"
+  },
+  "@luduvo/server/globaltype/MaterialStuds.NormalTop": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#NormalTop"
+  },
+  "@luduvo/server/globaltype/MaterialStuds.StudsPerTile": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#StudsPerTile"
+  },
+  "@luduvo/server/globaltype/MaterialSurface": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialSurface.AlphaCutoff": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#AlphaCutoff"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.BaseColor": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#BaseColor"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.MetallicMult": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#MetallicMult"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.Neon": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#Neon"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.Normal": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialSurface.NormalStrength": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#NormalStrength"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.Orm": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#Orm"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.RoughnessMult": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#RoughnessMult"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.TileSize": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#TileSize"
+  },
+  "@luduvo/server/globaltype/MaterialSurface.Tint": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialSurface.TintVertex": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#TintVertex"
+  },
+  "@luduvo/server/globaltype/MaterialWater": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/MaterialWater.Absorption": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Absorption"
+  },
+  "@luduvo/server/globaltype/MaterialWater.DepthScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#DepthScale"
+  },
+  "@luduvo/server/globaltype/MaterialWater.FlowMap": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowMap"
+  },
+  "@luduvo/server/globaltype/MaterialWater.FlowScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowScale"
+  },
+  "@luduvo/server/globaltype/MaterialWater.FlowSpeed": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowSpeed"
+  },
+  "@luduvo/server/globaltype/MaterialWater.Foam": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Foam"
+  },
+  "@luduvo/server/globaltype/MaterialWater.FoamDepth": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FoamDepth"
+  },
+  "@luduvo/server/globaltype/MaterialWater.FoamScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FoamScale"
+  },
+  "@luduvo/server/globaltype/MaterialWater.Refraction": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Refraction"
+  },
+  "@luduvo/server/globaltype/MaterialWater.WaveAmplitude": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveAmplitude"
+  },
+  "@luduvo/server/globaltype/MaterialWater.WaveScale": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveScale"
+  },
+  "@luduvo/server/globaltype/MaterialWater.WaveSpeed": {
+    "documentation": "",
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveSpeed"
+  },
   "@luduvo/server/globaltype/MoveIntent": {
     "documentation": "where a character wants to move, and which way it should face",
     "learn_more_link": "https://docs.luduvo.com/reference/types/MoveIntent"
@@ -6595,8 +7855,28 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/server/globaltype/OrthographicLensComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/OrthographicLensComponent.size": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/Pair": {
     "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/PlayerSpawnerComponent": {
+    "documentation": "Server only.",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/PlayerSpawnerComponent.character": {
+    "documentation": "Server only.",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/PlayerSpawnerComponent.respawnDelay": {
+    "documentation": "Server only.",
     "learn_more_link": null
   },
   "@luduvo/server/globaltype/Query": {
@@ -6607,6 +7887,10 @@
     "documentation": "column array of matched entity instances",
     "learn_more_link": "https://docs.luduvo.com/reference/Query#Entity"
   },
+  "@luduvo/server/globaltype/Query.Instance": {
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance"
+  },
   "@luduvo/server/globaltype/Query.count": {
     "documentation": "number of entities currently matching the query criteria",
     "learn_more_link": "https://docs.luduvo.com/reference/Query#count"
@@ -6614,6 +7898,22 @@
   "@luduvo/server/globaltype/QueryColumn": {
     "documentation": "one column a query matched, holding a value per entity",
     "learn_more_link": "https://docs.luduvo.com/reference/types/QueryColumn"
+  },
+  "@luduvo/server/globaltype/QueryParams": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/QueryParams.CollisionGroup": {
+    "documentation": "collision group name, Default when none is set",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#CollisionGroup"
+  },
+  "@luduvo/server/globaltype/QueryParams.ExcludeInstances": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/QueryParams.IncludeInstances": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/RaycastResult": {
     "documentation": "what a ray hit: the entity, the point, the surface normal, and the distance",
@@ -6626,6 +7926,10 @@
   "@luduvo/server/globaltype/RaycastResult.Entity": {
     "documentation": "entity hit by the ray, or nil if none",
     "learn_more_link": "https://docs.luduvo.com/reference/RaycastResult#Entity"
+  },
+  "@luduvo/server/globaltype/RaycastResult.Instance": {
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance"
   },
   "@luduvo/server/globaltype/RaycastResult.Normal": {
     "documentation": "surface normal vector at the hit position",
@@ -6654,6 +7958,14 @@
   "@luduvo/server/globaltype/Rect.Width": {
     "documentation": "width of the rectangle along the horizontal axis",
     "learn_more_link": "https://docs.luduvo.com/reference/Rect#Width"
+  },
+  "@luduvo/server/globaltype/Rect.__eq": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Rect.__tostring": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ScriptCost": {
     "documentation": "how often one script ran and how long each call took",
@@ -6687,6 +7999,10 @@
     "documentation": "fraction along the sweep path where the collision occurred",
     "learn_more_link": "https://docs.luduvo.com/reference/ShapecastHit#Fraction"
   },
+  "@luduvo/server/globaltype/ShapecastHit.Instance": {
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance"
+  },
   "@luduvo/server/globaltype/ShapecastHit.Normal": {
     "documentation": "surface normal vector at the contact point",
     "learn_more_link": "https://docs.luduvo.com/reference/ShapecastHit#Normal"
@@ -6710,6 +8026,26 @@
   "@luduvo/server/globaltype/Signal.Emit": {
     "documentation": "fire the signal, invoking all connected callbacks with the arguments",
     "learn_more_link": "https://docs.luduvo.com/reference/Signal#Emit"
+  },
+  "@luduvo/server/globaltype/Signal.Once": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/Signal.Wait": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/SignalConnection": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/SignalConnection.Connected": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/SignalConnection.Disconnect": {
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/Store": {
     "documentation": "a store kept with the place, so its rows survive a restart",
@@ -6795,6 +8131,48 @@
     "documentation": "minimum twist angle limit in radians",
     "learn_more_link": "https://docs.luduvo.com/reference/SwingTwistJointInfo#TwistMin"
   },
+  "@luduvo/server/globaltype/ToolComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/ToolComponent.equipped": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/ToolComponent.gripHand": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/ToolComponent.gripOffset": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/ToolComponent.gripRotation": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/ToolComponent.icon": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/ToolComponent.noDrop": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/ToolStateComponent": {
+    "documentation": "Server only.",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/ToolStateComponent.world": {
+    "documentation": "Server only.",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/TouchEvent": {
     "documentation": "two entities starting or stopping contact this frame",
     "learn_more_link": "https://docs.luduvo.com/reference/types/TouchEvent"
@@ -6851,8 +8229,225 @@
     "documentation": "",
     "learn_more_link": null
   },
+  "@luduvo/server/globaltype/UDim": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim.Offset": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim.Scale": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim.__add": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim.__eq": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim.__sub": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim.__tostring": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim.__unm": {
+    "documentation": "",
+    "learn_more_link": null
+  },
   "@luduvo/server/globaltype/UDim2": {
     "documentation": "a length on both axes, as a fraction of the parent plus a pixel offset",
     "learn_more_link": "https://docs.luduvo.com/reference/types/UDim2"
+  },
+  "@luduvo/server/globaltype/UDim2.Lerp": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim2.X": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim2.Y": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim2.__add": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim2.__eq": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim2.__sub": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim2.__tostring": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UDim2.__unm": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UITailComponent": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/UITailComponent.length": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/UITailComponent.offset": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/UITailComponent.pointAtAdornee": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/UITailComponent.side": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/UITailComponent.width": {
+    "documentation": "Read only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/World": {
+    "documentation": "iterates the entities of the running place and registers the systems that run over them every tick",
+    "learn_more_link": "https://docs.luduvo.com/reference/World"
+  },
+  "@luduvo/server/globaltype/World.Camera": {
+    "documentation": "the active Camera entity of the place\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/World.DumpAttributes": {
+    "documentation": "print attribute usage to the output",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#DumpAttributes"
+  },
+  "@luduvo/server/globaltype/World.Each": {
+    "documentation": "iterate the entities that hold a component",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#Each"
+  },
+  "@luduvo/server/globaltype/World.FindFirstChild": {
+    "documentation": "the first entity at the top of the place with this name",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#FindFirstChild"
+  },
+  "@luduvo/server/globaltype/World.GetChildren": {
+    "documentation": "every entity at the top of the place",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetChildren"
+  },
+  "@luduvo/server/globaltype/World.GetDescendants": {
+    "documentation": "every entity in the place, top level first",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/World.HasComponent": {
+    "documentation": "false: the World holds no component",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#HasComponent"
+  },
+  "@luduvo/server/globaltype/World.IsAlive": {
+    "documentation": "true: the World lasts as long as the place",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#IsAlive"
+  },
+  "@luduvo/server/globaltype/World.IsDescendantOf": {
+    "documentation": "false: nothing is above the World",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#IsDescendantOf"
+  },
+  "@luduvo/server/globaltype/World.Name": {
+    "documentation": "the name of the World, always \"World\"\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/World.Pair": {
+    "documentation": "a relationship pair for a query term",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/World.Parent": {
+    "documentation": "nil: the World is the top of the place\n\nRead only at runtime.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Parent",
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/World.Query": {
+    "documentation": "build a cached multi-component query",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#Query"
+  },
+  "@luduvo/server/globaltype/World.Screen": {
+    "documentation": "the root Screen entity of the place\n\nRead only at runtime.",
+    "learn_more_link": null,
+    "read_only": true
+  },
+  "@luduvo/server/globaltype/World.Spawn": {
+    "documentation": "spawn a root entity with the given components",
+    "learn_more_link": "https://docs.luduvo.com/reference/Prefabs#Spawn"
+  },
+  "@luduvo/server/globaltype/World.System": {
+    "documentation": "register a per-tick system over a query",
+    "learn_more_link": "https://docs.luduvo.com/reference/World#System"
+  },
+  "@luduvo/server/globaltype/World.WaitForChild": {
+    "documentation": "wait for an entity at the top of the place with this name",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.B": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.G": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.Magnitude": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.R": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.Unit": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.X": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.Y": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.Z": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.x": {
+    "documentation": "lateral movement input along the horizontal axis",
+    "learn_more_link": "https://docs.luduvo.com/reference/MoveIntent#x"
+  },
+  "@luduvo/server/globaltype/vector.y": {
+    "documentation": "",
+    "learn_more_link": null
+  },
+  "@luduvo/server/globaltype/vector.z": {
+    "documentation": "forward and backward movement input",
+    "learn_more_link": "https://docs.luduvo.com/reference/MoveIntent#z"
   }
 }
