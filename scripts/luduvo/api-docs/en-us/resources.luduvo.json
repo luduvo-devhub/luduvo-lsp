@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "luduvoContentVersion": "10",
+  "luduvoContentVersion": "11",
   "resources": {
     "component": [
       "Admin",
@@ -235,19 +235,29 @@
       "Cylinder",
       "Decal",
       "Diagnostics",
+      "Frame",
       "Health",
       "Hotbar",
+      "ImageButton",
+      "ImageLabel",
       "LoadingScreen",
       "Menu",
       "NetworkStats",
       "Part",
       "PlayerList",
+      "PlayerMenu",
       "PlayerSpawner",
       "PointLight",
+      "ScreenGui",
+      "ScrollingFrame",
       "ShiftLockCursor",
       "SpawnLocation",
       "Sphere",
       "SpotLight",
+      "SurfaceGui",
+      "TextBox",
+      "TextButton",
+      "TextLabel",
       "Wedge"
     ]
   }

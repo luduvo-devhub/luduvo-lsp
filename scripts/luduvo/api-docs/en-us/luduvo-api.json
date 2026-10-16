@@ -100,6 +100,82 @@
     "scope": "shared"
   },
   {
+    "name": "BillboardGuiComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type BillboardGuiComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent",
+      "@luduvo/server/globaltype/BillboardGuiComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "CameraFlyComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type CameraFlyComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraFlyComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "CameraLensComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type CameraLensComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraLensComponent",
+      "@luduvo/server/globaltype/CameraLensComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "CameraOrbitComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type CameraOrbitComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
     "name": "CloudStore",
     "owner": null,
     "kind": "type",
@@ -420,6 +496,166 @@
     "scope": "shared"
   },
   {
+    "name": "MaterialAudio",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialAudio",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialAudio",
+      "@luduvo/server/globaltype/MaterialAudio"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "MaterialEmission",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialEmission",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEmission",
+      "@luduvo/server/globaltype/MaterialEmission"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "MaterialEntry",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialEntry",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEntry",
+      "@luduvo/server/globaltype/MaterialEntry"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "MaterialPhysics",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialPhysics",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialPhysics",
+      "@luduvo/server/globaltype/MaterialPhysics"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "MaterialSpec",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialSpec",
+    "documentation": "the textures, pipeline class, and physical terms one material renders with",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec",
+      "@luduvo/server/globaltype/MaterialSpec"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/types/MaterialSpec",
+    "scope": "shared"
+  },
+  {
+    "name": "MaterialStuds",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialStuds",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialStuds",
+      "@luduvo/server/globaltype/MaterialStuds"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "MaterialSurface",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialSurface",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface",
+      "@luduvo/server/globaltype/MaterialSurface"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "MaterialWater",
+    "owner": null,
+    "kind": "type",
+    "type": "type MaterialWater",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater",
+      "@luduvo/server/globaltype/MaterialWater"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "MoveIntent",
     "owner": null,
     "kind": "type",
@@ -460,6 +696,26 @@
     "scope": "shared"
   },
   {
+    "name": "OrthographicLensComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type OrthographicLensComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/OrthographicLensComponent",
+      "@luduvo/server/globaltype/OrthographicLensComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Pair",
     "owner": null,
     "kind": "type",
@@ -478,6 +734,24 @@
     ],
     "learn_more_link": null,
     "scope": "shared"
+  },
+  {
+    "name": "PlayerSpawnerComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type PlayerSpawnerComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/PlayerSpawnerComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "server"
   },
   {
     "name": "Query",
@@ -517,6 +791,26 @@
       "@luduvo/server/globaltype/QueryColumn"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/types/QueryColumn",
+    "scope": "shared"
+  },
+  {
+    "name": "QueryParams",
+    "owner": null,
+    "kind": "type",
+    "type": "type QueryParams",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/QueryParams",
+      "@luduvo/server/globaltype/QueryParams"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -640,6 +934,26 @@
     "scope": "shared"
   },
   {
+    "name": "SignalConnection",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type SignalConnection",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/SignalConnection",
+      "@luduvo/server/globaltype/SignalConnection"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Store",
     "owner": null,
     "kind": "type",
@@ -700,6 +1014,44 @@
     "scope": "shared"
   },
   {
+    "name": "ToolComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type ToolComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent",
+      "@luduvo/server/globaltype/ToolComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "ToolStateComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type ToolStateComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/ToolStateComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "server"
+  },
+  {
     "name": "TouchEvent",
     "owner": null,
     "kind": "type",
@@ -735,6 +1087,46 @@
     "documentation_symbols": [
       "@luduvo/client/globaltype/Tween",
       "@luduvo/server/globaltype/Tween"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "UDim",
+    "owner": null,
+    "kind": "global",
+    "type": "table",
+    "documentation": "1d dimension constructor",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/UDim",
+      "@luduvo/server/global/UDim"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "UDim",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type UDim",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim",
+      "@luduvo/server/globaltype/UDim"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -780,6 +1172,26 @@
     "scope": "shared"
   },
   {
+    "name": "UITailComponent",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type UITailComponent",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent",
+      "@luduvo/server/globaltype/UITailComponent"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Vector2",
     "owner": null,
     "kind": "global",
@@ -817,6 +1229,26 @@
       "@luduvo/server/global/Vector3"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Vector3",
+    "scope": "shared"
+  },
+  {
+    "name": "World",
+    "owner": null,
+    "kind": "type",
+    "type": "type World",
+    "documentation": "iterates the entities of the running place and registers the systems that run over them every tick",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World",
+      "@luduvo/server/globaltype/World"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/World",
     "scope": "shared"
   },
   {
@@ -900,6 +1332,26 @@
     "scope": "shared"
   },
   {
+    "name": "rotation",
+    "owner": null,
+    "kind": "global",
+    "type": "table",
+    "documentation": "rotation vectors: the axis times the angle in radians",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation",
+      "@luduvo/server/global/rotation"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "self",
     "owner": null,
     "kind": "global",
@@ -957,6 +1409,26 @@
       "@luduvo/server/global/tick"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/tick",
+    "scope": "shared"
+  },
+  {
+    "name": "vector",
+    "owner": null,
+    "kind": "type",
+    "type": "extern type vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector",
+      "@luduvo/server/globaltype/vector"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -1420,6 +1892,568 @@
     "scope": "shared"
   },
   {
+    "name": "adornee",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "Instance?",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.adornee",
+      "@luduvo/server/globaltype/BillboardGuiComponent.adornee"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "alwaysOnTop",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.alwaysOnTop",
+      "@luduvo/server/globaltype/BillboardGuiComponent.alwaysOnTop"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "anchorX",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.anchorX",
+      "@luduvo/server/globaltype/BillboardGuiComponent.anchorX"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "anchorY",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.anchorY",
+      "@luduvo/server/globaltype/BillboardGuiComponent.anchorY"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "clampToScreen",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.clampToScreen",
+      "@luduvo/server/globaltype/BillboardGuiComponent.clampToScreen"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "edgeFadeEnd",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeEnd",
+      "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeEnd"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "edgeFadeStart",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeStart",
+      "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeStart"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "height",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.height",
+      "@luduvo/server/globaltype/BillboardGuiComponent.height"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "maxDistance",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.maxDistance",
+      "@luduvo/server/globaltype/BillboardGuiComponent.maxDistance"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "studsOffset",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.studsOffset",
+      "@luduvo/server/globaltype/BillboardGuiComponent.studsOffset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "width",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.width",
+      "@luduvo/server/globaltype/BillboardGuiComponent.width"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "pitch",
+    "owner": "CameraFlyComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraFlyComponent.pitch"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "sensitivity",
+    "owner": "CameraFlyComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraFlyComponent.sensitivity"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "speed",
+    "owner": "CameraFlyComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraFlyComponent.speed"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "yaw",
+    "owner": "CameraFlyComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraFlyComponent.yaw"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "farZ",
+    "owner": "CameraLensComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraLensComponent.farZ",
+      "@luduvo/server/globaltype/CameraLensComponent.farZ"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "fovY",
+    "owner": "CameraLensComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraLensComponent.fovY",
+      "@luduvo/server/globaltype/CameraLensComponent.fovY"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "nearZ",
+    "owner": "CameraLensComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraLensComponent.nearZ",
+      "@luduvo/server/globaltype/CameraLensComponent.nearZ"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "clearance",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.clearance"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "distance",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.distance"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "fade",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.fade"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "pitch",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.pitch"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "sensitivity",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.sensitivity"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "sideOffset",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.sideOffset"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "smoothDistance",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.smoothDistance"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "smoothSideOffset",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.smoothSideOffset"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "subject",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "Instance?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.subject"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "yaw",
+    "owner": "CameraOrbitComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/CameraOrbitComponent.yaw"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
     "name": "fromHSV",
     "owner": "Color3",
     "kind": "global_member",
@@ -1440,10 +2474,50 @@
     "scope": "shared"
   },
   {
+    "name": "fromHex",
+    "owner": "Color3",
+    "kind": "global_member",
+    "type": "(hex: string) -> vector",
+    "documentation": "make a color from six hex digits, with or without a leading #",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/Color3.fromHex",
+      "@luduvo/server/global/Color3.fromHex"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "fromRGB",
+    "owner": "Color3",
+    "kind": "global_member",
+    "type": "(r: number?, g: number?, b: number?) -> vector",
+    "documentation": "make a color from red, green and blue, each 0 to 255",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/Color3.fromRGB",
+      "@luduvo/server/global/Color3.fromRGB"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "new",
     "owner": "Color3",
     "kind": "global_member",
-    "type": "(r: number, g: number, b: number) -> vector",
+    "type": "(r: number?, g: number?, b: number?) -> vector",
     "documentation": "make a color",
     "directives": [],
     "read_only": false,
@@ -1457,6 +2531,26 @@
       "@luduvo/server/global/Color3.new"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Color3#new",
+    "scope": "shared"
+  },
+  {
+    "name": "__iter",
+    "owner": "Component",
+    "kind": "type_member",
+    "type": "(self: Component) -> (Component) -> (string, any)",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Component.__iter",
+      "@luduvo/server/globaltype/Component.__iter"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -1669,12 +2763,110 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/DynamicMesh.new"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "FireAllClients",
+    "owner": "EventTable",
+    "kind": "type_member",
+    "type": "(self: EventTable, ...any) -> ()",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "client",
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/DynamicMesh.new",
-      "@luduvo/server/global/DynamicMesh.new"
+      "@luduvo/client/globaltype/EventTable.FireAllClients",
+      "@luduvo/server/globaltype/EventTable.FireAllClients"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "FireClient",
+    "owner": "EventTable",
+    "kind": "type_member",
+    "type": "(self: EventTable, player: Instance, ...any) -> ()",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/EventTable.FireClient",
+      "@luduvo/server/globaltype/EventTable.FireClient"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "FireServer",
+    "owner": "EventTable",
+    "kind": "type_member",
+    "type": "(self: EventTable, ...any) -> ()",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/EventTable.FireServer",
+      "@luduvo/server/globaltype/EventTable.FireServer"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "OnClientEvent",
+    "owner": "EventTable",
+    "kind": "type_member",
+    "type": "Signal",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/EventTable.OnClientEvent",
+      "@luduvo/server/globaltype/EventTable.OnClientEvent"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "OnServerEvent",
+    "owner": "EventTable",
+    "kind": "type_member",
+    "type": "Signal",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/EventTable.OnServerEvent",
+      "@luduvo/server/globaltype/EventTable.OnServerEvent"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -1980,6 +3172,50 @@
     "scope": "shared"
   },
   {
+    "name": "AbsolutePosition",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.AbsolutePosition",
+      "@luduvo/server/globaltype/Instance.AbsolutePosition"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "AbsoluteSize",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.AbsoluteSize",
+      "@luduvo/server/globaltype/Instance.AbsoluteSize"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Action",
     "owner": "Instance",
     "kind": "type_member",
@@ -2065,7 +3301,7 @@
     "name": "AddAccessory",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, accessory: Instance | ContentAsset) -> Instance | boolean",
+    "type": "(self: Instance, accessory: Instance | ContentAsset) -> Instance?",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -2085,7 +3321,7 @@
     "name": "AddComponent",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, name: string) -> Component | Instance",
+    "type": "(self: Instance, ...string | Pair) -> Component | Instance",
     "documentation": "attach a component by name and return it",
     "directives": [],
     "read_only": false,
@@ -2526,26 +3762,6 @@
     "scope": "shared"
   },
   {
-    "name": "ApplyTorque",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance, torque: vector) -> ()",
-    "documentation": "spin the physics body with a torque",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.ApplyTorque",
-      "@luduvo/server/globaltype/Instance.ApplyTorque"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#ApplyTorque",
-    "scope": "shared"
-  },
-  {
     "name": "ApplyTorqueImpulse",
     "owner": "Instance",
     "kind": "type_member",
@@ -2589,7 +3805,7 @@
     "name": "ArrowDirection",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -2865,6 +4081,28 @@
     "documentation_symbols": [
       "@luduvo/client/globaltype/Instance.BillboardColor",
       "@luduvo/server/globaltype/Instance.BillboardColor"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "BillboardGui",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "BillboardGuiComponent",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.BillboardGui",
+      "@luduvo/server/globaltype/Instance.BillboardGui"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -3550,6 +4788,68 @@
     "scope": "shared"
   },
   {
+    "name": "CameraFly",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "CameraFlyComponent",
+    "documentation": "free-camera yaw, pitch, and zoom controls",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.CameraFly"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "CameraLens",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "CameraLensComponent",
+    "documentation": "perspective projection settings for a camera entity",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.CameraLens",
+      "@luduvo/server/globaltype/Instance.CameraLens"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "CameraOrbit",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "CameraOrbitComponent",
+    "documentation": "third-person orbit camera controls; smoothed fields are written by the rig",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.CameraOrbit"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
     "name": "CancelText",
     "owner": "Instance",
     "kind": "type_member",
@@ -3592,6 +4892,28 @@
     "scope": "shared"
   },
   {
+    "name": "CanvasPosition",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.CanvasPosition",
+      "@luduvo/server/globaltype/Instance.CanvasPosition"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "CanvasSize",
     "owner": "Instance",
     "kind": "type_member",
@@ -3621,15 +4943,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.CaptureFocus",
-      "@luduvo/server/globaltype/Instance.CaptureFocus"
+      "@luduvo/client/globaltype/Instance.CaptureFocus"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "CellPadding",
@@ -3692,6 +5012,26 @@
     "scope": "shared"
   },
   {
+    "name": "ChangeState",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "(self: Instance, state: string) -> ()",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.ChangeState",
+      "@luduvo/server/globaltype/Instance.ChangeState"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Changed",
     "owner": "Instance",
     "kind": "type_member",
@@ -3717,10 +5057,12 @@
     "name": "Character",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "boolean",
+    "type": "Instance?",
     "documentation": "Marks the root entity of a humanoid character",
-    "directives": [],
-    "read_only": false,
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
     "write_scope": null,
     "surfaces": [
       "client",
@@ -3731,6 +5073,28 @@
       "@luduvo/server/globaltype/Instance.Character"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Character",
+    "scope": "shared"
+  },
+  {
+    "name": "CharacterAdded",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "Signal",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.CharacterAdded",
+      "@luduvo/server/globaltype/Instance.CharacterAdded"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -4658,6 +6022,26 @@
     "scope": "shared"
   },
   {
+    "name": "CoreMenuDimmer",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.CoreMenuDimmer",
+      "@luduvo/server/globaltype/Instance.CoreMenuDimmer"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "CornerRadius",
     "owner": "Instance",
     "kind": "type_member",
@@ -5082,6 +6466,48 @@
     "scope": "shared"
   },
   {
+    "name": "EquipTool",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "(self: Instance, tool: Instance) -> ()",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.EquipTool",
+      "@luduvo/server/globaltype/Instance.EquipTool"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Equipped",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "Signal",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Equipped",
+      "@luduvo/server/globaltype/Instance.Equipped"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Face",
     "owner": "Instance",
     "kind": "type_member",
@@ -5165,7 +6591,7 @@
     "name": "FillMode",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -5205,7 +6631,7 @@
     "name": "FindAncestorWithComponent",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, name: string) -> Instance?",
+    "type": "(self: Instance, name: string | Pair) -> Instance?",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -5584,10 +7010,10 @@
     "scope": "shared"
   },
   {
-    "name": "GetAccessories",
+    "name": "GetAttributeChangedSignal",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance) -> {Instance}",
+    "type": "(self: Instance, name: string) -> Signal",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -5597,30 +7023,10 @@
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetAccessories",
-      "@luduvo/server/globaltype/Instance.GetAccessories"
+      "@luduvo/client/globaltype/Instance.GetAttributeChangedSignal",
+      "@luduvo/server/globaltype/Instance.GetAttributeChangedSignal"
     ],
     "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "GetAngularVelocity",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance) -> vector",
-    "documentation": "angular velocity of the physics body",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetAngularVelocity",
-      "@luduvo/server/globaltype/Instance.GetAngularVelocity"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetAngularVelocity",
     "scope": "shared"
   },
   {
@@ -5664,66 +7070,6 @@
     "scope": "shared"
   },
   {
-    "name": "GetHearingSense",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance) -> (number, number)",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetHearingSense",
-      "@luduvo/server/globaltype/Instance.GetHearingSense"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "GetLastHeardStimulus",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance) -> (Instance?, vector?, number?, number?)",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetLastHeardStimulus",
-      "@luduvo/server/globaltype/Instance.GetLastHeardStimulus"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "GetLinearVelocity",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance) -> vector",
-    "documentation": "linear velocity of the physics body",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetLinearVelocity",
-      "@luduvo/server/globaltype/Instance.GetLinearVelocity"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetLinearVelocity",
-    "scope": "shared"
-  },
-  {
     "name": "GetMass",
     "owner": "Instance",
     "kind": "type_member",
@@ -5744,30 +7090,10 @@
     "scope": "shared"
   },
   {
-    "name": "GetMoveIntent",
+    "name": "GetPropertyChangedSignal",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance) -> MoveIntent?",
-    "documentation": "movement intent of a character, nil when the entity has none",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetMoveIntent",
-      "@luduvo/server/globaltype/Instance.GetMoveIntent"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetMoveIntent",
-    "scope": "shared"
-  },
-  {
-    "name": "GetNearestPerceivedTarget",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance) -> (Instance?, number?)",
+    "type": "(self: Instance, name: string) -> Signal",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -5777,8 +7103,8 @@
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetNearestPerceivedTarget",
-      "@luduvo/server/globaltype/Instance.GetNearestPerceivedTarget"
+      "@luduvo/client/globaltype/Instance.GetPropertyChangedSignal",
+      "@luduvo/server/globaltype/Instance.GetPropertyChangedSignal"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -5804,30 +7130,10 @@
     "scope": "shared"
   },
   {
-    "name": "GetSwingTwistJoint",
+    "name": "GetStateEnabled",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance) -> SwingTwistJointInfo?",
-    "documentation": "swing-twist joint parameters, nil when the entity has no joint",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetSwingTwistJoint",
-      "@luduvo/server/globaltype/Instance.GetSwingTwistJoint"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetSwingTwistJoint",
-    "scope": "shared"
-  },
-  {
-    "name": "GetVisionCone",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance) -> (number, number, number, number)",
+    "type": "(self: Instance, state: string) -> boolean",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -5837,8 +7143,28 @@
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.GetVisionCone",
-      "@luduvo/server/globaltype/Instance.GetVisionCone"
+      "@luduvo/client/globaltype/Instance.GetStateEnabled",
+      "@luduvo/server/globaltype/Instance.GetStateEnabled"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "GetTool",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "(self: Instance, slot: number?) -> Instance?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.GetTool",
+      "@luduvo/server/globaltype/Instance.GetTool"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -6107,7 +7433,7 @@
     "name": "HandlesStyle",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -6147,7 +7473,7 @@
     "name": "HandlesType",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -6167,7 +7493,7 @@
     "name": "HasComponent",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, name: string) -> boolean",
+    "type": "(self: Instance, name: string | Pair) -> boolean",
     "documentation": "whether the entity holds the named component",
     "directives": [],
     "read_only": false,
@@ -6404,6 +7730,28 @@
     "scope": "shared"
   },
   {
+    "name": "Hit",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "Signal",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Hit",
+      "@luduvo/server/globaltype/Instance.Hit"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "HoverImage",
     "owner": "Instance",
     "kind": "type_member",
@@ -6469,7 +7817,7 @@
     "name": "IconAlign",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -6523,26 +7871,6 @@
       "@luduvo/server/globaltype/Instance.IconSize"
     ],
     "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "Id",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "number",
-    "documentation": "Team number of this entity. Team 0 means no team",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.Id",
-      "@luduvo/server/globaltype/Instance.Id"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Id",
     "scope": "shared"
   },
   {
@@ -6675,15 +8003,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.InputMove",
-      "@luduvo/server/globaltype/Instance.InputMove"
+      "@luduvo/client/globaltype/Instance.InputMove"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#InputMove",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "InputSteer",
@@ -6695,15 +8021,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.InputSteer",
-      "@luduvo/server/globaltype/Instance.InputSteer"
+      "@luduvo/client/globaltype/Instance.InputSteer"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#InputSteer",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "Intensity",
@@ -6723,6 +8047,26 @@
       "@luduvo/server/globaltype/Instance.Intensity"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Intensity",
+    "scope": "shared"
+  },
+  {
+    "name": "InverseTransformDirection",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "(self: Instance, direction: vector) -> vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.InverseTransformDirection",
+      "@luduvo/server/globaltype/Instance.InverseTransformDirection"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -6789,7 +8133,7 @@
     "name": "IsDescendantOf",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, ancestor: Instance) -> boolean",
+    "type": "(self: Instance, ancestor: Instance | World) -> boolean",
     "documentation": "whether the entity sits below the given ancestor",
     "directives": [],
     "read_only": false,
@@ -7450,6 +8794,26 @@
     "scope": "shared"
   },
   {
+    "name": "Looped",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Looped",
+      "@luduvo/server/globaltype/Instance.Looped"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "LowerTranslation",
     "owner": "Instance",
     "kind": "type_member",
@@ -7567,6 +8931,28 @@
       "@luduvo/server/globaltype/Instance.Margins"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Margins",
+    "scope": "shared"
+  },
+  {
+    "name": "MarkerReached",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "Signal",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.MarkerReached",
+      "@luduvo/server/globaltype/Instance.MarkerReached"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -8554,6 +9940,28 @@
     "scope": "shared"
   },
   {
+    "name": "OrthographicLens",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "OrthographicLensComponent",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.OrthographicLens",
+      "@luduvo/server/globaltype/Instance.OrthographicLens"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Other",
     "owner": "Instance",
     "kind": "type_member",
@@ -8599,11 +10007,9 @@
     "kind": "type_member",
     "type": "number",
     "documentation": "",
-    "directives": [
-      "read-only"
-    ],
-    "read_only": true,
-    "write_scope": null,
+    "directives": [],
+    "read_only": false,
+    "write_scope": "server",
     "surfaces": [
       "client",
       "server"
@@ -8762,7 +10168,7 @@
     "type": "Instance?",
     "documentation": "parent entity, nil for a root",
     "directives": [],
-    "read_only": false,
+    "read_only": true,
     "write_scope": null,
     "surfaces": [
       "client",
@@ -8831,6 +10237,28 @@
     "documentation_symbols": [
       "@luduvo/client/globaltype/Instance.Pause",
       "@luduvo/server/globaltype/Instance.Pause"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Paused",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Paused",
+      "@luduvo/server/globaltype/Instance.Paused"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -8996,6 +10424,48 @@
     "scope": "shared"
   },
   {
+    "name": "PlayerSpawner",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "PlayerSpawnerComponent",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/Instance.PlayerSpawner"
+    ],
+    "learn_more_link": null,
+    "scope": "server"
+  },
+  {
+    "name": "Playing",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Playing",
+      "@luduvo/server/globaltype/Instance.Playing"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "PlotColor3",
     "owner": "Instance",
     "kind": "type_member",
@@ -9039,7 +10509,7 @@
     "name": "PlotType",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -9139,7 +10609,7 @@
     "name": "Position",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "vector | UDim2",
+    "type": "vector",
     "documentation": "world position in studs, a UDim2 on GUI elements",
     "directives": [],
     "read_only": false,
@@ -9161,8 +10631,10 @@
     "kind": "type_member",
     "type": "number",
     "documentation": "Id of the prefab this instance was spawned from",
-    "directives": [],
-    "read_only": false,
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
     "write_scope": null,
     "surfaces": [
       "client",
@@ -9347,15 +10819,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.PushSample",
-      "@luduvo/server/globaltype/Instance.PushSample"
+      "@luduvo/client/globaltype/Instance.PushSample"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "Radio",
@@ -9463,7 +10933,7 @@
     "name": "RemoveComponent",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, name: string) -> ()",
+    "type": "(self: Instance, ...string | Pair) -> ()",
     "documentation": "detach the named component from the entity",
     "directives": [],
     "read_only": false,
@@ -9737,6 +11207,26 @@
       "@luduvo/server/globaltype/Instance.Rotate"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Rotate",
+    "scope": "shared"
+  },
+  {
+    "name": "RotationVector",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.RotationVector",
+      "@luduvo/server/globaltype/Instance.RotationVector"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -10060,90 +11550,10 @@
     "scope": "shared"
   },
   {
-    "name": "SetAngularVelocity",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance, velocity: vector) -> ()",
-    "documentation": "set the angular velocity of the physics body",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SetAngularVelocity",
-      "@luduvo/server/globaltype/Instance.SetAngularVelocity"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetAngularVelocity",
-    "scope": "shared"
-  },
-  {
-    "name": "SetBodyMotion",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance, type: string) -> ()",
-    "documentation": "switch the physics body between dynamic and kinematic",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SetBodyMotion",
-      "@luduvo/server/globaltype/Instance.SetBodyMotion"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetBodyMotion",
-    "scope": "shared"
-  },
-  {
-    "name": "SetHearingSense",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance, sensitivity: number, collisionMask: number?) -> ()",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SetHearingSense",
-      "@luduvo/server/globaltype/Instance.SetHearingSense"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "SetLinearVelocity",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance, velocity: vector) -> ()",
-    "documentation": "set the linear velocity of the physics body",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SetLinearVelocity",
-      "@luduvo/server/globaltype/Instance.SetLinearVelocity"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetLinearVelocity",
-    "scope": "shared"
-  },
-  {
     "name": "SetParent",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, parent: Instance?, keepWorld: boolean?) -> ()",
+    "type": "(self: Instance, parent: (Instance | World)?, keepWorld: boolean?) -> ()",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -10160,30 +11570,10 @@
     "scope": "shared"
   },
   {
-    "name": "SetSwingTwistJoint",
+    "name": "SetStateEnabled",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "(self: Instance, joint: SwingTwistJointDesc) -> ()",
-    "documentation": "configure the swing-twist joint of the entity",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SetSwingTwistJoint",
-      "@luduvo/server/globaltype/Instance.SetSwingTwistJoint"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Instance#SetSwingTwistJoint",
-    "scope": "shared"
-  },
-  {
-    "name": "SetVisionCone",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance, range: number, fieldOfView: number, eyeOffsetY: number?, collisionMask: number?) -> ()",
+    "type": "(self: Instance, state: string, enabled: boolean) -> ()",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -10193,8 +11583,8 @@
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SetVisionCone",
-      "@luduvo/server/globaltype/Instance.SetVisionCone"
+      "@luduvo/client/globaltype/Instance.SetStateEnabled",
+      "@luduvo/server/globaltype/Instance.SetStateEnabled"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -10303,7 +11693,7 @@
     "name": "Size",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "vector | UDim2",
+    "type": "vector",
     "documentation": "part size in studs, a UDim2 on GUI elements",
     "directives": [],
     "read_only": false,
@@ -10323,7 +11713,7 @@
     "name": "SizeModeX",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "Fit sizes X to content. Grow splits the list remainder",
     "directives": [],
     "read_only": false,
@@ -10343,7 +11733,7 @@
     "name": "SizeModeY",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "Fit sizes Y to content. Grow splits the list remainder",
     "directives": [],
     "read_only": false,
@@ -10660,66 +12050,6 @@
     "scope": "shared"
   },
   {
-    "name": "SoundLooped",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "boolean",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SoundLooped",
-      "@luduvo/server/globaltype/Instance.SoundLooped"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "SoundPaused",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "boolean",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SoundPaused",
-      "@luduvo/server/globaltype/Instance.SoundPaused"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "SoundPlaying",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "boolean",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.SoundPlaying",
-      "@luduvo/server/globaltype/Instance.SoundPlaying"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
     "name": "Spacing",
     "owner": "Instance",
     "kind": "type_member",
@@ -10795,26 +12125,6 @@
     "documentation_symbols": [
       "@luduvo/client/globaltype/Instance.StarLuminance",
       "@luduvo/server/globaltype/Instance.StarLuminance"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "StartTimer",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance, timeSec: number?) -> ()",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.StartTimer",
-      "@luduvo/server/globaltype/Instance.StartTimer"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -10947,7 +12257,7 @@
     "name": "StickMode",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -11061,26 +12371,6 @@
       "@luduvo/server/globaltype/Instance.StopPreview"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#StopPreview",
-    "scope": "shared"
-  },
-  {
-    "name": "StopTimer",
-    "owner": "Instance",
-    "kind": "type_member",
-    "type": "(self: Instance) -> ()",
-    "documentation": "",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.StopTimer",
-      "@luduvo/server/globaltype/Instance.StopTimer"
-    ],
-    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -11447,7 +12737,7 @@
     "name": "SwatchPreview",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -11561,6 +12851,66 @@
       "@luduvo/server/globaltype/Instance.TakeDamage"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#TakeDamage",
+    "scope": "shared"
+  },
+  {
+    "name": "Team",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Team",
+      "@luduvo/server/globaltype/Instance.Team"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "TeamColor",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.TeamColor",
+      "@luduvo/server/globaltype/Instance.TeamColor"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "TeamId",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.TeamId",
+      "@luduvo/server/globaltype/Instance.TeamId"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -11727,7 +13077,7 @@
     "name": "TextXAlignment",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "Horizontal text alignment: Left, Center, or Right",
     "directives": [],
     "read_only": false,
@@ -11747,7 +13097,7 @@
     "name": "TextYAlignment",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "Vertical text alignment: Top, Center, or Bottom",
     "directives": [],
     "read_only": false,
@@ -12090,6 +13440,48 @@
     "scope": "shared"
   },
   {
+    "name": "Tool",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "ToolComponent",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Tool",
+      "@luduvo/server/globaltype/Instance.Tool"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "ToolState",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "ToolStateComponent",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/Instance.ToolState"
+    ],
+    "learn_more_link": null,
+    "scope": "server"
+  },
+  {
     "name": "TouchEnded",
     "owner": "Instance",
     "kind": "type_member",
@@ -12137,7 +13529,7 @@
     "name": "TrackAxis",
     "owner": "Instance",
     "kind": "type_member",
-    "type": "number",
+    "type": "string",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -12231,6 +13623,26 @@
       "@luduvo/server/globaltype/Instance.TrackTransparency"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#TrackTransparency",
+    "scope": "shared"
+  },
+  {
+    "name": "TransformDirection",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "(self: Instance, direction: vector) -> vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.TransformDirection",
+      "@luduvo/server/globaltype/Instance.TransformDirection"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -12394,6 +13806,26 @@
     "scope": "shared"
   },
   {
+    "name": "UIPosition",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "UDim2",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.UIPosition",
+      "@luduvo/server/globaltype/Instance.UIPosition"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "UIRoot",
     "owner": "Instance",
     "kind": "type_member",
@@ -12414,6 +13846,26 @@
     "scope": "shared"
   },
   {
+    "name": "UISize",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "UDim2",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.UISize",
+      "@luduvo/server/globaltype/Instance.UISize"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "UISurfaceAlwaysOnTop",
     "owner": "Instance",
     "kind": "type_member",
@@ -12429,6 +13881,28 @@
     "documentation_symbols": [
       "@luduvo/client/globaltype/Instance.UISurfaceAlwaysOnTop",
       "@luduvo/server/globaltype/Instance.UISurfaceAlwaysOnTop"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "UITail",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "UITailComponent",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.UITail",
+      "@luduvo/server/globaltype/Instance.UITail"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -12471,6 +13945,48 @@
       "@luduvo/server/globaltype/Instance.Underlay"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#Underlay",
+    "scope": "shared"
+  },
+  {
+    "name": "UnequipTools",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "(self: Instance) -> ()",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.UnequipTools",
+      "@luduvo/server/globaltype/Instance.UnequipTools"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Unequipped",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "Signal",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.Unequipped",
+      "@luduvo/server/globaltype/Instance.Unequipped"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -12725,15 +14241,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/Instance.ViewSource",
-      "@luduvo/server/globaltype/Instance.ViewSource"
+      "@luduvo/client/globaltype/Instance.ViewSource"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Instance#ViewSource",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "Visible",
@@ -12771,6 +14285,26 @@
     "documentation_symbols": [
       "@luduvo/client/globaltype/Instance.Volume",
       "@luduvo/server/globaltype/Instance.Volume"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "WaitForChild",
+    "owner": "Instance",
+    "kind": "type_member",
+    "type": "(self: Instance, name: string, timeout: number?) -> Instance?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Instance.WaitForChild",
+      "@luduvo/server/globaltype/Instance.WaitForChild"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -12922,7 +14456,7 @@
     "owner": "Instance",
     "kind": "global_member",
     "type": "(name: string?) -> Instance",
-    "documentation": "create an Instance that holds no component row and has no parent",
+    "documentation": "create a built-in object or an empty Instance at the top of the place",
     "directives": [],
     "read_only": false,
     "write_scope": null,
@@ -12935,6 +14469,1046 @@
       "@luduvo/server/global/Instance.new"
     ],
     "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Clips",
+    "owner": "MaterialAudio",
+    "kind": "type_member",
+    "type": "{string}",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialAudio.Clips",
+      "@luduvo/server/globaltype/MaterialAudio.Clips"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Gain",
+    "owner": "MaterialAudio",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialAudio.Gain",
+      "@luduvo/server/globaltype/MaterialAudio.Gain"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "PitchSpread",
+    "owner": "MaterialAudio",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialAudio.PitchSpread",
+      "@luduvo/server/globaltype/MaterialAudio.PitchSpread"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Intensity",
+    "owner": "MaterialEmission",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEmission.Intensity",
+      "@luduvo/server/globaltype/MaterialEmission.Intensity"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Texture",
+    "owner": "MaterialEmission",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEmission.Texture",
+      "@luduvo/server/globaltype/MaterialEmission.Texture"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Emission#Texture",
+    "scope": "shared"
+  },
+  {
+    "name": "Tint",
+    "owner": "MaterialEmission",
+    "kind": "type_member",
+    "type": "{r: number, g: number, b: number}?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEmission.Tint",
+      "@luduvo/server/globaltype/MaterialEmission.Tint"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Id",
+    "owner": "MaterialEntry",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEntry.Id",
+      "@luduvo/server/globaltype/MaterialEntry.Id"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Model",
+    "owner": "MaterialEntry",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "surface model the shader samples with: UV, Triplanar, or Stud",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEntry.Model",
+      "@luduvo/server/globaltype/MaterialEntry.Model"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Model",
+    "scope": "shared"
+  },
+  {
+    "name": "Name",
+    "owner": "MaterialEntry",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEntry.Name",
+      "@luduvo/server/globaltype/MaterialEntry.Name"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Pipeline",
+    "owner": "MaterialEntry",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "pipeline class the surfaces draw in: Opaque, Cutout, Transparent, Water, or Decal",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialEntry.Pipeline",
+      "@luduvo/server/globaltype/MaterialEntry.Pipeline"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Pipeline",
+    "scope": "shared"
+  },
+  {
+    "name": "Density",
+    "owner": "MaterialPhysics",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialPhysics.Density",
+      "@luduvo/server/globaltype/MaterialPhysics.Density"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Friction",
+    "owner": "MaterialPhysics",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialPhysics.Friction",
+      "@luduvo/server/globaltype/MaterialPhysics.Friction"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Restitution",
+    "owner": "MaterialPhysics",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialPhysics.Restitution",
+      "@luduvo/server/globaltype/MaterialPhysics.Restitution"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Emission",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "MaterialEmission?",
+    "documentation": "emissive texture, and the tint and intensity it radiates at",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Emission",
+      "@luduvo/server/globaltype/MaterialSpec.Emission"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Emission",
+    "scope": "shared"
+  },
+  {
+    "name": "Footsteps",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "MaterialAudio?",
+    "documentation": "clips a character plays walking on the surfaces, and the gain and pitch spread they play at",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Footsteps",
+      "@luduvo/server/globaltype/MaterialSpec.Footsteps"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Footsteps",
+    "scope": "shared"
+  },
+  {
+    "name": "Id",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "id the material is defined and looked up under",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Id",
+      "@luduvo/server/globaltype/MaterialSpec.Id"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Id",
+    "scope": "shared"
+  },
+  {
+    "name": "Impacts",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "MaterialAudio?",
+    "documentation": "clips a contact plays against the surfaces, and the gain and pitch spread they play at",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Impacts",
+      "@luduvo/server/globaltype/MaterialSpec.Impacts"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Impacts",
+    "scope": "shared"
+  },
+  {
+    "name": "Model",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "surface model the shader samples with: UV, Triplanar, or Stud",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Model",
+      "@luduvo/server/globaltype/MaterialSpec.Model"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Model",
+    "scope": "shared"
+  },
+  {
+    "name": "Name",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "name the material can be looked up under, in place of the id",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Name",
+      "@luduvo/server/globaltype/MaterialSpec.Name"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Name",
+    "scope": "shared"
+  },
+  {
+    "name": "Physics",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "MaterialPhysics?",
+    "documentation": "density, friction, and restitution the solver gives the surfaces",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Physics",
+      "@luduvo/server/globaltype/MaterialSpec.Physics"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Physics",
+    "scope": "shared"
+  },
+  {
+    "name": "Pipeline",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "pipeline class the surfaces draw in: Opaque, Cutout, Transparent, Water, or Decal",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Pipeline",
+      "@luduvo/server/globaltype/MaterialSpec.Pipeline"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Pipeline",
+    "scope": "shared"
+  },
+  {
+    "name": "Studs",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "MaterialStuds?",
+    "documentation": "top and bottom stud textures the Stud surface model draws",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Studs",
+      "@luduvo/server/globaltype/MaterialSpec.Studs"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Studs",
+    "scope": "shared"
+  },
+  {
+    "name": "Surface",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "MaterialSurface",
+    "documentation": "base color, normal, and ORM textures, with the tint, tiling, and multipliers applied to them",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Surface",
+      "@luduvo/server/globaltype/MaterialSpec.Surface"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Surface",
+    "scope": "shared"
+  },
+  {
+    "name": "Water",
+    "owner": "MaterialSpec",
+    "kind": "type_member",
+    "type": "MaterialWater?",
+    "documentation": "absorption, refraction, foam, and wave terms the Water pipeline class solves",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSpec.Water",
+      "@luduvo/server/globaltype/MaterialSpec.Water"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MaterialSpec#Water",
+    "scope": "shared"
+  },
+  {
+    "name": "ColorBottom",
+    "owner": "MaterialStuds",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialStuds.ColorBottom",
+      "@luduvo/server/globaltype/MaterialStuds.ColorBottom"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#ColorBottom",
+    "scope": "shared"
+  },
+  {
+    "name": "ColorTop",
+    "owner": "MaterialStuds",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialStuds.ColorTop",
+      "@luduvo/server/globaltype/MaterialStuds.ColorTop"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#ColorTop",
+    "scope": "shared"
+  },
+  {
+    "name": "NormalBottom",
+    "owner": "MaterialStuds",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialStuds.NormalBottom",
+      "@luduvo/server/globaltype/MaterialStuds.NormalBottom"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#NormalBottom",
+    "scope": "shared"
+  },
+  {
+    "name": "NormalTop",
+    "owner": "MaterialStuds",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialStuds.NormalTop",
+      "@luduvo/server/globaltype/MaterialStuds.NormalTop"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#NormalTop",
+    "scope": "shared"
+  },
+  {
+    "name": "StudsPerTile",
+    "owner": "MaterialStuds",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialStuds.StudsPerTile",
+      "@luduvo/server/globaltype/MaterialStuds.StudsPerTile"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Studs#StudsPerTile",
+    "scope": "shared"
+  },
+  {
+    "name": "AlphaCutoff",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.AlphaCutoff",
+      "@luduvo/server/globaltype/MaterialSurface.AlphaCutoff"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#AlphaCutoff",
+    "scope": "shared"
+  },
+  {
+    "name": "BaseColor",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.BaseColor",
+      "@luduvo/server/globaltype/MaterialSurface.BaseColor"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#BaseColor",
+    "scope": "shared"
+  },
+  {
+    "name": "MetallicMult",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.MetallicMult",
+      "@luduvo/server/globaltype/MaterialSurface.MetallicMult"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#MetallicMult",
+    "scope": "shared"
+  },
+  {
+    "name": "Neon",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "boolean?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.Neon",
+      "@luduvo/server/globaltype/MaterialSurface.Neon"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#Neon",
+    "scope": "shared"
+  },
+  {
+    "name": "Normal",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.Normal",
+      "@luduvo/server/globaltype/MaterialSurface.Normal"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "NormalStrength",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.NormalStrength",
+      "@luduvo/server/globaltype/MaterialSurface.NormalStrength"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#NormalStrength",
+    "scope": "shared"
+  },
+  {
+    "name": "Orm",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.Orm",
+      "@luduvo/server/globaltype/MaterialSurface.Orm"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#Orm",
+    "scope": "shared"
+  },
+  {
+    "name": "RoughnessMult",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.RoughnessMult",
+      "@luduvo/server/globaltype/MaterialSurface.RoughnessMult"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#RoughnessMult",
+    "scope": "shared"
+  },
+  {
+    "name": "TileSize",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.TileSize",
+      "@luduvo/server/globaltype/MaterialSurface.TileSize"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#TileSize",
+    "scope": "shared"
+  },
+  {
+    "name": "Tint",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "{r: number, g: number, b: number, a: number}?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.Tint",
+      "@luduvo/server/globaltype/MaterialSurface.Tint"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "TintVertex",
+    "owner": "MaterialSurface",
+    "kind": "type_member",
+    "type": "boolean?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialSurface.TintVertex",
+      "@luduvo/server/globaltype/MaterialSurface.TintVertex"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Surface#TintVertex",
+    "scope": "shared"
+  },
+  {
+    "name": "Absorption",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "{r: number, g: number, b: number}?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.Absorption",
+      "@luduvo/server/globaltype/MaterialWater.Absorption"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Absorption",
+    "scope": "shared"
+  },
+  {
+    "name": "DepthScale",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.DepthScale",
+      "@luduvo/server/globaltype/MaterialWater.DepthScale"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#DepthScale",
+    "scope": "shared"
+  },
+  {
+    "name": "FlowMap",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.FlowMap",
+      "@luduvo/server/globaltype/MaterialWater.FlowMap"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowMap",
+    "scope": "shared"
+  },
+  {
+    "name": "FlowScale",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.FlowScale",
+      "@luduvo/server/globaltype/MaterialWater.FlowScale"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowScale",
+    "scope": "shared"
+  },
+  {
+    "name": "FlowSpeed",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.FlowSpeed",
+      "@luduvo/server/globaltype/MaterialWater.FlowSpeed"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FlowSpeed",
+    "scope": "shared"
+  },
+  {
+    "name": "Foam",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.Foam",
+      "@luduvo/server/globaltype/MaterialWater.Foam"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Foam",
+    "scope": "shared"
+  },
+  {
+    "name": "FoamDepth",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.FoamDepth",
+      "@luduvo/server/globaltype/MaterialWater.FoamDepth"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FoamDepth",
+    "scope": "shared"
+  },
+  {
+    "name": "FoamScale",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.FoamScale",
+      "@luduvo/server/globaltype/MaterialWater.FoamScale"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#FoamScale",
+    "scope": "shared"
+  },
+  {
+    "name": "Refraction",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.Refraction",
+      "@luduvo/server/globaltype/MaterialWater.Refraction"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#Refraction",
+    "scope": "shared"
+  },
+  {
+    "name": "WaveAmplitude",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.WaveAmplitude",
+      "@luduvo/server/globaltype/MaterialWater.WaveAmplitude"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveAmplitude",
+    "scope": "shared"
+  },
+  {
+    "name": "WaveScale",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.WaveScale",
+      "@luduvo/server/globaltype/MaterialWater.WaveScale"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveScale",
+    "scope": "shared"
+  },
+  {
+    "name": "WaveSpeed",
+    "owner": "MaterialWater",
+    "kind": "type_member",
+    "type": "number?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/MaterialWater.WaveSpeed",
+      "@luduvo/server/globaltype/MaterialWater.WaveSpeed"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Water#WaveSpeed",
     "scope": "shared"
   },
   {
@@ -13038,6 +15612,62 @@
     "scope": "shared"
   },
   {
+    "name": "size",
+    "owner": "OrthographicLensComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/OrthographicLensComponent.size",
+      "@luduvo/server/globaltype/OrthographicLensComponent.size"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "character",
+    "owner": "PlayerSpawnerComponent",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/PlayerSpawnerComponent.character"
+    ],
+    "learn_more_link": null,
+    "scope": "server"
+  },
+  {
+    "name": "respawnDelay",
+    "owner": "PlayerSpawnerComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/PlayerSpawnerComponent.respawnDelay"
+    ],
+    "learn_more_link": null,
+    "scope": "server"
+  },
+  {
     "name": "Entity",
     "owner": "Query",
     "kind": "type_member",
@@ -13058,6 +15688,26 @@
     "scope": "shared"
   },
   {
+    "name": "Instance",
+    "owner": "Query",
+    "kind": "type_member",
+    "type": "QueryColumn",
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Query.Instance",
+      "@luduvo/server/globaltype/Query.Instance"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance",
+    "scope": "shared"
+  },
+  {
     "name": "count",
     "owner": "Query",
     "kind": "type_member",
@@ -13075,6 +15725,66 @@
       "@luduvo/server/globaltype/Query.count"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Query#count",
+    "scope": "shared"
+  },
+  {
+    "name": "CollisionGroup",
+    "owner": "QueryParams",
+    "kind": "type_member",
+    "type": "string?",
+    "documentation": "collision group name, Default when none is set",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/QueryParams.CollisionGroup",
+      "@luduvo/server/globaltype/QueryParams.CollisionGroup"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#CollisionGroup",
+    "scope": "shared"
+  },
+  {
+    "name": "ExcludeInstances",
+    "owner": "QueryParams",
+    "kind": "type_member",
+    "type": "{Instance}?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/QueryParams.ExcludeInstances",
+      "@luduvo/server/globaltype/QueryParams.ExcludeInstances"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "IncludeInstances",
+    "owner": "QueryParams",
+    "kind": "type_member",
+    "type": "{Instance}?",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/QueryParams.IncludeInstances",
+      "@luduvo/server/globaltype/QueryParams.IncludeInstances"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -13115,6 +15825,26 @@
       "@luduvo/server/globaltype/RaycastResult.Entity"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/RaycastResult#Entity",
+    "scope": "shared"
+  },
+  {
+    "name": "Instance",
+    "owner": "RaycastResult",
+    "kind": "type_member",
+    "type": "Instance?",
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/RaycastResult.Instance",
+      "@luduvo/server/globaltype/RaycastResult.Instance"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance",
     "scope": "shared"
   },
   {
@@ -13235,6 +15965,46 @@
       "@luduvo/server/globaltype/Rect.Width"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Rect#Width",
+    "scope": "shared"
+  },
+  {
+    "name": "__eq",
+    "owner": "Rect",
+    "kind": "type_member",
+    "type": "(self: Rect, other: Rect) -> boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Rect.__eq",
+      "@luduvo/server/globaltype/Rect.__eq"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__tostring",
+    "owner": "Rect",
+    "kind": "type_member",
+    "type": "(self: Rect) -> string",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Rect.__tostring",
+      "@luduvo/server/globaltype/Rect.__tostring"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -13378,6 +16148,26 @@
     "scope": "shared"
   },
   {
+    "name": "Instance",
+    "owner": "ShapecastHit",
+    "kind": "type_member",
+    "type": "Instance",
+    "documentation": "an entity in the place tree; the components it holds add the members listed under each section",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ShapecastHit.Instance",
+      "@luduvo/server/globaltype/ShapecastHit.Instance"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance",
+    "scope": "shared"
+  },
+  {
     "name": "Normal",
     "owner": "ShapecastHit",
     "kind": "type_member",
@@ -13421,7 +16211,7 @@
     "name": "Connect",
     "owner": "Signal",
     "kind": "type_member",
-    "type": "(self: Signal, callback: (...any) -> ()) -> ()",
+    "type": "(self: Signal, callback: (...any) -> ()) -> SignalConnection",
     "documentation": "connect a listener callback to be invoked when the signal is emitted",
     "directives": [],
     "read_only": false,
@@ -13475,6 +16265,86 @@
       "@luduvo/server/globaltype/Signal.Emit"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Signal#Emit",
+    "scope": "shared"
+  },
+  {
+    "name": "Once",
+    "owner": "Signal",
+    "kind": "type_member",
+    "type": "(self: Signal, callback: (...any) -> ()) -> SignalConnection",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Signal.Once",
+      "@luduvo/server/globaltype/Signal.Once"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Wait",
+    "owner": "Signal",
+    "kind": "type_member",
+    "type": "(self: Signal) -> ...any",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/Signal.Wait",
+      "@luduvo/server/globaltype/Signal.Wait"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Connected",
+    "owner": "SignalConnection",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/SignalConnection.Connected",
+      "@luduvo/server/globaltype/SignalConnection.Connected"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Disconnect",
+    "owner": "SignalConnection",
+    "kind": "type_member",
+    "type": "(self: SignalConnection) -> ()",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/SignalConnection.Disconnect",
+      "@luduvo/server/globaltype/SignalConnection.Disconnect"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -13838,6 +16708,156 @@
     "scope": "shared"
   },
   {
+    "name": "equipped",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.equipped",
+      "@luduvo/server/globaltype/ToolComponent.equipped"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "gripHand",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.gripHand",
+      "@luduvo/server/globaltype/ToolComponent.gripHand"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "gripOffset",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.gripOffset",
+      "@luduvo/server/globaltype/ToolComponent.gripOffset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "gripRotation",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.gripRotation",
+      "@luduvo/server/globaltype/ToolComponent.gripRotation"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "icon",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.icon",
+      "@luduvo/server/globaltype/ToolComponent.icon"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "noDrop",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.noDrop",
+      "@luduvo/server/globaltype/ToolComponent.noDrop"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "world",
+    "owner": "ToolStateComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/ToolStateComponent.world"
+    ],
+    "learn_more_link": null,
+    "scope": "server"
+  },
+  {
     "name": "a",
     "owner": "TouchEvent",
     "kind": "type_member",
@@ -14041,7 +17061,7 @@
     "name": "SetEase",
     "owner": "Tween",
     "kind": "type_member",
-    "type": "(self: Tween, ease: string) -> Tween",
+    "type": "(self: Tween, direction: string) -> Tween",
     "documentation": "",
     "directives": [],
     "read_only": false,
@@ -14078,6 +17098,366 @@
     "scope": "shared"
   },
   {
+    "name": "Offset",
+    "owner": "UDim",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim.Offset",
+      "@luduvo/server/globaltype/UDim.Offset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Scale",
+    "owner": "UDim",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim.Scale",
+      "@luduvo/server/globaltype/UDim.Scale"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__add",
+    "owner": "UDim",
+    "kind": "type_member",
+    "type": "(self: UDim, other: UDim) -> UDim",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim.__add",
+      "@luduvo/server/globaltype/UDim.__add"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__eq",
+    "owner": "UDim",
+    "kind": "type_member",
+    "type": "(self: UDim, other: UDim) -> boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim.__eq",
+      "@luduvo/server/globaltype/UDim.__eq"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__sub",
+    "owner": "UDim",
+    "kind": "type_member",
+    "type": "(self: UDim, other: UDim) -> UDim",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim.__sub",
+      "@luduvo/server/globaltype/UDim.__sub"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__tostring",
+    "owner": "UDim",
+    "kind": "type_member",
+    "type": "(self: UDim) -> string",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim.__tostring",
+      "@luduvo/server/globaltype/UDim.__tostring"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__unm",
+    "owner": "UDim",
+    "kind": "type_member",
+    "type": "(self: UDim) -> UDim",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim.__unm",
+      "@luduvo/server/globaltype/UDim.__unm"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "new",
+    "owner": "UDim",
+    "kind": "global_member",
+    "type": "(scale: number?, offset: number?) -> UDim",
+    "documentation": "make a 1d dimension of scale and offset",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/UDim.new",
+      "@luduvo/server/global/UDim.new"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Lerp",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "(self: UDim2, goal: UDim2, alpha: number) -> UDim2",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.Lerp",
+      "@luduvo/server/globaltype/UDim2.Lerp"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "X",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "UDim",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.X",
+      "@luduvo/server/globaltype/UDim2.X"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Y",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "UDim",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.Y",
+      "@luduvo/server/globaltype/UDim2.Y"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__add",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "(self: UDim2, other: UDim2) -> UDim2",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.__add",
+      "@luduvo/server/globaltype/UDim2.__add"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__eq",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "(self: UDim2, other: UDim2) -> boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.__eq",
+      "@luduvo/server/globaltype/UDim2.__eq"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__sub",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "(self: UDim2, other: UDim2) -> UDim2",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.__sub",
+      "@luduvo/server/globaltype/UDim2.__sub"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__tostring",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "(self: UDim2) -> string",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.__tostring",
+      "@luduvo/server/globaltype/UDim2.__tostring"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "__unm",
+    "owner": "UDim2",
+    "kind": "type_member",
+    "type": "(self: UDim2) -> UDim2",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UDim2.__unm",
+      "@luduvo/server/globaltype/UDim2.__unm"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "fromOffset",
+    "owner": "UDim2",
+    "kind": "global_member",
+    "type": "(offsetX: number?, offsetY: number?) -> UDim2",
+    "documentation": "make a 2d dimension of pixels alone",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/UDim2.fromOffset",
+      "@luduvo/server/global/UDim2.fromOffset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "fromScale",
+    "owner": "UDim2",
+    "kind": "global_member",
+    "type": "(scaleX: number?, scaleY: number?) -> UDim2",
+    "documentation": "make a 2d dimension of scale alone",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/UDim2.fromScale",
+      "@luduvo/server/global/UDim2.fromScale"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "new",
     "owner": "UDim2",
     "kind": "global_member",
@@ -14098,10 +17478,120 @@
     "scope": "shared"
   },
   {
+    "name": "length",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.length",
+      "@luduvo/server/globaltype/UITailComponent.length"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "offset",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.offset",
+      "@luduvo/server/globaltype/UITailComponent.offset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "pointAtAdornee",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.pointAtAdornee",
+      "@luduvo/server/globaltype/UITailComponent.pointAtAdornee"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "side",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.side",
+      "@luduvo/server/globaltype/UITailComponent.side"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "width",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [
+      "read-only"
+    ],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.width",
+      "@luduvo/server/globaltype/UITailComponent.width"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "new",
     "owner": "Vector2",
     "kind": "global_member",
-    "type": "(x: number, y: number) -> vector",
+    "type": "(x: number?, y: number?) -> vector",
     "documentation": "make a 2d vector",
     "directives": [],
     "read_only": false,
@@ -14121,7 +17611,7 @@
     "name": "new",
     "owner": "Vector3",
     "kind": "global_member",
-    "type": "(x: number, y: number, z: number) -> vector",
+    "type": "(x: number?, y: number?, z: number?) -> vector",
     "documentation": "make a vector",
     "directives": [],
     "read_only": false,
@@ -14235,6 +17725,346 @@
       "@luduvo/server/global/Vector3.zero"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Vector3#zero",
+    "scope": "shared"
+  },
+  {
+    "name": "Camera",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "Instance?",
+    "documentation": "the active Camera entity of the place",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Camera",
+      "@luduvo/server/globaltype/World.Camera"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "DumpAttributes",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((entity: Instance?) -> ()) & ((self: World, entity: Instance?) -> ())",
+    "documentation": "print attribute usage to the output",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.DumpAttributes",
+      "@luduvo/server/globaltype/World.DumpAttributes"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/World#DumpAttributes",
+    "scope": "shared"
+  },
+  {
+    "name": "Each",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((component: string | Pair) -> () -> Instance?) & ((self: World, component: string | Pair) -> () -> Instance?)",
+    "documentation": "iterate the entities that hold a component",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Each",
+      "@luduvo/server/globaltype/World.Each"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/World#Each",
+    "scope": "shared"
+  },
+  {
+    "name": "FindFirstChild",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((name: string, recursive: boolean?) -> Instance?) & ((self: World, name: string, recursive: boolean?) -> Instance?)",
+    "documentation": "the first entity at the top of the place with this name",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.FindFirstChild",
+      "@luduvo/server/globaltype/World.FindFirstChild"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#FindFirstChild",
+    "scope": "shared"
+  },
+  {
+    "name": "GetChildren",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "(() -> {Instance}) & ((self: World) -> {Instance})",
+    "documentation": "every entity at the top of the place",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.GetChildren",
+      "@luduvo/server/globaltype/World.GetChildren"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#GetChildren",
+    "scope": "shared"
+  },
+  {
+    "name": "GetDescendants",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "(() -> {Instance}) & ((self: World) -> {Instance})",
+    "documentation": "every entity in the place, top level first",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.GetDescendants",
+      "@luduvo/server/globaltype/World.GetDescendants"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "HasComponent",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((component: string | Pair) -> boolean) & ((self: World, component: string | Pair) -> boolean)",
+    "documentation": "false: the World holds no component",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.HasComponent",
+      "@luduvo/server/globaltype/World.HasComponent"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#HasComponent",
+    "scope": "shared"
+  },
+  {
+    "name": "IsAlive",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "(() -> boolean) & ((self: World) -> boolean)",
+    "documentation": "true: the World lasts as long as the place",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.IsAlive",
+      "@luduvo/server/globaltype/World.IsAlive"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#IsAlive",
+    "scope": "shared"
+  },
+  {
+    "name": "IsDescendantOf",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((ancestor: Instance | World) -> boolean) & ((self: World, ancestor: Instance | World) -> boolean)",
+    "documentation": "false: nothing is above the World",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.IsDescendantOf",
+      "@luduvo/server/globaltype/World.IsDescendantOf"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#IsDescendantOf",
+    "scope": "shared"
+  },
+  {
+    "name": "Name",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "the name of the World, always \"World\"",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Name",
+      "@luduvo/server/globaltype/World.Name"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Pair",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((relation: string, target: Instance | World | string) -> Pair) & ((self: World, relation: string, target: Instance | World | string) -> Pair)",
+    "documentation": "a relationship pair for a query term",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Pair",
+      "@luduvo/server/globaltype/World.Pair"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Parent",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "nil",
+    "documentation": "nil: the World is the top of the place",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Parent",
+      "@luduvo/server/globaltype/World.Parent"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance#Parent",
+    "scope": "shared"
+  },
+  {
+    "name": "Query",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((...string | Pair) -> Query) & ((self: World, ...string | Pair) -> Query)",
+    "documentation": "build a cached multi-component query",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Query",
+      "@luduvo/server/globaltype/World.Query"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/World#Query",
+    "scope": "shared"
+  },
+  {
+    "name": "Screen",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "Instance?",
+    "documentation": "the root Screen entity of the place",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Screen",
+      "@luduvo/server/globaltype/World.Screen"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Spawn",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((...string | Pair) -> Instance) & ((self: World, ...string | Pair) -> Instance)",
+    "documentation": "spawn a root entity with the given components",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.Spawn",
+      "@luduvo/server/globaltype/World.Spawn"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Prefabs#Spawn",
+    "scope": "shared"
+  },
+  {
+    "name": "System",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((name: string, q: Query, fn: (Query, number) -> (), phase: string?, after: string?) -> ()) & ((self: World, name: string, q: Query, fn: (Query, number) -> (), phase: string?, after: string?) -> ())",
+    "documentation": "register a per-tick system over a query",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.System",
+      "@luduvo/server/globaltype/World.System"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/World#System",
+    "scope": "shared"
+  },
+  {
+    "name": "WaitForChild",
+    "owner": "World",
+    "kind": "type_member",
+    "type": "((name: string, timeout: number?) -> Instance?) & ((self: World, name: string, timeout: number?) -> Instance?)",
+    "documentation": "wait for an entity at the top of the place with this name",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/World.WaitForChild",
+      "@luduvo/server/globaltype/World.WaitForChild"
+    ],
+    "learn_more_link": null,
     "scope": "shared"
   },
   {
@@ -14361,7 +18191,7 @@
     "name": "EventTable",
     "owner": "game",
     "kind": "global_member",
-    "type": "((name: string, direction: EventDirection, fields: {{string | EventFieldType}}) -> EventTable) & {",
+    "type": "((name: string, direction: EventDirection?, fields: {{string | EventFieldType}}?) -> EventTable) & {",
     "documentation": "networked event tables",
     "directives": [],
     "read_only": true,
@@ -14438,6 +18268,26 @@
     "scope": "shared"
   },
   {
+    "name": "Instance",
+    "owner": "game",
+    "kind": "global_member",
+    "type": "EventFieldType",
+    "documentation": "Instance reference field",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Instance",
+      "@luduvo/server/global/game.Instance"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Instance",
+    "scope": "shared"
+  },
+  {
     "name": "Items",
     "owner": "game",
     "kind": "global_member",
@@ -14502,7 +18352,7 @@
     "owner": "game",
     "kind": "global_member",
     "type": "table",
-    "documentation": "material rows for parts",
+    "documentation": "the materials of parts",
     "directives": [],
     "read_only": true,
     "write_scope": null,
@@ -14555,26 +18405,6 @@
       "@luduvo/server/global/game.Players"
     ],
     "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "Prefab",
-    "owner": "game",
-    "kind": "global_member",
-    "type": "EventFieldType",
-    "documentation": "prefab name field",
-    "directives": [],
-    "read_only": true,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.Prefab",
-      "@luduvo/server/global/game.Prefab"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Prefab",
     "scope": "shared"
   },
   {
@@ -14742,7 +18572,7 @@
     "owner": "game",
     "kind": "global_member",
     "type": "EventDirection",
-    "documentation": "the server pushes rows, clients read them",
+    "documentation": "the server pushes events, clients read them",
     "directives": [],
     "read_only": true,
     "write_scope": null,
@@ -14762,7 +18592,7 @@
     "owner": "game",
     "kind": "global_member",
     "type": "EventDirection",
-    "documentation": "clients push rows, the server reads them",
+    "documentation": "clients push events, the server reads them",
     "directives": [],
     "read_only": true,
     "write_scope": null,
@@ -14841,7 +18671,7 @@
     "name": "World",
     "owner": "game",
     "kind": "global_member",
-    "type": "table",
+    "type": "World",
     "documentation": "the entity world",
     "directives": [],
     "read_only": true,
@@ -14861,8 +18691,8 @@
     "name": "DrainMarkers",
     "owner": "game.Animation",
     "kind": "global_member",
-    "type": "() -> ({{Entity: Instance, Clip: string, Marker: string}}, boolean)",
-    "documentation": "drain the clip markers the sampler crossed, second result reports lost markers",
+    "type": "@[deprecated {use = \"Instance.MarkerReached\"}] () -> ({{Entity: Instance, Clip: string, Marker: string}}, boolean)",
+    "documentation": "read the clip markers the sampler crossed, second result reports lost markers",
     "directives": [
       "server-only"
     ],
@@ -14878,11 +18708,31 @@
     "scope": "server"
   },
   {
+    "name": "FirstScriptLayer",
+    "owner": "game.Animation",
+    "kind": "global_member",
+    "type": "number",
+    "documentation": "lowest index of the AnimLayers rows scripts can write",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Animation.FirstScriptLayer",
+      "@luduvo/server/global/game.Animation.FirstScriptLayer"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "Part",
     "owner": "game.Animation",
     "kind": "global_member",
     "type": "{Head: number, Torso: number, LeftArm: number, RightArm: number, LeftLeg: number, RightLeg: number}",
-    "documentation": "body part mask bits for AnimLayers rows",
+    "documentation": "body part mask bits for AnimLayers layers",
     "directives": [],
     "read_only": true,
     "write_scope": null,
@@ -15007,15 +18857,31 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.Behavior",
-      "@luduvo/server/global/game.Input.Behavior"
+      "@luduvo/client/global/game.Input.Behavior"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
+  },
+  {
+    "name": "Button",
+    "owner": "game.Input",
+    "kind": "global_member",
+    "type": "{Left: number, Right: number, Middle: number, X1: number, X2: number}",
+    "documentation": "mouse button enum values",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Input.Button"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
   },
   {
     "name": "ButtonDown",
@@ -15027,15 +18893,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.ButtonDown",
-      "@luduvo/server/global/game.Input.ButtonDown"
+      "@luduvo/client/global/game.Input.ButtonDown"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Input#ButtonDown",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "ButtonPressed",
@@ -15047,15 +18911,31 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.ButtonPressed",
-      "@luduvo/server/global/game.Input.ButtonPressed"
+      "@luduvo/client/global/game.Input.ButtonPressed"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Input#ButtonPressed",
-    "scope": "shared"
+    "scope": "client"
+  },
+  {
+    "name": "Key",
+    "owner": "game.Input",
+    "kind": "global_member",
+    "type": "{Backspace: number, Tab: number, Return: number, Pause: number, CapsLock: number, Escape: number, Space: number, PageUp: number, PageDown: number, End: number, Home: number, Left: number, Up: number, Right: number, Down: number, Insert: number, Delete: number, Zero: number, One: number, Two: number, Three: number, Four: number, Five: number, Six: number, Seven: number, Eight: number, Nine: number, A: number, B: number, C: number, D: number, E: number, F: number, G: number, H: number, I: number, J: number, K: number, L: number, M: number, N: number, O: number, P: number, Q: number, R: number, S: number, T: number, U: number, V: number, W: number, X: number, Y: number, Z: number, LeftGui: number, RightGui: number, Numpad0: number, Numpad1: number, Numpad2: number, Numpad3: number, Numpad4: number, Numpad5: number, Numpad6: number, Numpad7: number, Numpad8: number, Numpad9: number, NumpadMultiply: number, NumpadAdd: number, NumpadSubtract: number, NumpadDecimal: number, NumpadDivide: number, F1: number, F2: number, F3: number, F4: number, F5: number, F6: number, F7: number, F8: number, F9: number, F10: number, F11: number, F12: number, NumLock: number, ScrollLock: number, LeftShift: number, RightShift: number, LeftControl: number, RightControl: number, LeftAlt: number, RightAlt: number, Semicolon: number, Equals: number, Comma: number, Minus: number, Period: number, Slash: number, Backquote: number, LeftBracket: number, Backslash: number, RightBracket: number, Apostrophe: number}",
+    "documentation": "keyboard key code enum values",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Input.Key"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
   },
   {
     "name": "KeyDown",
@@ -15067,15 +18947,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.KeyDown",
-      "@luduvo/server/global/game.Input.KeyDown"
+      "@luduvo/client/global/game.Input.KeyDown"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Input#KeyDown",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "KeyPressed",
@@ -15087,15 +18965,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.KeyPressed",
-      "@luduvo/server/global/game.Input.KeyPressed"
+      "@luduvo/client/global/game.Input.KeyPressed"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Input#KeyPressed",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "MouseBehavior",
@@ -15107,15 +18983,49 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.MouseBehavior",
-      "@luduvo/server/global/game.Input.MouseBehavior"
+      "@luduvo/client/global/game.Input.MouseBehavior"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
+  },
+  {
+    "name": "MouseDelta",
+    "owner": "game.Input",
+    "kind": "global_member",
+    "type": "vector",
+    "documentation": "cursor motion this frame in UI units",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Input.MouseDelta"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
+    "name": "MousePosition",
+    "owner": "game.Input",
+    "kind": "global_member",
+    "type": "vector",
+    "documentation": "cursor position in UI units",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Input.MousePosition"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
   },
   {
     "name": "PointerRay",
@@ -15127,15 +19037,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.PointerRay",
-      "@luduvo/server/global/game.Input.PointerRay"
+      "@luduvo/client/global/game.Input.PointerRay"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Input#PointerRay",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "Rotation",
@@ -15147,15 +19055,13 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.Rotation",
-      "@luduvo/server/global/game.Input.Rotation"
+      "@luduvo/client/global/game.Input.Rotation"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "RotationType",
@@ -15167,15 +19073,31 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Input.RotationType",
-      "@luduvo/server/global/game.Input.RotationType"
+      "@luduvo/client/global/game.Input.RotationType"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
+  },
+  {
+    "name": "Scroll",
+    "owner": "game.Input",
+    "kind": "global_member",
+    "type": "number",
+    "documentation": "mouse wheel scroll delta this frame",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Input.Scroll"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
   },
   {
     "name": "Examine",
@@ -15201,7 +19123,7 @@
     "name": "Ambient",
     "owner": "game.Lighting",
     "kind": "global_member",
-    "type": "{ Tint: vector, Intensity: number, Source: number, Contribution: number }",
+    "type": "{ Tint: vector, Intensity: number, Source: string, Contribution: number }",
     "documentation": "ambient light tint, strength, source, and sky contribution",
     "directives": [],
     "read_only": true,
@@ -15241,7 +19163,7 @@
     "name": "Background",
     "owner": "game.Lighting",
     "kind": "global_member",
-    "type": "{ Mode: number, Color: vector, Energy: number }",
+    "type": "{ Mode: string, Color: vector, Energy: number }",
     "documentation": "background mode, color, and energy multiplier",
     "directives": [],
     "read_only": true,
@@ -15301,7 +19223,7 @@
     "name": "Fog",
     "owner": "game.Lighting",
     "kind": "global_member",
-    "type": "{ Color: vector, Mode: number, Density: number, Start: number, End: number }",
+    "type": "{ Color: vector, Mode: string, Density: number, Start: number, End: number }",
     "documentation": "distance fog color, mode, density, and linear start and end",
     "directives": [],
     "read_only": true,
@@ -15341,7 +19263,7 @@
     "name": "Shadows",
     "owner": "game.Lighting",
     "kind": "global_member",
-    "type": "{ Mode: number, Fill: number, MaxDistance: number }",
+    "type": "{ Mode: string, Fill: number, MaxDistance: number }",
     "documentation": "shadow mode, the light level inside shadows, and how far from the camera shadows reach",
     "directives": [],
     "read_only": true,
@@ -15481,7 +19403,7 @@
     "name": "DefineMaterial",
     "owner": "game.Materials",
     "kind": "global_member",
-    "type": "(spec: {Id: string, Name: string?, Pipeline: string, Model: string, Surface: {BaseColor: string?, Normal: string?, Orm: string?, Tint: {r: number, g: number, b: number, a: number}?, TileSize: number?, NormalStrength: number?, RoughnessMult: number?, MetallicMult: number?, AlphaCutoff: number?, Neon: boolean?, TintVertex: boolean?}, Emission: {Texture: string?, Tint: {r: number, g: number, b: number}?, Intensity: number?}?, Studs: {ColorTop: string?, NormalTop: string?, ColorBottom: string?, NormalBottom: string?, StudsPerTile: number?}?, Water: {Absorption: {r: number, g: number, b: number}?, DepthScale: number?, Refraction: number?, FoamScale: number?, FoamDepth: number?, FlowSpeed: number?, FlowScale: number?, WaveAmplitude: number?, WaveScale: number?, WaveSpeed: number?, FlowMap: string?, Foam: string?}?, Physics: {Density: number?, Friction: number?, Restitution: number?}?, Footsteps: {Clips: {string}, Gain: number?, PitchSpread: number?}?, Impacts: {Clips: {string}, Gain: number?, PitchSpread: number?}?}, parent: string?) -> string",
+    "type": "(spec: MaterialSpec, parent: string?) -> string",
     "documentation": "write the material file, define the material, and answer its asset id. An absent Name takes the next free store name",
     "directives": [
       "server-only"
@@ -15501,7 +19423,7 @@
     "name": "GetMaterial",
     "owner": "game.Materials",
     "kind": "global_member",
-    "type": "(idOrName: string) -> {Id: string, Name: string?, Pipeline: string, Model: string, Surface: {BaseColor: string?, Normal: string?, Orm: string?, Tint: {r: number, g: number, b: number, a: number}?, TileSize: number?, NormalStrength: number?, RoughnessMult: number?, MetallicMult: number?, AlphaCutoff: number?, Neon: boolean?, TintVertex: boolean?}, Emission: {Texture: string?, Tint: {r: number, g: number, b: number}?, Intensity: number?}?, Studs: {ColorTop: string?, NormalTop: string?, ColorBottom: string?, NormalBottom: string?, StudsPerTile: number?}?, Water: {Absorption: {r: number, g: number, b: number}?, DepthScale: number?, Refraction: number?, FoamScale: number?, FoamDepth: number?, FlowSpeed: number?, FlowScale: number?, WaveAmplitude: number?, WaveScale: number?, WaveSpeed: number?, FlowMap: string?, Foam: string?}?, Physics: {Density: number?, Friction: number?, Restitution: number?}?, Footsteps: {Clips: {string}, Gain: number?, PitchSpread: number?}?, Impacts: {Clips: {string}, Gain: number?, PitchSpread: number?}?}",
+    "type": "(idOrName: string) -> MaterialSpec",
     "documentation": "read one material. An absent dataset is nil, never a flag",
     "directives": [],
     "read_only": false,
@@ -15521,7 +19443,7 @@
     "name": "GetMaterials",
     "owner": "game.Materials",
     "kind": "global_member",
-    "type": "() -> {{Id: string, Name: string, Pipeline: string, Model: string}}",
+    "type": "() -> {MaterialEntry}",
     "documentation": "list every material with its pipeline class and surface model",
     "directives": [],
     "read_only": false,
@@ -15596,26 +19518,6 @@
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Materials#ReplaceMaterial",
     "scope": "server"
-  },
-  {
-    "name": "DrainTouchEvents",
-    "owner": "game.Physics",
-    "kind": "global_member",
-    "type": "() -> ({TouchEvent}, boolean)",
-    "documentation": "drain the buffered touch begin and end events, second result reports lost events",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.Physics.DrainTouchEvents",
-      "@luduvo/server/global/game.Physics.DrainTouchEvents"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#DrainTouchEvents",
-    "scope": "shared"
   },
   {
     "name": "EmitAcousticStimulus",
@@ -15721,7 +19623,7 @@
     "name": "OverlapBox",
     "owner": "game.Physics",
     "kind": "global_member",
-    "type": "(center: vector, half: vector, rotation: vector?, out: {Instance}?) -> (number, {Instance})",
+    "type": "(center: vector, half: vector, rotation: vector?, out: {Instance} | QueryParams | nil, params: QueryParams?) -> (number, {Instance})",
     "documentation": "collect the entities inside a rotated box",
     "directives": [],
     "read_only": false,
@@ -15741,7 +19643,7 @@
     "name": "OverlapSphere",
     "owner": "game.Physics",
     "kind": "global_member",
-    "type": "(center: vector, radius: number, out: {Instance}?) -> (number, {Instance})",
+    "type": "(center: vector, radius: number, out: {Instance} | QueryParams | nil, params: QueryParams?) -> (number, {Instance})",
     "documentation": "collect the entities inside a sphere",
     "directives": [],
     "read_only": false,
@@ -15761,7 +19663,7 @@
     "name": "Raycast",
     "owner": "game.Physics",
     "kind": "global_member",
-    "type": "(origin: vector, dir: vector, maxDist: number, ignore: Instance?, mask: number?) -> RaycastResult?",
+    "type": "(origin: vector, dir: vector, maxDist: number, params: QueryParams | Instance | nil, mask: number?) -> RaycastResult?",
     "documentation": "cast a ray and report the first hit",
     "directives": [],
     "read_only": false,
@@ -15841,7 +19743,7 @@
     "name": "Shapecast",
     "owner": "game.Physics",
     "kind": "global_member",
-    "type": "(shape: string, size: vector, from: vector, to: vector, rotation: vector?, out: {ShapecastHit}?) -> (number, {ShapecastHit})",
+    "type": "(shape: string, size: vector, from: vector, to: vector, rotation: vector?, out: {ShapecastHit} | QueryParams | nil, params: QueryParams?) -> (number, {ShapecastHit})",
     "documentation": "sweep a box, a sphere, or a capsule and report every entity in the path, nearest first",
     "directives": [],
     "read_only": false,
@@ -15861,7 +19763,7 @@
     "name": "All",
     "owner": "game.Players",
     "kind": "global_member",
-    "type": "() -> {Instance}",
+    "type": "@[deprecated {use = \"World.Each\"}] () -> {Instance}",
     "documentation": "every player in the session",
     "directives": [],
     "read_only": false,
@@ -15881,7 +19783,7 @@
     "name": "BindCharacter",
     "owner": "game.Players",
     "kind": "global_member",
-    "type": "(player: Instance, character: Instance) -> ()",
+    "type": "@[deprecated {use = \"Instance.OwnerUserId\"}] (player: Instance, character: Instance) -> ()",
     "documentation": "bind a character entity to a player",
     "directives": [
       "server-only"
@@ -15941,7 +19843,7 @@
     "name": "CharacterOf",
     "owner": "game.Players",
     "kind": "global_member",
-    "type": "(player: Instance) -> Instance?",
+    "type": "@[deprecated {use = \"Instance.Character\"}] (player: Instance) -> Instance?",
     "documentation": "the character bound to a player",
     "directives": [],
     "read_only": false,
@@ -15967,15 +19869,13 @@
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Players.Chat",
-      "@luduvo/server/global/game.Players.Chat"
+      "@luduvo/client/global/game.Players.Chat"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "FriendStatus",
@@ -16018,6 +19918,24 @@
     "scope": "shared"
   },
   {
+    "name": "GameAnnounce",
+    "owner": "game.Players",
+    "kind": "global_member",
+    "type": "Signal",
+    "documentation": "fires with a line the server sends only to this player",
+    "directives": [],
+    "read_only": true,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Players.GameAnnounce"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
+  },
+  {
     "name": "Get",
     "owner": "game.Players",
     "kind": "global_member",
@@ -16041,7 +19959,7 @@
     "name": "IsAdmin",
     "owner": "game.Players",
     "kind": "global_member",
-    "type": "(player: Instance) -> boolean",
+    "type": "@[deprecated {use = \"Instance.HasComponent\"}] (player: Instance) -> boolean",
     "documentation": "whether a player entity has the Admin tag",
     "directives": [],
     "read_only": false,
@@ -16156,6 +20074,24 @@
     ],
     "learn_more_link": null,
     "scope": "shared"
+  },
+  {
+    "name": "Social",
+    "owner": "game.Players",
+    "kind": "global_member",
+    "type": "(player: Instance, verb: string, reason: string?) -> ()",
+    "documentation": "send a social action for a player",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Players.Social"
+    ],
+    "learn_more_link": null,
+    "scope": "client"
   },
   {
     "name": "Exists",
@@ -16341,7 +20277,7 @@
     "name": "BindCharacter",
     "owner": "game.Session",
     "kind": "global_member",
-    "type": "(userId: number, character: Instance) -> ()",
+    "type": "@[deprecated {use = \"Instance.OwnerUserId\"}] (userId: number, character: Instance) -> ()",
     "documentation": "bind a character entity to a user",
     "directives": [
       "server-only"
@@ -16381,7 +20317,7 @@
     "name": "CharacterOf",
     "owner": "game.Session",
     "kind": "global_member",
-    "type": "(userId: number) -> Instance?",
+    "type": "@[deprecated {use = \"Instance.Character\"}] (userId: number) -> Instance?",
     "documentation": "the character bound to a user",
     "directives": [],
     "read_only": false,
@@ -16401,7 +20337,7 @@
     "name": "Kick",
     "owner": "game.Session",
     "kind": "global_member",
-    "type": "(userId: number, reason: string?) -> boolean",
+    "type": "@[deprecated {use = \"Players.Kick\"}] (userId: number, reason: string?) -> boolean",
     "documentation": "remove a player from this server",
     "directives": [
       "server-only"
@@ -16421,21 +20357,19 @@
     "name": "LocalCharacter",
     "owner": "game.Session",
     "kind": "global_member",
-    "type": "() -> Instance?",
+    "type": "@[deprecated {use = \"Players.LocalPlayer\"}] () -> Instance?",
     "documentation": "the character entity of the local client",
     "directives": [],
     "read_only": false,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Session.LocalCharacter",
-      "@luduvo/server/global/game.Session.LocalCharacter"
+      "@luduvo/client/global/game.Session.LocalCharacter"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Session#LocalCharacter",
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "PlayerJoined",
@@ -16487,21 +20421,19 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Settings.ShiftLock",
-      "@luduvo/server/global/game.Settings.ShiftLock"
+      "@luduvo/client/global/game.Settings.ShiftLock"
     ],
     "learn_more_link": null,
-    "scope": "shared"
+    "scope": "client"
   },
   {
     "name": "GetBusVolumeDb",
     "owner": "game.Sound",
     "kind": "global_member",
-    "type": "(bus: number) -> number",
+    "type": "@[deprecated {use = \"World.Query\"}] (bus: number) -> number",
     "documentation": "get audio bus volume in decibels",
     "directives": [],
     "read_only": false,
@@ -16541,7 +20473,7 @@
     "name": "SetBusVolumeDb",
     "owner": "game.Sound",
     "kind": "global_member",
-    "type": "(bus: number, db: number) -> ()",
+    "type": "@[deprecated {use = \"World.Query\"}] (bus: number, db: number) -> ()",
     "documentation": "set audio bus volume in decibels",
     "directives": [],
     "read_only": false,
@@ -16601,7 +20533,7 @@
     "name": "Add",
     "owner": "game.Tags",
     "kind": "global_member",
-    "type": "(entity: Instance, tag: string) -> ()",
+    "type": "@[deprecated {use = \"Instance.AddComponent\"}] (entity: Instance, tag: string) -> ()",
     "documentation": "add a tag to an entity",
     "directives": [],
     "read_only": false,
@@ -16621,7 +20553,7 @@
     "name": "Find",
     "owner": "game.Tags",
     "kind": "global_member",
-    "type": "(tag: string) -> {Instance}",
+    "type": "@[deprecated {use = \"World.Each\"}] (tag: string) -> {Instance}",
     "documentation": "find all entities with a tag",
     "directives": [],
     "read_only": false,
@@ -16641,7 +20573,7 @@
     "name": "Get",
     "owner": "game.Tags",
     "kind": "global_member",
-    "type": "(entity: Instance) -> {string}",
+    "type": "@[deprecated {use = \"World.Query\"}] (entity: Instance) -> {string}",
     "documentation": "list tags on an entity",
     "directives": [],
     "read_only": false,
@@ -16701,7 +20633,7 @@
     "name": "Has",
     "owner": "game.Tags",
     "kind": "global_member",
-    "type": "(entity: Instance, tag: string) -> boolean",
+    "type": "@[deprecated {use = \"Instance.HasComponent\"}] (entity: Instance, tag: string) -> boolean",
     "documentation": "check whether an entity has a tag",
     "directives": [],
     "read_only": false,
@@ -16721,7 +20653,7 @@
     "name": "Remove",
     "owner": "game.Tags",
     "kind": "global_member",
-    "type": "(entity: Instance, tag: string) -> ()",
+    "type": "@[deprecated {use = \"Instance.RemoveComponent\"}] (entity: Instance, tag: string) -> ()",
     "documentation": "remove a tag from an entity",
     "directives": [],
     "read_only": false,
@@ -16758,106 +20690,6 @@
     "scope": "shared"
   },
   {
-    "name": "DumpAttributes",
-    "owner": "game.World",
-    "kind": "global_member",
-    "type": "(entity: Instance?) -> ()",
-    "documentation": "print attribute usage to the output",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.World.DumpAttributes",
-      "@luduvo/server/global/game.World.DumpAttributes"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/World#DumpAttributes",
-    "scope": "shared"
-  },
-  {
-    "name": "Each",
-    "owner": "game.World",
-    "kind": "global_member",
-    "type": "(component: string) -> () -> Instance?",
-    "documentation": "iterate the entities that hold a component",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.World.Each",
-      "@luduvo/server/global/game.World.Each"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/World#Each",
-    "scope": "shared"
-  },
-  {
-    "name": "Pair",
-    "owner": "game.World",
-    "kind": "global_member",
-    "type": "(relation: string, target: Instance | string) -> Pair",
-    "documentation": "a relationship pair for a query term",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.World.Pair",
-      "@luduvo/server/global/game.World.Pair"
-    ],
-    "learn_more_link": null,
-    "scope": "shared"
-  },
-  {
-    "name": "Query",
-    "owner": "game.World",
-    "kind": "global_member",
-    "type": "(...string | Pair) -> Query",
-    "documentation": "build a cached multi-component query",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.World.Query",
-      "@luduvo/server/global/game.World.Query"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/World#Query",
-    "scope": "shared"
-  },
-  {
-    "name": "System",
-    "owner": "game.World",
-    "kind": "global_member",
-    "type": "(name: string, q: Query, fn: (Query) -> (), phase: string?, after: string?) -> ()",
-    "documentation": "register a per-tick system over a query",
-    "directives": [],
-    "read_only": false,
-    "write_scope": null,
-    "surfaces": [
-      "client",
-      "server"
-    ],
-    "documentation_symbols": [
-      "@luduvo/client/global/game.World.System",
-      "@luduvo/server/global/game.World.System"
-    ],
-    "learn_more_link": "https://docs.luduvo.com/reference/World#System",
-    "scope": "shared"
-  },
-  {
     "name": "triangulate_polygon",
     "owner": "geometry",
     "kind": "global_member",
@@ -16878,10 +20710,170 @@
     "scope": "shared"
   },
   {
+    "name": "apply",
+    "owner": "rotation",
+    "kind": "global_member",
+    "type": "(r: vector, v: vector) -> vector",
+    "documentation": "turn the vector v by the rotation r",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation.apply",
+      "@luduvo/server/global/rotation.apply"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "axis",
+    "owner": "rotation",
+    "kind": "global_member",
+    "type": "(axis: vector, angle: number) -> vector",
+    "documentation": "the rotation by angle radians around axis",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation.axis",
+      "@luduvo/server/global/rotation.axis"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "compose",
+    "owner": "rotation",
+    "kind": "global_member",
+    "type": "(a: vector, b: vector) -> vector",
+    "documentation": "the rotation that turns by b first, then by a",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation.compose",
+      "@luduvo/server/global/rotation.compose"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "from_euler",
+    "owner": "rotation",
+    "kind": "global_member",
+    "type": "(degrees: vector) -> vector",
+    "documentation": "the rotation of an Orientation in degrees",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation.from_euler",
+      "@luduvo/server/global/rotation.from_euler"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "look",
+    "owner": "rotation",
+    "kind": "global_member",
+    "type": "(forward: vector, up: vector?) -> vector",
+    "documentation": "the rotation that points -Z along forward with +Y as close to up as the turn allows; up defaults to +Y",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation.look",
+      "@luduvo/server/global/rotation.look"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "slerp",
+    "owner": "rotation",
+    "kind": "global_member",
+    "type": "(a: vector, b: vector, t: number) -> vector",
+    "documentation": "turn from a toward b along the shortest arc; t 0 is a, t 1 is b",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation.slerp",
+      "@luduvo/server/global/rotation.slerp"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "to_euler",
+    "owner": "rotation",
+    "kind": "global_member",
+    "type": "(r: vector) -> vector",
+    "documentation": "the Orientation in degrees of the rotation r",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/rotation.to_euler",
+      "@luduvo/server/global/rotation.to_euler"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "cancel",
+    "owner": "task",
+    "kind": "global_member",
+    "type": "(thread: thread) -> ()",
+    "documentation": "stop a suspended or scheduled thread so it never resumes",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/task.cancel",
+      "@luduvo/server/global/task.cancel"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
     "name": "defer",
     "owner": "task",
     "kind": "global_member",
-    "type": "(fn: (...any) -> (), ...any) -> ()",
+    "type": "(fn: ((...any) -> ...any) | thread, ...any) -> thread",
     "documentation": "run fn with the arguments at the end of this update tick, after every Update",
     "directives": [],
     "read_only": false,
@@ -16901,7 +20893,7 @@
     "name": "delay",
     "owner": "task",
     "kind": "global_member",
-    "type": "(seconds: number, fn: (...any) -> (), ...any) -> ()",
+    "type": "(seconds: number, fn: ((...any) -> ...any) | thread, ...any) -> thread",
     "documentation": "run fn with the arguments at the end of the first update tick at least seconds later",
     "directives": [],
     "read_only": false,
@@ -16913,6 +20905,26 @@
     "documentation_symbols": [
       "@luduvo/client/global/task.delay",
       "@luduvo/server/global/task.delay"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "spawn",
+    "owner": "task",
+    "kind": "global_member",
+    "type": "(fn: ((...any) -> ...any) | thread, ...any) -> thread",
+    "documentation": "run fn immediately with the arguments until it yields or ends, then return the thread",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/task.spawn",
+      "@luduvo/server/global/task.spawn"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -16935,6 +20947,226 @@
       "@luduvo/server/global/task.wait"
     ],
     "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "B",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.B",
+      "@luduvo/server/globaltype/vector.B"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "G",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.G",
+      "@luduvo/server/globaltype/vector.G"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Magnitude",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.Magnitude",
+      "@luduvo/server/globaltype/vector.Magnitude"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "R",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.R",
+      "@luduvo/server/globaltype/vector.R"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Unit",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.Unit",
+      "@luduvo/server/globaltype/vector.Unit"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "X",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.X",
+      "@luduvo/server/globaltype/vector.X"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Y",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.Y",
+      "@luduvo/server/globaltype/vector.Y"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "Z",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.Z",
+      "@luduvo/server/globaltype/vector.Z"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "x",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "lateral movement input along the horizontal axis",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.x",
+      "@luduvo/server/globaltype/vector.x"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MoveIntent#x",
+    "scope": "shared"
+  },
+  {
+    "name": "y",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.y",
+      "@luduvo/server/globaltype/vector.y"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "z",
+    "owner": "vector",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "forward and backward movement input",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "client",
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/vector.z",
+      "@luduvo/server/globaltype/vector.z"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/MoveIntent#z",
     "scope": "shared"
   }
 ]
