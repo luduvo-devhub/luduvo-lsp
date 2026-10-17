@@ -18,10 +18,10 @@ struct BuiltinBinding
 };
 
 constexpr BuiltinBinding kBuiltinBindings[] = {
-    {"Instance.AddComponent", "name", "component"},
+    {"Instance.AddComponent", "name", "component", true, true},
     {"Instance.FindAncestorWithComponent", "name", "component"},
     {"Instance.HasComponent", "name", "component"},
-    {"Instance.RemoveComponent", "name", "component"},
+    {"Instance.RemoveComponent", "name", "component", true, true},
     {"Query.With", "name", "component"},
     {"Query.Without", "name", "component"},
     {"game.Prefabs.Exists", "name", "prefab"},

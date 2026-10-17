@@ -678,8 +678,10 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
     TempDir temp("luduvo_rich_hover_resource_arguments");
     const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+        declare extern type Pair with
+        end
         declare extern type Instance with
-            function AddComponent(self, name: string): ()
+            AddComponent: (self: Instance, ...string | Pair) -> ()
             function Rename(self, name: string): ()
         end
         declare instance: Instance
@@ -725,7 +727,7 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
 
     const std::string add = hover("local add = instance.AddComponent", {0, 23});
     CHECK(add.find("`resource-constrained`") != std::string::npos);
-    CHECK(add.find("`name: string` expects a Luduvo component name.") != std::string::npos);
+    CHECK(add.find("`name: string` expects Luduvo component names.") != std::string::npos);
     const std::string spawn = hover("local spawn = game.Prefabs.Spawn", {0, 28});
     CHECK(spawn.find("`resource-constrained`") != std::string::npos);
     CHECK(spawn.find("`name: string` expects a Luduvo prefab name.") != std::string::npos);

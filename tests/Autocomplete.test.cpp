@@ -141,7 +141,10 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
         declare extern type Query with
         end
         declare extern type Instance with
-            AddComponent: (self: Instance, name: string) -> ()
+            AddComponent: (self: Instance, ...string | Pair) -> Component | Instance
+            RemoveComponent: (self: Instance, ...string | Pair) -> ()
+        end
+        declare extern type Component with
         end
         declare instance: Instance
         declare game: {
@@ -217,7 +220,9 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     CHECK(getItem(variadicArgument, "Position"));
 
     CHECK(getItem(complete("instance:AddComponent(\"|\")"), "Health"));
+    CHECK(getItem(complete("instance:AddComponent(\"Health\", \"|\")"), "Position"));
     CHECK(getItem(complete("instance.AddComponent(instance, \"|\")"), "Health"));
+    CHECK(getItem(complete("instance:RemoveComponent(\"Health\", \"|\")"), "Position"));
     CHECK_FALSE(getItem(complete("instance.AddComponent(\"|\")"), "Health"));
 
     CHECK(getItem(complete("MyLibrary.SpawnNamed(\"|\")"), "Crate"));
