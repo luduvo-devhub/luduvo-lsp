@@ -70,6 +70,31 @@ Fixture::~Fixture()
     Luau::resetPrintLine();
 }
 
+LuduvoFixture::LuduvoFixture(
+    const std::string& name, ClientConfiguration config, std::optional<std::string> serverDefinitions, std::optional<std::string> clientDefinitions)
+    : solverFlag(FFlag::LuauSolverV2, true)
+    , tempDir(name)
+    , config(std::move(config))
+    , workspace(&client, "$" + name, Uri::file(tempDir.path()), std::nullopt)
+{
+    this->config.platform.type = LSPPlatformConfig::Luduvo;
+    if (this->config.platform.luduvo.dataDirectory.empty())
+        this->config.platform.luduvo.dataDirectory = tempDir.path();
+    if (serverDefinitions)
+        this->config.platform.luduvo.definitions.serverOverride = tempDir.write_child("server.d.luau", *serverDefinitions);
+    if (clientDefinitions)
+        this->config.platform.luduvo.definitions.clientOverride = tempDir.write_child("client.d.luau", *clientDefinitions);
+
+    client.globalConfig = this->config;
+    workspace.setupWithConfiguration(this->config);
+    workspace.isReady = true;
+}
+
+Uri LuduvoFixture::newDocument(const std::string& name, const std::string& source)
+{
+    return Luau::LanguageServer::newDocument(workspace, name, source);
+}
+
 Luau::ModuleName fromString(std::string_view name)
 {
     return Luau::ModuleName(name);

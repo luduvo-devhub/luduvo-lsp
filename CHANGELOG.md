@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- More testing files for the python scripts
+
+### Changed
+
+- Moved around the location of the python test scripts, and the CI workflow now uses them
+- Bit the bullet and finally split up and reorganized the hover/definition code. Things were starting to get a bit too messy
+- Luduvo Tests no longer rely on Luduvo itself to be installed. I thought this was a good idea, but it was causing more issues than it solved
+
+### Fixed
+
+- Some broken Hover and completion tests weren't testing what they were supposed to correctly. That is now fixed
+- Some Luduvo Tests could just straight up not run when testing specific testing groups due to more stupidity
+- Writable server endpoints no longer incorrectly get the `read-only` tag just because its read only on the client
+- Luduvo LSP's extension no longer haphazardly mixes `luau-lsp` and `luduvo-lsp` as config names for its settings and commands. If they weren't working before, they should work now. Genuinely, this was one of the stupider things I've done. Thank god no one has used it yet...
+- Resource autocomplete got updated to reflect changes made in Luduvo 50
+
 ## [1.70.3L-alpha] - 2026-10-10
 
 ### Added

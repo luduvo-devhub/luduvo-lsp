@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 
-MODULE_PATH = Path(__file__).with_name("dumpLuduvoTypes.py")
+MODULE_PATH = Path(__file__).resolve().parents[1] / "dumpLuduvoTypes.py"
 SPEC = importlib.util.spec_from_file_location("dumpLuduvoTypes", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 types_dump = importlib.util.module_from_spec(SPEC)

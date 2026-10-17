@@ -99,7 +99,7 @@ export const registerViewInternalSource = (
       tdcp,
     ),
     vscode.commands.registerTextEditorCommand(
-      "luau-lsp.debug.viewInternalSource",
+      "luduvo-lsp.debug.viewInternalSource",
       async (textEditor: vscode.TextEditor) => {
         if (isLuauEditor(textEditor)) {
           const doc = await vscode.workspace.openTextDocument(tdcp.uri);

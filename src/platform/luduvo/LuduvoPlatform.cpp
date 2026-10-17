@@ -46,8 +46,8 @@ void LuduvoPlatform::reportResourceConfigurationWarnings(const std::vector<std::
                 return;
             const auto action = response.result->get<lsp::MessageActionItem>();
             if (action.title == "Open Resource Settings")
-                client->sendNotification("$/command",
-                    json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo.resources"}});
+                client->sendNotification(
+                    "$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo.resources"}});
         });
 }
 
@@ -137,7 +137,30 @@ std::vector<PlatformRequirement> LuduvoPlatform::getRequirements(bool platformDe
     return {{"SolverV2", false,
         "Official Luduvo global definitions require SolverV2. Enable luau-lsp.fflags.enableNewSolver and restart the language server, or use "
         "types.definitionFiles instead.",
-        "luau-lsp.fflags.enableNewSolver", "luau-lsp.platform.luduvo.definitions.globalPolicy", "definitionFilesOnly"}};
+        {{"Open Settings", "luau-lsp.fflags.enableNewSolver", std::nullopt},
+            {"Use Definition Files Only", "luau-lsp.platform.luduvo.definitions.globalPolicy", "definitionFilesOnly"}}}};
+}
+
+void LuduvoPlatform::reportDefinitionLoadWarnings(Client* client, const std::vector<std::string>& warnings) const
+{
+    if (warnings.empty())
+        return;
+
+    std::string message = "Could not load the active Luduvo API definitions and used a fallback. "
+                          "Check luau-lsp.platform.luduvo.dataDirectory, then reload the workspace.";
+    for (const std::string& warning : warnings)
+        message += "\n" + warning;
+
+    client->sendWindowMessageRequest(lsp::MessageType::Warning, message, {{"Open Luduvo Settings"}},
+        [client](const JsonRpcMessage& response)
+        {
+            if (!response.result || response.result->is_null())
+                return;
+            const auto action = response.result->get<lsp::MessageActionItem>();
+            if (action.title == "Open Luduvo Settings")
+                client->sendNotification(
+                    "$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo.dataDirectory"}});
+        });
 }
 
 std::optional<std::string> LuduvoPlatform::getEnvironmentForModule(const Luau::ModuleName& moduleName) const

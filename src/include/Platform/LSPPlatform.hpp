@@ -29,6 +29,7 @@
 #include <vector>
 
 class WorkspaceFolder;
+class Client;
 struct WorkspaceFileResolver;
 
 struct PlatformDefinitionCandidate
@@ -77,14 +78,19 @@ struct PlatformDefinitionConfiguration
     PlatformDefinitionConflictWinner conflictWinner = PlatformDefinitionConflictWinner::Platform;
 };
 
+struct PlatformSettingsAction
+{
+    std::string title;
+    std::string settingsKey;
+    std::optional<std::string> value;
+};
+
 struct PlatformRequirement
 {
     std::string name;
     bool satisfied = true;
     std::string message;
-    std::string settingsKey;
-    std::optional<std::string> fallbackSettingsKey;
-    std::optional<std::string> fallbackSettingsValue;
+    std::vector<PlatformSettingsAction> actions;
 };
 
 /// Context for generating unknown symbol quick fixes
@@ -178,6 +184,8 @@ public:
         return {};
     }
 
+    virtual void reportDefinitionLoadWarnings(Client* client, const std::vector<std::string>& warnings) const {}
+
     void setDefinitionEnvironmentsActive(bool active)
     {
         definitionEnvironmentsActive = active;
@@ -254,9 +262,7 @@ public:
     virtual void handleSuggestImports(const TextDocument& textDocument, const Luau::SourceModule& module, const ClientConfiguration& config,
         size_t hotCommentsLineNumber, bool completingTypeReferencePrefix, std::vector<lsp::CompletionItem>& items);
 
-    virtual void handleSignatureHelp(const PlatformSignatureHelpContext& context)
-    {
-    }
+    virtual void handleSignatureHelp(const PlatformSignatureHelpContext& context) {}
 
     virtual void handleCodeAction(const lsp::CodeActionParams& params, std::vector<lsp::CodeAction>& items) {}
 

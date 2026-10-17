@@ -93,6 +93,7 @@ struct Client
 class LSPClient : public Client
 {
 public:
+    std::string configurationSection = "luau-lsp";
     lsp::TraceValue traceMode = lsp::TraceValue::Off;
     /// Configuration passed from the language client. Currently we only handle configuration at the workspace level
     std::unordered_map<Uri, ClientConfiguration, UriHash> configStore{};
@@ -130,15 +131,15 @@ public:
     void createWorkDoneProgress(const lsp::ProgressToken& token) override;
     void sendWorkDoneProgressBegin(const lsp::ProgressToken& token, const std::string& title, std::optional<std::string> message = std::nullopt,
         std::optional<uint8_t> percentage = std::nullopt) override;
-    void sendWorkDoneProgressReport(
-        const lsp::ProgressToken& token, std::optional<std::string> message = std::nullopt, std::optional<uint8_t> percentage = std::nullopt) override;
+    void sendWorkDoneProgressReport(const lsp::ProgressToken& token, std::optional<std::string> message = std::nullopt,
+        std::optional<uint8_t> percentage = std::nullopt) override;
     void sendWorkDoneProgressEnd(const lsp::ProgressToken& token, std::optional<std::string> message = std::nullopt) override;
 
     void sendLogMessage(const lsp::MessageType& type, const std::string& message) const override;
     void sendTrace(const std::string& message, const std::optional<std::string>& verbose = std::nullopt) const override;
     void sendWindowMessage(const lsp::MessageType& type, const std::string& message) const override;
-    void sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message,
-        const std::vector<lsp::MessageActionItem>& actions, const std::optional<ResponseHandler>& handler = std::nullopt) override;
+    void sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message, const std::vector<lsp::MessageActionItem>& actions,
+        const std::optional<ResponseHandler>& handler = std::nullopt) override;
 
     void registerCapability(const std::string& registrationId, const std::string& method, const json& registerOptions) override;
     void unregisterCapability(const std::string& registrationId, const std::string& method) override;

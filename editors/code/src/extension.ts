@@ -48,6 +48,15 @@ export type AddArgCallback = (
 let client: LanguageClient | undefined = undefined;
 let platformContext: PlatformContext = { client: undefined };
 const clientDisposables: vscode.Disposable[] = [];
+const EDITOR_NAMESPACE = "luduvo-lsp";
+const SERVER_NAMESPACE = "luau-lsp";
+
+const translateServerSettingKey = (key: string) => {
+  const prefix = `${SERVER_NAMESPACE}.`;
+  return key.startsWith(prefix)
+    ? `${EDITOR_NAMESPACE}.${key.substring(prefix.length)}`
+    : key;
+};
 
 const CURRENT_FFLAGS =
   "https://clientsettingscdn.roblox.com/v1/settings/application?applicationName=PCStudioApp";
@@ -75,7 +84,9 @@ const isAlphanumericUnderscore = (str: string) => {
 };
 
 const isCrashReportingEnabled = () => {
-  const config = vscode.workspace.getConfiguration("luau-lsp.server");
+  const config = vscode.workspace.getConfiguration(
+    `${EDITOR_NAMESPACE}.server`,
+  );
   return config.get("crashReporting.enabled", false);
 };
 
@@ -129,7 +140,7 @@ class ClientErrorHandler implements ErrorHandler {
         .then((value) => {
           if (value === "Enable") {
             vscode.workspace
-              .getConfiguration("luau-lsp.server")
+              .getConfiguration(`${EDITOR_NAMESPACE}.server`)
               .update(
                 "crashReporting.enabled",
                 true,
@@ -274,7 +285,9 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
     documentation: builtinDocumentationFiles,
   } = await roblox.preLanguageServerStart(context);
 
-  const typesConfig = vscode.workspace.getConfiguration("luau-lsp.types");
+  const typesConfig = vscode.workspace.getConfiguration(
+    `${EDITOR_NAMESPACE}.types`,
+  );
 
   // Load extra type definitions
   // TODO: deprecate and remove support of array-based definitionFiles configuration
@@ -343,7 +356,9 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
 
   // Handle FFlags
   const fflags: FFlags = {};
-  const fflagsConfig = vscode.workspace.getConfiguration("luau-lsp.fflags");
+  const fflagsConfig = vscode.workspace.getConfiguration(
+    `${EDITOR_NAMESPACE}.fflags`,
+  );
 
   if (!fflagsConfig.get<boolean>("enableByDefault")) {
     addArg("--no-flags-enabled");
@@ -402,8 +417,9 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
     }
   }
 
-  const serverConfiguration =
-    vscode.workspace.getConfiguration("luau-lsp.server");
+  const serverConfiguration = vscode.workspace.getConfiguration(
+    `${EDITOR_NAMESPACE}.server`,
+  );
 
   const serverBinConfig = utils.resolvePath(
     serverConfiguration.get("path", "").trim(),
@@ -478,7 +494,7 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
           if (action === "Configure Settings") {
             vscode.commands.executeCommand(
               "workbench.action.openSettings",
-              "luau-lsp.server.baseLuaurc",
+              `${EDITOR_NAMESPACE}.server.baseLuaurc`,
             );
           }
         });
@@ -504,7 +520,7 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: vscode.workspace
-      .getConfiguration("luau-lsp")
+      .getConfiguration(EDITOR_NAMESPACE)
       .get<boolean>("analyzeLuaFiles", true)
       ? [
           { language: "luau", scheme: "file" },
@@ -518,14 +534,15 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
         ],
     diagnosticPullOptions: {
       onChange: vscode.workspace
-        .getConfiguration("luau-lsp.diagnostics")
+        .getConfiguration(`${EDITOR_NAMESPACE}.diagnostics`)
         .get("pullOnChange", true),
       onSave: vscode.workspace
-        .getConfiguration("luau-lsp.diagnostics")
+        .getConfiguration(`${EDITOR_NAMESPACE}.diagnostics`)
         .get("pullOnSave", true),
     },
     initializationOptions: {
       fflags,
+      configurationSection: EDITOR_NAMESPACE,
     },
     markdown: {
       supportHtml: true,
@@ -547,22 +564,34 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
 
   // Register commands
   client.onNotification("$/command", (params) => {
-    vscode.commands.executeCommand(params.command, params.data);
+    const data =
+      params.command === "workbench.action.openSettings" &&
+      typeof params.data === "string"
+        ? translateServerSettingKey(params.data)
+        : params.data;
+    vscode.commands.executeCommand(params.command, data);
   });
 
   clientDisposables.push(
     vscode.commands.registerCommand(
-      "luau-lsp.updateSettingAndReload",
+      `${EDITOR_NAMESPACE}.updateSettingAndReload`,
       async (params: { key: string; value: unknown }) => {
-        const prefix = "luau-lsp.";
-        if (!params?.key?.startsWith(prefix)) {
+        const serverPrefix = `${SERVER_NAMESPACE}.`;
+        const editorPrefix = `${EDITOR_NAMESPACE}.`;
+        if (
+          !params?.key?.startsWith(serverPrefix) &&
+          !params?.key?.startsWith(editorPrefix)
+        ) {
           throw new Error(`Invalid Luau LSP setting key: ${params?.key}`);
         }
+        const prefix = params.key.startsWith(serverPrefix)
+          ? serverPrefix
+          : editorPrefix;
         const target = vscode.workspace.workspaceFolders
           ? vscode.ConfigurationTarget.Workspace
           : vscode.ConfigurationTarget.Global;
         await vscode.workspace
-          .getConfiguration("luau-lsp")
+          .getConfiguration(EDITOR_NAMESPACE)
           .update(params.key.substring(prefix.length), params.value, target);
         await startLanguageServer(context);
       },
@@ -571,7 +600,7 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
 
   clientDisposables.push(
     vscode.commands.registerCommand(
-      "luau-lsp.rename",
+      `${EDITOR_NAMESPACE}.rename`,
       async (
         uriString: string,
         position: { line: number; character: number },
@@ -587,34 +616,65 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
     ),
   );
 
+  // The upstream server still emits these command identifiers. Keep the
+  // translation at the client boundary while exposing only luduvo-lsp.* in
+  // the extension manifest and user settings.
+  clientDisposables.push(
+    vscode.commands.registerCommand(
+      `${SERVER_NAMESPACE}.updateSettingAndReload`,
+      (params: { key: string; value: unknown }) =>
+        vscode.commands.executeCommand(
+          `${EDITOR_NAMESPACE}.updateSettingAndReload`,
+          params,
+        ),
+    ),
+    vscode.commands.registerCommand(
+      `${SERVER_NAMESPACE}.rename`,
+      (uriString: string, position: { line: number; character: number }) =>
+        vscode.commands.executeCommand(
+          `${EDITOR_NAMESPACE}.rename`,
+          uriString,
+          position,
+        ),
+    ),
+  );
+
   clientDisposables.push(...registerComputeBytecode(context, client));
   clientDisposables.push(...registerComputeCompilerRemarks(context, client));
   clientDisposables.push(...registerComputeCodeGen(context, client));
   clientDisposables.push(...registerRequireGraph(context, client));
   clientDisposables.push(...registerViewInternalSource(context, client));
   clientDisposables.push(
-    vscode.commands.registerCommand("luau-lsp.openWalkthrough", () => {
-      return vscode.commands.executeCommand(
-        "workbench.action.openWalkthrough",
-        "JohnnyMorganz.luau-lsp#getting-started",
-        false,
-      );
-    }),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.openWalkthrough`,
+      () => {
+        return vscode.commands.executeCommand(
+          "workbench.action.openWalkthrough",
+          "LuduvoDeveloperHub.luduvo-lsp#getting-started",
+          false,
+        );
+      },
+    ),
   );
   clientDisposables.push(
-    vscode.commands.registerCommand("luau-lsp.updateApi", async () => {
-      await downloadExternalFiles(result.externalFiles);
-      vscode.window
-        .showInformationMessage(
-          "API Types have been updated, reload server to take effect.",
-          "Reload Language Server",
-        )
-        .then((command) => {
-          if (command === "Reload Language Server") {
-            vscode.commands.executeCommand("luau-lsp.reloadServer");
-          }
-        });
-    }),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.updateApi`,
+      async () => {
+        await downloadExternalFiles(result.externalFiles);
+        vscode.window
+          .showInformationMessage(
+            "API Types have been updated, reload server to take effect.",
+            "Reload Language Server",
+          )
+          .then((command) => {
+            if (command === "Reload Language Server") {
+              vscode.commands.executeCommand(
+                `${EDITOR_NAMESPACE}.reloadServer`,
+              );
+            }
+          });
+      },
+    ),
   );
 
   console.log("LSP Setup");
@@ -627,20 +687,26 @@ export async function activate(context: vscode.ExtensionContext) {
   await roblox.onActivate(platformContext, context);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("luau-lsp.reloadServer", async () => {
-      vscode.window.showInformationMessage("Reloading Language Server");
-      await startLanguageServer(context);
-    }),
-    vscode.commands.registerCommand("luau-lsp.flushTimeTrace", async () => {
-      if (client) {
-        client.sendNotification("$/flushTimeTrace");
-      }
-    }),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.reloadServer`,
+      async () => {
+        vscode.window.showInformationMessage("Reloading Language Server");
+        await startLanguageServer(context);
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.flushTimeTrace`,
+      async () => {
+        if (client) {
+          client.sendNotification("$/flushTimeTrace");
+        }
+      },
+    ),
   );
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("luau-lsp.server")) {
+      if (e.affectsConfiguration(`${EDITOR_NAMESPACE}.server`)) {
         vscode.window
           .showInformationMessage(
             "Luau LSP server configuration has changed, reload server for this to take effect.",
@@ -648,12 +714,16 @@ export async function activate(context: vscode.ExtensionContext) {
           )
           .then((command) => {
             if (command === "Reload Language Server") {
-              vscode.commands.executeCommand("luau-lsp.reloadServer");
+              vscode.commands.executeCommand(
+                `${EDITOR_NAMESPACE}.reloadServer`,
+              );
             }
           });
       } else if (
-        e.affectsConfiguration("luau-lsp.fflags") ||
-        e.affectsConfiguration("luau-lsp.completion.enableFragmentAutocomplete")
+        e.affectsConfiguration(`${EDITOR_NAMESPACE}.fflags`) ||
+        e.affectsConfiguration(
+          `${EDITOR_NAMESPACE}.completion.enableFragmentAutocomplete`,
+        )
       ) {
         vscode.window
           .showInformationMessage(
@@ -662,14 +732,16 @@ export async function activate(context: vscode.ExtensionContext) {
           )
           .then((command) => {
             if (command === "Reload Language Server") {
-              vscode.commands.executeCommand("luau-lsp.reloadServer");
+              vscode.commands.executeCommand(
+                `${EDITOR_NAMESPACE}.reloadServer`,
+              );
             }
           });
       } else if (
-        e.affectsConfiguration("luau-lsp.types") ||
-        e.affectsConfiguration("luau-lsp.platform.type") ||
-        e.affectsConfiguration("luau-lsp.analyzeLuaFiles") ||
-        e.affectsConfiguration("luau-lsp.platform.luduvo")
+        e.affectsConfiguration(`${EDITOR_NAMESPACE}.types`) ||
+        e.affectsConfiguration(`${EDITOR_NAMESPACE}.platform.type`) ||
+        e.affectsConfiguration(`${EDITOR_NAMESPACE}.analyzeLuaFiles`) ||
+        e.affectsConfiguration(`${EDITOR_NAMESPACE}.platform.luduvo`)
       ) {
         vscode.window
           .showInformationMessage(
@@ -678,7 +750,9 @@ export async function activate(context: vscode.ExtensionContext) {
           )
           .then((command) => {
             if (command === "Reload Language Server") {
-              vscode.commands.executeCommand("luau-lsp.reloadServer");
+              vscode.commands.executeCommand(
+                `${EDITOR_NAMESPACE}.reloadServer`,
+              );
             }
           });
       }

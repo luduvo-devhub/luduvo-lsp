@@ -27,6 +27,22 @@ TEST_CASE("language_server_handles_fflags_in_initialization_options")
     FFlag::DebugLuauTimeTracing.value = false;
 }
 
+TEST_CASE("language_server_accepts_an_editor_configuration_namespace")
+{
+    TestClient client;
+    LanguageServer server(&client, std::nullopt);
+
+    InitializationOptions initializationOptions{};
+    initializationOptions.configurationSection = "luduvo-lsp";
+
+    lsp::InitializeParams params;
+    params.initializationOptions = initializationOptions;
+    server.onRequest(0, "initialize", params);
+
+    CHECK_EQ(client.configurationSection, "luduvo-lsp");
+    server.shutdown();
+}
+
 TEST_CASE("language_server_lazily_initializes_workspace_folders")
 {
     TestClient client;

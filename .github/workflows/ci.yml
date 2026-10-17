@@ -13,6 +13,18 @@ env:
   MACOSX_DEPLOYMENT_TARGET: "10.15"
 
 jobs:
+  python_tests:
+    name: Test Luduvo API generators
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
+
+      - name: Run generator tests
+        run: python -m unittest discover -s scripts/luduvo/tests
+
   build:
     strategy:
       fail-fast: false

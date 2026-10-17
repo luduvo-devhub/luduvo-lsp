@@ -65,9 +65,7 @@ TEST_SUITE_BEGIN("Autocomplete");
 
 TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
 {
-    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
-    TempDir temp("luduvo_rich_completion_docs");
-    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+    const std::string definitions = R"(
         declare game: {
             read World: {
                 Camera: any,
@@ -76,54 +74,46 @@ TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
                 Spawn: (name: string) -> {}?,
             },
         }
-    )");
+    )";
 
-    TestClient client;
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.type = LSPPlatformConfig::Luduvo;
-    config.platform.luduvo.definitions.serverOverride = definitions;
-    config.platform.luduvo.definitions.clientOverride = definitions;
-    client.globalConfig = config;
-
-    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_COMPLETION_DOCS", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
-    workspace.setupWithConfiguration(config);
-    workspace.isReady = true;
-    client.documentation["@luduvo/server/global/game.World"] =
+    LuduvoFixture fixture("luduvo_rich_completion_docs", config, definitions, definitions);
+    fixture.client.documentation["@luduvo/server/global/game.World"] =
         Luau::BasicDocumentation{"The entity world", "https://docs.luduvo.com/reference/World", ""};
-    client.documentation["@luduvo/server/global/game.World.Camera"] =
+    fixture.client.documentation["@luduvo/server/global/game.World.Camera"] =
         Luau::BasicDocumentation{"The active camera", "https://docs.luduvo.com/reference/Camera", ""};
-    client.documentation["@luduvo/server/global/game.Prefabs.Spawn"] =
+    fixture.client.documentation["@luduvo/server/global/game.Prefabs.Spawn"] =
         Luau::BasicDocumentation{"Spawn a prefab", "https://docs.luduvo.com/reference/Prefabs#Spawn", ""};
 
     auto [worldSource, worldMarker] = sourceWithMarker("local world = game.|");
-    auto worldUri = Luau::LanguageServer::newDocument(workspace, "world.server.luau", worldSource);
+    auto worldUri = fixture.newDocument("world.server.luau", worldSource);
     lsp::CompletionParams params;
     params.textDocument = lsp::TextDocumentIdentifier{worldUri};
     params.position = worldMarker;
 
-    auto world = requireItem(workspace.completion(params, nullptr), "World");
+    auto world = requireItem(fixture.workspace.completion(params, nullptr), "World");
     REQUIRE(world.documentation);
     CHECK_EQ(world.documentation->value, "# [game.World ](https://docs.luduvo.com/reference/World)↗ (Server Version)\n"
                                          "`read-only`\n\n"
                                          "The entity world");
 
     auto [cameraSource, cameraMarker] = sourceWithMarker("local camera = game.World.|");
-    auto cameraUri = Luau::LanguageServer::newDocument(workspace, "camera.server.luau", cameraSource);
+    auto cameraUri = fixture.newDocument("camera.server.luau", cameraSource);
     params.textDocument = lsp::TextDocumentIdentifier{cameraUri};
     params.position = cameraMarker;
 
-    auto camera = requireItem(workspace.completion(params, nullptr), "Camera");
+    auto camera = requireItem(fixture.workspace.completion(params, nullptr), "Camera");
     REQUIRE(camera.documentation);
     CHECK_EQ(camera.documentation->value, "# [game.World.Camera ](https://docs.luduvo.com/reference/Camera)↗ (Server Version)\n"
                                           "`uncheckable`\n\n"
                                           "The active camera");
 
     auto [prefabSource, prefabMarker] = sourceWithMarker("local prefab = game.Prefabs.|");
-    auto prefabUri = Luau::LanguageServer::newDocument(workspace, "prefab.server.luau", prefabSource);
+    auto prefabUri = fixture.newDocument("prefab.server.luau", prefabSource);
     params.textDocument = lsp::TextDocumentIdentifier{prefabUri};
     params.position = prefabMarker;
 
-    auto spawn = requireItem(workspace.completion(params, nullptr), "Spawn");
+    auto spawn = requireItem(fixture.workspace.completion(params, nullptr), "Spawn");
     REQUIRE(spawn.documentation);
     CHECK_EQ(spawn.documentation->value, "# [game.Prefabs.Spawn ](https://docs.luduvo.com/reference/Prefabs#Spawn)↗ (Server Version)\n"
                                          "`resource-constrained`\n\n"
@@ -133,9 +123,7 @@ TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
 
 TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
 {
-    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
-    TempDir temp("luduvo_resource_completion");
-    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+    const std::string definitions = R"(
         declare extern type Pair with
         end
         declare extern type Query with
@@ -163,13 +151,9 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
             SetCount: (count: number) -> (),
             SetState: (state: "Idle" | "Running") -> (),
         }
-    )");
+    )";
 
-    TestClient client;
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.type = LSPPlatformConfig::Luduvo;
-    config.platform.luduvo.definitions.serverOverride = definitions;
-    config.platform.luduvo.definitions.clientOverride = definitions;
     config.platform.luduvo.resources.sources["test-components"].values = {"Position", "Health", "Health"};
     config.platform.luduvo.resources.sources["test-prefabs"].values = {"Crate", "Folder/Enemy"};
     config.platform.luduvo.resources.groups["component"] = {"string", false, {"test-components"}};
@@ -177,27 +161,24 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     config.platform.luduvo.resources.bindings.push_back({"MyLibrary.SpawnNamed", "asset", "prefab"});
     config.platform.luduvo.resources.bindings.push_back({"MyLibrary.QueryMany", "components", "component", true, true});
     config.platform.luduvo.resources.bindings.push_back({"MyLibrary.SetCount", "count", "component"});
-    client.globalConfig = config;
-
-    WorkspaceFolder workspace(&client, "$LUDUVO_RESOURCE_COMPLETION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
-    workspace.setupWithConfiguration(config);
-    workspace.isReady = true;
+    LuduvoFixture fixture("luduvo_resource_completion", config, definitions, definitions);
 
     size_t documentIndex = 0;
     auto complete = [&](const std::string& markedSource)
     {
         auto [source, marker] = sourceWithMarker(markedSource);
-        auto uri = Luau::LanguageServer::newDocument(workspace, "resource-completion-" + std::to_string(documentIndex++) + ".server.luau", source);
+        auto uri = fixture.newDocument("resource-completion-" + std::to_string(documentIndex++) + ".server.luau", source);
         lsp::CompletionParams params;
         params.textDocument = lsp::TextDocumentIdentifier{uri};
         params.position = marker;
-        return workspace.completion(params, nullptr);
+        return fixture.workspace.completion(params, nullptr);
     };
 
     auto prefabItems = complete("game.Prefabs.Spawn(\"|\")");
     auto crate = requireItem(prefabItems, "Crate");
     REQUIRE(crate.textEdit);
     CHECK_EQ(crate.textEdit->newText, "\"Crate\"");
+    CHECK_EQ(applyEdit("game.Prefabs.Spawn(\"\")", {*crate.textEdit}), "game.Prefabs.Spawn(\"Crate\")");
     CHECK_EQ(crate.labelDetails, std::nullopt);
     CHECK_EQ(crate.detail, "prefab");
     auto slash = requireItem(prefabItems, "Folder/Enemy");
@@ -207,10 +188,12 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     auto bare = requireItem(complete("game.Prefabs.Spawn(|)"), "Crate");
     REQUIRE(bare.textEdit);
     CHECK_EQ(bare.textEdit->newText, "\"Crate\"");
+    CHECK_EQ(applyEdit("game.Prefabs.Spawn()", {*bare.textEdit}), "game.Prefabs.Spawn(\"Crate\")");
 
     auto partial = requireItem(complete("game.Prefabs.Spawn(\"Cr|\")"), "Crate");
     REQUIRE(partial.textEdit);
     CHECK_EQ(partial.textEdit->newText, "\"Crate\"");
+    CHECK_EQ(applyEdit("game.Prefabs.Spawn(\"Cr\")", {*partial.textEdit}), "game.Prefabs.Spawn(\"Crate\")");
 
     auto laterArgument = complete("game.Prefabs.RevertAddedComponent(instance, \"|\")");
     CHECK(getItem(laterArgument, "Health"));
@@ -228,13 +211,13 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     CHECK(getItem(complete("MyLibrary.SpawnNamed(\"|\")"), "Crate"));
     CHECK(getItem(complete("MyLibrary.QueryMany(\"Health\", \"|\")"), "Position"));
     CHECK_FALSE(getItem(complete("MyLibrary.SetCount(|)"), "Health"));
-    auto invalidBindingWarning = std::find_if(client.requestQueue.begin(), client.requestQueue.end(),
+    auto invalidBindingWarning = std::find_if(fixture.client.requestQueue.begin(), fixture.client.requestQueue.end(),
         [](const std::pair<std::string, std::optional<json>>& request)
         {
             return request.first == "window/showMessageRequest" && request.second &&
                    (*request.second)["message"].get<std::string>().find("MyLibrary.SetCount") != std::string::npos;
         });
-    REQUIRE(invalidBindingWarning != client.requestQueue.end());
+    REQUIRE(invalidBindingWarning != fixture.client.requestQueue.end());
     CHECK((*invalidBindingWarning->second)["message"].get<std::string>().find("does not accept string resource names") != std::string::npos);
     CHECK((*invalidBindingWarning->second)["actions"][0]["title"] == "Open Resource Settings");
     CHECK(getItem(complete("MyLibrary.SetState(|)"), "\"Idle\""));
@@ -244,81 +227,59 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
 
 TEST_CASE("luduvo_resource_completion_uses_fragment_type_information")
 {
-    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
-    TempDir temp("luduvo_resource_fragment_completion");
-    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+    const std::string definitions = R"(
         declare game: {
             Prefabs: { Spawn: (name: string) -> {}? },
         }
-    )");
+    )";
 
-    TestClient client;
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
     config.completion.enableFragmentAutocomplete = true;
-    config.platform.type = LSPPlatformConfig::Luduvo;
-    config.platform.luduvo.definitions.serverOverride = definitions;
-    config.platform.luduvo.definitions.clientOverride = definitions;
     config.platform.luduvo.resources.sources["test-prefabs"].values = {"Crate"};
     config.platform.luduvo.resources.groups["prefab"] = {"string", false, {"test-prefabs"}};
-    client.globalConfig = config;
-    client.capabilities.textDocument = lsp::TextDocumentClientCapabilities{};
-    client.capabilities.textDocument->diagnostic = lsp::DiagnosticClientCapabilities{};
+    LuduvoFixture fixture("luduvo_resource_fragment_completion", config, definitions, definitions);
+    fixture.client.capabilities.textDocument = lsp::TextDocumentClientCapabilities{};
+    fixture.client.capabilities.textDocument->diagnostic = lsp::DiagnosticClientCapabilities{};
 
-    WorkspaceFolder workspace(
-        &client, "$LUDUVO_RESOURCE_FRAGMENT_COMPLETION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
-    workspace.setupWithConfiguration(config);
-    workspace.isReady = true;
-
-    auto uri = Luau::LanguageServer::newDocument(workspace, "fragment.server.luau", "game.Prefabs.Spawn(\"\")");
-    const auto moduleName = workspace.fileResolver.getModuleName(uri);
-    workspace.checkStrict(moduleName, nullptr, /* forAutocomplete: */ false);
+    auto uri = fixture.newDocument("fragment.server.luau", "game.Prefabs.Spawn(\"\")");
+    const auto moduleName = fixture.workspace.fileResolver.getModuleName(uri);
+    fixture.workspace.checkStrict(moduleName, nullptr, /* forAutocomplete: */ false);
 
     auto [source, marker] = sourceWithMarker("game.Prefabs.Spawn(\"Cr|\")");
     lsp::DidChangeTextDocumentParams change;
     change.textDocument = {{uri}, 1};
     change.contentChanges = {{std::nullopt, source}};
-    workspace.updateTextDocument(uri, change);
-    REQUIRE(workspace.frontend.isDirty(moduleName, /* forAutocomplete: */ false));
+    fixture.workspace.updateTextDocument(uri, change);
+    REQUIRE(fixture.workspace.frontend.isDirty(moduleName, /* forAutocomplete: */ false));
 
     lsp::CompletionParams params;
     params.textDocument = lsp::TextDocumentIdentifier{uri};
     params.position = marker;
-    auto crate = requireItem(workspace.completion(params, nullptr), "Crate");
+    auto crate = requireItem(fixture.workspace.completion(params, nullptr), "Crate");
     REQUIRE(crate.textEdit);
     CHECK_EQ(crate.textEdit->newText, "\"Crate\"");
-    CHECK(workspace.frontend.isDirty(moduleName, /* forAutocomplete: */ false));
+    CHECK(fixture.workspace.frontend.isDirty(moduleName, /* forAutocomplete: */ false));
 }
 
 TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
 {
-    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
-    TempDir temp("luduvo_resource_group_completion");
-    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+    const std::string definitions = R"(
         declare game: {
             Prefabs: { Spawn: (name: string) -> {}? },
         }
-    )");
+    )";
 
-    TestClient client;
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.type = LSPPlatformConfig::Luduvo;
-    config.platform.luduvo.dataDirectory = temp.path();
-    config.platform.luduvo.definitions.serverOverride = definitions;
-    config.platform.luduvo.definitions.clientOverride = definitions;
     config.platform.luduvo.resources.sources["project-prefabs"].values = {"MyProjectPrefab"};
     config.platform.luduvo.resources.groups["prefab"] = {"string", true, {"project-prefabs"}};
-    client.globalConfig = config;
-
-    WorkspaceFolder workspace(&client, "$LUDUVO_RESOURCE_GROUP_COMPLETION", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
-    workspace.setupWithConfiguration(config);
-    workspace.isReady = true;
+    LuduvoFixture fixture("luduvo_resource_group_completion", config, definitions, definitions);
 
     auto [source, marker] = sourceWithMarker("game.Prefabs.Spawn(\"|\")");
-    auto uri = Luau::LanguageServer::newDocument(workspace, "resource-groups.server.luau", source);
+    auto uri = fixture.newDocument("resource-groups.server.luau", source);
     lsp::CompletionParams params;
     params.textDocument = lsp::TextDocumentIdentifier{uri};
     params.position = marker;
-    auto items = workspace.completion(params, nullptr);
+    auto items = fixture.workspace.completion(params, nullptr);
 
     const auto builtIn = requireItem(items, "Character");
     CHECK_EQ(builtIn.labelDetails, std::nullopt);
@@ -330,39 +291,28 @@ TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
 
 TEST_CASE("luduvo_resource_completion_honors_empty_groups_and_disables")
 {
-    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
-    TempDir temp("luduvo_resource_completion_disabled");
-    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+    const std::string definitions = R"(
         declare game: {
             World: { Each: (component: string) -> () -> Instance? },
             Prefabs: { Spawn: (name: string) -> Instance? },
         }
-    )");
+    )";
 
-    TestClient client;
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.type = LSPPlatformConfig::Luduvo;
-    config.platform.luduvo.definitions.serverOverride = definitions;
-    config.platform.luduvo.definitions.clientOverride = definitions;
     config.platform.luduvo.resources.sources["test-components"].values = {"Health"};
     config.platform.luduvo.resources.groups["component"] = {"string", false, {"test-components"}};
     config.platform.luduvo.resources.groups["prefab"] = {"string", false, {}};
     config.platform.luduvo.resources.completion.disabledApis = {"game.World.Each"};
-    client.globalConfig = config;
-
-    WorkspaceFolder workspace(
-        &client, "$LUDUVO_RESOURCE_COMPLETION_DISABLED", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
-    workspace.setupWithConfiguration(config);
-    workspace.isReady = true;
+    LuduvoFixture fixture("luduvo_resource_completion_disabled", config, definitions, definitions);
 
     auto complete = [&](const std::string& name, const std::string& markedSource)
     {
         auto [source, marker] = sourceWithMarker(markedSource);
-        auto uri = Luau::LanguageServer::newDocument(workspace, name + ".server.luau", source);
+        auto uri = fixture.newDocument(name + ".server.luau", source);
         lsp::CompletionParams params;
         params.textDocument = lsp::TextDocumentIdentifier{uri};
         params.position = marker;
-        return workspace.completion(params, nullptr);
+        return fixture.workspace.completion(params, nullptr);
     };
 
     CHECK_FALSE(getItem(complete("empty-prefabs", "game.Prefabs.Spawn(\"|\")"), "Character"));
@@ -370,14 +320,14 @@ TEST_CASE("luduvo_resource_completion_honors_empty_groups_and_disables")
 
     config.platform.luduvo.resources.completion.disabledApis.clear();
     config.platform.luduvo.resources.completion.disabledKinds = {"component"};
-    client.globalConfig = config;
-    workspace.setupWithConfiguration(config);
+    fixture.client.globalConfig = config;
+    fixture.workspace.setupWithConfiguration(config);
     CHECK_FALSE(getItem(complete("disabled-kind", "game.World.Each(\"|\")"), "Health"));
 
     config.platform.luduvo.resources.completion.disabledKinds.clear();
     config.platform.luduvo.resources.completion.enabled = false;
-    client.globalConfig = config;
-    workspace.setupWithConfiguration(config);
+    fixture.client.globalConfig = config;
+    fixture.workspace.setupWithConfiguration(config);
     CHECK_FALSE(getItem(complete("disabled-global", "game.World.Each(\"|\")"), "Health"));
 }
 

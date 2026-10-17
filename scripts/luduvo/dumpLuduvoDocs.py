@@ -26,8 +26,7 @@ def description(record: dict) -> str:
     return "\n\n".join(parts)
 
 
-def main() -> None:
-    records = json.loads((ROOT / "luduvo-api.json").read_text(encoding="utf-8"))
+def build_documentation(records: list[dict]) -> dict[str, dict]:
     docs = {}
     for record in records:
         entry = {
@@ -37,7 +36,13 @@ def main() -> None:
         if record.get("read_only"):
             entry["read_only"] = True
         for symbol in record["documentation_symbols"]:
-            docs[symbol] = entry
+            docs[symbol] = entry.copy()
+    return docs
+
+
+def main() -> None:
+    records = json.loads((ROOT / "luduvo-api.json").read_text(encoding="utf-8"))
+    docs = build_documentation(records)
 
     output = ROOT / "documentation.luduvo.json"
     output.write_text(

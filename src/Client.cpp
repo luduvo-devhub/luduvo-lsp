@@ -143,8 +143,8 @@ void LSPClient::sendWindowMessage(const lsp::MessageType& type, const std::strin
     sendNotification("window/showMessage", params);
 }
 
-void LSPClient::sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message,
-    const std::vector<lsp::MessageActionItem>& actions, const std::optional<ResponseHandler>& handler)
+void LSPClient::sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message, const std::vector<lsp::MessageActionItem>& actions,
+    const std::optional<ResponseHandler>& handler)
 {
     lsp::ShowMessageRequestParams params{type, message, actions};
     sendRequest(nextRequestId++, "window/showMessageRequest", params, handler);
@@ -182,9 +182,9 @@ void LSPClient::requestConfiguration(const std::vector<lsp::DocumentUri>& uris)
     for (auto& uri : uris)
     {
         if (uri == Uri()) // Handle null workspace (global config)
-            items.emplace_back(lsp::ConfigurationItem{std::nullopt, "luau-lsp"});
+            items.emplace_back(lsp::ConfigurationItem{std::nullopt, configurationSection});
         else
-            items.emplace_back(lsp::ConfigurationItem{uri, "luau-lsp"});
+            items.emplace_back(lsp::ConfigurationItem{uri, configurationSection});
     }
 
 

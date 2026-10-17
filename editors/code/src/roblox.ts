@@ -13,7 +13,7 @@ let pluginServer: Server | undefined = undefined;
 
 const getStudioPluginValue = <T>(key: string, defaultValue: T): T => {
   const newInspect = vscode.workspace
-    .getConfiguration("luau-lsp.studioPlugin")
+    .getConfiguration("luduvo-lsp.studioPlugin")
     .inspect<T>(key);
   if (
     newInspect?.globalValue !== undefined ||
@@ -28,14 +28,14 @@ const getStudioPluginValue = <T>(key: string, defaultValue: T): T => {
     );
   }
   return (
-    vscode.workspace.getConfiguration("luau-lsp.plugin").get<T>(key) ??
+    vscode.workspace.getConfiguration("luduvo-lsp.plugin").get<T>(key) ??
     defaultValue
   );
 };
 
 const getFilePattern = (): string => {
   const analyzeLua = vscode.workspace
-    .getConfiguration("luau-lsp")
+    .getConfiguration("luduvo-lsp")
     .get<boolean>("analyzeLuaFiles", true);
   return analyzeLua ? "**/*.{lua,luau}" : "**/*.luau";
 };
@@ -48,7 +48,7 @@ const STUDIO_PLUGIN_URL =
 const setupStudioPlugin = async (client: LanguageClient | undefined) => {
   // Enable the plugin server
   await vscode.workspace
-    .getConfiguration("luau-lsp.studioPlugin")
+    .getConfiguration("luduvo-lsp.studioPlugin")
     .update("enabled", true);
   startPluginServer(client);
   // Open the studio plugin in the browser for the user to install
@@ -123,7 +123,7 @@ const getRojoProjectFile = async (
         } else if (value === "Configure Settings") {
           vscode.commands.executeCommand(
             "workbench.action.openWorkspaceSettings",
-            "luau-lsp.sourcemap",
+            "luduvo-lsp.sourcemap",
           );
         }
       });
@@ -199,7 +199,7 @@ const startSourcemapGeneration = async (
   cleanupSourcemapDisposables(workspaceFolder);
 
   const config = vscode.workspace.getConfiguration(
-    "luau-lsp.sourcemap",
+    "luduvo-lsp.sourcemap",
     workspaceFolder,
   );
 
@@ -319,7 +319,7 @@ const startSourcemapGeneration = async (
           } else if (value === "Configure Settings") {
             vscode.commands.executeCommand(
               "workbench.action.openWorkspaceSettings",
-              "luau-lsp.sourcemap",
+              "luduvo-lsp.sourcemap",
             );
           }
         });
@@ -359,7 +359,7 @@ const startSourcemapGeneration = async (
         if (code === 0) {
           vscode.window
             .showWarningMessage(
-              "Sourcemap generator ended. No further updates will be tracked. If the generator does not support file watching, enable luau-lsp.sourcemap.useVSCodeWatcher",
+              "Sourcemap generator ended. No further updates will be tracked. If the generator does not support file watching, enable luduvo-lsp.sourcemap.useVSCodeWatcher",
               "Restart",
               "Configure Settings",
             )
@@ -369,7 +369,7 @@ const startSourcemapGeneration = async (
               } else if (value === "Configure Settings") {
                 vscode.commands.executeCommand(
                   "workbench.action.openWorkspaceSettings",
-                  "luau-lsp.sourcemap",
+                  "luduvo-lsp.sourcemap",
                 );
               }
             });
@@ -444,7 +444,7 @@ const startPluginServer = async (client: LanguageClient | undefined) => {
         .status(413)
         .send(
           `Result is too large. Limit: ${bytesFormat(err.limit)}, Received: ${bytesFormat(err.received)}.\n` +
-            `Increase your available limits by updating the 'luau-lsp.studioPlugin.maximumRequestBodySize' property in VSCode, or by reducing the include list in the Studio Plugin settings`,
+            `Increase your available limits by updating the 'luduvo-lsp.studioPlugin.maximumRequestBodySize' property in VSCode, or by reducing the include list in the Studio Plugin settings`,
         );
     }
   };
@@ -473,7 +473,7 @@ const startPluginServer = async (client: LanguageClient | undefined) => {
             } else if (value === "Change Port Configuration") {
               vscode.commands.executeCommand(
                 "workbench.action.openWorkspaceSettings",
-                "luau-lsp.studioPlugin.port",
+                "luduvo-lsp.studioPlugin.port",
               );
             }
           });
@@ -512,13 +512,13 @@ export const onActivate = async (
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      "luau-lsp.regenerateSourcemap",
+      "luduvo-lsp.regenerateSourcemap",
       startSourcemapGenerationForAllFolders,
     ),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("luau-lsp.setupStudioPlugin", () =>
+    vscode.commands.registerCommand("luduvo-lsp.setupStudioPlugin", () =>
       setupStudioPlugin(platformContext.client),
     ),
   );
@@ -526,13 +526,13 @@ export const onActivate = async (
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (
-        e.affectsConfiguration("luau-lsp.sourcemap") ||
-        e.affectsConfiguration("luau-lsp.analyzeLuaFiles")
+        e.affectsConfiguration("luduvo-lsp.sourcemap") ||
+        e.affectsConfiguration("luduvo-lsp.analyzeLuaFiles")
       ) {
         if (vscode.workspace.workspaceFolders) {
           for (const folder of vscode.workspace.workspaceFolders) {
             const config = vscode.workspace.getConfiguration(
-              "luau-lsp.sourcemap",
+              "luduvo-lsp.sourcemap",
               folder,
             );
 
@@ -547,9 +547,9 @@ export const onActivate = async (
           }
         }
       } else if (
-        e.affectsConfiguration("luau-lsp.studioPlugin") ||
-        e.affectsConfiguration("luau-lsp.plugin") ||
-        e.affectsConfiguration("luau-lsp.analyzeLuaFiles")
+        e.affectsConfiguration("luduvo-lsp.studioPlugin") ||
+        e.affectsConfiguration("luduvo-lsp.plugin") ||
+        e.affectsConfiguration("luduvo-lsp.analyzeLuaFiles")
       ) {
         if (getStudioPluginValue("enabled", false)) {
           stopPluginServer(true);
@@ -568,8 +568,10 @@ export const preLanguageServerStart = async (
   context: vscode.ExtensionContext,
 ) => {
   // Load roblox type definitions
-  const typesConfig = vscode.workspace.getConfiguration("luau-lsp.types");
-  const platformConfig = vscode.workspace.getConfiguration("luau-lsp.platform");
+  const typesConfig = vscode.workspace.getConfiguration("luduvo-lsp.types");
+  const platformConfig = vscode.workspace.getConfiguration(
+    "luduvo-lsp.platform",
+  );
 
   // TODO: Cleanup when deprecated luau-lsp.types.roblox is deleted
   // We need to respect the new setting as well as the old setting. We check for "&&" since they are on by default

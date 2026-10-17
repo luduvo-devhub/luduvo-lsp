@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_DIR))
 MODULE_PATH = SCRIPT_DIR / "dumpLuduvoResources.py"
 SPEC = importlib.util.spec_from_file_location("dumpLuduvoResources", MODULE_PATH)

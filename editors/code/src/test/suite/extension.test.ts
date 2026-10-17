@@ -23,4 +23,24 @@ suite("Extension Test Suite", () => {
       "Luduvo platform setting was not registered",
     );
   });
+
+  test("contributed commands use and register the Luduvo namespace", async () => {
+    const extension = vscode.extensions.all.find(
+      (candidate) => candidate.packageJSON.name === "luduvo-lsp",
+    );
+    assert.ok(extension);
+
+    const contributed: Array<{ command: string }> =
+      extension.packageJSON.contributes?.commands ?? [];
+    assert.ok(contributed.length > 0);
+    assert.ok(
+      contributed.every(({ command }) => command.startsWith("luduvo-lsp.")),
+      "all contributed commands should use luduvo-lsp.*",
+    );
+
+    const registered = new Set(await vscode.commands.getCommands(true));
+    for (const { command } of contributed) {
+      assert.ok(registered.has(command), `${command} was not registered`);
+    }
+  });
 });

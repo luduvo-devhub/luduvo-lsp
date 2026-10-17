@@ -88,8 +88,11 @@ target_sources(Luau.LanguageServer PRIVATE
         src/CliConfigurationParser.cpp
         src/platform/AutoImports.cpp
         src/platform/LSPPlatform.cpp
+        src/platform/PlatformDefinitionLoader.cpp
         src/platform/luduvo/LuduvoPlatform.cpp
         src/platform/luduvo/LuduvoDefinitionResolver.cpp
+        src/platform/luduvo/LuduvoHoverAnalysis.cpp
+        src/platform/luduvo/LuduvoHoverRenderer.cpp
         src/platform/luduvo/LuduvoHover.cpp
         src/platform/luduvo/LuduvoCompletion.cpp
         src/platform/luduvo/LuduvoResourceBindings.cpp

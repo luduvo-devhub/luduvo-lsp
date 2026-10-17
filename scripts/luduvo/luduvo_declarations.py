@@ -143,9 +143,23 @@ def parse_declarations(source: str, surface: str) -> list[dict]:
 
 def merge_surfaces(server: list[dict], client: list[dict]) -> list[dict]:
     """Merge equivalent declarations while retaining per-surface symbols."""
-    merged: dict[tuple[str | None, str, str], dict] = {}
+    merged: dict[tuple, dict] = {}
     for record in [*server, *client]:
-        key = (record["owner"], record["name"], record["kind"])
+        # Surface records may share a symbol path while differing in access,
+        # scope, type, or documentation. Only collapse records whose metadata
+        # is genuinely interchangeable; otherwise each documentation symbol
+        # must retain the facts from its own declaration surface.
+        key = (
+            record["owner"],
+            record["name"],
+            record["kind"],
+            record["type"],
+            record["documentation"],
+            tuple(record["directives"]),
+            record["read_only"],
+            record["write_scope"],
+            record["learn_more_link"],
+        )
         existing = merged.get(key)
         if existing is None:
             merged[key] = record.copy()
@@ -154,18 +168,19 @@ def merge_surfaces(server: list[dict], client: list[dict]) -> list[dict]:
         existing["documentation_symbols"] = sorted(
             set(existing["documentation_symbols"] + record["documentation_symbols"])
         )
-        existing["directives"] = sorted(set(existing["directives"] + record["directives"]))
-        existing["read_only"] = existing["read_only"] or record["read_only"]
-        if not existing["documentation"]:
-            existing["documentation"] = record["documentation"]
-        if not existing["type"]:
-            existing["type"] = record["type"]
+
+    available_surfaces: dict[tuple[str | None, str, str], set[str]] = {}
+    for record in merged.values():
+        identity = (record["owner"], record["name"], record["kind"])
+        available_surfaces.setdefault(identity, set()).update(record["surfaces"])
 
     for record in merged.values():
         directives = set(record["directives"])
-        if "server-only" in directives or record["surfaces"] == ["server"]:
+        identity = (record["owner"], record["name"], record["kind"])
+        surfaces = available_surfaces[identity]
+        if "server-only" in directives or surfaces == {"server"}:
             record["scope"] = "server"
-        elif "client-only" in directives or record["surfaces"] == ["client"]:
+        elif "client-only" in directives or surfaces == {"client"}:
             record["scope"] = "client"
         else:
             record["scope"] = "shared"

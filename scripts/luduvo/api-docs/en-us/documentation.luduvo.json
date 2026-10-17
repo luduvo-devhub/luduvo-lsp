@@ -4599,9 +4599,8 @@
     "read_only": true
   },
   "@luduvo/server/global/game.Physics.Gravity": {
-    "documentation": "downward acceleration\n\nWritable only on the server.\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity",
-    "read_only": true
+    "documentation": "downward acceleration\n\nWritable only on the server.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity"
   },
   "@luduvo/server/global/game.Physics.IsSleeping": {
     "documentation": "whether the physics body of an entity sleeps",
@@ -4803,9 +4802,8 @@
     "learn_more_link": null
   },
   "@luduvo/server/global/game.Sound.SurfaceSoundsVolume": {
-    "documentation": "volume of surface contact sounds, 0 to 1\n\nWritable only on the server.\n\nRead only at runtime.",
-    "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume",
-    "read_only": true
+    "documentation": "volume of surface contact sounds, 0 to 1\n\nWritable only on the server.",
+    "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume"
   },
   "@luduvo/server/global/game.Store": {
     "documentation": "saved key stores for player data\n\nRead only at runtime.",
@@ -5085,59 +5083,48 @@
     "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.adornee": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.alwaysOnTop": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.anchorX": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.anchorY": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.clampToScreen": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeEnd": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeStart": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.height": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.maxDistance": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.studsOffset": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/BillboardGuiComponent.width": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/CameraLensComponent": {
     "documentation": "",
@@ -8136,34 +8123,28 @@
     "learn_more_link": null
   },
   "@luduvo/server/globaltype/ToolComponent.equipped": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ToolComponent.gripHand": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ToolComponent.gripOffset": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ToolComponent.gripRotation": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ToolComponent.icon": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ToolComponent.noDrop": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/ToolStateComponent": {
     "documentation": "Server only.",
@@ -8302,29 +8283,24 @@
     "learn_more_link": null
   },
   "@luduvo/server/globaltype/UITailComponent.length": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/UITailComponent.offset": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/UITailComponent.pointAtAdornee": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/UITailComponent.side": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/UITailComponent.width": {
-    "documentation": "Read only at runtime.",
-    "learn_more_link": null,
-    "read_only": true
+    "documentation": "",
+    "learn_more_link": null
   },
   "@luduvo/server/globaltype/World": {
     "documentation": "iterates the entities of the running place and registers the systems that run over them every tick",

@@ -44,7 +44,7 @@ const viewRequireGraph = async (
     path.join(context.extensionPath, "node_modules"),
   );
   const panel = vscode.window.createWebviewPanel(
-    "luau-lsp.require-graph",
+    "luduvo-lsp.require-graph",
     "Luau Require Graph",
     vscode.ViewColumn.Two,
     {
@@ -107,7 +107,7 @@ export const registerRequireGraph = (
 ) => {
   return [
     vscode.commands.registerTextEditorCommand(
-      "luau-lsp.requireGraph",
+      "luduvo-lsp.requireGraph",
       async (textEditor: vscode.TextEditor) => {
         if (isLuauEditor(textEditor)) {
           return viewRequireGraph(context, client, textEditor.document, {
@@ -117,7 +117,7 @@ export const registerRequireGraph = (
       },
     ),
     vscode.commands.registerTextEditorCommand(
-      "luau-lsp.requireGraphForFile",
+      "luduvo-lsp.requireGraphForFile",
       async (textEditor: vscode.TextEditor) => {
         if (isLuauEditor(textEditor)) {
           return viewRequireGraph(context, client, textEditor.document, {

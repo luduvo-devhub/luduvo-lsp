@@ -1897,18 +1897,52 @@
     "kind": "type_member",
     "type": "Instance?",
     "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/BillboardGuiComponent.adornee"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "adornee",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "Instance?",
+    "documentation": "",
     "directives": [
       "read-only"
     ],
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.adornee"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "alwaysOnTop",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.adornee",
-      "@luduvo/server/globaltype/BillboardGuiComponent.adornee"
+      "@luduvo/server/globaltype/BillboardGuiComponent.alwaysOnTop"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -1925,12 +1959,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.alwaysOnTop"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "anchorX",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.alwaysOnTop",
-      "@luduvo/server/globaltype/BillboardGuiComponent.alwaysOnTop"
+      "@luduvo/server/globaltype/BillboardGuiComponent.anchorX"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -1947,12 +1997,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.anchorX"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "anchorY",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.anchorX",
-      "@luduvo/server/globaltype/BillboardGuiComponent.anchorX"
+      "@luduvo/server/globaltype/BillboardGuiComponent.anchorY"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -1969,12 +2035,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.anchorY"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "clampToScreen",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.anchorY",
-      "@luduvo/server/globaltype/BillboardGuiComponent.anchorY"
+      "@luduvo/server/globaltype/BillboardGuiComponent.clampToScreen"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -1991,12 +2073,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.clampToScreen"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "edgeFadeEnd",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.clampToScreen",
-      "@luduvo/server/globaltype/BillboardGuiComponent.clampToScreen"
+      "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeEnd"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -2013,12 +2111,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeEnd"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "edgeFadeStart",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeEnd",
-      "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeEnd"
+      "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeStart"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -2035,12 +2149,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeStart"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "height",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.edgeFadeStart",
-      "@luduvo/server/globaltype/BillboardGuiComponent.edgeFadeStart"
+      "@luduvo/server/globaltype/BillboardGuiComponent.height"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -2057,12 +2187,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.height"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "maxDistance",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.height",
-      "@luduvo/server/globaltype/BillboardGuiComponent.height"
+      "@luduvo/server/globaltype/BillboardGuiComponent.maxDistance"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -2079,12 +2225,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.maxDistance"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "studsOffset",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.maxDistance",
-      "@luduvo/server/globaltype/BillboardGuiComponent.maxDistance"
+      "@luduvo/server/globaltype/BillboardGuiComponent.studsOffset"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -2101,12 +2263,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/BillboardGuiComponent.studsOffset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "width",
+    "owner": "BillboardGuiComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.studsOffset",
-      "@luduvo/server/globaltype/BillboardGuiComponent.studsOffset"
+      "@luduvo/server/globaltype/BillboardGuiComponent.width"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -2123,12 +2301,10 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/BillboardGuiComponent.width",
-      "@luduvo/server/globaltype/BillboardGuiComponent.width"
+      "@luduvo/client/globaltype/BillboardGuiComponent.width"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -16713,18 +16889,52 @@
     "kind": "type_member",
     "type": "number",
     "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/ToolComponent.equipped"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "equipped",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
     "directives": [
       "read-only"
     ],
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.equipped"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "gripHand",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/ToolComponent.equipped",
-      "@luduvo/server/globaltype/ToolComponent.equipped"
+      "@luduvo/server/globaltype/ToolComponent.gripHand"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -16741,12 +16951,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.gripHand"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "gripOffset",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/ToolComponent.gripHand",
-      "@luduvo/server/globaltype/ToolComponent.gripHand"
+      "@luduvo/server/globaltype/ToolComponent.gripOffset"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -16763,12 +16989,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.gripOffset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "gripRotation",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "vector",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/ToolComponent.gripOffset",
-      "@luduvo/server/globaltype/ToolComponent.gripOffset"
+      "@luduvo/server/globaltype/ToolComponent.gripRotation"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -16785,12 +17027,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.gripRotation"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "icon",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "string",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/ToolComponent.gripRotation",
-      "@luduvo/server/globaltype/ToolComponent.gripRotation"
+      "@luduvo/server/globaltype/ToolComponent.icon"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -16807,12 +17065,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/ToolComponent.icon"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "noDrop",
+    "owner": "ToolComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/ToolComponent.icon",
-      "@luduvo/server/globaltype/ToolComponent.icon"
+      "@luduvo/server/globaltype/ToolComponent.noDrop"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -16829,12 +17103,10 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/ToolComponent.noDrop",
-      "@luduvo/server/globaltype/ToolComponent.noDrop"
+      "@luduvo/client/globaltype/ToolComponent.noDrop"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -17483,18 +17755,52 @@
     "kind": "type_member",
     "type": "number",
     "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
+      "server"
+    ],
+    "documentation_symbols": [
+      "@luduvo/server/globaltype/UITailComponent.length"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "length",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
     "directives": [
       "read-only"
     ],
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.length"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "offset",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/UITailComponent.length",
-      "@luduvo/server/globaltype/UITailComponent.length"
+      "@luduvo/server/globaltype/UITailComponent.offset"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -17511,12 +17817,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.offset"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "pointAtAdornee",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "boolean",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/UITailComponent.offset",
-      "@luduvo/server/globaltype/UITailComponent.offset"
+      "@luduvo/server/globaltype/UITailComponent.pointAtAdornee"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -17533,12 +17855,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.pointAtAdornee"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "side",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/UITailComponent.pointAtAdornee",
-      "@luduvo/server/globaltype/UITailComponent.pointAtAdornee"
+      "@luduvo/server/globaltype/UITailComponent.side"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -17555,12 +17893,28 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/globaltype/UITailComponent.side"
+    ],
+    "learn_more_link": null,
+    "scope": "shared"
+  },
+  {
+    "name": "width",
+    "owner": "UITailComponent",
+    "kind": "type_member",
+    "type": "number",
+    "documentation": "",
+    "directives": [],
+    "read_only": false,
+    "write_scope": null,
+    "surfaces": [
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/UITailComponent.side",
-      "@luduvo/server/globaltype/UITailComponent.side"
+      "@luduvo/server/globaltype/UITailComponent.width"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -17577,12 +17931,10 @@
     "read_only": true,
     "write_scope": null,
     "surfaces": [
-      "client",
-      "server"
+      "client"
     ],
     "documentation_symbols": [
-      "@luduvo/client/globaltype/UITailComponent.width",
-      "@luduvo/server/globaltype/UITailComponent.width"
+      "@luduvo/client/globaltype/UITailComponent.width"
     ],
     "learn_more_link": null,
     "scope": "shared"
@@ -19586,15 +19938,31 @@
     "type": "number",
     "documentation": "downward acceleration",
     "directives": [],
-    "read_only": true,
+    "read_only": false,
     "write_scope": "server",
     "surfaces": [
-      "client",
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Physics.Gravity",
       "@luduvo/server/global/game.Physics.Gravity"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity",
+    "scope": "shared"
+  },
+  {
+    "name": "Gravity",
+    "owner": "game.Physics",
+    "kind": "global_member",
+    "type": "number",
+    "documentation": "downward acceleration",
+    "directives": [],
+    "read_only": true,
+    "write_scope": "server",
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Physics.Gravity"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Physics#Gravity",
     "scope": "shared"
@@ -20496,15 +20864,31 @@
     "type": "number",
     "documentation": "volume of surface contact sounds, 0 to 1",
     "directives": [],
-    "read_only": true,
+    "read_only": false,
     "write_scope": "server",
     "surfaces": [
-      "client",
       "server"
     ],
     "documentation_symbols": [
-      "@luduvo/client/global/game.Sound.SurfaceSoundsVolume",
       "@luduvo/server/global/game.Sound.SurfaceSoundsVolume"
+    ],
+    "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume",
+    "scope": "shared"
+  },
+  {
+    "name": "SurfaceSoundsVolume",
+    "owner": "game.Sound",
+    "kind": "global_member",
+    "type": "number",
+    "documentation": "volume of surface contact sounds, 0 to 1",
+    "directives": [],
+    "read_only": true,
+    "write_scope": "server",
+    "surfaces": [
+      "client"
+    ],
+    "documentation_symbols": [
+      "@luduvo/client/global/game.Sound.SurfaceSoundsVolume"
     ],
     "learn_more_link": "https://docs.luduvo.com/reference/Sound#SurfaceSoundsVolume",
     "scope": "shared"

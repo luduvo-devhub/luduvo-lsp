@@ -248,40 +248,38 @@ TEST_CASE_FIXTURE(Fixture, "type_functions_in_definition_files_work")
 
 TEST_SUITE_END();
 
+TEST_SUITE_BEGIN("LuduvoDefinitions");
+
 TEST_CASE("luduvo_platform_loads_bundled_definitions_without_client_files")
 {
-    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
-    TestClient client;
-    auto config = defaultTestClientConfiguration();
-    config.platform.type = LSPPlatformConfig::Luduvo;
-    client.globalConfig = config;
-    WorkspaceFolder workspace(&client, "$LUDUVO_TEST", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
-    workspace.setupWithConfiguration(config);
-    workspace.isReady = true;
-    REQUIRE(client.definitionsFiles.empty());
-    auto document = newDocument(workspace, "luduvo-test.luau", R"(
+    LuduvoFixture fixture("luduvo_bundled_definitions");
+    REQUIRE(fixture.client.definitionsFiles.empty());
+    CHECK_EQ(fixture.config.platform.luduvo.dataDirectory, fixture.tempDir.path());
+    auto document = fixture.newDocument("luduvo-test.luau", R"(
         --!strict
         local entity: Instance = self
         entity.Anchored = true
         local physics = game.Physics
     )");
-    auto result = workspace.frontend.check(workspace.fileResolver.getModuleName(document));
+    auto result = fixture.workspace.frontend.check(fixture.workspace.fileResolver.getModuleName(document));
     REQUIRE(result.errors.empty());
 
-    auto badDocument = newDocument(workspace, "luduvo-bad.luau", R"(
+    auto badDocument = fixture.newDocument("luduvo-bad.luau", R"(
         --!strict
         self.Anchored = "wrong"
     )");
-    auto badResult = workspace.frontend.check(workspace.fileResolver.getModuleName(badDocument));
+    auto badResult = fixture.workspace.frontend.check(fixture.workspace.fileResolver.getModuleName(badDocument));
     REQUIRE_EQ(badResult.errors.size(), 1);
 }
 
 TEST_CASE("luduvo_platform_ignores_unused_lifecycle_functions")
 {
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_lifecycle_functions");
     TestClient client;
     auto config = defaultTestClientConfiguration();
     config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
     client.globalConfig = config;
     WorkspaceFolder workspace(&client, "$LUDUVO_LINT_TEST", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
     workspace.setupWithConfiguration(config);
@@ -342,8 +340,7 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
     CHECK(json(config)["platform"]["luduvo"]["resources"]["groups"]["component"]["sources"] == json::array({"test-components"}));
     CHECK(json(config)["platform"]["luduvo"]["resources"]["groups"]["prefab"]["sources"] == json::array());
     CHECK(json(config)["platform"]["luduvo"]["resources"]["sources"]["test-components"]["provider"] == "static");
-    CHECK(json(config)["platform"]["luduvo"]["resources"]["sources"]["test-components"]["values"] ==
-          json::array({"Health", "Position"}));
+    CHECK(json(config)["platform"]["luduvo"]["resources"]["sources"]["test-components"]["values"] == json::array({"Health", "Position"}));
     CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["parameter"] == "components");
     CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["variadic"]);
     CHECK(json(config)["platform"]["luduvo"]["resources"]["bindings"][0]["pluralResourceNoun"]);
@@ -381,9 +378,11 @@ TEST_CASE("luduvo_is_the_default_platform")
 TEST_CASE("luduvo_platform_selects_server_and_client_types_from_file_names")
 {
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_surface_types");
     TestClient client;
     auto config = defaultTestClientConfiguration();
     config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
     client.globalConfig = config;
     WorkspaceFolder workspace(&client, "$LUDUVO_SURFACE_TEST", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
     workspace.setupWithConfiguration(config);
@@ -404,9 +403,11 @@ TEST_CASE("luduvo_platform_selects_server_and_client_types_from_file_names")
 TEST_CASE("luduvo_platform_exposes_named_types_in_side_specific_environments")
 {
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_side_specific_named_types");
     TestClient client;
     auto config = defaultTestClientConfiguration();
     config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
     config.platform.luduvo.definitions.exposePrivateTypes = true;
     client.globalConfig = config;
     WorkspaceFolder workspace(&client, "$LUDUVO_NAMED_TYPE_TEST", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
@@ -445,6 +446,7 @@ TEST_CASE("luduvo_platform_can_leave_private_definition_types_private")
     TestClient client;
     auto config = defaultTestClientConfiguration();
     config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
     config.platform.luduvo.definitions.serverOverride = serverDefinitions;
     config.platform.luduvo.definitions.exposePrivateTypes = false;
     client.globalConfig = config;
@@ -462,9 +464,11 @@ TEST_CASE("luduvo_platform_can_leave_private_definition_types_private")
 TEST_CASE("luduvo_platform_uses_configured_default_and_exact_script_suffixes")
 {
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
+    TempDir temp("luduvo_default_script_side");
     TestClient client;
     auto config = defaultTestClientConfiguration();
     config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
     config.platform.luduvo.definitions.defaultScriptSide = LuduvoScriptSide::Client;
     client.globalConfig = config;
     WorkspaceFolder workspace(&client, "$LUDUVO_DEFAULT_TEST", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
@@ -601,6 +605,7 @@ TEST_CASE("luduvo_global_definitions_policy_selects_definition_sources")
         TestClient client;
         auto config = defaultTestClientConfiguration();
         config.platform.type = LSPPlatformConfig::Luduvo;
+        config.platform.luduvo.dataDirectory = temp.path();
         config.platform.luduvo.definitions.globalPolicy = testCase.policy;
         client.globalConfig = config;
         client.definitionsFiles["@custom"] = definitions;
@@ -628,6 +633,7 @@ TEST_CASE("luduvo_definition_conflict_winner_controls_colliding_globals")
         TestClient client;
         auto config = defaultTestClientConfiguration();
         config.platform.type = LSPPlatformConfig::Luduvo;
+        config.platform.luduvo.dataDirectory = temp.path();
         config.platform.luduvo.definitions.globalPolicy = LuduvoGlobalDefinitionsPolicy::Combine;
         config.platform.luduvo.definitions.conflictWinner = winner;
         client.globalConfig = config;
@@ -651,9 +657,11 @@ TEST_CASE("luduvo_definition_conflict_winner_controls_colliding_globals")
 TEST_CASE("luduvo_official_definitions_report_an_unmet_solver_requirement")
 {
     ScopedFastFlag solverFlag{FFlag::LuauSolverV2, false};
+    TempDir temp("luduvo_solver_requirement");
     TestClient client;
     auto config = defaultTestClientConfiguration();
     config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
     config.platform.luduvo.definitions.globalPolicy = LuduvoGlobalDefinitionsPolicy::LuduvoOnly;
     client.globalConfig = config;
     WorkspaceFolder workspace(&client, "$LUDUVO_SOLVER_REQUIREMENT", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
@@ -684,6 +692,7 @@ TEST_CASE("definition_files_only_does_not_require_solver_v2")
     TestClient client;
     auto config = defaultTestClientConfiguration();
     config.platform.type = LSPPlatformConfig::Luduvo;
+    config.platform.luduvo.dataDirectory = temp.path();
     config.platform.luduvo.definitions.globalPolicy = LuduvoGlobalDefinitionsPolicy::DefinitionFilesOnly;
     client.globalConfig = config;
     client.definitionsFiles["@custom"] = definitions;
@@ -695,3 +704,5 @@ TEST_CASE("definition_files_only_does_not_require_solver_v2")
     CHECK(workspace.frontend.check(workspace.fileResolver.getModuleName(document)).errors.empty());
     CHECK(client.requestQueue.empty());
 }
+
+TEST_SUITE_END();

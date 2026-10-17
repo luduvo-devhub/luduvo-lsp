@@ -219,7 +219,7 @@ const getBytecodeInfo = (
         if (isLuauEditor(textEditor)) {
           optimizationLevel = await getOptimizationLevel();
 
-          if (command === "luau-lsp.computeCodeGen") {
+          if (command === "luduvo-lsp.computeCodeGen") {
             codeGenTarget = await getCodeGenTarget();
           }
 
@@ -242,7 +242,7 @@ export const registerComputeBytecode = (
   return getBytecodeInfo(
     context,
     client,
-    "luau-lsp.computeBytecode",
+    "luduvo-lsp.computeBytecode",
     BYTECODE_SCHEME,
     "bytecode",
     BytecodeRequest,
@@ -256,7 +256,7 @@ export const registerComputeCompilerRemarks = (
   return getBytecodeInfo(
     context,
     client,
-    "luau-lsp.computeCompilerRemarks",
+    "luduvo-lsp.computeCompilerRemarks",
     COMPILER_REMARKS_SCHEME,
     "compiler-remarks",
     ComputeCompilerRemarksRequest,
@@ -270,7 +270,7 @@ export const registerComputeCodeGen = (
   return getBytecodeInfo(
     context,
     client,
-    "luau-lsp.computeCodeGen",
+    "luduvo-lsp.computeCodeGen",
     CODEGEN_SCHEME,
     "codeGen",
     ComputeCodeGenRequest,

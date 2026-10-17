@@ -7,9 +7,7 @@ TEST_SUITE_BEGIN("SignatureHelp");
 
 TEST_CASE("luduvo_rich_signature_help_documentation_matches_hover_presentation")
 {
-    ScopedFastFlag solverFlag{FFlag::LuauSolverV2, true};
-    TempDir temp("luduvo_rich_signature_help_docs");
-    const std::string definitions = temp.write_child("luduvo.d.luau", R"(
+    const std::string definitions = R"(
         declare extern type Pair with
         end
         declare extern type Query with
@@ -19,29 +17,22 @@ TEST_CASE("luduvo_rich_signature_help_documentation_matches_hover_presentation")
                 Query: (...string | Pair) -> Query,
             },
         }
-    )");
+    )";
 
-    TestClient client;
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.type = LSPPlatformConfig::Luduvo;
-    config.platform.luduvo.definitions.serverOverride = definitions;
-    config.platform.luduvo.definitions.clientOverride = definitions;
-    client.globalConfig = config;
-
-    WorkspaceFolder workspace(&client, "$LUDUVO_RICH_SIGNATURE_HELP_DOCS", Uri::file(*Luau::FileUtils::getCurrentWorkingDirectory()), std::nullopt);
-    workspace.setupWithConfiguration(config);
-    workspace.isReady = true;
-    client.documentation["@luduvo/server/global/game.World.Query"] =
+    LuduvoFixture fixture("luduvo_rich_signature_help_docs", config, definitions, definitions);
+    fixture.client.documentation["@luduvo/server/global/game.World.Query"] =
         Luau::BasicDocumentation{"Find entities with a component", "https://docs.luduvo.com/reference/World#Query", ""};
-    client.documentation["@luduvo/server/global/game.World.Query/param/0"] = Luau::BasicDocumentation{"The component name to require", "", ""};
+    fixture.client.documentation["@luduvo/server/global/game.World.Query/param/0"] =
+        Luau::BasicDocumentation{"The component name to require", "", ""};
 
     auto [source, marker] = sourceWithMarker("game.World.Query(|)");
-    auto uri = Luau::LanguageServer::newDocument(workspace, "query.server.luau", source);
+    auto uri = fixture.newDocument("query.server.luau", source);
     lsp::SignatureHelpParams params;
     params.textDocument = lsp::TextDocumentIdentifier{uri};
     params.position = marker;
 
-    auto result = workspace.signatureHelp(params, nullptr);
+    auto result = fixture.workspace.signatureHelp(params, nullptr);
     REQUIRE(result);
     REQUIRE_EQ(result->signatures.size(), 1);
     REQUIRE(result->signatures[0].documentation);

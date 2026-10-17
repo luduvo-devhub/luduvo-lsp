@@ -125,9 +125,11 @@ public:
     /// Loads a single definition file into the frontend globals (and autocomplete globals for old solver).
     /// Applies platform mutations and stores the checked module in definitionsFileState.
     /// Callers are responsible for unfreezing/freezing the global type arenas.
-    Luau::LoadDefinitionFileResult loadDefinitionFile(
-        const std::string& packageName, const std::string& source, std::optional<nlohmann::json> metadata = std::nullopt,
-        std::optional<Luau::ScopePtr> targetScope = std::nullopt, bool exposePrivateTypes = false);
+    Luau::LoadDefinitionFileResult loadDefinitionFile(const std::string& packageName, const std::string& source,
+        std::optional<nlohmann::json> metadata = std::nullopt, std::optional<Luau::ScopePtr> targetScope = std::nullopt,
+        bool exposePrivateTypes = false);
+
+    void setDefinitionFileSource(const std::string& packageName, const Uri& uri, const std::string& source);
 
 private:
     void registerTypes(const std::vector<std::string>& disabledGlobals);

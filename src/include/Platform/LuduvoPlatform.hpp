@@ -21,6 +21,7 @@ public:
     std::vector<PlatformDefinitionEnvironment> getDefinitionEnvironments() const override;
     PlatformDefinitionConfiguration getDefinitionConfiguration() const override;
     std::vector<PlatformRequirement> getRequirements(bool platformDefinitionsActive) const override;
+    void reportDefinitionLoadWarnings(Client* client, const std::vector<std::string>& warnings) const override;
     std::optional<std::string> getEnvironmentForModule(const Luau::ModuleName& moduleName) const override;
     void setupWithConfiguration(const ClientConfiguration& config) override;
     bool isLintIgnored(const Luau::LintWarning& lint) const override;

@@ -83,6 +83,23 @@ struct Fixture
     void switchToStandardPlatform();
 };
 
+/// Isolated Luduvo workspace for operation and definition tests. The data
+/// directory always points inside the fixture unless a test explicitly
+/// supplies another one, so an installed Luduvo cannot affect test behavior.
+struct LuduvoFixture
+{
+    ScopedFastFlag solverFlag;
+    TestClient client;
+    TempDir tempDir;
+    ClientConfiguration config;
+    WorkspaceFolder workspace;
+
+    explicit LuduvoFixture(const std::string& name, ClientConfiguration config = Luau::LanguageServer::defaultTestClientConfiguration(),
+        std::optional<std::string> serverDefinitions = std::nullopt, std::optional<std::string> clientDefinitions = std::nullopt);
+
+    Uri newDocument(const std::string& name, const std::string& source);
+};
+
 #define LUAU_LSP_REQUIRE_ERRORS(result) \
     do \
     { \

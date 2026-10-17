@@ -693,6 +693,8 @@ lsp::InitializeResult LanguageServer::onInitialize(const lsp::InitializeParams& 
         try
         {
             InitializationOptions options = params.initializationOptions.value();
+            if (options.configurationSection && !options.configurationSection->empty())
+                client->configurationSection = *options.configurationSection;
             if (!options.fflags.empty())
             {
                 registerFastFlags(
