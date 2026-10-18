@@ -31,6 +31,7 @@ Then you'll probable be fine
 
 <!-- luduvo-api-stats:start -->
 As of Luduvo 51, the prefab section of `resources.luduvo.json`, `globalTypes.luduvo.client.d.luau`, and `globalTypes.luduvo.server.d.luau` files inside Luduvo LSP are essentially copy/pasted global type files straight from Luduvo itself (you can find them in the `prefabs/` and `defs/` directory of your Luduvo install's roaming data equivalent respectively). The components side of `resources.luduvo.json` was dumped from Luduvo's `LuduvoEditor.exe`. Currently, these files contain ~1340 entries spanning across:
+
 ```text
 ├── 1,080 API entries (508 documented)
 │   ├── 896 Entries under 55 Global Types (325 documented)
