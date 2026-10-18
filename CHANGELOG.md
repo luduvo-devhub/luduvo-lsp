@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- game.World.Pair no longer internally has components as its resource for the relation parameter
+
 ## [1.70.4L-alpha] - 2026-10-18
 
 ### Added

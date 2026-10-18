@@ -5,7 +5,7 @@ if part then
     part.Position = Vector3.new(0, 10, 0)
     part.Anchored = true
     part.Color = Color3.new(0.2, 0.6, 1)
-    game.Tags.Add(part, "Example")
+    part:AddComponent(game.World.Pair("tag", "Example"))
 end
 
 local finishMe = game.
