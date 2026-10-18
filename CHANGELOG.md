@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.70.4L-alpha] - 2026-10-18
+
 ### Added
 
 - Resources now can have markdown doc strings associated with them, meaning that you can add descriptions to individual resources now
 - Builtin Component Resources now provide doc strings when applicable (not all components have doc strings internally)
   - You can use them via the new `documentation` field in the values section of resource config files:
+
 ```jsonc
 "luduvo": {
   "resources": {
@@ -29,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   }
 }
 ```
+
 - More testing files have been added for the python scripts, and the CI workflow now runs them before using them
 - A nice little counter program that generates a tree from the luduvo definition files
 
