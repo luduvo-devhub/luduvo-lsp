@@ -38,6 +38,13 @@ jobs:
             --content-manifest-url https://api.luduvo.com/content/manifest \
             --generate
 
+      - name: Refresh README API stats
+        run: |
+          luduvo_version="$(cd scripts/luduvo && python -c 'from dumpLuduvoResources import release_manifest; print(release_manifest()["version"])')"
+          python scripts/luduvo/countLuduvoApi.py \
+            --luduvo-version "$luduvo_version" \
+            --update-readme README.md
+
       - name: Create Pull Request
         id: create_pull_request
         uses: peter-evans/create-pull-request@v8

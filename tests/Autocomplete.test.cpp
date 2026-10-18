@@ -135,10 +135,20 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
         declare extern type Component with
         end
         declare instance: Instance
+        type World = {
+            -- iterate entities holding a component
+            Each: ((component: string | Pair) -> () -> Instance?) & ((self: World, component: string | Pair) -> () -> Instance?),
+            -- test whether the World holds a component
+            HasComponent: ((component: string | Pair) -> boolean) & ((self: World, component: string | Pair) -> boolean),
+            -- construct a relationship pair
+            Pair: ((relation: string, target: Instance | World | string) -> Pair) & ((self: World, relation: string, target: Instance | World | string) -> Pair),
+            -- build a cached component query
+            Query: ((...string | Pair) -> Query) & ((self: World, ...string | Pair) -> Query),
+            -- spawn an entity with components
+            Spawn: ((...string | Pair) -> Instance) & ((self: World, ...string | Pair) -> Instance),
+        }
         declare game: {
-            World: {
-                Query: (...string | Pair) -> Query,
-            },
+            World: World,
             Prefabs: {
                 Spawn: (name: string) -> Instance?,
                 RevertAddedComponent: (entity: Instance, name: string) -> (),
@@ -154,6 +164,7 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     )";
 
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.definitions.exposePrivateTypes = true;
     config.platform.luduvo.resources.sources["test-components"].values = {"Position", "Health", "Health"};
     config.platform.luduvo.resources.sources["test-prefabs"].values = {"Crate", "Folder/Enemy"};
     config.platform.luduvo.resources.groups["component"] = {"string", false, {"test-components"}};
@@ -201,6 +212,10 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
 
     auto variadicArgument = complete("game.World.Query(\"Health\", \"|\")");
     CHECK(getItem(variadicArgument, "Position"));
+    CHECK(getItem(complete("game.World.Each(\"|\")"), "Health"));
+    CHECK(getItem(complete("game.World.HasComponent(\"|\")"), "Health"));
+    CHECK(getItem(complete("game.World.Pair(\"|\", instance)"), "Health"));
+    CHECK(getItem(complete("game.World.Spawn(\"Health\", \"|\")"), "Position"));
 
     CHECK(getItem(complete("instance:AddComponent(\"|\")"), "Health"));
     CHECK(getItem(complete("instance:AddComponent(\"Health\", \"|\")"), "Position"));
@@ -264,13 +279,19 @@ TEST_CASE("luduvo_resource_completion_uses_fragment_type_information")
 TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
 {
     const std::string definitions = R"(
+        type World = {
+            -- iterate entities holding a component
+            Each: ((component: string) -> () -> {}?) & ((self: World, component: string) -> () -> {}?),
+        }
         declare game: {
+            World: World,
             Prefabs: { Spawn: (name: string) -> {}? },
         }
     )";
 
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.luduvo.resources.sources["project-prefabs"].values = {"MyProjectPrefab"};
+    config.platform.luduvo.resources.sources["project-prefabs"].values = {
+        ClientLuduvoResourcesConfiguration::Source::Value{"MyProjectPrefab", "A project-defined prefab"}};
     config.platform.luduvo.resources.groups["prefab"] = {"string", true, {"project-prefabs"}};
     LuduvoFixture fixture("luduvo_resource_group_completion", config, definitions, definitions);
 
@@ -287,13 +308,29 @@ TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
     const auto custom = requireItem(items, "MyProjectPrefab");
     CHECK_EQ(custom.labelDetails, std::nullopt);
     CHECK_EQ(custom.detail, "prefab");
+    REQUIRE(custom.documentation);
+    CHECK(custom.documentation->value.find("# MyProjectPrefab\n`prefab`") == 0);
+    CHECK(custom.documentation->value.find("A project-defined prefab") != std::string::npos);
+
+    auto [componentSource, componentMarker] = sourceWithMarker("game.World.Each(\"|\")");
+    auto componentUri = fixture.newDocument("resource-components.server.luau", componentSource);
+    params.textDocument = lsp::TextDocumentIdentifier{componentUri};
+    params.position = componentMarker;
+    const auto component = requireItem(fixture.workspace.completion(params, nullptr), "AdornmentHandles");
+    REQUIRE(component.documentation);
+    CHECK(component.documentation->value.find("# AdornmentHandles\n`component` · `built-in`") == 0);
+    CHECK(component.documentation->value.find("3D drag handles") != std::string::npos);
 }
 
 TEST_CASE("luduvo_resource_completion_honors_empty_groups_and_disables")
 {
     const std::string definitions = R"(
+        type World = {
+            -- iterate entities holding a component
+            Each: ((component: string) -> () -> Instance?) & ((self: World, component: string) -> () -> Instance?),
+        }
         declare game: {
-            World: { Each: (component: string) -> () -> Instance? },
+            World: World,
             Prefabs: { Spawn: (name: string) -> Instance? },
         }
     )";

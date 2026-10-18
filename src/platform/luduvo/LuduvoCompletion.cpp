@@ -133,6 +133,21 @@ std::optional<lsp::Range> resourceCompletionRange(
     return std::nullopt;
 }
 
+std::string resourceCompletionDocumentation(
+    const ClientLuduvoConfiguration& configuration, const LuduvoResourceGroup& group, const LuduvoResourceName& resource)
+{
+    if (!resource.documentation)
+        return {};
+    if (configuration.hover.presentation == LuduvoHoverPresentation::Standard)
+        return *resource.documentation;
+
+    std::string result = "# " + resource.name + "\n`" + group.kind + "`";
+    if (resource.builtIn)
+        result += " · `built-in`";
+    result += "\n\n" + *resource.documentation;
+    return result;
+}
+
 } // namespace
 
 void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
@@ -195,6 +210,8 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
         item.label = name;
         item.kind = lsp::CompletionItemKind::Constant;
         item.detail = resource.builtIn ? "Luduvo " + resourceGroup->kind + " (built-in)" : resourceGroup->kind;
+        if (std::string documentation = resourceCompletionDocumentation(configuration, *resourceGroup, resource); !documentation.empty())
+            item.documentation = lsp::MarkupContent{lsp::MarkupKind::Markdown, std::move(documentation)};
         item.sortText = name;
         item.filterText = name;
         item.textEdit = lsp::TextEdit{*replacementRange, "\"" + Luau::escape(name) + "\""};

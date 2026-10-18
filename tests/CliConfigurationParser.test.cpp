@@ -40,7 +40,10 @@ TEST_CASE("convert dotted Luduvo resource configuration")
             },
             "luau-lsp.platform.luduvo.resources.sources": {
                 "default-states": {"provider": "static", "values": ["Idle", "Running"]},
-                "project-prefabs": {"provider": "static", "values": ["Test"]}
+                "project-prefabs": {
+                    "provider": "static",
+                    "values": [{"name": "Test", "documentation": "Project test prefab"}]
+                }
             },
             "luau-lsp.platform.luduvo.resources.bindings": [
                 {
@@ -60,6 +63,7 @@ TEST_CASE("convert dotted Luduvo resource configuration")
     CHECK(resources["groups"]["animation-state"]["sources"] == json::array({"default-states"}));
     CHECK(resources["groups"]["prefab"]["includeBuiltins"]);
     CHECK(resources["sources"]["default-states"]["values"] == json::array({"Idle", "Running"}));
+    CHECK(resources["sources"]["project-prefabs"]["values"][0]["documentation"] == "Project test prefab");
     CHECK(resources["bindings"][0]["parameter"] == "components");
     CHECK(resources["bindings"][0]["variadic"]);
     CHECK(resources["bindings"][0]["pluralResourceNoun"]);

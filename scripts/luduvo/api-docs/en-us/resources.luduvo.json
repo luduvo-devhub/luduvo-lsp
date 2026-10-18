@@ -1,231 +1,867 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "luduvoContentVersion": "11",
   "resources": {
     "component": [
-      "Admin",
-      "AdornmentHandles",
-      "AeroSurface",
-      "AirControl",
-      "Ambient",
-      "Anchored",
-      "AtmosphereSky",
-      "Attachment",
-      "AutoLocomotion",
-      "AutoRotate",
-      "Background",
-      "Backpack",
-      "BackpackSlot",
-      "Billboard",
-      "BillboardOnTop",
-      "BodyPart",
-      "BrickColor",
-      "CameraFly",
-      "CameraLens",
-      "CameraOrbit",
-      "Character",
-      "CharacterAnimation",
-      "CharacterAppearance",
-      "CharacterGravity",
-      "CharacterPhysics",
-      "CharacterPose",
-      "CharacterRig",
-      "CharacterSurfaceAlign",
-      "CharacterTuning",
-      "ClickDetector",
-      "Climbable",
-      "CloudModelSettings",
-      "CloudNoiseSettings",
-      "Clouds",
-      "Collider",
-      "CollisionGroup",
-      "CollisionMatrix",
-      "ConsoleAction",
-      "ConsolePrompt",
-      "ConsoleRowLine",
-      "ConsoleRowPrefix",
-      "ContinuousCollision",
-      "CoreMenuAction",
-      "CoreMenuPage",
-      "CoreSettingBind",
-      "Decal",
-      "DirectionalLight",
-      "DisplayName",
-      "DynamicMesh",
-      "Exposure",
-      "Fog",
-      "Health",
-      "HingeJoint",
-      "HumanoidState",
-      "Identity",
-      "Invulnerable",
-      "Kinematic",
-      "LastHit",
-      "LensFlare",
-      "Lifetime",
-      "Light",
-      "LightShadowOff",
-      "LimbAttachment",
-      "LocalTransform",
-      "Locked",
-      "Locomotion",
-      "Mesh",
-      "MultiJump",
-      "Name",
-      "NoContactFriction",
-      "PanoramaSky",
-      "PhysicalSurfaceOverride",
-      "PlatformAvatarConfig",
-      "PlatformDisablesMask",
-      "Player",
-      "Position",
-      "PrefabAnchor",
-      "PrefabInstance",
-      "PrefabNodeId",
-      "RenderDisabled",
-      "RigidBody",
-      "RootMotion",
-      "RopeConstraint",
-      "Rotation",
-      "Scale",
-      "ScriptHandles",
-      "ScriptRef",
-      "Seat",
-      "SessionOwner",
-      "ShadowOff",
-      "Shape",
-      "SixSidedSky",
-      "Sound",
-      "SoundAttenuation",
-      "SoundBus",
-      "SoundCone",
-      "SoundConfig",
-      "SoundLooped",
-      "SoundPaused",
-      "SoundPlaying",
-      "SoundPolyphony",
-      "SpawnPoint",
-      "SpotCone",
-      "StableId",
-      "StreamingConfig",
-      "SurfaceAppearance",
-      "SurfaceMaterial",
-      "SuspensionConfig",
-      "SwingTwistJoint",
-      "TargetYaw",
-      "Team",
-      "TextMenuItem",
-      "Timer",
-      "TimerAutostart",
-      "TimerOneShot",
-      "TimerPaused",
-      "TirePatchConfig",
-      "Transient",
-      "Transparency",
-      "Trigger",
-      "UIArrowButton",
-      "UIBusyBar",
-      "UICheckbox",
-      "UIChecked",
-      "UIClickable",
-      "UIClips",
-      "UIColorButton",
-      "UIColorPicker",
-      "UIColorPickerState",
-      "UIColumnWidths",
-      "UIConsoleText",
-      "UICorner",
-      "UIDialog",
-      "UIDisabled",
-      "UIDropdown",
-      "UIFitColumns",
-      "UIFloatSlider",
-      "UIFloatSliderValue",
-      "UIFoldable",
-      "UIFrame",
-      "UIFreezeRows",
-      "UIGraph",
-      "UIGraphConfig",
-      "UIGraphLink",
-      "UIGraphPort",
-      "UIGridLayout",
-      "UIHeaderCell",
-      "UIHidden",
-      "UIIcon",
-      "UIImage",
-      "UIImageStates",
-      "UIItemList",
-      "UIItemListState",
-      "UIJoystick",
-      "UIJoystickState",
-      "UILinkButton",
-      "UIListClipper",
-      "UIListLayout",
-      "UIListStripe",
-      "UIMenu",
-      "UIMenuCheck",
-      "UIMenuOpen",
-      "UIMenuRadio",
-      "UIMultiSelect",
-      "UINumberField",
-      "UINumberValue",
-      "UIOrder",
-      "UIPlot",
-      "UIPopup",
-      "UIPopupOpen",
-      "UIProgressBar",
-      "UIProgressValue",
-      "UIRadialFill",
-      "UIRadioButton",
-      "UIRadioGroup",
-      "UIRadioSelected",
-      "UIRect",
-      "UIRepeat",
-      "UIResizableColumns",
-      "UIRoot",
-      "UIScrollBar",
-      "UIScrollBarValue",
-      "UIScrollFollowing",
-      "UIScrollingFrame",
-      "UISearchBox",
-      "UISelected",
-      "UISeparator",
-      "UIShortcut",
-      "UISlider",
-      "UISliderArt",
-      "UISliderFormat",
-      "UISliderRange",
-      "UISliderState",
-      "UISliderTicks",
-      "UIStroke",
-      "UISurface",
-      "UISurfaceAlwaysOnTop",
-      "UITableBorders",
-      "UITableHeader",
-      "UITabs",
-      "UITextInput",
-      "UITextSource",
-      "UITextStyle",
-      "UITextWrapped",
-      "UIToggle",
-      "UIToggleArt",
-      "UIToggleButton",
-      "UIToggleMixed",
-      "UIToggleOn",
-      "UITreeFolded",
-      "UITreeView",
-      "UIVectorField",
-      "UIVectorValue",
-      "UIWindow",
-      "UvTransform",
-      "VehicleSeat",
-      "Velocity",
-      "ViewSource",
-      "Weld",
-      "WeldBreak",
-      "WorldConfig",
-      "WorldLimits",
-      "Worn"
+      {
+        "name": "Admin",
+        "documentation": "Marks a player entity with administrator privileges"
+      },
+      {
+        "name": "AdornmentHandles",
+        "documentation": "3D drag handles drawn on an adornee entity"
+      },
+      {
+        "name": "AeroSurface"
+      },
+      {
+        "name": "AirControl",
+        "documentation": "Enables classic air strafing: preserves speed when coasting, accelerates when turning into a strafe"
+      },
+      {
+        "name": "Ambient"
+      },
+      {
+        "name": "Anchored"
+      },
+      {
+        "name": "AtmosphereSky"
+      },
+      {
+        "name": "Attachment"
+      },
+      {
+        "name": "AutoLocomotion",
+        "documentation": "Automatic walk/idle/jump clip selection from velocity and state"
+      },
+      {
+        "name": "AutoRotate",
+        "documentation": "The character turns to the move direction"
+      },
+      {
+        "name": "Background",
+        "documentation": "What the camera sees behind the world: a color, or the sky component on this entity"
+      },
+      {
+        "name": "Backpack",
+        "documentation": "Holds equipped and stored tool prefab ids"
+      },
+      {
+        "name": "BackpackSlot",
+        "documentation": "Assigns a tool to an unbounded backpack slot"
+      },
+      {
+        "name": "Billboard",
+        "documentation": "Camera-facing text anchored to the entity"
+      },
+      {
+        "name": "BillboardGui"
+      },
+      {
+        "name": "BillboardOnTop",
+        "documentation": "The Billboard draws over walls instead of behind them"
+      },
+      {
+        "name": "BodyPart",
+        "documentation": "Which body part this child entity is"
+      },
+      {
+        "name": "BrickColor"
+      },
+      {
+        "name": "CameraFly"
+      },
+      {
+        "name": "CameraLens"
+      },
+      {
+        "name": "CameraOrbit"
+      },
+      {
+        "name": "Character"
+      },
+      {
+        "name": "CharacterAnimation",
+        "documentation": "Attaches an Animator once the six body parts exist"
+      },
+      {
+        "name": "CharacterAppearance"
+      },
+      {
+        "name": "CharacterGravity",
+        "documentation": "The character falls along its own Gravity Vector and stands up along its own Up Direction"
+      },
+      {
+        "name": "CharacterPhysics",
+        "documentation": "Opt-in dynamic torso body; Health and Locomotion alone are inert data"
+      },
+      {
+        "name": "CharacterPose"
+      },
+      {
+        "name": "CharacterRig",
+        "documentation": "Kinematic limb bodies for the BodyPart children, ridden on the torso and pose"
+      },
+      {
+        "name": "CharacterSurfaceAlign",
+        "documentation": "While the character stands on ground, its Up Direction turns to the floor under its feet, so it walks up walls and around planets"
+      },
+      {
+        "name": "CharacterTuning",
+        "documentation": "World-wide locomotion and PD force controller tuning"
+      },
+      {
+        "name": "ClickDetector",
+        "documentation": "Enables pointer picking and clicks on this entity or its ancestors"
+      },
+      {
+        "name": "Climbable",
+        "documentation": "Characters that walk into this part climb it, as they climb a truss"
+      },
+      {
+        "name": "CloudModelSettings"
+      },
+      {
+        "name": "CloudNoiseSettings"
+      },
+      {
+        "name": "Clouds",
+        "documentation": "Volumetric shell and lighting, drawn with the Atmosphere Sky only"
+      },
+      {
+        "name": "Collider",
+        "documentation": "Collision shape, decoupled from the visual; None opts out"
+      },
+      {
+        "name": "CollisionGroup",
+        "documentation": "Membership in a named collision group; absent means group 0"
+      },
+      {
+        "name": "CollisionMatrix"
+      },
+      {
+        "name": "ConsoleAction",
+        "documentation": "engine action this console button fires"
+      },
+      {
+        "name": "ConsolePrompt",
+        "documentation": "tag identifying the console command line prompt"
+      },
+      {
+        "name": "ConsoleRowLine",
+        "documentation": "tag identifying console row line text child"
+      },
+      {
+        "name": "ConsoleRowPrefix",
+        "documentation": "tag identifying console row prefix child"
+      },
+      {
+        "name": "ContinuousCollision",
+        "documentation": "Predicts where the part will collide instead of moving it and correcting afterwards, so a small fast part stops passing through moving parts; slower to compute"
+      },
+      {
+        "name": "CoreMenuAction",
+        "documentation": "engine action this core Menu button fires; the Name does nothing"
+      },
+      {
+        "name": "CoreMenuPage",
+        "documentation": "page of the core Menu this subtree belongs to"
+      },
+      {
+        "name": "CoreSettingBind",
+        "documentation": "device setting this core Menu widget shows or steps"
+      },
+      {
+        "name": "Decal",
+        "documentation": "An image on one face of the parent part, held as a child entity. Its own Color tints and Transparency fades it"
+      },
+      {
+        "name": "DirectionalLight"
+      },
+      {
+        "name": "DisplayName",
+        "documentation": "Account display name shown on nametags and the leaderboard"
+      },
+      {
+        "name": "DynamicMesh"
+      },
+      {
+        "name": "Exposure"
+      },
+      {
+        "name": "Fog",
+        "documentation": "Fades objects into the fog color with distance from the camera; the sky stays clear"
+      },
+      {
+        "name": "Health"
+      },
+      {
+        "name": "HingeJoint",
+        "documentation": "Groups two rigid bodies together, constraining them to move like connected by a hinge"
+      },
+      {
+        "name": "HumanoidState"
+      },
+      {
+        "name": "Identity",
+        "documentation": "Session fact on the character root; distinct from Name"
+      },
+      {
+        "name": "Invulnerable",
+        "documentation": "TakeDamage does nothing while this tag exists"
+      },
+      {
+        "name": "Kinematic",
+        "documentation": "Kinematic motion policy for a simulated physics body"
+      },
+      {
+        "name": "LastHit",
+        "documentation": "The server adds this component when damage lands"
+      },
+      {
+        "name": "LensFlare"
+      },
+      {
+        "name": "Lifetime",
+        "documentation": "Countdown to destruction; the server subtracts the tick time and deletes the entity at zero"
+      },
+      {
+        "name": "Light",
+        "documentation": "Local point light. A SpotCone on the entity makes it a spot light"
+      },
+      {
+        "name": "LightShadowOff",
+        "documentation": "The light casts no shadow. Absence means it casts"
+      },
+      {
+        "name": "LimbAttachment",
+        "documentation": "Joint frames; rewritten from the rig asset at attach"
+      },
+      {
+        "name": "LocalTransform"
+      },
+      {
+        "name": "Locked"
+      },
+      {
+        "name": "Locomotion"
+      },
+      {
+        "name": "Mesh"
+      },
+      {
+        "name": "MultiJump",
+        "documentation": "The character jumps again in the air each time jump is pressed, up to Max Jumps before it lands"
+      },
+      {
+        "name": "Name"
+      },
+      {
+        "name": "NoContactFriction",
+        "documentation": "Zero contact friction while present; the FSM holds it during GettingUp"
+      },
+      {
+        "name": "OrthographicLens"
+      },
+      {
+        "name": "PanoramaSky"
+      },
+      {
+        "name": "PhysicalSurfaceOverride"
+      },
+      {
+        "name": "PlatformAvatarConfig"
+      },
+      {
+        "name": "PlatformDisablesMask"
+      },
+      {
+        "name": "Player",
+        "documentation": "Marks a connected player entity"
+      },
+      {
+        "name": "PlayerSpawner"
+      },
+      {
+        "name": "Position"
+      },
+      {
+        "name": "PrefabAnchor"
+      },
+      {
+        "name": "PrefabInstance",
+        "documentation": "Names the prefab this entity instantiates; saving a prefab stores the reference instead of the expanded subtree"
+      },
+      {
+        "name": "PrefabNodeId"
+      },
+      {
+        "name": "RenderDisabled",
+        "documentation": "No render slot; physics, replication, and raycasts untouched"
+      },
+      {
+        "name": "RigidBody"
+      },
+      {
+        "name": "RootMotion",
+        "documentation": "Applies root bone animation translation to character movement, modeling Unity Animator.applyRootMotion"
+      },
+      {
+        "name": "RopeConstraint",
+        "documentation": "Keeps the connected object no further than Distance away; it can move closer"
+      },
+      {
+        "name": "Rotation"
+      },
+      {
+        "name": "Scale"
+      },
+      {
+        "name": "ScriptHandles"
+      },
+      {
+        "name": "ScriptRef"
+      },
+      {
+        "name": "Seat",
+        "documentation": "A character that lands on this part sits on it and stays there until it jumps"
+      },
+      {
+        "name": "SessionOwner",
+        "documentation": "The user a character answers to; set by the session binding"
+      },
+      {
+        "name": "ShadowOff",
+        "documentation": "No shadow from this entity; the shadow passes skip it"
+      },
+      {
+        "name": "Shape",
+        "documentation": "Part shape identity as a value"
+      },
+      {
+        "name": "SixSidedSky"
+      },
+      {
+        "name": "Sound",
+        "documentation": "Plays an audio asset either 2D or positioned in 3D space"
+      },
+      {
+        "name": "SoundAttenuation",
+        "documentation": "Distance attenuation settings for 3D positional audio"
+      },
+      {
+        "name": "SoundBus",
+        "documentation": "Routes audio playback to a specific mix bus"
+      },
+      {
+        "name": "SoundCone",
+        "documentation": "Directional cone a 3D sound radiates along its Front face"
+      },
+      {
+        "name": "SoundConfig"
+      },
+      {
+        "name": "SoundLooped"
+      },
+      {
+        "name": "SoundPaused"
+      },
+      {
+        "name": "SoundPlaying"
+      },
+      {
+        "name": "SoundPolyphony",
+        "documentation": "Caps concurrent voice playback for this sound"
+      },
+      {
+        "name": "SpawnPoint"
+      },
+      {
+        "name": "SpotCone",
+        "documentation": "Cone half-angles in radians. Presence makes the Light a spot light"
+      },
+      {
+        "name": "StableId"
+      },
+      {
+        "name": "StreamingConfig"
+      },
+      {
+        "name": "SurfaceAppearance",
+        "documentation": "Per-mesh PBR texture overrides; a zero slot means no override"
+      },
+      {
+        "name": "SurfaceMaterial"
+      },
+      {
+        "name": "SuspensionConfig",
+        "documentation": "Makes this entity a wheel of its parent part: a ray from the Suspension Hardpoint finds the ground, and a spring and damper push the parent up there"
+      },
+      {
+        "name": "SwingTwistJoint",
+        "documentation": "Authored swing-twist joint limit between this entity's body and its ECS parent's; materialized by the consuming system (e.g. character knockdown)"
+      },
+      {
+        "name": "TargetYaw",
+        "documentation": "Target yaw angle in radians"
+      },
+      {
+        "name": "Team",
+        "documentation": "Groups entities that fight together"
+      },
+      {
+        "name": "TextMenuItem",
+        "documentation": "edit this text context menu item runs on the focused text box"
+      },
+      {
+        "name": "Timer",
+        "documentation": "A countdown timer; it fires Timeout when it reaches the end of its Wait Time"
+      },
+      {
+        "name": "TimerAutostart",
+        "documentation": "The timer starts when the entity enters the world"
+      },
+      {
+        "name": "TimerOneShot",
+        "documentation": "The timer stops after reaching the end; without the component it restarts"
+      },
+      {
+        "name": "TimerPaused",
+        "documentation": "The timer does not count down while it is paused"
+      },
+      {
+        "name": "TirePatchConfig",
+        "documentation": "Makes this part a wheel whose grip peaks at a small slip and falls as it spins, locks or slides; it rolls about its local Y axis"
+      },
+      {
+        "name": "Tool"
+      },
+      {
+        "name": "ToolState"
+      },
+      {
+        "name": "Transient",
+        "documentation": "Marks a session-only entity omitted when saving the place"
+      },
+      {
+        "name": "Transparency"
+      },
+      {
+        "name": "Trigger",
+        "documentation": "Other parts and characters pass through this part and fire its Touched and TouchEnded signals"
+      },
+      {
+        "name": "UIArrowButton",
+        "documentation": "A button that draws a filled arrow in its text color"
+      },
+      {
+        "name": "UIBusyBar",
+        "documentation": "Sweeps a segment across the bar for work of unknown length; the client draws it, no script runs"
+      },
+      {
+        "name": "UICheckbox",
+        "documentation": "A square box that shows a check mark while checked"
+      },
+      {
+        "name": "UIChecked",
+        "documentation": "The box shows its check mark"
+      },
+      {
+        "name": "UIClickable",
+        "documentation": "Opts into hit-testing and click/press events"
+      },
+      {
+        "name": "UIClips",
+        "documentation": "Scissors the descendants to this entity's rect"
+      },
+      {
+        "name": "UIColorButton",
+        "documentation": "Draws a color swatch with a checkerboard under its alpha"
+      },
+      {
+        "name": "UIColorPicker",
+        "documentation": "A saturation and value square beside a hue bar"
+      },
+      {
+        "name": "UIColorPickerState",
+        "documentation": "The color a picker holds; a drag writes these three numbers and never the style"
+      },
+      {
+        "name": "UIColumnWidths",
+        "documentation": "Gives each of the first 16 grid columns its own width"
+      },
+      {
+        "name": "UIConsoleText",
+        "documentation": "resolved console text sequence and part"
+      },
+      {
+        "name": "UICorner",
+        "documentation": "Rounds the corners of the plate and the stroke"
+      },
+      {
+        "name": "UIDialog",
+        "documentation": "Asks the player to confirm or cancel; dims the screen behind it and centers it in its parent"
+      },
+      {
+        "name": "UIDisabled",
+        "documentation": "Draws the control dim and refuses the pointer and the key; absent means usable"
+      },
+      {
+        "name": "UIDropdown",
+        "documentation": "A button that shows the selected option and opens a list of every option below itself"
+      },
+      {
+        "name": "UIFitColumns",
+        "documentation": "Sizes each grid column to its widest cell"
+      },
+      {
+        "name": "UIFloatSlider",
+        "documentation": "A slider whose value moves freely from Min to Max"
+      },
+      {
+        "name": "UIFloatSliderValue",
+        "documentation": "The value a float slider holds; a drag writes these four bytes and never the range"
+      },
+      {
+        "name": "UIFoldable",
+        "documentation": "A section the player folds by its header strip; folded it hides its children"
+      },
+      {
+        "name": "UIFrame",
+        "documentation": "Filled rectangle background; the plate behind every Gui"
+      },
+      {
+        "name": "UIFreezeRows",
+        "documentation": "Pins the top lines of a scrolling grid, as a table header"
+      },
+      {
+        "name": "UIGraph",
+        "documentation": "Container that pans and zooms child nodes and connects ports with wires"
+      },
+      {
+        "name": "UIGraphConfig",
+        "documentation": "Input limits and step for a node graph view"
+      },
+      {
+        "name": "UIGraphLink",
+        "documentation": "Connects two ports in a UIGraph with a bezier wire"
+      },
+      {
+        "name": "UIGraphPort",
+        "documentation": "Marks a UI element as a connectable node graph port"
+      },
+      {
+        "name": "UIGridLayout",
+        "documentation": "Steps the children through uniform cells and owns their position and size"
+      },
+      {
+        "name": "UIHeaderCell",
+        "documentation": "Draws the grid cell as a column header with a sort arrow; a click sorts by its column"
+      },
+      {
+        "name": "UIHidden",
+        "documentation": "Hides the entity and its subtree; the renderer skips it"
+      },
+      {
+        "name": "UIIcon",
+        "documentation": "Places an icon beside a caption on one entity"
+      },
+      {
+        "name": "UIImage",
+        "documentation": "Draws a texture inside the rect of this element"
+      },
+      {
+        "name": "UIImageStates",
+        "documentation": "Swaps the image of a button on hover, press and disable"
+      },
+      {
+        "name": "UIItemList",
+        "documentation": "Lets the player pick one child with a click or the arrow keys and highlights it"
+      },
+      {
+        "name": "UIItemListState",
+        "documentation": "The child a list holds picked; a pick writes these two bytes and never the style"
+      },
+      {
+        "name": "UIJoystick",
+        "documentation": "A thumbstick the player drags; the state component has the direction"
+      },
+      {
+        "name": "UIJoystickState",
+        "documentation": "Where a thumbstick points; a drag writes these bytes and never the style"
+      },
+      {
+        "name": "UILinkButton",
+        "documentation": "Underlines the text of this element and opens the address in the browser when the player clicks it"
+      },
+      {
+        "name": "UIListClipper",
+        "documentation": "Makes the children of a scrolling frame a pool the engine binds to the rows in view"
+      },
+      {
+        "name": "UIListLayout",
+        "documentation": "Stacks the children and owns their position, anchor, and the scroll canvas height; child size stays authored"
+      },
+      {
+        "name": "UIListStripe",
+        "documentation": "Tints every other row of this list or grid, counted in the order the layout places them"
+      },
+      {
+        "name": "UIMenu",
+        "documentation": "Opens the children as a menu panel at this element"
+      },
+      {
+        "name": "UIMenuCheck",
+        "documentation": "A checkable item in a menu panel"
+      },
+      {
+        "name": "UIMenuOpen",
+        "documentation": "The menu panel of this element is open"
+      },
+      {
+        "name": "UIMenuRadio",
+        "documentation": "A radio item in a menu panel"
+      },
+      {
+        "name": "UIMultiSelect",
+        "documentation": "Enables multi-selection across children in layout order"
+      },
+      {
+        "name": "UINumberField",
+        "documentation": "Turns the text input into a number box that clamps, steps on the arrow keys, and scrubs on a drag"
+      },
+      {
+        "name": "UINumberValue",
+        "documentation": "The number a number box holds; a drag writes these four bytes and never the limits"
+      },
+      {
+        "name": "UIOrder",
+        "documentation": "Draw and list order among siblings"
+      },
+      {
+        "name": "UIPlot",
+        "documentation": "Draws the newest samples as a line or bar graph"
+      },
+      {
+        "name": "UIPopup",
+        "documentation": "Shows this element over every other one at its parent rect while it holds UIPopupOpen"
+      },
+      {
+        "name": "UIPopupOpen",
+        "documentation": "The popup is open; a press outside it closes it"
+      },
+      {
+        "name": "UIProgressBar",
+        "documentation": "Draws a track and a fill up to the progress; the player cannot drag it"
+      },
+      {
+        "name": "UIProgressValue",
+        "documentation": "The progress a progress bar shows; a change writes these four bytes and never the colors"
+      },
+      {
+        "name": "UIRadialFill",
+        "documentation": "Shows the image of this element up to an angle"
+      },
+      {
+        "name": "UIRadioButton",
+        "documentation": "A circle that shows a dot while selected; one radio of a group is selected at a time"
+      },
+      {
+        "name": "UIRadioGroup",
+        "documentation": "Radios with the same group number select one at a time"
+      },
+      {
+        "name": "UIRadioSelected",
+        "documentation": "The radio shows its dot; selecting it clears the rest of its group"
+      },
+      {
+        "name": "UIRect",
+        "documentation": "Screen-space rectangle; scale is a parent fraction, offset pixels"
+      },
+      {
+        "name": "UIRepeat",
+        "documentation": "Fires Activated on press and again while the press holds"
+      },
+      {
+        "name": "UIResizableColumns",
+        "documentation": "Lets the player drag the border between two grid columns to resize them"
+      },
+      {
+        "name": "UIRoot",
+        "documentation": "ScreenGui: top-level entity whose descendants form one overlay"
+      },
+      {
+        "name": "UIScrollBar",
+        "documentation": "Draws a scroll bar whose thumb the player drags from Min to Max minus Page"
+      },
+      {
+        "name": "UIScrollBarValue",
+        "documentation": "The value a scroll bar holds; a drag writes these four bytes and never the range"
+      },
+      {
+        "name": "UIScrollFollowing",
+        "documentation": "Keeps a scrolling frame at its end as the canvas grows"
+      },
+      {
+        "name": "UIScrollingFrame",
+        "documentation": "Clips the children and moves them with the wheel; a zero canvas takes the extent of a vertical list layout"
+      },
+      {
+        "name": "UISearchBox",
+        "documentation": "Turns the text input into a search box with a clear button; Enter sets Text"
+      },
+      {
+        "name": "UISelected",
+        "documentation": "Marks a child element selected"
+      },
+      {
+        "name": "UISeparator",
+        "documentation": "A divider line across the element, with an optional label"
+      },
+      {
+        "name": "UIShortcut",
+        "documentation": "The key label of a menu item as an interned name id"
+      },
+      {
+        "name": "UISlider",
+        "documentation": "A stepped track the player drags; the value is a place in a list, never a free number"
+      },
+      {
+        "name": "UISliderArt",
+        "documentation": "Paints the track, the fill and the thumb of the slider with textures"
+      },
+      {
+        "name": "UISliderFormat",
+        "documentation": "Draws the slider value over the track in this format"
+      },
+      {
+        "name": "UISliderRange",
+        "documentation": "Adds an upper thumb, so the slider picks a low and a high place"
+      },
+      {
+        "name": "UISliderState",
+        "documentation": "The place a slider holds; a drag writes these two bytes and never the style"
+      },
+      {
+        "name": "UISliderTicks",
+        "documentation": "Draws a notch across the track at every step, under the thumb"
+      },
+      {
+        "name": "UIStroke",
+        "documentation": "Border line around the plate of this Gui"
+      },
+      {
+        "name": "UISurface",
+        "documentation": "Part-face canvas for 2D UI elements"
+      },
+      {
+        "name": "UISurfaceAlwaysOnTop",
+        "documentation": "The UISurface draws over parts in front instead of behind them"
+      },
+      {
+        "name": "UITableBorders",
+        "documentation": "Draws lines between the columns and rows of this grid"
+      },
+      {
+        "name": "UITableHeader",
+        "documentation": "Holds the sort column and direction a click on a header cell of this grid steps"
+      },
+      {
+        "name": "UITabs",
+        "documentation": "Shows one child page and draws a strip of clickable tabs"
+      },
+      {
+        "name": "UITail"
+      },
+      {
+        "name": "UITextInput",
+        "documentation": "Editable text input; cursor and focus state stay client-side"
+      },
+      {
+        "name": "UITextSource",
+        "documentation": "The authored text as an interned name id"
+      },
+      {
+        "name": "UITextStyle",
+        "documentation": "Text style, including horizontal and vertical alignment"
+      },
+      {
+        "name": "UITextWrapped",
+        "documentation": "Breaks the text into lines at the width of the rect"
+      },
+      {
+        "name": "UIToggle",
+        "documentation": "A two-state switch with a pill track and a round knob"
+      },
+      {
+        "name": "UIToggleArt",
+        "documentation": "Skins the track and knob of a switch with textures"
+      },
+      {
+        "name": "UIToggleButton",
+        "documentation": "A click latches the button pressed; the next click releases it"
+      },
+      {
+        "name": "UIToggleMixed",
+        "documentation": "The knob rests halfway for a group that is partly on"
+      },
+      {
+        "name": "UIToggleOn",
+        "documentation": "The switch is in the on position"
+      },
+      {
+        "name": "UITreeFolded",
+        "documentation": "Hides the children of this tree item or foldable section; absent shows them"
+      },
+      {
+        "name": "UITreeView",
+        "documentation": "Lays out the descendants as an indented tree the player folds; the UIItemListState component has the pick"
+      },
+      {
+        "name": "UIVectorField",
+        "documentation": "Two or three numbers side by side that the player drags"
+      },
+      {
+        "name": "UIVectorValue",
+        "documentation": "The numbers a vector field holds; a drag writes these twelve bytes and never the style"
+      },
+      {
+        "name": "UIWindow",
+        "documentation": "A panel the player moves by its title strip, resizes by its grip and raises with a press"
+      },
+      {
+        "name": "UvTransform",
+        "documentation": "Moves, repeats and turns the textures a part samples through its mesh UVs, and the image of a Decal. Triplanar and stud materials ignore it"
+      },
+      {
+        "name": "VehicleSeat",
+        "documentation": "A seat whose driver's movement keys set Throttle and Steer for scripts that drive the vehicle"
+      },
+      {
+        "name": "Velocity",
+        "documentation": "Linear velocity in studs/s"
+      },
+      {
+        "name": "ViewSource"
+      },
+      {
+        "name": "Weld",
+        "documentation": "Rigid weld to another entity; the weld system creates the joint and removes this component when the joint breaks"
+      },
+      {
+        "name": "WeldBreak",
+        "documentation": "Reaction force or torque that breaks the weld on this entity; the weld system removes the Weld component past either"
+      },
+      {
+        "name": "WorldConfig"
+      },
+      {
+        "name": "WorldLimits"
+      },
+      {
+        "name": "Worn",
+        "documentation": "Session fact on an accessory root worn through AddAccessory"
+      }
     ],
     "prefab": [
       "Character",

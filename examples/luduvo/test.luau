@@ -10,9 +10,10 @@ end
 
 local finishMe = game.
 
-local testResourceAutocomplete = game.World.Query("") or self:HasComponent("") or game.Prefabs.Exists("")
+local testResourceAutocomplete = game.World:Query("") or self:HasComponent("") or game.Prefabs.Exists("")
 
 math.abs(3-2)
+local test = self:AddComponent()
 
 local function test()
     return "hello"

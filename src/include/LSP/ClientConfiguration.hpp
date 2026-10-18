@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <utility>
 #include <vector>
 #include "Protocol/Base.hpp"
 #include "nlohmann/json.hpp"
@@ -420,10 +421,33 @@ struct ClientLuduvoResourcesConfiguration
 
     struct Source
     {
+        struct Value
+        {
+            /// Resource name offered by completion.
+            std::string name{};
+            /// Optional Markdown documentation shown with the completion item.
+            std::optional<std::string> documentation{};
+
+            Value() = default;
+            Value(const char* name)
+                : name(name)
+            {
+            }
+            Value(std::string name)
+                : name(std::move(name))
+            {
+            }
+            Value(std::string name, std::optional<std::string> documentation)
+                : name(std::move(name))
+                , documentation(std::move(documentation))
+            {
+            }
+        };
+
         /// Source provider. Only static is currently supported.
         std::string provider = "static";
-        /// Values supplied by the static provider.
-        std::vector<std::string> values{};
+        /// Values supplied by the static provider. Strings are shorthand for entries without documentation.
+        std::vector<Value> values{};
     };
 
     /// Resource groups keyed by kind. Missing built-in groups implicitly contain their active built-ins.
@@ -434,6 +458,30 @@ struct ClientLuduvoResourcesConfiguration
     std::vector<ClientLuduvoResourceBindingConfiguration> bindings{};
     ClientLuduvoResourceCompletionConfiguration completion{};
 };
+
+inline void to_json(nlohmann::json& json, const ClientLuduvoResourcesConfiguration::Source::Value& value)
+{
+    if (!value.documentation)
+        json = value.name;
+    else
+        json = nlohmann::json{{"name", value.name}, {"documentation", *value.documentation}};
+}
+
+inline void from_json(const nlohmann::json& json, ClientLuduvoResourcesConfiguration::Source::Value& value)
+{
+    if (json.is_string())
+    {
+        value.name = json.get<std::string>();
+        value.documentation.reset();
+        return;
+    }
+
+    json.at("name").get_to(value.name);
+    value.documentation.reset();
+    if (json.contains("documentation"))
+        value.documentation = json.at("documentation").get<std::string>();
+}
+
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Group, dataType, includeBuiltins, sources)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Source, provider, values)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration, groups, sources, bindings, completion)

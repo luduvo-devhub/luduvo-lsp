@@ -30,7 +30,20 @@ static std::vector<LuduvoResourceName> resourceEntries(std::vector<std::string> 
     std::vector<LuduvoResourceName> result;
     result.reserve(names.size());
     for (std::string& name : names)
-        result.push_back({std::move(name), builtIn});
+        result.push_back({std::move(name), std::nullopt, builtIn});
+    return result;
+}
+
+static std::vector<LuduvoResourceName> resourceEntries(
+    const std::vector<ClientLuduvoResourcesConfiguration::Source::Value>& values, bool builtIn)
+{
+    std::vector<LuduvoResourceName> result;
+    result.reserve(values.size());
+    for (const ClientLuduvoResourcesConfiguration::Source::Value& value : values)
+    {
+        if (!value.name.empty())
+            result.push_back({value.name, value.documentation, builtIn});
+    }
     return result;
 }
 
@@ -45,6 +58,8 @@ static void addResourceEntries(LuduvoResourceGroup& group, const std::vector<Lud
             });
         if (existing == group.resources.end())
             group.resources.push_back(resource);
+        else if (!existing->documentation && resource.documentation)
+            existing->documentation = resource.documentation;
     }
     std::sort(group.resources.begin(), group.resources.end(),
         [](const LuduvoResourceName& left, const LuduvoResourceName& right)
@@ -53,13 +68,14 @@ static void addResourceEntries(LuduvoResourceGroup& group, const std::vector<Lud
         });
 }
 
-static std::unordered_map<std::string, std::vector<std::string>> parseEmbeddedResources(std::string_view source)
+static std::unordered_map<std::string, std::vector<LuduvoResourceName>> parseEmbeddedResources(std::string_view source)
 {
-    std::unordered_map<std::string, std::vector<std::string>> result;
+    std::unordered_map<std::string, std::vector<LuduvoResourceName>> result;
     try
     {
         const json document = json::parse(source);
-        if (document.value("formatVersion", 0) != 1 || !document.contains("resources") || !document["resources"].is_object())
+        const int formatVersion = document.value("formatVersion", 0);
+        if ((formatVersion != 1 && formatVersion != 2) || !document.contains("resources") || !document["resources"].is_object())
             return result;
 
         for (const auto& [kind, value] : document["resources"].items())
@@ -67,14 +83,20 @@ static std::unordered_map<std::string, std::vector<std::string>> parseEmbeddedRe
             if (!value.is_array())
                 continue;
 
-            std::vector<std::string> names;
-            for (const auto& name : value)
+            LuduvoResourceGroup group{kind, "string", {}};
+            for (const auto& item : value)
             {
-                if (name.is_string())
-                    names.push_back(name.get<std::string>());
+                if (item.is_string())
+                    addResourceEntries(group, {{item.get<std::string>(), std::nullopt, true}});
+                else if (formatVersion >= 2 && item.is_object() && item.contains("name") && item["name"].is_string())
+                {
+                    std::optional<std::string> documentation;
+                    if (item.contains("documentation") && item["documentation"].is_string())
+                        documentation = item["documentation"].get<std::string>();
+                    addResourceEntries(group, {{item["name"].get<std::string>(), std::move(documentation), true}});
+                }
             }
-            normalizeNames(names);
-            result.emplace(kind, std::move(names));
+            result.emplace(kind, std::move(group.resources));
         }
     }
     catch (const json::exception&)
@@ -134,10 +156,10 @@ LuduvoResourceCatalog::LuduvoResourceCatalog()
 
 LuduvoResourceCatalog::LuduvoResourceCatalog(std::string embeddedResources)
 {
-    for (auto& [kind, names] : parseEmbeddedResources(embeddedResources))
+    for (auto& [kind, resources] : parseEmbeddedResources(embeddedResources))
     {
         std::string groupKind = kind;
-        embeddedGroups.emplace(std::move(kind), LuduvoResourceGroup{std::move(groupKind), "string", resourceEntries(std::move(names), true)});
+        embeddedGroups.emplace(std::move(kind), LuduvoResourceGroup{std::move(groupKind), "string", std::move(resources)});
     }
 }
 

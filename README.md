@@ -29,12 +29,41 @@ Then you'll probable be fine
 
 ## Luduvo definitions
 
-As of Luduvo 45, the `globalTypes.luduvo.client.d.luau` and `globalTypes.luduvo.server.d.luau` files inside Luduvo LSP are essentially copy/pasted global type files straight from Luduvo itself (you can find them in the `defs/` directory of your Luduvo install's roaming data equivalent). Currently, these files contain ~845 entries spanning across:
-- 16 global symbols
-- 796 members, with
-  - 56 of those are from Instance
-  - 19 of those are from game services
-Out of said 845 entries, there are docs for about 458 of them.
+<!-- luduvo-api-stats:start -->
+As of Luduvo 51, the prefab section of `resources.luduvo.json`, `globalTypes.luduvo.client.d.luau`, and `globalTypes.luduvo.server.d.luau` files inside Luduvo LSP are essentially copy/pasted global type files straight from Luduvo itself (you can find them in the `prefabs/` and `defs/` directory of your Luduvo install's roaming data equivalent respectively). The components side of `resources.luduvo.json` was dumped from Luduvo's `LuduvoEditor.exe`. Currently, these files contain ~1340 entries spanning across:
+```text
+├── 1,080 API entries (508 documented)
+│   ├── 896 Entries under 55 Global Types (325 documented)
+│   │   ├── 46 Types with members (20 documented)
+│   │   │   ├── 44 Other types (Query, Signal, UDim2, etc. | 18 documented)
+│   │   │   │   └── 264 Members (Query.With, Signal.Connect, UDim2.Scale, etc. | 99 documented)
+│   │   │   ├── The literal `Instance` type (documented)
+│   │   │   └── The literal `World` type (documented)
+│   │   └── 9 Types without members (AnimLayers, CloudStore, Pair, etc. | 7 documented)
+│   └── 184 Entries under 18 Global Variables/Classes (183 documented)
+│       ├── 12 Variables/classes with members (11 documented)
+│       │   ├── 10 Other variables/classes (UDim2, Vector3, task, etc. | all documented)
+│       │   │   └── 30 Members (UDim2.new, Vector3.xAxis, task.wait, etc. | all documented)
+│       │   ├── `Instance` (documented)
+│       │   │   ├── 1 Static constructor (`Instance.new` | documented)
+│       │   │   └── 560 Members from the literal `Instance` type above (182 documented)
+│       │   │       ├── 49 Instance methods (instance:AddComponent, instance:ApplyImpulse, etc. | 24 documented)
+│       │   │       └── 511 Instance properties (instance.Character, instance.Activated, etc. | 158 documented)
+│       │   └── `game` (undocumented)
+│       │       ├── 31 Direct members (all documented)
+│       │       │   ├── 19 Services (game.World, game.Input, etc. | all documented)
+│       │       │   └── 12 Other symbols (game.Bool, game.EventTable, game.ToServer, etc. | all documented)
+│       │       └── 121 Members across the 19 services (all documented)
+│       │           ├── 104 Members under 18 table services (game.Physics.Raycast, game.Input.Key, etc. | all documented)
+│       │           └── 17 Members from the literal `World` type above (game.World.Query, game.World.Each, etc. | all documented)
+│       └── 6 Variables without members (EventTableDump, handles, print, self, tick, warn | all documented)
+├── 229 Exposed* components (Anchored, MultiJump, etc. | 172 documented)
+│   └── * = Luduvo uses more components than this, but those aren't exposed in scripts
+└── 31 Prefabs (Part, Hotbar, etc. | none documented)
+```
+
+Out of said 1340 entries, there are docs for about 680 of them.
+<!-- luduvo-api-stats:end -->
 
 Luduvo also refers to different global types depending on the script's scope (client or server). Files ending in `.client.lua` or `.client.luau` receive client globals, and files ending in `.server.lua` or `.server.luau` receive server globals. Right now the default script side is set to `server` when parsing files that don't have a special suffix, but you can override this behavior in your config.
 
@@ -129,14 +158,18 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `luau-lsp.platform.luduvo.hover.presentation` | `"rich"` or `"standard"` | `"rich"` | Selects Luduvo's API-aware hover layout or the upstream-compatible hover layout. Standard hovers keep documentation above the type definition. |
 | `luau-lsp.platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits visible rich-hover title length while preserving provenance text. URLs do not count toward the limit; `null` disables truncation. |
 | `luau-lsp.platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
-| `luau-lsp.platform.luduvo.resources.groups` | map of resource-group names to group objects | `{}` | Each group defines `dataType`, `includeBuiltins`, and a list of source names. Missing built-in groups implicitly use their active Luduvo built-ins. Only the `string` data type is supported in this release. |
-| `luau-lsp.platform.luduvo.resources.sources` | map of source names to source objects | `{}` | Defines reusable value sources. Static sources use `provider: "static"` and a `values` array; a source may be shared by multiple groups. |
-| `luau-lsp.platform.luduvo.resources.bindings` | array of binding objects | `[]` | Adds resource constraints for custom function parameters. `kind` selects a resource group (such as `component` or `prefab`); the other fields are `symbol`, `parameter`, `variadic`, and `pluralResourceNoun`. The metadata is shared by completion, rich hovers, and signature help. |
-| `luau-lsp.platform.luduvo.resources.completion.enabled` | boolean | `true` | Enables resource-name suggestions in resource-constrained arguments. Disabling it does not hide resource metadata from hovers or signature help. |
+| `luau-lsp.platform.luduvo.resources.groups` | map of resource-group names to group dictionaries | `{}` | Each group defines `dataType`, `includeBuiltins` (boolean that decides whether or not to auto-include LSP-maintained Luduvo built-in sources), and a list of source names. Missing built-in groups implicitly use their active Luduvo built-ins. Currently, only the `string` data type is supported. |
+| `luau-lsp.platform.luduvo.resources.sources` | map of source names to source dictionaries | `{}` | Defines the resources that each resource group uses. Static `values` entries may be strings or dictionaries containing `name` and optional Markdown `documentation`; a source may be shared by multiple groups. |
+| `luau-lsp.platform.luduvo.resources.bindings` | array of binding dictionaries | `[]` | Adds resource constraints for custom function parameters. `kind` selects a resource group (such as `component` or `prefab`); the other fields are `symbol` (string of the endpoint you want to bind resources to), `parameter` (string of the parameter name to bind resources to in the function), `variadic` (boolean indicating whether the parameter takes an arbitrary amount of said resources), and `pluralResourceNoun` (boolean indicating whether the resource parameter's name is meant to be described as plural). The metadata is shared by completion, rich hovers, and signature highlighting. |
+| `luau-lsp.platform.luduvo.resources.completion.enabled` | boolean | `true` | Enables resource-name suggestions in resource-constrained arguments. Disabling it does not hide resource metadata from hovers or signature highlighting. |
 | `luau-lsp.platform.luduvo.resources.completion.disabledKinds` | string array | `[]` | Disables resource-name completion for the listed resource kinds. |
 | `luau-lsp.platform.luduvo.resources.completion.disabledApis` | string array | `[]` | Disables resource-name completion for the listed canonical API symbols. |
 
-Resource groups collect reusable value sources by kind. A group omitted from configuration uses its active Luduvo built-ins. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. An empty source list with built-ins disabled intentionally provides no names. Prefab built-ins come from the active Luduvo installation and then a bundled, precompiled fallback. Components currently use the generated bundled catalog because Luduvo does not expose a live component-name source.
+### Resources
+
+Resource are a way to extend autocomplete to provide enum-like resource name suggestions for function arguments that aren't actually enums. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. `includeBuiltins` doubles as a way to override the default built-in resource sources. An empty source list with `includeBuiltins` set to `false` intentionally provides no names. 
+
+While Prefab resources come from the active Luduvo installation, components currently use the generated bundled catalog because Luduvo does not expose a live component-name source. When Luduvo LSP cannot find the active installation, prefab resources fall back to a precompiled version that is bundled with the LSP.
 
 For example, you can extend the built-in prefabs with your own project prefabs, create a custom "animation-state" group, and mark a custom function parameter as accepting prefab names:
 
@@ -159,16 +192,17 @@ For example, you can extend the built-in prefabs with your own project prefabs, 
         "sources": {
           "project-prefabs": {
             "provider": "static",
-            "values": ["MyProjectPrefab"]
-          },
-          "default-states": {
-            "provider": "static",
-            "values": ["Idle", "Running"]
+            "values": [
+              {
+                "name": "MyProjectPrefab",
+                "documentation": "This is my awesome prefab description."
+              }
+            ]
           }
         },
         "bindings": [
           {
-            "symbol": "MyLibrary.Spawn",
+            "symbol": "MyLibrary.Spawn", // note that the symbol is literally just the function's name. Do not include the rest of the API path like `@luduvo/client/globaltype/MyLibrary.Spawn`
             "parameter": "name",
             "kind": "prefab"
           }

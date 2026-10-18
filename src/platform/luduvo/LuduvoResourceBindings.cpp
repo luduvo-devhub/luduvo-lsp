@@ -29,8 +29,15 @@ constexpr BuiltinBinding kBuiltinBindings[] = {
     {"game.Prefabs.RevertAddedComponent", "name", "component"},
     {"game.Prefabs.Spawn", "name", "prefab"},
     {"game.World.Each", "component", "component"},
+    {"game.World.HasComponent", "component", "component"},
     {"game.World.Pair", "relation", "component"},
     {"game.World.Query", "components", "component", true, true},
+    {"game.World.Spawn", "components", "component", true, true},
+    {"World.Each", "component", "component"},
+    {"World.HasComponent", "component", "component"},
+    {"World.Pair", "relation", "component"},
+    {"World.Query", "components", "component", true, true},
+    {"World.Spawn", "components", "component", true, true},
 };
 
 std::string_view stripOverloadSuffix(std::string_view symbol)

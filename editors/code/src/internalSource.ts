@@ -11,7 +11,7 @@ export type InternalSourceParams = {
   textDocument: TextDocumentIdentifier;
 };
 
-export const InternalSourceRequest = new RequestType<
+export const internalSourceRequest = new RequestType<
   InternalSourceParams,
   string,
   void
@@ -85,7 +85,7 @@ export const registerViewInternalSource = (
         ),
       };
 
-      return client.sendRequest(InternalSourceRequest, params);
+      return client.sendRequest(internalSourceRequest, params);
     }
 
     get onDidChange(): vscode.Event<vscode.Uri> {

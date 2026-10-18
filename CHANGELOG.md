@@ -8,21 +8,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- More testing files for the python scripts
+- Resources now can have markdown doc strings associated with them, meaning that you can add descriptions to individual resources now
+- Builtin Component Resources now provide doc strings when applicable (not all components have doc strings internally)
+  - You can use them via the new `documentation` field in the values section of resource config files:
+```jsonc
+"luduvo": {
+  "resources": {
+    "sources": {
+      "myCoolSource": {
+        "values": [
+          "ResourceWithoutDocumentation", // This old version still works
+          {
+            "name": "ResourceWithDocumentation", // But new resources should really be made using this format
+            "documentation": "# This documentation supports markdown (or at least it should)"
+          },
+          // ...
+        ]
+      }
+    }
+  }
+}
+```
+- More testing files have been added for the python scripts, and the CI workflow now runs them before using them
+- A nice little counter program that generates a tree from the luduvo definition files
 
 ### Changed
 
+- Python component extractors now also extract "custom" components and any documentation strings associated with the extracted component
+- Builtin Component Resouces now include components in Luduvo's "Custom" category in the Editor
 - Moved around the location of the python test scripts, and the CI workflow now uses them
 - Bit the bullet and finally split up and reorganized the hover/definition code. Things were starting to get a bit too messy
 - Luduvo Tests no longer rely on Luduvo itself to be installed. I thought this was a good idea, but it was causing more issues than it solved
+- Resources in config files now expect an array of dictionaries instead of an array of strings. Its backwards compatible with the old format, so you don't need to change anything if you don't want to
 
 ### Fixed
 
+- Minor Lint/Prettier checks pass now
 - Some broken Hover and completion tests weren't testing what they were supposed to correctly. That is now fixed
 - Some Luduvo Tests could just straight up not run when testing specific testing groups due to more stupidity
 - Writable server endpoints no longer incorrectly get the `read-only` tag just because its read only on the client
-- Luduvo LSP's extension no longer haphazardly mixes `luau-lsp` and `luduvo-lsp` as config names for its settings and commands. If they weren't working before, they should work now. Genuinely, this was one of the stupider things I've done. Thank god no one has used it yet...
-- Resource autocomplete got updated to reflect changes made in Luduvo 50
+- Luduvo LSP's extension no longer haphazardly mixes `luau-lsp` and `luduvo-lsp` as config names for its settings and commands. If they weren't working before, they should work now. Genuinely, this was one of the stupider things I've done and I don't know how I didn't catch it sooner. Thank god no one has used it yet...
+- Resource autocomplete got updated to reflect the many changes made in Luduvo 50
 
 ## [1.70.3L-alpha] - 2026-10-10
 

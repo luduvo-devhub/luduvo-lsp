@@ -2,6 +2,7 @@
 
 #include "LSP/ClientConfiguration.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -10,6 +11,7 @@
 struct LuduvoResourceName
 {
     std::string name;
+    std::optional<std::string> documentation;
     bool builtIn = false;
 };
 

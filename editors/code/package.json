@@ -385,10 +385,31 @@
                 "type": "array",
                 "default": [],
                 "items": {
-                  "type": "string"
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "name"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Resource name offered by completion"
+                        },
+                        "documentation": {
+                          "type": "string",
+                          "description": "Markdown documentation shown with the resource completion item"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
                 },
                 "uniqueItems": true,
-                "description": "Values supplied by a static source"
+                "description": "Values supplied by a static source. A string is shorthand for an entry without documentation"
               }
             },
             "additionalProperties": false
