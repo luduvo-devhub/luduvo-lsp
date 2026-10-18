@@ -29,7 +29,7 @@
 #include <vector>
 
 class WorkspaceFolder;
-class Client;
+struct Client;
 struct WorkspaceFileResolver;
 
 struct PlatformDefinitionCandidate

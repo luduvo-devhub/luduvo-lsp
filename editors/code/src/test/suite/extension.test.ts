@@ -38,7 +38,17 @@ suite("Extension Test Suite", () => {
       "all contributed commands should use luduvo-lsp.*",
     );
 
-    const registered = new Set(await vscode.commands.getCommands(true));
+    const expectedCommands = contributed.map(({ command }) => command);
+    const registrationDeadline = Date.now() + 15_000;
+    let registered = new Set(await vscode.commands.getCommands(true));
+    while (
+      expectedCommands.some((command) => !registered.has(command)) &&
+      Date.now() < registrationDeadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      registered = new Set(await vscode.commands.getCommands(true));
+    }
+
     for (const { command } of contributed) {
       assert.ok(registered.has(command), `${command} was not registered`);
     }

@@ -1,4 +1,6 @@
 luau/
 tests/testdata/non-ascii/
+examples/luduvo/test.luau
+examples/luduvo/test.client.luau
 *.d.lua
 *.d.luau

@@ -208,7 +208,7 @@ jobs:
           cmake --build . --target Luau.LanguageServer.CLI -j 3
 
       - name: Run Luau Analyze (Plugin Source)
-        run: ../build/luduvo-lsp analyze --sourcemap=sourcemap.json --definitions=../scripts/globalTypes.d.luau src
+        run: ../build/luduvo-lsp analyze --platform=roblox --sourcemap=sourcemap.json --definitions=../scripts/globalTypes.d.luau src
         working-directory: plugin
 
       - name: Run Luau Analyze (Cloud Scripts)
@@ -216,7 +216,7 @@ jobs:
           lune setup
           echo '{ "aliases": { "lune": "'"$HOME"'/.lune/.typedefs/0.8.9" } }' > .luaurc
           rojo sourcemap test.project.json --output test-sourcemap.json
-          ../build/luduvo-lsp analyze --sourcemap=test-sourcemap.json --definitions=../scripts/globalTypes.d.luau --flag:LuauFixIndexerSubtypingOrdering=True cloud
+          ../build/luduvo-lsp analyze --platform=roblox --sourcemap=test-sourcemap.json --definitions=../scripts/globalTypes.d.luau --flag:LuauFixIndexerSubtypingOrdering=True cloud
         working-directory: plugin
 
       - name: Build Plugin

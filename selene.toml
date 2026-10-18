@@ -1,2 +1,8 @@
 std = "luau+roblox"
-exclude = ["luau/*", "*.d.lua", "*.d.luau"]
+exclude = [
+    "luau/*",
+    "examples/luduvo/test.luau",
+    "examples/luduvo/test.client.luau",
+    "*.d.lua",
+    "*.d.luau",
+]
