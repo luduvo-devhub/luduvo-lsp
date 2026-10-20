@@ -168,7 +168,7 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 
 ### Resources
 
-Resource are a way to extend autocomplete to provide enum-like resource name suggestions for function arguments that aren't actually enums. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. `includeBuiltins` doubles as a way to override the default built-in resource sources. An empty source list with `includeBuiltins` set to `false` intentionally provides no names. 
+Resource are a way to extend autocomplete to provide enum-like name suggestions for function arguments that aren't actually enums. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. `includeBuiltins` doubles as a way to override the default built-in resource sources. An empty source list with `includeBuiltins` set to `false` intentionally provides no names.
 
 While Prefab resources come from the active Luduvo installation, components currently use the generated bundled catalog because Luduvo does not expose a live component-name source. When Luduvo LSP cannot find the active installation, prefab resources fall back to a precompiled version that is bundled with the LSP.
 
@@ -199,16 +199,21 @@ For example, you can extend the built-in prefabs with your own project prefabs, 
                 "documentation": "This is my awesome prefab description."
               }
             ]
+          },
+          "default-states": {
+            "provider": "static",
+            "values": ["Idle", "Running"]
           }
-        },
-        "bindings": [
-          {
-            "symbol": "MyLibrary.Spawn", // note that the symbol is literally just the function's name. Do not include the rest of the API path like `@luduvo/client/globaltype/MyLibrary.Spawn`
-            "parameter": "name",
-            "kind": "prefab"
-          }
-        ]
-      }
+        }
+      },
+      "bindings": [
+        {
+          "symbol": "MyLibrary.Spawn", // note that the symbol is literally just the function's name. Do not include the rest of the API path like `@luduvo/client/globaltype/MyLibrary.Spawn`
+          "kind": "resource",
+          "parameter": "name",
+          "group": "prefab"
+        }
+      ]
     }
   }
 }

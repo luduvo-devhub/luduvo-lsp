@@ -20,7 +20,7 @@ LuduvoPlatform::LuduvoPlatform(const ClientLuduvoConfiguration& configuration, W
     , configuration(configuration)
 {
     resourceCatalog.configure(configuration);
-    resourceBindings.configure(configuration);
+    bindings.configure(configuration);
 }
 
 void LuduvoPlatform::reportResourceConfigurationWarnings(const std::vector<std::string>& warnings)
@@ -35,19 +35,18 @@ void LuduvoPlatform::reportResourceConfigurationWarnings(const std::vector<std::
     if (newWarnings.empty())
         return;
 
-    std::string message = "Some Luduvo resource configuration entries were ignored:";
+    std::string message = "Some Luduvo binding or resource configuration entries were ignored:";
     for (const std::string& warning : newWarnings)
         message += "\n- " + warning;
 
-    workspaceFolder->client->sendWindowMessageRequest(lsp::MessageType::Warning, message, {{"Open Resource Settings"}},
+    workspaceFolder->client->sendWindowMessageRequest(lsp::MessageType::Warning, message, {{"Open Luduvo Settings"}},
         [client = workspaceFolder->client](const JsonRpcMessage& response)
         {
             if (!response.result || response.result->is_null())
                 return;
             const auto action = response.result->get<lsp::MessageActionItem>();
-            if (action.title == "Open Resource Settings")
-                client->sendNotification(
-                    "$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo.resources"}});
+            if (action.title == "Open Luduvo Settings")
+                client->sendNotification("$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo"}});
         });
 }
 
@@ -55,7 +54,7 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoPlatform::resolveResourceBindin
     const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType)
 {
     std::vector<std::string> warnings;
-    auto result = resourceBindings.resolve(documentationSymbol, callableType, &warnings);
+    auto result = bindings.resolveResources(documentationSymbol, callableType, &warnings);
     result.erase(std::remove_if(result.begin(), result.end(),
                      [&](const LuduvoResolvedResourceBinding& binding)
                      {
@@ -185,10 +184,10 @@ void LuduvoPlatform::setupWithConfiguration(const ClientConfiguration& config)
     const bool defaultChanged = configuration.definitions.defaultScriptSide != config.platform.luduvo.definitions.defaultScriptSide;
     configuration = config.platform.luduvo;
     resourceCatalog.configure(configuration);
-    resourceBindings.configure(configuration);
+    bindings.configure(configuration);
     reportedResourceWarnings.clear();
     reportResourceConfigurationWarnings(resourceCatalog.configurationWarnings());
-    reportResourceConfigurationWarnings(resourceBindings.configurationWarnings());
+    reportResourceConfigurationWarnings(bindings.configurationWarnings());
 
     if (defaultChanged && workspaceFolder)
     {

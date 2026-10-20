@@ -5,16 +5,15 @@ if part then
     part.Position = Vector3.new(0, 10, 0)
     part.Anchored = true
     part.Color = Color3.new(0.2, 0.6, 1)
-    part:AddComponent(game.World.Pair("tag", "Example"))
+    part:AddComponent(game.World.Pair("", "Example"))
 end
-
 local finishMe = game.
 
 local testResourceAutocomplete = game.World:Query("") or self:HasComponent("") or game.Prefabs.Exists("")
 
 math.abs(3-2)
 local test = self:AddComponent()
-
+game.Tween.TweenProperty(self, "UIPosition", "bignbong", 10)
 local function test()
     return "hello"
 end

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "LSP/ClientConfiguration.hpp"
-
 #include <optional>
 #include <string>
 #include <string_view>

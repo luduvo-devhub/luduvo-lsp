@@ -166,7 +166,7 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
 
     Luau::TypeId callableType = Luau::follow(*callable);
     const std::optional<std::string> documentationSymbol = callableDocumentationSymbol(sourceModule, *typedModule, *call, callableType);
-    const std::optional<std::string> canonicalSymbol = canonicalLuduvoResourceSymbol(documentationSymbol);
+    const std::optional<std::string> canonicalSymbol = canonicalLuduvoBindingSymbol(documentationSymbol);
     if (!canonicalSymbol || contains(configuration.resources.completion.disabledApis, *canonicalSymbol))
         return;
 

@@ -1,13 +1,13 @@
 #pragma once
 #include "Platform/LSPPlatform.hpp"
-#include "Platform/LuduvoResourceBindings.hpp"
+#include "Platform/LuduvoBindings.hpp"
 #include "Platform/LuduvoResourceCatalog.hpp"
 
 class LuduvoPlatform : public LSPPlatform
 {
     ClientLuduvoConfiguration configuration;
     LuduvoResourceCatalog resourceCatalog;
-    LuduvoResourceBindingRegistry resourceBindings;
+    LuduvoBindingRegistry bindings;
     std::unordered_set<std::string> reportedResourceWarnings;
 
     std::vector<LuduvoResolvedResourceBinding> resolveResourceBindings(
@@ -31,4 +31,6 @@ public:
     std::optional<lsp::MarkupContent> handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context) override;
     std::optional<lsp::MarkupContent> handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context) override;
     void handleSignatureHelp(const PlatformSignatureHelpContext& context) override;
+    lsp::DocumentColorResult documentColor(const TextDocument& textDocument, const Luau::SourceModule& module) override;
+    lsp::ColorPresentationResult colorPresentation(const PlatformColorPresentationContext& context) override;
 };

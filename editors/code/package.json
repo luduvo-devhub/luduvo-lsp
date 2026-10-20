@@ -417,7 +417,7 @@
           "scope": "resource"
         },
         "luduvo-lsp.platform.luduvo.resources.bindings": {
-          "markdownDescription": "Additional function parameters that consume named Luduvo resources. Bindings also supply resource metadata to rich hovers and signature help, so they remain active when resource completion is disabled",
+          "markdownDescription": "Legacy resource-only bindings. Prefer `luduvo-lsp.platform.luduvo.bindings` for new configuration",
           "type": "array",
           "default": [],
           "items": {
@@ -449,6 +449,70 @@
                 "type": "boolean",
                 "default": false,
                 "description": "Whether hover and signature documentation should refer to multiple resource names"
+              }
+            },
+            "additionalProperties": false
+          },
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.bindings": {
+          "markdownDescription": "Function argument semantics used by Luduvo providers. This release supports `resource` and `color` bindings. Multiple bindings may target the same symbol and parameter",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "required": [
+              "symbol",
+              "kind"
+            ],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Canonical function symbol, such as game.World.Query or Color3.fromHex"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "resource",
+                  "color"
+                ]
+              },
+              "parameter": {
+                "type": "string",
+                "description": "Single parameter targeted by the binding"
+              },
+              "parameters": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "uniqueItems": true,
+                "description": "Ordered parameters for a multi-argument color encoding"
+              },
+              "group": {
+                "type": "string",
+                "description": "Resource group used by resource bindings"
+              },
+              "encoding": {
+                "type": "string",
+                "enum": [
+                  "rgb",
+                  "rgb255",
+                  "hsv",
+                  "hex"
+                ],
+                "description": "Color representation interpreted by a color binding"
+              },
+              "variadic": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether a resource binding targets a variadic argument tail"
+              },
+              "pluralResourceNoun": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether resource documentation should use a plural noun"
               }
             },
             "additionalProperties": false

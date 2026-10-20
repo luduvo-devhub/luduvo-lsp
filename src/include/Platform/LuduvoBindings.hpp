@@ -2,6 +2,7 @@
 
 #include "LSP/ClientConfiguration.hpp"
 #include "Luau/TypeFwd.h"
+#include "Platform/ColorPresentation.hpp"
 
 #include <optional>
 #include <string>
@@ -30,12 +31,19 @@ struct LuduvoResolvedResourceBinding
     bool pluralResourceNoun = false;
 };
 
-std::optional<LuduvoSymbolIdentity> getLuduvoSymbolIdentity(const std::optional<std::string>& documentationSymbol);
-std::optional<std::string> canonicalLuduvoResourceSymbol(const std::optional<std::string>& documentationSymbol);
-
-class LuduvoResourceBindingRegistry
+struct LuduvoColorBinding
 {
-    struct Binding
+    std::string symbol;
+    std::vector<std::string> parameters;
+    ColorPresentationEncoding encoding = ColorPresentationEncoding::Rgb;
+};
+
+std::optional<LuduvoSymbolIdentity> getLuduvoSymbolIdentity(const std::optional<std::string>& documentationSymbol);
+std::optional<std::string> canonicalLuduvoBindingSymbol(const std::optional<std::string>& documentationSymbol);
+
+class LuduvoBindingRegistry
+{
+    struct ResourceBinding
     {
         std::string symbol;
         std::string parameter;
@@ -43,15 +51,17 @@ class LuduvoResourceBindingRegistry
         bool variadic = false;
         bool pluralResourceNoun = false;
     };
-    std::vector<Binding> bindings;
+    std::vector<ResourceBinding> resourceBindings;
+    std::vector<LuduvoColorBinding> colorBindings;
     std::vector<std::string> configuredWarnings;
 
 public:
-    LuduvoResourceBindingRegistry();
+    LuduvoBindingRegistry();
 
     void configure(const ClientLuduvoConfiguration& configuration);
     const std::vector<std::string>& configurationWarnings() const;
 
-    std::vector<LuduvoResolvedResourceBinding> resolve(const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType,
-        std::vector<std::string>* warnings = nullptr) const;
+    std::vector<LuduvoResolvedResourceBinding> resolveResources(
+        const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType, std::vector<std::string>* warnings = nullptr) const;
+    const std::vector<LuduvoColorBinding>& colors() const;
 };

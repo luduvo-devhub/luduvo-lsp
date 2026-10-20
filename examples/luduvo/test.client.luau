@@ -11,8 +11,8 @@ end
 local finishMe = game.
 
 local testResourceAutocomplete = game.World.Query("") or self:HasComponent("") or game.Prefabs.Exists("")
+game.C
 
-game.Input.
 math.abs(3-2)
 
 local function test()

@@ -34,8 +34,7 @@ static std::vector<LuduvoResourceName> resourceEntries(std::vector<std::string> 
     return result;
 }
 
-static std::vector<LuduvoResourceName> resourceEntries(
-    const std::vector<ClientLuduvoResourcesConfiguration::Source::Value>& values, bool builtIn)
+static std::vector<LuduvoResourceName> resourceEntries(const std::vector<ClientLuduvoResourcesConfiguration::Source::Value>& values, bool builtIn)
 {
     std::vector<LuduvoResourceName> result;
     result.reserve(values.size());
@@ -57,8 +56,11 @@ static void addResourceEntries(LuduvoResourceGroup& group, const std::vector<Lud
                 return candidate.name == resource.name;
             });
         if (existing == group.resources.end())
+        {
             group.resources.push_back(resource);
-        else if (!existing->documentation && resource.documentation)
+            continue;
+        }
+        if (!existing->documentation && resource.documentation)
             existing->documentation = resource.documentation;
     }
     std::sort(group.resources.begin(), group.resources.end(),

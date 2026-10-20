@@ -1,23 +1,7 @@
 #include "Platform/RobloxPlatform.hpp"
 
 #include "LSP/ColorProvider.hpp"
-
-static std::string formatDouble(double d)
-{
-    std::string s = std::to_string(d);
-
-    // Strip trailing decimals that are redundant
-    size_t decimalPos = s.find('.');
-    if (decimalPos != std::string::npos)
-    {
-        size_t lastNonZero = std::max(s.find_last_not_of('0'), decimalPos);
-        if (lastNonZero != std::string::npos)
-            s.erase(lastNonZero + 1);
-        if (s.back() == '.')
-            s.pop_back();
-    }
-    return s;
-}
+#include "Platform/ColorPresentation.hpp"
 
 struct RobloxColorVisitor : public Luau::AstVisitor
 {
@@ -139,33 +123,7 @@ lsp::DocumentColorResult RobloxPlatform::documentColor(const TextDocument& textD
     return visitor.colors;
 }
 
-lsp::ColorPresentationResult RobloxPlatform::colorPresentation(const lsp::ColorPresentationParams& params)
+lsp::ColorPresentationResult RobloxPlatform::colorPresentation(const PlatformColorPresentationContext& context)
 {
-    // Create color presentations
-    lsp::ColorPresentationResult presentations;
-
-    // Add Color3.new
-    presentations.emplace_back(lsp::ColorPresentation{
-        "Color3.new(" + formatDouble(params.color.red) + ", " + formatDouble(params.color.green) + ", " + formatDouble(params.color.blue) + ")"});
-
-    // Convert to RGB values
-    RGB rgb{
-        (int)std::floor(params.color.red * 255.0),
-        (int)std::floor(params.color.green * 255.0),
-        (int)std::floor(params.color.blue * 255.0),
-    };
-
-    // Add Color3.fromRGB
-    presentations.emplace_back(
-        lsp::ColorPresentation{"Color3.fromRGB(" + std::to_string(rgb.r) + ", " + std::to_string(rgb.g) + ", " + std::to_string(rgb.b) + ")"});
-
-    // Add Color3.fromHSV
-    HSV hsv = rgbToHsv(rgb);
-    presentations.emplace_back(
-        lsp::ColorPresentation{"Color3.fromHSV(" + formatDouble(hsv.h) + ", " + formatDouble(hsv.s) + ", " + formatDouble(hsv.v) + ")"});
-
-    // Add Color3.fromHex
-    presentations.emplace_back(lsp::ColorPresentation{"Color3.fromHex(\"" + rgbToHex(rgb) + "\")"});
-
-    return presentations;
+    return color3Presentations(context.params.color);
 }

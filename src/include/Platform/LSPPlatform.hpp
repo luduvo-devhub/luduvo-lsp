@@ -108,6 +108,13 @@ struct PlatformDocumentationLocation
     Luau::Location location;
 };
 
+struct PlatformColorPresentationContext
+{
+    const lsp::ColorPresentationParams& params;
+    const TextDocument& textDocument;
+    const Luau::SourceModule& sourceModule;
+};
+
 struct PlatformHoverContext
 {
     const Luau::ModuleName& moduleName;
@@ -279,7 +286,7 @@ public:
         return {};
     }
 
-    virtual lsp::ColorPresentationResult colorPresentation(const lsp::ColorPresentationParams& params)
+    virtual lsp::ColorPresentationResult colorPresentation(const PlatformColorPresentationContext& context)
     {
         return {};
     }

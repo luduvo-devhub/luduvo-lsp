@@ -169,9 +169,9 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     config.platform.luduvo.resources.sources["test-prefabs"].values = {"Crate", "Folder/Enemy"};
     config.platform.luduvo.resources.groups["component"] = {"string", false, {"test-components"}};
     config.platform.luduvo.resources.groups["prefab"] = {"string", false, {"test-prefabs"}};
-    config.platform.luduvo.resources.bindings.push_back({"MyLibrary.SpawnNamed", "asset", "prefab"});
-    config.platform.luduvo.resources.bindings.push_back({"MyLibrary.QueryMany", "components", "component", true, true});
-    config.platform.luduvo.resources.bindings.push_back({"MyLibrary.SetCount", "count", "component"});
+    config.platform.luduvo.bindings.push_back({"MyLibrary.SpawnNamed", "resource", "asset", {}, "prefab"});
+    config.platform.luduvo.bindings.push_back({"MyLibrary.QueryMany", "resource", "components", {}, "component", {}, true, true});
+    config.platform.luduvo.bindings.push_back({"MyLibrary.SetCount", "resource", "count", {}, "component"});
     LuduvoFixture fixture("luduvo_resource_completion", config, definitions, definitions);
 
     size_t documentIndex = 0;
@@ -214,7 +214,7 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     CHECK(getItem(variadicArgument, "Position"));
     CHECK(getItem(complete("game.World.Each(\"|\")"), "Health"));
     CHECK(getItem(complete("game.World.HasComponent(\"|\")"), "Health"));
-    CHECK(getItem(complete("game.World.Pair(\"|\", instance)"), "Health"));
+    CHECK_FALSE(getItem(complete("game.World.Pair(\"|\", instance)"), "Health"));
     CHECK(getItem(complete("game.World.Spawn(\"Health\", \"|\")"), "Position"));
 
     CHECK(getItem(complete("instance:AddComponent(\"|\")"), "Health"));
@@ -234,7 +234,7 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
         });
     REQUIRE(invalidBindingWarning != fixture.client.requestQueue.end());
     CHECK((*invalidBindingWarning->second)["message"].get<std::string>().find("does not accept string resource names") != std::string::npos);
-    CHECK((*invalidBindingWarning->second)["actions"][0]["title"] == "Open Resource Settings");
+    CHECK((*invalidBindingWarning->second)["actions"][0]["title"] == "Open Luduvo Settings");
     CHECK(getItem(complete("MyLibrary.SetState(|)"), "\"Idle\""));
     CHECK(getItem(complete("MyLibrary.SetState(\"|\")"), "Running"));
     CHECK_FALSE(getItem(complete("game.Prefabs.Echo(\"|\")"), "Crate"));

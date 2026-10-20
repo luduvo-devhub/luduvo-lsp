@@ -87,6 +87,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/JsonTomlSyntaxParser.cpp
         src/CliConfigurationParser.cpp
         src/platform/AutoImports.cpp
+        src/platform/ColorPresentation.cpp
         src/platform/LSPPlatform.cpp
         src/platform/PlatformDefinitionLoader.cpp
         src/platform/luduvo/LuduvoPlatform.cpp
@@ -95,7 +96,8 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/LuduvoHoverRenderer.cpp
         src/platform/luduvo/LuduvoHover.cpp
         src/platform/luduvo/LuduvoCompletion.cpp
-        src/platform/luduvo/LuduvoResourceBindings.cpp
+        src/platform/luduvo/LuduvoColorProvider.cpp
+        src/platform/luduvo/LuduvoBindings.cpp
         src/platform/luduvo/LuduvoResourceCatalog.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp

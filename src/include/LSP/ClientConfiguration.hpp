@@ -210,8 +210,8 @@ struct ClientCompletionConfiguration
     bool enableFragmentAutocomplete = true;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientCompletionConfiguration, enabled, autocompleteEnd, suggestImports, imports, addParentheses,
-    addTabstopAfterParentheses, fillCallArguments, showPropertiesOnMethodCall, showKeywords, showAnonymousAutofilledFunction, anonymousAutofilledFunction,
-    showDeprecatedItems, enableFragmentAutocomplete);
+    addTabstopAfterParentheses, fillCallArguments, showPropertiesOnMethodCall, showKeywords, showAnonymousAutofilledFunction,
+    anonymousAutofilledFunction, showDeprecatedItems, enableFragmentAutocomplete);
 
 struct ClientSignatureHelpConfiguration
 {
@@ -311,9 +311,9 @@ enum struct LuduvoScriptSide
     Client,
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(LuduvoScriptSide, {
-                                                  {LuduvoScriptSide::Server, "server"},
-                                                  {LuduvoScriptSide::Client, "client"},
-                                              })
+                                                   {LuduvoScriptSide::Server, "server"},
+                                                   {LuduvoScriptSide::Client, "client"},
+                                               })
 
 enum struct LuduvoGlobalDefinitionsPolicy
 {
@@ -324,12 +324,12 @@ enum struct LuduvoGlobalDefinitionsPolicy
     Combine,
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(LuduvoGlobalDefinitionsPolicy, {
-                                                               {LuduvoGlobalDefinitionsPolicy::LuduvoOnly, "luduvoOnly"},
-                                                               {LuduvoGlobalDefinitionsPolicy::DefinitionFilesOnly, "definitionFilesOnly"},
-                                                               {LuduvoGlobalDefinitionsPolicy::PreferLuduvo, "preferLuduvo"},
-                                                               {LuduvoGlobalDefinitionsPolicy::PreferDefinitionFiles, "preferDefinitionFiles"},
-                                                               {LuduvoGlobalDefinitionsPolicy::Combine, "combine"},
-                                                           })
+                                                                {LuduvoGlobalDefinitionsPolicy::LuduvoOnly, "luduvoOnly"},
+                                                                {LuduvoGlobalDefinitionsPolicy::DefinitionFilesOnly, "definitionFilesOnly"},
+                                                                {LuduvoGlobalDefinitionsPolicy::PreferLuduvo, "preferLuduvo"},
+                                                                {LuduvoGlobalDefinitionsPolicy::PreferDefinitionFiles, "preferDefinitionFiles"},
+                                                                {LuduvoGlobalDefinitionsPolicy::Combine, "combine"},
+                                                            })
 
 enum struct LuduvoDefinitionConflictWinner
 {
@@ -337,9 +337,9 @@ enum struct LuduvoDefinitionConflictWinner
     DefinitionFiles,
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(LuduvoDefinitionConflictWinner, {
-                                                               {LuduvoDefinitionConflictWinner::Luduvo, "luduvo"},
-                                                               {LuduvoDefinitionConflictWinner::DefinitionFiles, "definitionFiles"},
-                                                           })
+                                                                 {LuduvoDefinitionConflictWinner::Luduvo, "luduvo"},
+                                                                 {LuduvoDefinitionConflictWinner::DefinitionFiles, "definitionFiles"},
+                                                             })
 
 struct ClientLuduvoDefinitionsConfiguration
 {
@@ -393,8 +393,29 @@ struct ClientLuduvoResourceBindingConfiguration
     /// Whether hover and signature documentation should describe multiple resource names.
     bool pluralResourceNoun = false;
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourceBindingConfiguration, symbol, parameter, kind, variadic, pluralResourceNoun)
+
+struct ClientLuduvoBindingConfiguration
+{
+    /// Canonical function symbol, such as Color3.fromHex or MyLibrary.Spawn.
+    std::string symbol{};
+    /// Binding behavior. This release supports resource and color.
+    std::string kind{};
+    /// Parameter targeted by a single-argument resource or color binding.
+    std::string parameter{};
+    /// Ordered parameters targeted by a multi-argument color binding.
+    std::vector<std::string> parameters{};
+    /// Resource group used by resource bindings.
+    std::string group{};
+    /// Color representation: rgb, rgb255, hsv, or hex.
+    std::string encoding{};
+    /// Whether a resource binding targets the function's variadic argument tail.
+    bool variadic = false;
+    /// Whether resource documentation should describe multiple resource names.
+    bool pluralResourceNoun = false;
+};
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    ClientLuduvoResourceBindingConfiguration, symbol, parameter, kind, variadic, pluralResourceNoun)
+    ClientLuduvoBindingConfiguration, symbol, kind, parameter, parameters, group, encoding, variadic, pluralResourceNoun)
 
 struct ClientLuduvoResourceCompletionConfiguration
 {
@@ -427,7 +448,6 @@ struct ClientLuduvoResourcesConfiguration
             std::string name{};
             /// Optional Markdown documentation shown with the completion item.
             std::optional<std::string> documentation{};
-
             Value() = default;
             Value(const char* name)
                 : name(name)
@@ -454,7 +474,7 @@ struct ClientLuduvoResourcesConfiguration
     std::unordered_map<std::string, Group> groups{};
     /// Reusable value sources referenced by groups.
     std::unordered_map<std::string, Source> sources{};
-    /// Additional function-parameter resource bindings used by completion, hover, and signature help.
+    /// Legacy function-parameter resource bindings. Prefer platform.luduvo.bindings.
     std::vector<ClientLuduvoResourceBindingConfiguration> bindings{};
     ClientLuduvoResourceCompletionConfiguration completion{};
 };
@@ -464,7 +484,11 @@ inline void to_json(nlohmann::json& json, const ClientLuduvoResourcesConfigurati
     if (!value.documentation)
         json = value.name;
     else
-        json = nlohmann::json{{"name", value.name}, {"documentation", *value.documentation}};
+    {
+        json = nlohmann::json{{"name", value.name}};
+        if (value.documentation)
+            json["documentation"] = *value.documentation;
+    }
 }
 
 inline void from_json(const nlohmann::json& json, ClientLuduvoResourcesConfiguration::Source::Value& value)
@@ -493,8 +517,10 @@ struct ClientLuduvoConfiguration
     ClientLuduvoDefinitionsConfiguration definitions{};
     ClientLuduvoHoverConfiguration hover{};
     ClientLuduvoResourcesConfiguration resources{};
+    /// Function argument semantics shared by completion, hover, and editor providers.
+    std::vector<ClientLuduvoBindingConfiguration> bindings{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, hover, resources)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, hover, resources, bindings)
 
 struct ClientPlatformConfiguration
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Platform/LuduvoResourceBindings.hpp"
+#include "Platform/LuduvoBindings.hpp"
 #include "Platform/LuduvoHoverRenderer.hpp"
 #include "LSP/DocumentationParser.hpp"
 

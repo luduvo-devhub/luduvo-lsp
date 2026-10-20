@@ -1,7 +1,7 @@
 #pragma once
 
 #include "LSP/ClientConfiguration.hpp"
-#include "Platform/LuduvoResourceBindings.hpp"
+#include "Platform/LuduvoBindings.hpp"
 
 #include <optional>
 #include <cstddef>

@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Color preview support from Roblox got ported to Luduvo Color3 constructors! You can now preview colors and change their RGB values via an interactive (editor-provided) color picker.
+- Color picker functionality can be configured for custom functions and properties via the new `luduvo.bindings` field in the project config
+
+### Changed
+
+- Bindings have been completely overhauled to support the new `luduvo.bindings` field in the project config instead of the old `luduvo.reosources.bindings` because I realized that more than just resources needed this functionality. As of now, `luduvo.reosources.bindings` is "deprecated"
+  - To migrate, bindings should more or less look like this:
+
+```jsonc
+"luduvo": {
+  "bindings": [
+    {
+      "symbol": "MyLibrary.Test", // The exact same thing as the old "symbol" field
+      "kind": "resource", // This "kind" field designates that the binding is for a luduvo resource. NOT THE SAME AS THE OLD "kind" FIELD!!!
+      "parameter": "name", // The exact same thing as the old "parameter" field
+      "group": "prefab" // The exact same thing as the old "kind" field. Use this instead
+    }
+  ]
+}
+```
+
 ### Fixed
 
 - game.World.Pair no longer internally has components as its resource for the relation parameter

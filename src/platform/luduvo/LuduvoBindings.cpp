@@ -1,4 +1,4 @@
-#include "Platform/LuduvoResourceBindings.hpp"
+#include "Platform/LuduvoBindings.hpp"
 
 #include "Luau/Type.h"
 #include "Luau/TypePack.h"
@@ -37,6 +37,19 @@ constexpr BuiltinBinding kBuiltinBindings[] = {
     {"World.Query", "components", "component", true, true},
     {"World.Spawn", "components", "component", true, true},
 };
+
+std::optional<ColorPresentationEncoding> colorEncoding(std::string_view encoding)
+{
+    if (encoding == "rgb")
+        return ColorPresentationEncoding::Rgb;
+    if (encoding == "rgb255")
+        return ColorPresentationEncoding::Rgb255;
+    if (encoding == "hsv")
+        return ColorPresentationEncoding::Hsv;
+    if (encoding == "hex")
+        return ColorPresentationEncoding::Hex;
+    return std::nullopt;
+}
 
 std::string_view stripOverloadSuffix(std::string_view symbol)
 {
@@ -138,50 +151,113 @@ std::optional<LuduvoSymbolIdentity> getLuduvoSymbolIdentity(const std::optional<
     return LuduvoSymbolIdentity{std::string(symbol), side};
 }
 
-std::optional<std::string> canonicalLuduvoResourceSymbol(const std::optional<std::string>& documentationSymbol)
+std::optional<std::string> canonicalLuduvoBindingSymbol(const std::optional<std::string>& documentationSymbol)
 {
     return canonicalDocumentationSymbol(documentationSymbol);
 }
 
-LuduvoResourceBindingRegistry::LuduvoResourceBindingRegistry()
+LuduvoBindingRegistry::LuduvoBindingRegistry()
 {
     configure(ClientLuduvoConfiguration{});
 }
 
-void LuduvoResourceBindingRegistry::configure(const ClientLuduvoConfiguration& configuration)
+void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configuration)
 {
-    bindings.clear();
+    resourceBindings.clear();
+    colorBindings.clear();
     configuredWarnings.clear();
-    bindings.reserve(std::size(kBuiltinBindings) + configuration.resources.bindings.size());
+    resourceBindings.reserve(std::size(kBuiltinBindings) + configuration.resources.bindings.size() + configuration.bindings.size());
     for (const BuiltinBinding& binding : kBuiltinBindings)
-        bindings.push_back(
+        resourceBindings.push_back(
             {std::string(binding.symbol), std::string(binding.parameter), std::string(binding.kind), binding.variadic, binding.pluralResourceNoun});
+
+    colorBindings = {
+        {"Color3.new", {"r", "g", "b"}, ColorPresentationEncoding::Rgb},
+        {"Color3.fromRGB", {"r", "g", "b"}, ColorPresentationEncoding::Rgb255},
+        {"Color3.fromHSV", {"h", "s", "v"}, ColorPresentationEncoding::Hsv},
+        {"Color3.fromHex", {"hex"}, ColorPresentationEncoding::Hex},
+    };
+
+    auto addResource = [&](const std::string& symbol, const std::string& parameter, const std::string& group, bool variadic, bool pluralResourceNoun,
+                           std::string_view label)
+    {
+        if (symbol.empty() || parameter.empty() || group.empty())
+        {
+            configuredWarnings.push_back(std::string(label) + " must define non-empty symbol, parameter, and group values.");
+            return;
+        }
+        resourceBindings.erase(std::remove_if(resourceBindings.begin(), resourceBindings.end(),
+                                   [&](const ResourceBinding& existing)
+                                   {
+                                       return existing.symbol == symbol && existing.parameter == parameter;
+                                   }),
+            resourceBindings.end());
+        resourceBindings.push_back({symbol, parameter, group, variadic, pluralResourceNoun});
+    };
 
     for (size_t index = 0; index < configuration.resources.bindings.size(); ++index)
     {
         const ClientLuduvoResourceBindingConfiguration& configured = configuration.resources.bindings[index];
         if (configured.symbol.empty() || configured.parameter.empty() || configured.kind.empty())
         {
-            configuredWarnings.push_back("Binding #" + std::to_string(index + 1) + " must define non-empty symbol, parameter, and kind values.");
+            configuredWarnings.push_back(
+                "Legacy resource binding #" + std::to_string(index + 1) + " must define non-empty symbol, parameter, and kind values.");
+            continue;
+        }
+        addResource(configured.symbol, configured.parameter, configured.kind, configured.variadic, configured.pluralResourceNoun,
+            "Legacy resource binding #" + std::to_string(index + 1));
+    }
+
+    for (size_t index = 0; index < configuration.bindings.size(); ++index)
+    {
+        const ClientLuduvoBindingConfiguration& configured = configuration.bindings[index];
+        const std::string label = "Binding #" + std::to_string(index + 1);
+        if (configured.kind == "resource")
+        {
+            addResource(configured.symbol, configured.parameter, configured.group, configured.variadic, configured.pluralResourceNoun, label);
+            continue;
+        }
+        if (configured.kind != "color")
+        {
+            configuredWarnings.push_back(label + " uses unsupported kind '" + configured.kind + "'. This version supports resource and color.");
             continue;
         }
 
-        bindings.erase(std::remove_if(bindings.begin(), bindings.end(),
-                           [&](const Binding& existing)
-                           {
-                               return existing.symbol == configured.symbol && existing.parameter == configured.parameter;
-                           }),
-            bindings.end());
-        bindings.push_back({configured.symbol, configured.parameter, configured.kind, configured.variadic, configured.pluralResourceNoun});
+        const auto encoding = colorEncoding(configured.encoding);
+        std::vector<std::string> parameters = configured.parameters;
+        if (parameters.empty() && !configured.parameter.empty())
+            parameters.push_back(configured.parameter);
+        if (configured.symbol.empty() || !encoding || parameters.empty())
+        {
+            configuredWarnings.push_back(label + " must define a symbol, a supported color encoding, and parameter or parameters.");
+            continue;
+        }
+        const size_t expectedParameters = (*encoding == ColorPresentationEncoding::Rgb || *encoding == ColorPresentationEncoding::Rgb255 ||
+                                              *encoding == ColorPresentationEncoding::Hsv)
+                                              ? 3
+                                              : 1;
+        if (parameters.size() != expectedParameters)
+        {
+            configuredWarnings.push_back(label + " has " + std::to_string(parameters.size()) + " color parameters; encoding '" + configured.encoding +
+                                         "' requires " + std::to_string(expectedParameters) + ".");
+            continue;
+        }
+        colorBindings.erase(std::remove_if(colorBindings.begin(), colorBindings.end(),
+                                [&](const LuduvoColorBinding& existing)
+                                {
+                                    return existing.symbol == configured.symbol;
+                                }),
+            colorBindings.end());
+        colorBindings.push_back({configured.symbol, std::move(parameters), *encoding});
     }
 }
 
-const std::vector<std::string>& LuduvoResourceBindingRegistry::configurationWarnings() const
+const std::vector<std::string>& LuduvoBindingRegistry::configurationWarnings() const
 {
     return configuredWarnings;
 }
 
-std::vector<LuduvoResolvedResourceBinding> LuduvoResourceBindingRegistry::resolve(
+std::vector<LuduvoResolvedResourceBinding> LuduvoBindingRegistry::resolveResources(
     const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType, std::vector<std::string>* warnings) const
 {
     const auto canonicalSymbol = canonicalDocumentationSymbol(documentationSymbol);
@@ -200,7 +276,7 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoResourceBindingRegistry::resolv
     }
 
     std::vector<LuduvoResolvedResourceBinding> result;
-    for (const Binding& binding : bindings)
+    for (const ResourceBinding& binding : resourceBindings)
     {
         if (binding.symbol != *canonicalSymbol)
             continue;
@@ -263,4 +339,9 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoResourceBindingRegistry::resolv
     }
 
     return result;
+}
+
+const std::vector<LuduvoColorBinding>& LuduvoBindingRegistry::colors() const
+{
+    return colorBindings;
 }

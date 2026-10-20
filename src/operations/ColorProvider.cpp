@@ -139,7 +139,17 @@ lsp::DocumentColorResult LanguageServer::documentColor(const lsp::DocumentColorP
 
 lsp::ColorPresentationResult WorkspaceFolder::colorPresentation(const lsp::ColorPresentationParams& params)
 {
-    return platform->colorPresentation(params);
+    const auto moduleName = fileResolver.getModuleName(params.textDocument.uri);
+    const auto textDocument = fileResolver.getTextDocument(params.textDocument.uri);
+    if (!textDocument)
+        throw JsonRpcException(lsp::ErrorCode::RequestFailed, "No managed text document for " + params.textDocument.uri.toString());
+
+    frontend.parse(moduleName);
+    const auto sourceModule = frontend.getSourceModule(moduleName);
+    if (!sourceModule)
+        return {};
+
+    return platform->colorPresentation({params, *textDocument, *sourceModule});
 }
 
 lsp::ColorPresentationResult LanguageServer::colorPresentation(const lsp::ColorPresentationParams& params)

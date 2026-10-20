@@ -196,7 +196,7 @@ public:
 
     lsp::DocumentColorResult documentColor(const TextDocument& textDocument, const Luau::SourceModule& module) override;
 
-    lsp::ColorPresentationResult colorPresentation(const lsp::ColorPresentationParams& params) override;
+    lsp::ColorPresentationResult colorPresentation(const PlatformColorPresentationContext& context) override;
 
     void onStudioPluginFullChange(const json& dataModel);
     void onStudioPluginClear();
