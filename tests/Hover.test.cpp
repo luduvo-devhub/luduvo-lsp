@@ -933,6 +933,26 @@ TEST_CASE("luduvo_rich_hover_does_not_inherit_global_member_documentation_for_ca
     CHECK_EQ(result->contents.value, codeBlock("luau", "local err: string?"));
 }
 
+TEST_CASE("luduvo_rich_hover_does_not_inherit_global_member_identity_for_assigned_globals")
+{
+    const std::string definitions = R"(
+        declare extern type Instance with
+            Action: string
+        end
+        declare game: any
+    )";
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    LuduvoFixture fixture("luduvo_rich_hover_assigned_global_identity", config, definitions, definitions);
+    fixture.client.documentation["@luduvo/server/globaltype/Instance.Action"] = Luau::BasicDocumentation{"Action documentation"};
+    auto uri = fixture.newDocument("assigned-global.server.luau", "local finishMe = game\nhi = \"hello\"");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = lsp::Position{1, 0};
+    auto result = fixture.workspace.hover(params, nullptr);
+    REQUIRE(result);
+    CHECK_EQ(result->contents.value, codeBlock("luau", "declare hi: string"));
+}
+
 TEST_CASE("luduvo_rich_hover_structurally_truncates_normal_table_declarations")
 {
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();

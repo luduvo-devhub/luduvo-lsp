@@ -34,8 +34,12 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     const bool directMemberInitializer = localHasDirectMemberInitializer(context.sourceModule, hoveredLocal);
 
     std::optional<std::string> documentationSymbol = context.documentationSymbol;
-    const bool directIdentityBelongsToHover =
-        !((declarationTarget.kind == DeclarationKind::Local && !directMemberInitializer) || context.node->asType());
+    bool directIdentityBelongsToHover = !((declarationTarget.kind == DeclarationKind::Local && !directMemberInitializer) || context.node->asType());
+    if (directIdentityBelongsToHover && declarationTarget.kind == DeclarationKind::Global)
+    {
+        const auto identity = getLuduvoSymbolIdentity(documentationSymbol);
+        directIdentityBelongsToHover = !identity || identity->title == declarationTarget.name;
+    }
     if (!directIdentityBelongsToHover)
         documentationSymbol = std::nullopt;
     documentationSymbol = resolveDocumentationSymbol(context.type, documentationSymbol, getEnvironmentForModule(context.moduleName));

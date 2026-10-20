@@ -32,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - game.World.Pair no longer internally has components as its resource for the relation parameter
+    - Hovering global variables no longer incorrectly shows Luduvo API documentation. At this point, the hover bugs will be here forever...
 
 ## [1.70.4L-alpha] - 2026-10-18
 
