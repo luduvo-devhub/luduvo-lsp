@@ -1,4 +1,4 @@
-#include "Platform/LuduvoPlatform.hpp"
+#include "Platform/luduvo/LuduvoPlatform.hpp"
 
 #include "LSP/ColorProvider.hpp"
 #include "Platform/ColorPresentation.hpp"

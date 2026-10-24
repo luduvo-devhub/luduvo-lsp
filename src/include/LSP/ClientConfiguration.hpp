@@ -380,6 +380,15 @@ struct ClientLuduvoHoverConfiguration
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoHoverConfiguration, presentation, maxTitleLength, maxTypeDefinitionLength)
 
+struct ClientLuduvoDiagnosticsConfiguration
+{
+    /// Whether Luduvo-specific diagnostics are reported.
+    bool enabled = true;
+    /// Per-rule severity overrides keyed by stable rule identifier.
+    std::unordered_map<std::string, std::string> rules{};
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoDiagnosticsConfiguration, enabled, rules)
+
 struct ClientLuduvoResourceBindingConfiguration
 {
     /// Canonical function symbol, such as game.World.Query or MyLibrary.Spawn.
@@ -515,12 +524,13 @@ struct ClientLuduvoConfiguration
     /// Luduvo's per-user Client directory. The content store lives below this directory.
     std::string dataDirectory{};
     ClientLuduvoDefinitionsConfiguration definitions{};
+    ClientLuduvoDiagnosticsConfiguration diagnostics{};
     ClientLuduvoHoverConfiguration hover{};
     ClientLuduvoResourcesConfiguration resources{};
     /// Function argument semantics shared by completion, hover, and editor providers.
     std::vector<ClientLuduvoBindingConfiguration> bindings{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, hover, resources, bindings)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, diagnostics, hover, resources, bindings)
 
 struct ClientPlatformConfiguration
 {

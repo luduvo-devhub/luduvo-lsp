@@ -9,6 +9,7 @@
 #include "Luau/TimeTrace.h"
 
 #include "LSP/Completion.hpp"
+#include "LSP/CommentDirectiveCompletion.hpp"
 #include "LSP/Workspace.hpp"
 #include "LSP/LuauExt.hpp"
 #include "LSP/DocumentationParser.hpp"
@@ -727,6 +728,9 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
     auto textDocument = fileResolver.getTextDocument(params.textDocument.uri);
     if (!textDocument)
         throw JsonRpcException(lsp::ErrorCode::RequestFailed, "No managed text document for " + params.textDocument.uri.toString());
+
+    if (auto directiveItems = completeCommentDirective(*textDocument, params.position, *platform))
+        return *directiveItems;
 
     std::unordered_set<std::string> tags;
 

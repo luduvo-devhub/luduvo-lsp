@@ -1,4 +1,6 @@
 --!strict
+--!nolint luduvo/unused-local
+
 -- Tested in Zed. Complete the unfinished `game.` declare on line 11, or try hovering any of the luduvo-speciifc data types!
 local part: Instance? = game.Prefabs.Spawn("Part")
 if part then
@@ -7,6 +9,7 @@ if part then
     part.Color = Color3.new(0.2, 0.6, 1)
     part:AddComponent(game.World.Pair("", "Example"))
 end
+
 local finishMe = game.
 
 local testResourceAutocomplete = game.World:Query("") or self:HasComponent("") or game.Prefabs.Exists("")
@@ -17,7 +20,9 @@ game.Tween.TweenProperty(self, "UIPosition", "bignbong", 10)
 local function test()
     return "hello"
 end
+game.World.Query()
 
+table.insert({}, "hi")
 local newFunc = test
 
 local query = game.World.Query("Position")

@@ -4,7 +4,7 @@
 #include "LSP/ClientConfiguration.hpp"
 #include "LSP/Workspace.hpp"
 #include "Platform/RobloxPlatform.hpp"
-#include "Platform/LuduvoPlatform.hpp"
+#include "Platform/luduvo/LuduvoPlatform.hpp"
 #include "Platform/StringRequireSuggester.hpp"
 #include "Platform/StringRequireAutoImporter.hpp"
 

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Platform/LuduvoBindings.hpp"
-#include "Platform/LuduvoHoverRenderer.hpp"
+#include "Platform/luduvo/LuduvoBindings.hpp"
+#include "LuduvoHoverRenderer.hpp"
+#include "Platform/luduvo/LuduvoSymbols.hpp"
 #include "LSP/DocumentationParser.hpp"
 
 #include "Luau/Ast.h"
@@ -55,6 +56,7 @@ struct RichHoverInput
     std::optional<std::string> fallbackTitle;
     bool preferLeafTitle = false;
     bool showTypeDefinition = true;
+    std::vector<RichHoverOverload> overloads;
 };
 
 DeclarationTarget getDeclarationTarget(
@@ -70,6 +72,8 @@ bool hasUncheckableArguments(Luau::TypeId type);
 bool isDeprecated(Luau::TypeId type);
 std::string normalizeRichHoverType(Luau::TypeId type, Luau::ToStringOptions& options);
 std::string getRichHoverTypeDefinition(Luau::TypeId type, Luau::ToStringOptions& options);
+std::vector<RichHoverOverload> makeRichHoverOverloads(Luau::TypeId type, const DeclarationTarget& target, Luau::ToStringOptions& options,
+    const std::vector<LuduvoResolvedResourceBinding>& constrainedResources);
 std::optional<std::string> resolveDocumentationSymbol(
     Luau::TypeId type, const std::optional<std::string>& directDocumentationSymbol, const std::optional<std::string>& environmentName);
 RichHoverRenderModel analyzeRichHover(const std::vector<LuduvoResolvedResourceBinding>& constrainedResources, const RichHoverInput& input);

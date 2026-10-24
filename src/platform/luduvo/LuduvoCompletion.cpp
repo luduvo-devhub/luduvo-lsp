@@ -1,4 +1,6 @@
-#include "Platform/LuduvoPlatform.hpp"
+#include "Platform/luduvo/LuduvoPlatform.hpp"
+#include "Platform/luduvo/LuduvoLifecycle.hpp"
+#include "Platform/luduvo/LuduvoSymbols.hpp"
 
 #include "LSP/LuauExt.hpp"
 #include "LSP/TextDocument.hpp"
@@ -8,6 +10,7 @@
 #include "Luau/Type.h"
 
 #include <algorithm>
+#include <cctype>
 #include <unordered_set>
 
 namespace
@@ -148,11 +151,117 @@ std::string resourceCompletionDocumentation(
     return result;
 }
 
+bool isLifecycleCompletionPosition(
+    const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const std::vector<Luau::AstNode*>& ancestry, Luau::Position position)
+{
+    for (Luau::AstNode* ancestor : ancestry)
+    {
+        if (const auto block = ancestor->as<Luau::AstStatBlock>(); block && block != sourceModule.root)
+            return false;
+
+        if (ancestor->as<Luau::AstExprFunction>())
+            return false;
+
+        if (Luau::AstExpr* expression = ancestor->asExpr();
+            expression && !expression->is<Luau::AstExprGlobal>() && !expression->is<Luau::AstExprError>())
+            return false;
+    }
+
+    const std::string line = textDocument.getLine(position.line);
+    if (position.column > line.size())
+        return false;
+
+    const std::string_view prefix(line.data(), position.column);
+    const auto firstNonWhitespace = std::find_if_not(prefix.begin(), prefix.end(),
+        [](unsigned char character)
+        {
+            return std::isspace(character);
+        });
+    if (firstNonWhitespace == prefix.end())
+        return true;
+
+    if (!std::isalpha(static_cast<unsigned char>(*firstNonWhitespace)) && *firstNonWhitespace != '_')
+        return false;
+
+    return std::all_of(firstNonWhitespace + 1, prefix.end(),
+        [](unsigned char character)
+        {
+            return std::isalnum(character) || character == '_';
+        });
+}
+
+bool hasTopLevelBinding(const Luau::SourceModule& sourceModule, std::string_view name)
+{
+    for (Luau::AstStat* statement : sourceModule.root->body)
+    {
+        if (const auto function = statement->as<Luau::AstStatFunction>())
+        {
+            if (const auto global = function->name->as<Luau::AstExprGlobal>(); global && global->name.value == name)
+                return true;
+        }
+        else if (const auto function = statement->as<Luau::AstStatLocalFunction>())
+        {
+            if (function->name->name.value == name)
+                return true;
+        }
+        else if (const auto local = statement->as<Luau::AstStatLocal>())
+        {
+            if (std::any_of(local->vars.begin(), local->vars.end(),
+                    [name](const Luau::AstLocal* variable)
+                    {
+                        return variable->name.value == name;
+                    }))
+                return true;
+        }
+        else if (const auto assignment = statement->as<Luau::AstStatAssign>())
+        {
+            if (std::any_of(assignment->vars.begin(), assignment->vars.end(),
+                    [name](const Luau::AstExpr* variable)
+                    {
+                        const auto global = variable->as<Luau::AstExprGlobal>();
+                        return global && global->name.value == name;
+                    }))
+                return true;
+        }
+    }
+    return false;
+}
+
+bool supportsSnippets(const WorkspaceFolder* workspaceFolder)
+{
+    if (!workspaceFolder || !workspaceFolder->client)
+        return false;
+
+    const lsp::ClientCapabilities& capabilities = workspaceFolder->client->capabilities;
+    return capabilities.textDocument && capabilities.textDocument->completion && capabilities.textDocument->completion->completionItem &&
+           capabilities.textDocument->completion->completionItem->snippetSupport;
+}
+
 } // namespace
 
 void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
     const std::vector<Luau::AstNode*>& ancestry, Luau::Position position, std::vector<lsp::CompletionItem>& items)
 {
+    if (isLifecycleCompletionPosition(textDocument, sourceModule, ancestry, position))
+    {
+        const bool snippets = supportsSnippets(workspaceFolder);
+        for (const LuduvoLifecycleFunction& lifecycle : luduvoLifecycleFunctions)
+        {
+            if (hasTopLevelBinding(sourceModule, lifecycle.name))
+                continue;
+
+            lsp::CompletionItem item;
+            item.label = std::string(lifecycle.name);
+            item.kind = lsp::CompletionItemKind::Snippet;
+            item.detail = "Luduvo lifecycle function";
+            item.filterText = std::string(lifecycle.name);
+            item.insertText =
+                "function " + std::string(lifecycle.name) + "(" + std::string(lifecycle.parameters) + ")\n\t" + (snippets ? "$0" : "") + "\nend";
+            item.insertTextFormat = snippets ? lsp::InsertTextFormat::Snippet : lsp::InsertTextFormat::PlainText;
+            items.push_back(std::move(item));
+        }
+    }
+
     if (!configuration.resources.completion.enabled || !typedModule)
         return;
 
@@ -166,7 +275,7 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
 
     Luau::TypeId callableType = Luau::follow(*callable);
     const std::optional<std::string> documentationSymbol = callableDocumentationSymbol(sourceModule, *typedModule, *call, callableType);
-    const std::optional<std::string> canonicalSymbol = canonicalLuduvoBindingSymbol(documentationSymbol);
+    const std::optional<std::string> canonicalSymbol = canonicalLuduvoSymbol(documentationSymbol);
     if (!canonicalSymbol || contains(configuration.resources.completion.disabledApis, *canonicalSymbol))
         return;
 

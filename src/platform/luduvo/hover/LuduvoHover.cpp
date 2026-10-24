@@ -1,10 +1,11 @@
-#include "Platform/LuduvoPlatform.hpp"
+#include "Platform/luduvo/LuduvoPlatform.hpp"
 
 #include "LSP/DocumentationParser.hpp"
 #include "LSP/LuauExt.hpp"
 #include "LSP/Workspace.hpp"
-#include "Platform/LuduvoHoverAnalysis.hpp"
-#include "Platform/LuduvoHoverRenderer.hpp"
+#include "Platform/luduvo/hover/LuduvoHoverAnalysis.hpp"
+#include "Platform/luduvo/hover/LuduvoHoverRenderer.hpp"
+#include "Platform/luduvo/LuduvoSymbols.hpp"
 
 #include "Luau/ToString.h"
 
@@ -83,10 +84,10 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     if (context.hoveredProperty)
         property = *context.hoveredProperty;
     const auto constrainedResources = resolveResourceBindings(documentationSymbol, context.type);
-    return lsp::Hover{{lsp::MarkupKind::Markdown,
-        renderRichHover(configuration.hover,
-            analyzeRichHover(constrainedResources, RichHoverInput{context.type, declaration, documentationSymbol, std::move(property), documentation,
-                                                       fallbackTitle, directMemberInitializer, true}))}};
+    RichHoverInput hoverInput{
+        context.type, declaration, documentationSymbol, std::move(property), documentation, fallbackTitle, directMemberInitializer, true};
+    hoverInput.overloads = makeRichHoverOverloads(context.type, declarationTarget, options, constrainedResources);
+    return lsp::Hover{{lsp::MarkupKind::Markdown, renderRichHover(configuration.hover, analyzeRichHover(constrainedResources, hoverInput))}};
 }
 
 std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context)

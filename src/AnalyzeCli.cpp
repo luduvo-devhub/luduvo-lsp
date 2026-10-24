@@ -103,14 +103,20 @@ bool analyzeFile(WorkspaceFolder& workspace, const std::string& path, ReportForm
     for (auto& warning : cr.lintResult.warnings)
         reportWarning(format, relativePath.c_str(), warning);
 
+    Luau::SourceModule* sourceModule = workspace.frontend.getSourceModule(name);
+    Luau::ModulePtr module = workspace.getModule(name);
+    for (const PlatformDiagnostic& diagnostic : workspace.fileResolver.platform->collectDiagnostics({name, Uri::file(path), *sourceModule, module}))
+    {
+        const std::string type = diagnostic.source + "/" + diagnostic.code;
+        report(format, relativePath.c_str(), diagnostic.location, type.c_str(), diagnostic.message.c_str());
+        reportedErrors += diagnostic.severity == PlatformDiagnosticSeverity::Error;
+    }
+
     if (annotate)
     {
-        Luau::SourceModule* sm = workspace.frontend.getSourceModule(name);
-        Luau::ModulePtr m = workspace.getModule(name);
+        Luau::attachTypeData(*sourceModule, *module);
 
-        Luau::attachTypeData(*sm, *m);
-
-        std::string annotated = Luau::prettyPrintWithTypes(*sm->root);
+        std::string annotated = Luau::prettyPrintWithTypes(*sourceModule->root);
 
         printf("%s", annotated.c_str());
     }

@@ -19,6 +19,31 @@ static bool supportsRelatedDocuments(const lsp::ClientCapabilities& capabilities
     return capabilities.textDocument && capabilities.textDocument->diagnostic && capabilities.textDocument->diagnostic->relatedDocumentSupport;
 }
 
+static lsp::Diagnostic createPlatformDiagnostic(const PlatformDiagnostic& diagnostic, const TextDocument* textDocument)
+{
+    lsp::Diagnostic result;
+    result.code = diagnostic.code;
+    result.source = diagnostic.source;
+    result.message = diagnostic.message;
+    result.range = {toUTF16(textDocument, diagnostic.location.begin), toUTF16(textDocument, diagnostic.location.end)};
+    switch (diagnostic.severity)
+    {
+    case PlatformDiagnosticSeverity::Error:
+        result.severity = lsp::DiagnosticSeverity::Error;
+        break;
+    case PlatformDiagnosticSeverity::Warning:
+        result.severity = lsp::DiagnosticSeverity::Warning;
+        break;
+    case PlatformDiagnosticSeverity::Information:
+        result.severity = lsp::DiagnosticSeverity::Information;
+        break;
+    case PlatformDiagnosticSeverity::Hint:
+        result.severity = lsp::DiagnosticSeverity::Hint;
+        break;
+    }
+    return result;
+}
+
 /// Compute a document diagnostics report for a single file (and potentially related files)
 /// By default, this is called by the client for an open document. Hence we can expect that files are managed
 /// However, we sometimes call this as part of reverse-dependency updates (see updateTextDocument), where the file may be unmanaged
@@ -109,6 +134,11 @@ lsp::DocumentDiagnosticReport WorkspaceFolder::documentDiagnostics(
     }
     for (auto& error : cr.lintResult.warnings)
         report.items.emplace_back(createLintDiagnostic(error, *textDocument));
+
+    const auto module = getModule(moduleName);
+    for (const PlatformDiagnostic& diagnostic :
+        platform->collectDiagnostics({moduleName, params.textDocument.uri, *frontend.getSourceModule(moduleName), module}))
+        report.items.push_back(createPlatformDiagnostic(diagnostic, *textDocument));
 
     return report;
 }
@@ -202,6 +232,10 @@ lsp::WorkspaceDiagnosticReport WorkspaceFolder::workspaceDiagnostics(const lsp::
         }
         for (auto& error : cr.lintResult.warnings)
             documentReport.items.emplace_back(createLintDiagnostic(error, document));
+
+        const auto module = getModule(moduleName);
+        for (const PlatformDiagnostic& diagnostic : platform->collectDiagnostics({moduleName, uri, *frontend.getSourceModule(moduleName), module}))
+            documentReport.items.push_back(createPlatformDiagnostic(diagnostic, document));
 
         workspaceReport.items.emplace_back(documentReport);
     }

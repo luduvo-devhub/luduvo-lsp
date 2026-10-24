@@ -305,6 +305,64 @@
           "default": false,
           "scope": "window"
         },
+        "luduvo-lsp.platform.luduvo.diagnostics.enabled": {
+          "markdownDescription": "Whether diagnostics for Luduvo runtime rules are enabled",
+          "type": "boolean",
+          "default": true,
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.diagnostics.rules": {
+          "markdownDescription": "Overrides Luduvo diagnostic severities by stable rule ID. `default` uses the rule's built-in severity and `off` disables it",
+          "type": "object",
+          "default": {},
+          "properties": {
+            "autorun-self-access": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "empty-world-query": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "invalid-nolint-directive": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "default",
+              "error",
+              "warning",
+              "information",
+              "hint",
+              "off"
+            ]
+          },
+          "scope": "resource"
+        },
         "luduvo-lsp.platform.luduvo.hover.presentation": {
           "markdownDescription": "Controls Luduvo-specific hover presentation. `rich` adds canonical API/type headings, definition-side provenance, and tags; `standard` preserves upstream hover presentation",
           "type": "string",

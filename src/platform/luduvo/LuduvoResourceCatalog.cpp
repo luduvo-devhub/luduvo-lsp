@@ -1,7 +1,7 @@
-#include "Platform/LuduvoResourceCatalog.hpp"
+#include "Platform/luduvo/LuduvoResourceCatalog.hpp"
 
 #include "LuduvoResources.hpp"
-#include "Platform/LuduvoDefinitionResolver.hpp"
+#include "Platform/luduvo/LuduvoDefinitionResolver.hpp"
 
 #include "nlohmann/json.hpp"
 

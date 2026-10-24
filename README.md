@@ -156,6 +156,8 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `luau-lsp.platform.luduvo.definitions.globalPolicy` | `"luduvoOnly"`, `"definitionFilesOnly"`, `"preferLuduvo"`, `"preferDefinitionFiles"`, or `"combine"` | `"combine"` | Controls how official Luduvo declarations interact with `types.definitionFiles`. |
 | `luau-lsp.platform.luduvo.definitions.conflictWinner` | `"luduvo"` or `"definitionFiles"` | `"luduvo"` | Chooses which source owns a duplicate global when `globalPolicy` is `combine`. |
 | `luau-lsp.platform.luduvo.definitions.exposePrivateTypes` | boolean | `false` | For some reason, official Luduvo definition files purposely hides certain types. If you enable this, Luduvo LSP will force all top-level `type` aliases from Luduvo definition files into exported globals. May cause issues with type checking and Luduvo's own type checker likely won't like that you are using, so it's disabled by default. |
+| `luau-lsp.platform.luduvo.diagnostics.enabled` | boolean | `true` | Globally enables diagnostics for Luduvo-specific runtime rules |
+| `luau-lsp.platform.luduvo.diagnostics.rules` | map of rule IDs to severity | `{}` | Overrides individual Luduvo diagnostics with `default`, `error`, `warning`, `information`, `hint`, or `off`. |
 | `luau-lsp.platform.luduvo.hover.presentation` | `"rich"` or `"standard"` | `"rich"` | Selects Luduvo's API-aware hover layout or the upstream-compatible hover layout. Standard hovers keep documentation above the type definition. |
 | `luau-lsp.platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits visible rich-hover title length while preserving provenance text. URLs do not count toward the limit; `null` disables truncation. |
 | `luau-lsp.platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
@@ -218,6 +220,44 @@ For example, you can extend the built-in prefabs with your own project prefabs, 
   }
 }
 ```
+
+## Diagnostics & Linting
+
+Luduvo LSP comes packed with its own custom error diagnostics that lint a select few runtime errors that would normally only trigger when running the project in a live game. So far, these are the ones that have been implemented:
+
+| Rule ID | Default Severity | Trigger Condition |
+|---|---|---|
+| `autorun-self-access` | error | Attempting to use Luduvo's `self` inside an `autorun` directory, where Luduvo supplies `nil`. Should not trigger if you redefine `self` locally |
+| `empty-world-query` | error | Calling `game.World.Query` or `World.Query` without any expected arguments (a string component name or `Pair`) |
+| `invalid-nolint-directive` | warning | Referring to an unknown Luduvo diagnostic rule in a `--!nolint luduvo/...` directive, or slightly mispelling it to the point that the LSP can guess what your intent was. Any lint that doesn't start with `luduvo/` won't get this lint and instead gets the default upstream Luau hint |
+
+If you feel the need, severities can be changed without globally disabling every Luduvo diagnostic:
+
+```jsonc
+{
+  "platform": {
+    "luduvo": {
+      "diagnostics": {
+        "enabled": true,
+        "rules": {
+          "empty-world-query": "warning",
+          "autorun-self-access": "off"
+        }
+      }
+    }
+  }
+}
+```
+
+Supported values are `default`, `error`, `warning`, `information`, `hint`, and `off`.
+
+Just like normal lints, Luduvo lints can be suppressed via `--!nolint`:
+
+```luau
+--!nolint luduvo/empty-world-query
+```
+
+Normal `nolint` still applies. Only 1 rule per line is supported. A bare `--!nolint` suppresses all Luau lint warnings and all Luduvo diagnostic rules in the file. It does not suppress type errors. An unknown `luduvo/` rule produces a diagnostic and suggests a nearby ID when possible.
 
 ## Building
 

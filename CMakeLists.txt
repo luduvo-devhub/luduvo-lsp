@@ -48,15 +48,15 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.client.d.luau")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.server.d.luau" LUDUVO_SERVER_DEFINITIONS)
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/globalTypes.luduvo.client.d.luau" LUDUVO_CLIENT_DEFINITIONS)
-configure_file(src/include/Platform/LuduvoDefinitions.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDefinitions.hpp" @ONLY)
+configure_file(src/include/Platform/luduvo/in/LuduvoDefinitions.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDefinitions.hpp" @ONLY)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/documentation.luduvo.json")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/documentation.luduvo.json" LUDUVO_DOCUMENTATION)
-configure_file(src/include/Platform/LuduvoDocumentation.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDocumentation.hpp" @ONLY)
+configure_file(src/include/Platform/luduvo/in/LuduvoDocumentation.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoDocumentation.hpp" @ONLY)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/resources.luduvo.json")
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/api-docs/en-us/resources.luduvo.json" LUDUVO_RESOURCES)
-configure_file(src/include/Platform/LuduvoResources.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoResources.hpp" @ONLY)
+configure_file(src/include/Platform/luduvo/in/LuduvoResources.hpp.in "${LUDUVO_GENERATED_INCLUDE_DIR}/LuduvoResources.hpp" @ONLY)
 target_include_directories(Luau.LanguageServer PRIVATE "${LUDUVO_GENERATED_INCLUDE_DIR}")
 add_executable(Luau.LanguageServer.CLI)
 add_executable(Luau.LanguageServer.Test)
@@ -92,12 +92,18 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/PlatformDefinitionLoader.cpp
         src/platform/luduvo/LuduvoPlatform.cpp
         src/platform/luduvo/LuduvoDefinitionResolver.cpp
-        src/platform/luduvo/LuduvoHoverAnalysis.cpp
-        src/platform/luduvo/LuduvoHoverRenderer.cpp
-        src/platform/luduvo/LuduvoHover.cpp
+        src/platform/luduvo/diagnostics/LuduvoDiagnostics.cpp
+        src/platform/luduvo/diagnostics/LuduvoDiagnosticAdapter.cpp
+        src/platform/luduvo/diagnostics/LuduvoDiagnosticRules.cpp
+        src/platform/luduvo/diagnostics/LuduvoCustomDiagnostics.cpp
+        src/platform/luduvo/hover/LuduvoHoverAnalysis.cpp
+        src/platform/luduvo/hover/LuduvoHoverRenderer.cpp
+        src/platform/luduvo/hover/LuduvoHover.cpp
         src/platform/luduvo/LuduvoCompletion.cpp
         src/platform/luduvo/LuduvoColorProvider.cpp
         src/platform/luduvo/LuduvoBindings.cpp
+        src/platform/luduvo/LuduvoBindingRecords.cpp
+        src/platform/luduvo/LuduvoSymbols.cpp
         src/platform/luduvo/LuduvoResourceCatalog.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
@@ -113,6 +119,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/roblox/RobloxSourceNode.cpp
         src/platform/roblox/RobloxStudioPlugin.cpp
         src/operations/Diagnostics.cpp
+        src/operations/CommentDirectiveCompletion.cpp
         src/operations/Completion.cpp
         src/operations/DocumentSymbol.cpp
         src/operations/DocumentLink.cpp
@@ -176,6 +183,7 @@ target_sources(Luau.LanguageServer.Test PRIVATE
         tests/Definitions.test.cpp
         tests/SignatureHelp.test.cpp
         tests/Diagnostics.test.cpp
+        tests/LuduvoDiagnostics.test.cpp
         tests/GoToDefinition.test.cpp
         tests/Glob.test.cpp
         tests/Workspace.test.cpp

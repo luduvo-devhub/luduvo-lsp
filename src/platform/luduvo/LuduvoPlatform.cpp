@@ -1,5 +1,7 @@
-#include "Platform/LuduvoPlatform.hpp"
-#include "Platform/LuduvoDefinitionResolver.hpp"
+#include "Platform/luduvo/LuduvoPlatform.hpp"
+#include "Platform/luduvo/diagnostics/LuduvoDiagnosticAdapter.hpp"
+#include "Platform/luduvo/LuduvoLifecycle.hpp"
+#include "Platform/luduvo/LuduvoDefinitionResolver.hpp"
 #include "LuduvoDefinitions.hpp"
 #include "LuduvoDocumentation.hpp"
 #include "LSP/Workspace.hpp"
@@ -19,23 +21,24 @@ LuduvoPlatform::LuduvoPlatform(const ClientLuduvoConfiguration& configuration, W
     : LSPPlatform(fileResolver, workspaceFolder)
     , configuration(configuration)
 {
+    diagnosticSettings = resolveLuduvoDiagnosticConfiguration(configuration.diagnostics).settings;
     resourceCatalog.configure(configuration);
     bindings.configure(configuration);
 }
 
-void LuduvoPlatform::reportResourceConfigurationWarnings(const std::vector<std::string>& warnings)
+void LuduvoPlatform::reportConfigurationWarnings(std::string_view area, const std::vector<std::string>& warnings)
 {
     if (!workspaceFolder)
         return;
 
     std::vector<std::string> newWarnings;
     for (const std::string& warning : warnings)
-        if (reportedResourceWarnings.insert(warning).second)
+        if (reportedConfigurationWarnings.insert(std::string(area) + ":" + warning).second)
             newWarnings.push_back(warning);
     if (newWarnings.empty())
         return;
 
-    std::string message = "Some Luduvo binding or resource configuration entries were ignored:";
+    std::string message = "Some Luduvo " + std::string(area) + " configuration entries were ignored:";
     for (const std::string& warning : newWarnings)
         message += "\n- " + warning;
 
@@ -67,7 +70,7 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoPlatform::resolveResourceBindin
                          return group->dataType != "string";
                      }),
         result.end());
-    reportResourceConfigurationWarnings(warnings);
+    reportConfigurationWarnings("binding or resource", warnings);
     return result;
 }
 
@@ -183,11 +186,14 @@ void LuduvoPlatform::setupWithConfiguration(const ClientConfiguration& config)
 {
     const bool defaultChanged = configuration.definitions.defaultScriptSide != config.platform.luduvo.definitions.defaultScriptSide;
     configuration = config.platform.luduvo;
+    const LuduvoDiagnosticConfigurationResult diagnosticConfiguration = resolveLuduvoDiagnosticConfiguration(configuration.diagnostics);
+    diagnosticSettings = diagnosticConfiguration.settings;
     resourceCatalog.configure(configuration);
     bindings.configure(configuration);
-    reportedResourceWarnings.clear();
-    reportResourceConfigurationWarnings(resourceCatalog.configurationWarnings());
-    reportResourceConfigurationWarnings(bindings.configurationWarnings());
+    reportedConfigurationWarnings.clear();
+    reportConfigurationWarnings("diagnostics", diagnosticConfiguration.warnings);
+    reportConfigurationWarnings("binding or resource", resourceCatalog.configurationWarnings());
+    reportConfigurationWarnings("binding or resource", bindings.configurationWarnings());
 
     if (defaultChanged && workspaceFolder)
     {
@@ -202,14 +208,26 @@ void LuduvoPlatform::setupWithConfiguration(const ClientConfiguration& config)
 
 bool LuduvoPlatform::isLintIgnored(const Luau::LintWarning& lint) const
 {
+    if (lint.code == Luau::LintWarning::Code_CommentDirective && lint.text.find("unknown lint rule 'luduvo/") != std::string::npos)
+        return true;
+
     if (lint.code != Luau::LintWarning::Code_FunctionUnused)
         return false;
 
-    static constexpr std::array lifecycleFunctions{"Update", "PhysicsUpdate", "Migrate"};
-    for (const char* name : lifecycleFunctions)
+    for (const LuduvoLifecycleFunction& lifecycle : luduvoLifecycleFunctions)
     {
-        if (lint.text == "Function '" + std::string(name) + "' is never used; prefix with '_' to silence")
+        if (lint.text == "Function '" + std::string(lifecycle.name) + "' is never used; prefix with '_' to silence")
             return true;
     }
     return false;
+}
+
+std::vector<PlatformDiagnostic> LuduvoPlatform::collectDiagnostics(const PlatformDiagnosticContext& context)
+{
+    return collectLuduvoPlatformDiagnostics(diagnosticSettings, context);
+}
+
+std::vector<PlatformLintRuleCompletion> LuduvoPlatform::getLintRuleCompletions() const
+{
+    return getLuduvoLintRuleCompletions();
 }

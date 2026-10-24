@@ -1,18 +1,20 @@
 #pragma once
 #include "Platform/LSPPlatform.hpp"
-#include "Platform/LuduvoBindings.hpp"
-#include "Platform/LuduvoResourceCatalog.hpp"
+#include "LuduvoBindings.hpp"
+#include "diagnostics/LuduvoDiagnostics.hpp"
+#include "LuduvoResourceCatalog.hpp"
 
 class LuduvoPlatform : public LSPPlatform
 {
     ClientLuduvoConfiguration configuration;
+    LuduvoDiagnosticSettings diagnosticSettings;
     LuduvoResourceCatalog resourceCatalog;
     LuduvoBindingRegistry bindings;
-    std::unordered_set<std::string> reportedResourceWarnings;
+    std::unordered_set<std::string> reportedConfigurationWarnings;
 
     std::vector<LuduvoResolvedResourceBinding> resolveResourceBindings(
         const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType);
-    void reportResourceConfigurationWarnings(const std::vector<std::string>& warnings);
+    void reportConfigurationWarnings(std::string_view area, const std::vector<std::string>& warnings);
 
 public:
     LuduvoPlatform(const ClientLuduvoConfiguration& configuration, WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder);
@@ -25,6 +27,8 @@ public:
     std::optional<std::string> getEnvironmentForModule(const Luau::ModuleName& moduleName) const override;
     void setupWithConfiguration(const ClientConfiguration& config) override;
     bool isLintIgnored(const Luau::LintWarning& lint) const override;
+    std::vector<PlatformDiagnostic> collectDiagnostics(const PlatformDiagnosticContext& context) override;
+    std::vector<PlatformLintRuleCompletion> getLintRuleCompletions() const override;
     void handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
         const std::vector<Luau::AstNode*>& ancestry, Luau::Position position, std::vector<lsp::CompletionItem>& items) override;
     std::optional<lsp::Hover> handleTypeHover(const PlatformHoverContext& context) override;

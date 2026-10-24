@@ -8,11 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Custom Luduvo-specific errors via a new diagnostics system! For now it's just a proof of concept with a check for `self` in `autorun` scripts as well as a check for empty query errors because those were easy to code. However, it's built in such a way that makes it pretty easily extensible for errors that are basically the same thing. Later updates will add more as demand arises.
+- 2 new settings for customizing Luduvo diagnostics got added:
+  - `luau-lsp.platform.luduvo.diagnostics.enabled: boolean`: Globally enables diagnostics for Luduvo-specific runtime rules.
+  - `luau-lsp.platform.luduvo.diagnostics.rules: {[rule]: severity}`: Allows you to override individual rules with 6 "severities":
+    - `default` (whatever the LSP default is)
+    - `error` (red squiggles)
+    - `warning` (yellow squiggles)
+    - `information` (blue squiggles)
+    - `hint` (grayish-blue squiggles)
+    - `off` (no squiggles)
+- Luduvo `--!nolint` diagnostics support (i.e. `--!nolint luduvo/empty-world-query`)
+- Comment-directive (--!optimize, --!nolint, etc.) are now autocompletable
+- Autocomplete snippets for Luduvo's `Update`, `PhysicsUpdate`, and `Migrate` lifecycle functions.
 - Color preview support from Roblox got ported to Luduvo Color3 constructors! You can now preview colors and change their RGB values via an interactive (editor-provided) color picker.
 - Color picker functionality can be configured for custom functions and properties via the new `luduvo.bindings` field in the project config
 
 ### Changed
 
+- Many Luduvo-related files got reorganized into subdirectories because I couldn't stand it all being flat anymore
+- Rich hovers now render function overloads as separate declarations for better readability. In respects to the resource system, resource constraints that all overloads share still get appended to the end of doc strings, while overload-specific constraints are now commented beside the overload they affect.
 - Bindings have been completely overhauled to support the new `luduvo.bindings` field in the project config instead of the old `luduvo.reosources.bindings` because I realized that more than just resources needed this functionality. As of now, `luduvo.reosources.bindings` is "deprecated"
   - To migrate, bindings should more or less look like this:
 
@@ -31,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Hovering over overloaded functions no longer shows the type info for its parent instead of its own
 - game.World.Pair no longer internally has components as its resource for the relation parameter
     - Hovering global variables no longer incorrectly shows Luduvo API documentation. At this point, the hover bugs will be here forever...
 

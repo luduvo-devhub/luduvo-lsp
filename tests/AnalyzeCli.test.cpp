@@ -227,6 +227,39 @@ TEST_CASE("analyze_file_reports_no_errors_for_valid_code")
     CHECK(cr.errors.empty());
 }
 
+TEST_CASE("analyze_file_reports_luduvo_platform_diagnostics")
+{
+    ScopedFastFlag solverV2{FFlag::LuauSolverV2, true};
+    TempDir t("analyze_cli_luduvo_diagnostics");
+    auto filePath = t.write_child("query.server.luau", "game.World.Query()");
+
+    CliClient client;
+    initCliClient(client);
+    client.globalConfig.platform.type = LSPPlatformConfig::Luduvo;
+    client.globalConfig.platform.luduvo.dataDirectory = t.path();
+    WorkspaceFolder workspace(&client, "CLI", Uri::file(t.path()), std::nullopt);
+    setupCliWorkspace(client, workspace);
+
+    CHECK_FALSE(analyzeFile(workspace, filePath, ReportFormat::Default, false));
+}
+
+TEST_CASE("analyze_file_does_not_fail_for_luduvo_warnings")
+{
+    ScopedFastFlag solverV2{FFlag::LuauSolverV2, true};
+    TempDir t("analyze_cli_luduvo_warnings");
+    auto filePath = t.write_child("query.server.luau", "game.World.Query()");
+
+    CliClient client;
+    initCliClient(client);
+    client.globalConfig.platform.type = LSPPlatformConfig::Luduvo;
+    client.globalConfig.platform.luduvo.dataDirectory = t.path();
+    client.globalConfig.platform.luduvo.diagnostics.rules = {{"empty-world-query", "warning"}};
+    WorkspaceFolder workspace(&client, "CLI", Uri::file(t.path()), std::nullopt);
+    setupCliWorkspace(client, workspace);
+
+    CHECK(analyzeFile(workspace, filePath, ReportFormat::Default, false));
+}
+
 TEST_CASE("definitions_loaded_through_workspace_via_client")
 {
     TempDir t("analyze_cli_definitions");

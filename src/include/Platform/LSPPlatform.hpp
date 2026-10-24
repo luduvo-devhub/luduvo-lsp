@@ -16,6 +16,7 @@
 #include "Luau/TypeFwd.h"
 #include "Protocol/CodeAction.hpp"
 #include "Protocol/Completion.hpp"
+#include "Protocol/Diagnostics.hpp"
 #include "Protocol/LanguageFeatures.hpp"
 #include "Protocol/SignatureHelp.hpp"
 #include "Protocol/Workspace.hpp"
@@ -139,6 +140,13 @@ struct PlatformCompletionDocumentationContext
     const std::optional<std::string>& fallbackDocumentation;
 };
 
+struct PlatformLintRuleCompletion
+{
+    std::string name;
+    std::string detail;
+    std::string documentation;
+};
+
 struct PlatformSignatureHelpDocumentationContext
 {
     const Luau::ModuleName& moduleName;
@@ -156,6 +164,31 @@ struct PlatformSignatureHelpContext
     Luau::TypeId type;
     const std::optional<std::string>& documentationSymbol;
     lsp::SignatureHelp& signatureHelp;
+};
+
+struct PlatformDiagnosticContext
+{
+    const Luau::ModuleName& moduleName;
+    const lsp::DocumentUri& uri;
+    const Luau::SourceModule& sourceModule;
+    const Luau::ModulePtr& module;
+};
+
+enum struct PlatformDiagnosticSeverity
+{
+    Error,
+    Warning,
+    Information,
+    Hint,
+};
+
+struct PlatformDiagnostic
+{
+    std::string code;
+    std::string source;
+    Luau::Location location;
+    std::string message;
+    PlatformDiagnosticSeverity severity = PlatformDiagnosticSeverity::Warning;
 };
 
 class LSPPlatform
@@ -208,6 +241,11 @@ public:
         return false;
     }
 
+    virtual std::vector<PlatformDiagnostic> collectDiagnostics(const PlatformDiagnosticContext& context)
+    {
+        return {};
+    }
+
     virtual void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata) {}
 
     virtual void onDidChangeWatchedFiles(const lsp::FileEvent& change) {}
@@ -250,6 +288,11 @@ public:
     virtual void handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
         const std::vector<Luau::AstNode*>& ancestry, Luau::Position position, std::vector<lsp::CompletionItem>& items)
     {
+    }
+
+    virtual std::vector<PlatformLintRuleCompletion> getLintRuleCompletions() const
+    {
+        return {};
     }
 
     virtual std::optional<Luau::AutocompleteEntryMap> completionCallback(

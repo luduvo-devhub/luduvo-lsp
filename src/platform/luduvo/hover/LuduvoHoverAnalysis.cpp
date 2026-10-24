@@ -1,5 +1,6 @@
-#include "Platform/LuduvoHoverAnalysis.hpp"
+#include "Platform/luduvo/hover/LuduvoHoverAnalysis.hpp"
 
+#include "LSP/LuauExt.hpp"
 #include "Luau/AstQuery.h"
 #include "Luau/TypePack.h"
 
@@ -427,39 +428,8 @@ static std::string renderLuduvoUnionWithoutDuplicateMembers(Luau::TypeId type, L
     return result;
 }
 
-std::string normalizeRichHoverType(Luau::TypeId type, Luau::ToStringOptions& options)
+static std::optional<size_t> findTopLevelFunctionArrow(std::string_view rendered)
 {
-    type = Luau::follow(type);
-    std::string rendered = Luau::toString(type, options);
-    const auto functionType = Luau::get<Luau::FunctionType>(type);
-    if (!functionType)
-        return rendered;
-
-    auto [returns, tail] = Luau::flatten(functionType->retTypes);
-    std::vector<std::string> renderedReturns;
-    renderedReturns.reserve(returns.size() + (tail ? 1 : 0));
-    for (Luau::TypeId returnType : returns)
-        renderedReturns.push_back(renderLuduvoUnionWithoutDuplicateMembers(returnType, options));
-    if (tail)
-        renderedReturns.push_back(Luau::toString(*tail, options));
-
-    std::string returnPack;
-    if (renderedReturns.empty())
-        returnPack = "()";
-    else if (renderedReturns.size() == 1 && !tail)
-        returnPack = renderedReturns.front();
-    else
-    {
-        returnPack = "(";
-        for (size_t index = 0; index < renderedReturns.size(); ++index)
-        {
-            if (index > 0)
-                returnPack += ", ";
-            returnPack += renderedReturns[index];
-        }
-        returnPack += ")";
-    }
-
     int depth = 0;
     for (size_t index = 0; index + 4 <= rendered.size(); ++index)
     {
@@ -468,8 +438,88 @@ std::string normalizeRichHoverType(Luau::TypeId type, Luau::ToStringOptions& opt
         else if (rendered[index] == ')' || rendered[index] == '}' || rendered[index] == ']' || rendered[index] == '>')
             --depth;
         else if (depth == 0 && rendered.substr(index, 4) == " -> ")
-            return rendered.substr(0, index + 4) + returnPack;
+            return index;
     }
+    return std::nullopt;
+}
+
+static std::string renderFunctionReturnPack(const Luau::FunctionType& functionType, Luau::ToStringOptions& options)
+{
+    auto [returns, tail] = Luau::flatten(functionType.retTypes);
+    std::vector<std::string> renderedReturns;
+    renderedReturns.reserve(returns.size() + (tail ? 1 : 0));
+    for (Luau::TypeId returnType : returns)
+        renderedReturns.push_back(renderLuduvoUnionWithoutDuplicateMembers(returnType, options));
+    if (tail)
+        renderedReturns.push_back(Luau::toString(*tail, options));
+
+    if (renderedReturns.empty())
+        return "()";
+    if (renderedReturns.size() == 1 && !tail)
+        return renderedReturns.front();
+
+    std::string result = "(";
+    for (size_t index = 0; index < renderedReturns.size(); ++index)
+    {
+        if (index > 0)
+            result += ", ";
+        result += renderedReturns[index];
+    }
+    return result + ")";
+}
+
+std::string normalizeRichHoverType(Luau::TypeId type, Luau::ToStringOptions& options)
+{
+    type = Luau::follow(type);
+    if (const auto intersectionType = Luau::get<Luau::IntersectionType>(type);
+        intersectionType && !intersectionType->parts.empty() &&
+        std::all_of(intersectionType->parts.begin(), intersectionType->parts.end(),
+            [](Luau::TypeId part)
+            {
+                return Luau::is<Luau::FunctionType>(Luau::follow(part));
+            }))
+    {
+        std::string rendered;
+        for (Luau::TypeId part : intersectionType->parts)
+        {
+            if (!rendered.empty())
+                rendered += "\n& ";
+            rendered += "(" + normalizeRichHoverType(part, options) + ")";
+        }
+        return rendered;
+    }
+
+    Luau::ToStringOptions callableOptions = options;
+    if (Luau::is<Luau::FunctionType>(type))
+        callableOptions.hideTableAliasExpansions = true;
+
+    std::string rendered = Luau::toString(type, callableOptions);
+    const auto functionType = Luau::get<Luau::FunctionType>(type);
+    if (!functionType)
+        return rendered;
+
+    // The exhaustive printer can retain a recursive binder for a function whose self type
+    // points back to the function, even when the named self alias hides that recursion. Drop
+    // the binder only when its name no longer occurs in the rendered function body.
+    if (const size_t where = rendered.find(" where "); where != std::string::npos)
+    {
+        const std::string binder = rendered.substr(0, where);
+        const std::string assignment = binder + " = ";
+        const size_t body = where + std::string_view(" where ").size();
+        if (!binder.empty() && binder.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") == std::string::npos &&
+            rendered.compare(body, assignment.size(), assignment) == 0)
+        {
+            const size_t bodyStart = body + assignment.size();
+            const size_t occurrence = rendered.find(binder, bodyStart);
+            if (occurrence == std::string::npos)
+                rendered.erase(0, bodyStart);
+        }
+    }
+
+    const std::string returnPack = renderFunctionReturnPack(*functionType, callableOptions);
+
+    if (const auto arrow = findTopLevelFunctionArrow(rendered))
+        return rendered.substr(0, *arrow + 4) + returnPack;
     return rendered;
 }
 
@@ -543,6 +593,141 @@ std::string getRichHoverTypeDefinition(Luau::TypeId type, Luau::ToStringOptions&
     return normalizeRichHoverType(type, options);
 }
 
+std::vector<RichHoverOverload> makeRichHoverOverloads(Luau::TypeId type, const DeclarationTarget& target, Luau::ToStringOptions& options,
+    const std::vector<LuduvoResolvedResourceBinding>& constrainedResources)
+{
+    type = Luau::follow(type);
+    const auto intersection = Luau::get<Luau::IntersectionType>(type);
+    if (!intersection || intersection->parts.size() < 2 || target.name.empty())
+        return {};
+
+    std::vector<const Luau::FunctionType*> functions;
+    functions.reserve(intersection->parts.size());
+    for (Luau::TypeId part : intersection->parts)
+    {
+        const auto function = Luau::get<Luau::FunctionType>(Luau::follow(part));
+        if (!function)
+            return {};
+        functions.push_back(function);
+    }
+
+    auto hasExplicitSelf = [](const Luau::FunctionType& function)
+    {
+        auto [arguments, tail] = Luau::flatten(function.argTypes);
+        return !arguments.empty() &&
+               (function.hasSelf || (!function.argNames.empty() && function.argNames[0] && function.argNames[0]->name == "self"));
+    };
+
+    const bool hasDotCall = std::any_of(functions.begin(), functions.end(),
+        [&](const Luau::FunctionType* function)
+        {
+            return !hasExplicitSelf(*function);
+        });
+    const bool hasMethodCall = std::any_of(functions.begin(), functions.end(),
+        [&](const Luau::FunctionType* function)
+        {
+            return hasExplicitSelf(*function);
+        });
+
+    std::optional<std::string> receiverName;
+    for (const Luau::FunctionType* function : functions)
+    {
+        if (!hasExplicitSelf(*function))
+            continue;
+        auto [arguments, tail] = Luau::flatten(function->argTypes);
+        Luau::ToStringOptions receiverOptions = options;
+        receiverOptions.hideTableAliasExpansions = true;
+        std::string candidate = types::getTypeName(Luau::follow(arguments.front())).value_or(Luau::toString(arguments.front(), receiverOptions));
+        if (!candidate.empty() &&
+            candidate.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.") == std::string::npos)
+            receiverName = std::move(candidate);
+        break;
+    }
+
+    auto removeFirstParameter = [](std::string& signature)
+    {
+        const size_t open = signature.find('(');
+        if (open == std::string::npos)
+            return;
+        int depth = 0;
+        for (size_t index = open + 1; index < signature.size(); ++index)
+        {
+            const char character = signature[index];
+            if (character == '(' || character == '{' || character == '[' || character == '<')
+                ++depth;
+            else if (character == ')' || character == '}' || character == ']' || character == '>')
+            {
+                if (character == ')' && depth == 0)
+                {
+                    signature.erase(open + 1, index - open - 1);
+                    return;
+                }
+                --depth;
+            }
+            else if (character == ',' && depth == 0)
+            {
+                size_t following = index + 1;
+                while (following < signature.size() && signature[following] == ' ')
+                    ++following;
+                signature.erase(open + 1, following - open - 1);
+                return;
+            }
+        }
+    };
+
+    auto findParameterListClose = [](std::string_view signature) -> std::optional<size_t>
+    {
+        const size_t open = signature.find('(');
+        if (open == std::string_view::npos)
+            return std::nullopt;
+
+        int depth = 0;
+        for (size_t index = open + 1; index < signature.size(); ++index)
+        {
+            if (signature[index] == '(')
+                ++depth;
+            else if (signature[index] == ')')
+            {
+                if (depth == 0)
+                    return index;
+                --depth;
+            }
+        }
+        return std::nullopt;
+    };
+
+    std::vector<RichHoverOverload> overloads;
+    overloads.reserve(functions.size());
+    for (size_t index = 0; index < functions.size(); ++index)
+    {
+        RichHoverOverload overload;
+        const bool methodCall = hasExplicitSelf(*functions[index]);
+        std::string declarationName = target.name;
+        if (receiverName)
+        {
+            declarationName = *receiverName + (methodCall ? ":" : ".") + target.name;
+        }
+
+        Luau::ToStringOptions callableOptions = options;
+        callableOptions.hideTableAliasExpansions = true;
+        std::string signature = Luau::toStringNamedFunction(declarationName, *functions[index], callableOptions);
+        if (methodCall)
+            removeFirstParameter(signature);
+
+        if (const auto close = findParameterListClose(signature))
+            signature = signature.substr(0, *close + 1) + ": " + renderFunctionReturnPack(*functions[index], callableOptions);
+
+        overload.declaration = "function " + signature + "\nend";
+        if (hasDotCall && hasMethodCall)
+            overload.callStyle = methodCall ? "Method call" : "Dot call";
+        for (const LuduvoResolvedResourceBinding& binding : constrainedResources)
+            if (binding.overloadIndex == index)
+                overload.constrainedResources.push_back(binding);
+        overloads.push_back(std::move(overload));
+    }
+    return overloads;
+}
+
 std::optional<std::string> resolveDocumentationSymbol(
     Luau::TypeId type, const std::optional<std::string>& directDocumentationSymbol, const std::optional<std::string>& environmentName)
 {
@@ -611,6 +796,12 @@ static std::optional<UnionSummary> summarizeUnion(Luau::TypeId type, std::string
     return UnionSummary{std::move(firstMember), members.size() - 1, typeDefinition.find('\n') != std::string_view::npos};
 }
 
+static bool sameResourceConstraint(const LuduvoResolvedResourceBinding& left, const LuduvoResolvedResourceBinding& right)
+{
+    return left.parameter == right.parameter && left.kind == right.kind && left.variadic == right.variadic &&
+           left.pluralResourceNoun == right.pluralResourceNoun;
+}
+
 RichHoverRenderModel analyzeRichHover(const std::vector<LuduvoResolvedResourceBinding>& constrainedResources, const RichHoverInput& input)
 {
     RichHoverRenderModel result;
@@ -664,7 +855,43 @@ RichHoverRenderModel analyzeRichHover(const std::vector<LuduvoResolvedResourceBi
         while (!result.documentation.empty() && (result.documentation.back() == '\n' || result.documentation.back() == '\r'))
             result.documentation.pop_back();
     }
-    result.constrainedResources = constrainedResources;
+    result.overloads = input.overloads;
+    if (result.overloads.empty())
+        result.constrainedResources = constrainedResources;
+    else
+    {
+        for (const LuduvoResolvedResourceBinding& candidate : result.overloads.front().constrainedResources)
+        {
+            const bool appliesToEveryOverload = std::all_of(result.overloads.begin() + 1, result.overloads.end(),
+                [&](const RichHoverOverload& overload)
+                {
+                    return std::any_of(overload.constrainedResources.begin(), overload.constrainedResources.end(),
+                        [&](const LuduvoResolvedResourceBinding& binding)
+                        {
+                            return sameResourceConstraint(candidate, binding);
+                        });
+                });
+            const bool alreadyHoisted = std::any_of(result.constrainedResources.begin(), result.constrainedResources.end(),
+                [&](const LuduvoResolvedResourceBinding& binding)
+                {
+                    return sameResourceConstraint(candidate, binding);
+                });
+            if (appliesToEveryOverload && !alreadyHoisted)
+                result.constrainedResources.push_back(candidate);
+        }
+
+        for (RichHoverOverload& overload : result.overloads)
+            overload.constrainedResources.erase(std::remove_if(overload.constrainedResources.begin(), overload.constrainedResources.end(),
+                                                    [&](const LuduvoResolvedResourceBinding& binding)
+                                                    {
+                                                        return std::any_of(result.constrainedResources.begin(), result.constrainedResources.end(),
+                                                            [&](const LuduvoResolvedResourceBinding& common)
+                                                            {
+                                                                return sameResourceConstraint(binding, common);
+                                                            });
+                                                    }),
+                overload.constrainedResources.end());
+    }
     result.typeDefinition = normalizeDisplayedType(input.typeDefinition);
     result.unionSummary = summarizeUnion(input.type, input.typeDefinition);
     result.showTypeDefinition = input.showTypeDefinition;

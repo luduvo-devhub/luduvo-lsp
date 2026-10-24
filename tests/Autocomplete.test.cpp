@@ -63,6 +63,139 @@ struct FragmentAutocompleteFixture : Fixture
 
 TEST_SUITE_BEGIN("Autocomplete");
 
+TEST_CASE_FIXTURE(Fixture, "comment_directive_completion_offers_upstream_nolint_rules_and_optimize_levels")
+{
+    auto complete = [&](const std::string& markedSource)
+    {
+        auto [source, marker] = sourceWithMarker(markedSource);
+        const auto uri = newDocument("directive-" + std::to_string(marker.character) + ".luau", source);
+        lsp::CompletionParams params;
+        params.textDocument = lsp::TextDocumentIdentifier{uri};
+        params.position = marker;
+        return std::pair{source, workspace.completion(params, nullptr)};
+    };
+
+    const auto [nolintSource, nolintItems] = complete("--!nolint UnknownG|");
+    const auto unknownGlobal = requireItem(nolintItems, "UnknownGlobal");
+    REQUIRE(unknownGlobal.textEdit);
+    CHECK_EQ(applyEdit(nolintSource, {*unknownGlobal.textEdit}), "--!nolint UnknownGlobal");
+    CHECK_EQ(unknownGlobal.detail, "Luau lint rule");
+
+    const auto [strictSource, directiveItems] = complete("--!str|");
+    const auto strict = requireItem(directiveItems, "strict");
+    REQUIRE(strict.textEdit);
+    CHECK_EQ(applyEdit(strictSource, {*strict.textEdit}), "--!strict");
+    CHECK_EQ(strict.detail, "Luau comment directive");
+    REQUIRE(strict.documentation);
+
+    const auto [optimizeSource, optimizeItems] = complete("--!optimize |\n");
+    for (const std::string level : {"0", "1", "2"})
+    {
+        const auto item = requireItem(optimizeItems, level);
+        REQUIRE(item.textEdit);
+        CHECK_EQ(applyEdit(optimizeSource, {*item.textEdit}), "--!optimize " + level + "\n");
+    }
+}
+
+TEST_CASE("luduvo_nolint_completion_uses_the_diagnostic_rule_registry")
+{
+    LuduvoFixture fixture("luduvo_nolint_completion");
+    auto [source, marker] = sourceWithMarker("--!nolint luduvo/empty-world-q|");
+    const auto uri = fixture.newDocument("directive.server.luau", source);
+    lsp::CompletionParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = marker;
+
+    const auto item = requireItem(fixture.workspace.completion(params, nullptr), "luduvo/empty-world-query");
+    REQUIRE(item.textEdit);
+    CHECK_EQ(applyEdit(source, {*item.textEdit}), "--!nolint luduvo/empty-world-query");
+    CHECK_EQ(item.detail, "Luduvo diagnostic rule · default: error");
+    REQUIRE(item.documentation);
+    CHECK_EQ(item.documentation->value, "World.Query requires at least one query term.");
+
+    const auto invalidDirective = requireItem(fixture.workspace.completion(params, nullptr), "luduvo/invalid-nolint-directive");
+    CHECK_EQ(invalidDirective.detail, "Luduvo diagnostic rule · default: warning");
+}
+
+TEST_CASE("luduvo_lifecycle_completion_inserts_top_level_snippets")
+{
+    LuduvoFixture fixture("luduvo_lifecycle_completion");
+    fixture.client.capabilities.textDocument = lsp::TextDocumentClientCapabilities{};
+    fixture.client.capabilities.textDocument->completion = lsp::CompletionClientCapabilities{};
+    fixture.client.capabilities.textDocument->completion->completionItem = lsp::CompletionItemClientCapabilities{};
+    fixture.client.capabilities.textDocument->completion->completionItem->snippetSupport = true;
+
+    auto [source, marker] = sourceWithMarker("Phy|");
+    auto uri = fixture.newDocument("lifecycle.server.luau", source);
+    lsp::CompletionParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = marker;
+
+    const auto items = fixture.workspace.completion(params, nullptr);
+    const auto update = requireItem(items, "Update");
+    const auto physicsUpdate = requireItem(items, "PhysicsUpdate");
+    const auto migrate = requireItem(items, "Migrate");
+
+    CHECK_EQ(update.kind, lsp::CompletionItemKind::Snippet);
+    CHECK_EQ(update.detail, "Luduvo lifecycle function");
+    REQUIRE(update.insertText);
+    CHECK_EQ(*update.insertText, "function Update(dt: number)\n\t$0\nend");
+    CHECK_EQ(update.insertTextFormat, lsp::InsertTextFormat::Snippet);
+    REQUIRE(physicsUpdate.insertText);
+    CHECK_EQ(*physicsUpdate.insertText, "function PhysicsUpdate(dt: number)\n\t$0\nend");
+    REQUIRE(migrate.insertText);
+    CHECK_EQ(*migrate.insertText, "function Migrate(old)\n\t$0\nend");
+}
+
+TEST_CASE("luduvo_lifecycle_completion_has_plain_text_fallback")
+{
+    LuduvoFixture fixture("luduvo_lifecycle_plain_text");
+    auto [source, marker] = sourceWithMarker("|");
+    auto uri = fixture.newDocument("lifecycle.server.luau", source);
+    lsp::CompletionParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = marker;
+
+    const auto update = requireItem(fixture.workspace.completion(params, nullptr), "Update");
+    REQUIRE(update.insertText);
+    CHECK_EQ(*update.insertText, "function Update(dt: number)\n\t\nend");
+    CHECK_EQ(update.insertTextFormat, lsp::InsertTextFormat::PlainText);
+}
+
+TEST_CASE("luduvo_lifecycle_completion_only_offers_missing_functions_at_module_scope")
+{
+    LuduvoFixture fixture("luduvo_lifecycle_scope");
+    size_t documentIndex = 0;
+    auto complete = [&](const std::string& markedSource)
+    {
+        auto [source, marker] = sourceWithMarker(markedSource);
+        auto uri = fixture.newDocument("lifecycle-scope-" + std::to_string(documentIndex++) + ".server.luau", source);
+        lsp::CompletionParams params;
+        params.textDocument = lsp::TextDocumentIdentifier{uri};
+        params.position = marker;
+        return fixture.workspace.completion(params, nullptr);
+    };
+
+    const auto missingOnly = complete("function Update(dt: number)\nend\n|");
+    CHECK_FALSE(std::any_of(missingOnly.begin(), missingOnly.end(),
+        [](const lsp::CompletionItem& item)
+        {
+            return item.label == "Update" && item.detail == "Luduvo lifecycle function";
+        }));
+    CHECK(getItem(missingOnly, "PhysicsUpdate"));
+    CHECK(getItem(missingOnly, "Migrate"));
+
+    const auto nested = complete("function helper()\n\t|\nend");
+    CHECK_FALSE(getItem(nested, "Update"));
+    CHECK_FALSE(getItem(nested, "PhysicsUpdate"));
+    CHECK_FALSE(getItem(nested, "Migrate"));
+
+    const auto expression = complete("local value = |");
+    CHECK_FALSE(getItem(expression, "Update"));
+    CHECK_FALSE(getItem(expression, "PhysicsUpdate"));
+    CHECK_FALSE(getItem(expression, "Migrate"));
+}
+
 TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
 {
     const std::string definitions = R"(

@@ -1,4 +1,4 @@
-#include "Platform/LuduvoHoverRenderer.hpp"
+#include "Platform/luduvo/hover/LuduvoHoverRenderer.hpp"
 
 #include "LSP/DocumentationParser.hpp"
 
@@ -122,18 +122,69 @@ std::string truncateTypeDefinition(std::string_view text, size_t maximumLength)
 
 } // namespace
 
-std::string renderResourceConstraints(const std::vector<LuduvoResolvedResourceBinding>& bindings)
+static std::string renderResourceConstraint(const LuduvoResolvedResourceBinding& binding, bool markdown)
+{
+    std::string result = binding.parameter + ": string";
+    if (markdown)
+        result = "`" + result + "`";
+    result += " expects ";
+    if (binding.pluralResourceNoun)
+        result += "Luduvo " + binding.kind + " names.";
+    else
+        result += "a Luduvo " + binding.kind + " name.";
+    return result;
+}
+
+static std::string renderResourceConstraints(const std::vector<LuduvoResolvedResourceBinding>& bindings)
 {
     std::string result;
-    for (const LuduvoResolvedResourceBinding& binding : bindings)
+    for (size_t index = 0; index < bindings.size(); ++index)
     {
+        const LuduvoResolvedResourceBinding& binding = bindings[index];
+        const auto duplicate = std::find_if(bindings.begin(), bindings.begin() + index,
+            [&](const LuduvoResolvedResourceBinding& existing)
+            {
+                return existing.parameter == binding.parameter && existing.kind == binding.kind &&
+                       existing.pluralResourceNoun == binding.pluralResourceNoun;
+            });
+        if (duplicate != bindings.begin() + index)
+            continue;
+
         if (!result.empty())
             result += "\n\n";
-        result += "`" + binding.parameter + ": string` expects ";
-        if (binding.pluralResourceNoun)
-            result += "Luduvo " + binding.kind + " names.";
-        else
-            result += "a Luduvo " + binding.kind + " name.";
+        result += renderResourceConstraint(binding, true);
+    }
+    return result;
+}
+
+static std::string renderOverloadBlock(const RichHoverOverload& overload)
+{
+    std::string result;
+    if (overload.callStyle)
+        result += "-- " + *overload.callStyle + "\n";
+    for (const LuduvoResolvedResourceBinding& binding : overload.constrainedResources)
+        result += "-- " + renderResourceConstraint(binding, false) + "\n";
+    return result + overload.declaration;
+}
+
+static std::string renderOverloads(const std::vector<RichHoverOverload>& overloads, const std::optional<size_t>& maximumLength)
+{
+    std::string result;
+    for (size_t index = 0; index < overloads.size(); ++index)
+    {
+        const std::string block = renderOverloadBlock(overloads[index]);
+        const std::string separator = result.empty() ? "" : "\n\n";
+        if (!result.empty() && maximumLength)
+        {
+            const size_t omitted = overloads.size() - index;
+            const std::string marker = "\n\n-- +" + std::to_string(omitted) + " overload" + (omitted == 1 ? "" : "s");
+            if (visibleLength(result) + visibleLength(separator) + visibleLength(block) + visibleLength(marker) > *maximumLength)
+            {
+                result += marker;
+                break;
+            }
+        }
+        result += separator + block;
     }
     return result;
 }
@@ -159,8 +210,8 @@ std::string renderRichHover(const ClientLuduvoHoverConfiguration& config, const 
             title = truncateVisible(title, titleBudget);
     }
 
-    std::string typeDefinition = model.typeDefinition;
-    if (config.maxTypeDefinitionLength)
+    std::string typeDefinition = model.overloads.empty() ? model.typeDefinition : renderOverloads(model.overloads, config.maxTypeDefinitionLength);
+    if (model.overloads.empty() && config.maxTypeDefinitionLength)
         typeDefinition = truncateTypeDefinition(typeDefinition, *config.maxTypeDefinitionLength);
 
     const bool hasVisibleDocumentation = !model.documentation.empty() || model.learnMoreLink.has_value();

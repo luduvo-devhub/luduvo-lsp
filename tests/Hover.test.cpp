@@ -3,7 +3,7 @@
 #include "LSP/DocumentationParser.hpp"
 #include "LuauFileUtils.hpp"
 #include "Luau/Parser.h"
-#include "Platform/LuduvoHoverRenderer.hpp"
+#include "Platform/luduvo/hover/LuduvoHoverRenderer.hpp"
 
 static std::string hoverWithDocumentation(std::string documentation, std::string type)
 {
@@ -53,6 +53,27 @@ TEST_CASE("luduvo_rich_hover_renderer_formats_analyzed_input_without_a_workspace
                                                             "```luau\n"
                                                             "declare game: { World: {} }\n"
                                                             "```");
+}
+
+TEST_CASE("luduvo_rich_hover_truncates_between_complete_overloads")
+{
+    ClientLuduvoHoverConfiguration config;
+    config.maxTypeDefinitionLength = 80;
+    luduvo::hover::RichHoverRenderModel model;
+    model.title = "Parse";
+    model.overloads = {
+        {"function Parse(value: string): Result\nend"},
+        {"function Parse(value: Buffer): Result\nend"},
+        {"function Parse(value: Instance): Result\nend"},
+    };
+
+    const std::string rendered = luduvo::hover::renderRichHover(config, model);
+    CHECK_EQ(rendered, "```luau\n"
+                       "function Parse(value: string): Result\n"
+                       "end\n\n"
+                       "-- +2 overloads\n"
+                       "```");
+    requireValidLuauCodeBlock(rendered);
 }
 
 TEST_CASE_FIXTURE(Fixture, "show_string_length_on_hover")
@@ -599,6 +620,80 @@ TEST_CASE("luduvo_rich_hover_marks_runtime_constrained_resource_arguments")
     CHECK(customVariadic.find("`components: string` expects Luduvo component names.") != std::string::npos);
     CHECK(hover("local rename = instance.Rename", {0, 25}).find("resource-constrained") == std::string::npos);
     CHECK(hover("local echo = game.Prefabs.Echo", {0, 27}).find("resource-constrained") == std::string::npos);
+}
+
+TEST_CASE("luduvo_rich_hover_renders_overloaded_resource_members_without_expanding_the_owner")
+{
+    const std::string definitions = R"(
+        declare extern type Pair with
+        end
+        declare extern type Query with
+            count: number
+            function Refresh(self): number
+            function With(self, name: string | Pair): Query
+        end
+        type World = {
+            Camera: number?,
+            Pair: ((target: World) -> Pair) & ((self: World, target: World) -> Pair),
+            Query: ((...string | Pair) -> Query) & ((self: World, ...string | Pair) -> Query),
+        }
+        declare game: { World: World }
+    )";
+
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.resources.completion.enabled = false;
+    config.platform.luduvo.definitions.exposePrivateTypes = true;
+    LuduvoFixture fixture("luduvo_rich_hover_overloaded_resource_member", config, definitions, definitions);
+    const Uri document = fixture.newDocument("query.server.luau", "game.World.Query");
+
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{document};
+    params.position = {0, 13};
+    const auto result = fixture.workspace.hover(params, nullptr);
+    REQUIRE(result);
+
+    const std::string& hover = result->contents.value;
+    CHECK(hover.find("-- Dot call\nfunction World.Query(...: Pair | string): Query\nend\n\n"
+                     "-- Method call\nfunction World:Query(...: Pair | string): Query\nend") != std::string::npos);
+    CHECK(hover.find("Camera: number?") == std::string::npos);
+    CHECK(hover.find(" where ") == std::string::npos);
+
+    constexpr std::string_view resourceText = "`components: string` expects Luduvo component names.";
+    const size_t firstResourceText = hover.find(resourceText);
+    REQUIRE(firstResourceText != std::string::npos);
+    CHECK(hover.find(resourceText, firstResourceText + resourceText.size()) == std::string::npos);
+    requireValidLuauCodeBlock(hover);
+}
+
+TEST_CASE("luduvo_rich_hover_keeps_resource_constraints_with_their_overloads")
+{
+    const std::string definitions = R"(
+        declare extern type Instance with
+        end
+        declare Library: {
+            Load: ((name: string) -> Instance) & ((id: number) -> Instance),
+        }
+    )";
+
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.bindings.push_back({"Library.Load", "resource", "name", {}, "prefab"});
+    config.platform.luduvo.resources.completion.enabled = false;
+    LuduvoFixture fixture("luduvo_rich_hover_overload_resources", config, definitions, definitions);
+    const Uri document = fixture.newDocument("load.server.luau", "Library.Load");
+
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{document};
+    params.position = {0, 9};
+    const auto result = fixture.workspace.hover(params, nullptr);
+    REQUIRE(result);
+
+    const std::string& hover = result->contents.value;
+    CHECK(hover.find("`name: string` expects a Luduvo prefab name.") == std::string::npos);
+    const std::string code = extractLuauCodeBlock(hover);
+    CHECK(code.find("-- name: string expects a Luduvo prefab name.\nfunction Load(name: string): Instance\nend") != std::string::npos);
+    CHECK(code.find("function Load(id: number): Instance\nend") != std::string::npos);
+    CHECK_EQ(code.find("name: string expects"), code.rfind("name: string expects"));
+    requireValidLuauCodeBlock(hover);
 }
 
 TEST_CASE("luduvo_rich_hover_marks_functions_with_uncheckable_arguments")

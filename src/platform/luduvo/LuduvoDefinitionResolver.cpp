@@ -1,4 +1,4 @@
-#include "Platform/LuduvoDefinitionResolver.hpp"
+#include "Platform/luduvo/LuduvoDefinitionResolver.hpp"
 
 #include "LSP/Utils.hpp"
 #include "LuauFileUtils.hpp"
