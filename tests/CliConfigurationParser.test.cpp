@@ -56,7 +56,7 @@ TEST_CASE("convert dotted Luduvo resource configuration")
             ],
             "luau-lsp.platform.luduvo.resources.completion.enabled": false
             ,"luau-lsp.platform.luduvo.bindings": [
-                {"symbol": "Color3.fromHex", "kind": "color", "parameter": "hex", "encoding": "hex"}
+                {"symbol": "Color3.fromHex", "kind": "color", "target": {"parameter": "hex"}, "encoding": "hex"}
             ]
         }
     )DOTTED_CONFIG");
@@ -73,6 +73,7 @@ TEST_CASE("convert dotted Luduvo resource configuration")
     CHECK_FALSE(resources["completion"]["enabled"]);
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["kind"], "color");
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["encoding"], "hex");
+    CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["target"]["parameter"], "hex");
 }
 
 TEST_SUITE_END();

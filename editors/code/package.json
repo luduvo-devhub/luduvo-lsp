@@ -514,7 +514,7 @@
           "scope": "resource"
         },
         "luduvo-lsp.platform.luduvo.bindings": {
-          "markdownDescription": "Function argument semantics used by Luduvo providers. This release supports `resource` and `color` bindings. Multiple bindings may target the same symbol and parameter",
+          "markdownDescription": "Semantic bindings used by Luduvo providers. This release supports `resource` and `color` bindings on callable parameters. Multiple bindings may target the same symbol and parameter",
           "type": "array",
           "default": [],
           "items": {
@@ -537,7 +537,7 @@
               },
               "parameter": {
                 "type": "string",
-                "description": "Single parameter targeted by the binding"
+                "markdownDescription": "Legacy shorthand for `target.parameter`"
               },
               "parameters": {
                 "type": "array",
@@ -546,7 +546,7 @@
                 },
                 "minItems": 1,
                 "uniqueItems": true,
-                "description": "Ordered parameters for a multi-argument color encoding"
+                "markdownDescription": "Legacy shorthand for `target.parameters`"
               },
               "group": {
                 "type": "string",
@@ -565,12 +565,49 @@
               "variadic": {
                 "type": "boolean",
                 "default": false,
-                "description": "Whether a resource binding targets a variadic argument tail"
+                "markdownDescription": "Legacy shorthand for `target.variadic`"
               },
               "pluralResourceNoun": {
                 "type": "boolean",
                 "default": false,
                 "description": "Whether resource documentation should use a plural noun"
+              },
+              "target": {
+                "type": "object",
+                "markdownDescription": "Callable parameter target shared by resource and color providers",
+                "properties": {
+                  "parameter": {
+                    "type": "string",
+                    "description": "One named callable parameter"
+                  },
+                  "parameters": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "description": "Ordered named parameters that form one semantic value"
+                  },
+                  "variadic": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether parameter identifies the callable's variadic tail"
+                  }
+                },
+                "oneOf": [
+                  {
+                    "required": [
+                      "parameter"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "parameters"
+                    ]
+                  }
+                ],
+                "additionalProperties": false
               }
             },
             "additionalProperties": false

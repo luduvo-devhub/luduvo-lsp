@@ -116,7 +116,12 @@ TEST_CASE("luduvo_color_bindings_resolve_named_parameters")
         }
     )";
     ClientConfiguration config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.luduvo.bindings.push_back({"Palette.make", "color", {}, {"r", "g", "b"}, {}, "rgb", false, false});
+    ClientLuduvoBindingConfiguration binding;
+    binding.symbol = "Palette.make";
+    binding.kind = "color";
+    binding.encoding = "rgb";
+    binding.target = ClientLuduvoBindingConfiguration::Target{{}, {"r", "g", "b"}};
+    config.platform.luduvo.bindings.push_back(std::move(binding));
 
     LuduvoFixture fixture("luduvo_custom_color_parameters", config, definitions, definitions);
     const Uri uri = fixture.newDocument("custom-color.client.luau", "local color = Palette.make(\"accent\", 1, 0.5, 0)");

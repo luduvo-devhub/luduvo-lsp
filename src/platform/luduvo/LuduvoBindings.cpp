@@ -1,9 +1,9 @@
 #include "Platform/luduvo/LuduvoBindings.hpp"
 #include "Platform/luduvo/LuduvoBindingRecords.hpp"
 #include "Platform/luduvo/LuduvoSymbols.hpp"
+#include "Platform/luduvo/LuduvoTargetResolver.hpp"
 
 #include "Luau/Type.h"
-#include "Luau/TypePack.h"
 
 #include <algorithm>
 #include <unordered_set>
@@ -52,37 +52,6 @@ bool containsStringType(Luau::TypeId type)
     return containsStringType(type, visited);
 }
 
-struct CallableOverload
-{
-    const Luau::FunctionType* function;
-    size_t index;
-};
-
-std::vector<CallableOverload> callableOverloads(Luau::TypeId callableType)
-{
-    std::vector<CallableOverload> result;
-    callableType = Luau::follow(callableType);
-    if (const auto function = Luau::get<Luau::FunctionType>(callableType))
-        result.push_back({function, 0});
-    else if (const auto intersection = Luau::get<Luau::IntersectionType>(callableType))
-    {
-        for (Luau::TypeId part : intersection->parts)
-            if (const auto function = Luau::get<Luau::FunctionType>(Luau::follow(part)))
-                result.push_back({function, result.size()});
-    }
-    return result;
-}
-
-std::optional<size_t> namedParameterIndex(const Luau::FunctionType& function, std::string_view parameter)
-{
-    auto [arguments, tail] = Luau::flatten(function.argTypes);
-    for (size_t index = 0; index < function.argNames.size() && index < arguments.size(); ++index)
-    {
-        if (function.argNames[index] && function.argNames[index]->name == parameter)
-            return index;
-    }
-    return std::nullopt;
-}
 } // namespace
 
 LuduvoBindingRegistry::LuduvoBindingRegistry()
@@ -98,25 +67,74 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
     resourceBindings.reserve(luduvoBuiltinResourceBindings.size() + configuration.resources.bindings.size() + configuration.bindings.size());
     for (const LuduvoBuiltinResourceBinding& binding : luduvoBuiltinResourceBindings)
         resourceBindings.push_back(
-            {std::string(binding.symbol), std::string(binding.parameter), std::string(binding.kind), binding.variadic, binding.pluralResourceNoun});
+            {std::string(binding.symbol), {LuduvoBindingTargetKind::CallParameter, {std::string(binding.parameter)}, binding.variadic},
+                std::string(binding.kind), binding.pluralResourceNoun});
 
-    colorBindings = luduvoBuiltinColorBindings;
+    colorBindings.reserve(luduvoBuiltinColorBindings.size() + configuration.bindings.size());
+    for (const LuduvoColorBinding& binding : luduvoBuiltinColorBindings)
+        colorBindings.push_back({binding.symbol, {LuduvoBindingTargetKind::CallParameter, binding.parameters}, binding.encoding});
 
-    auto addResource = [&](const std::string& symbol, const std::string& parameter, const std::string& group, bool variadic, bool pluralResourceNoun,
-                           std::string_view label)
+    auto configuredTarget = [&](const ClientLuduvoBindingConfiguration& configured, std::string_view label) -> std::optional<LuduvoBindingTarget>
     {
-        if (symbol.empty() || parameter.empty() || group.empty())
+        LuduvoBindingTarget target;
+        if (configured.target)
         {
-            configuredWarnings.push_back(std::string(label) + " must define non-empty symbol, parameter, and group values.");
+            if (!configured.parameter.empty() || !configured.parameters.empty() || configured.variadic)
+            {
+                configuredWarnings.push_back(std::string(label) + " cannot combine target with legacy parameter fields.");
+                return std::nullopt;
+            }
+            if (!configured.target->parameter.empty() && !configured.target->parameters.empty())
+            {
+                configuredWarnings.push_back(std::string(label) + " target cannot define both parameter and parameters.");
+                return std::nullopt;
+            }
+            target.names = configured.target->parameters;
+            if (!configured.target->parameter.empty())
+                target.names.push_back(configured.target->parameter);
+            target.variadic = configured.target->variadic;
+        }
+        else
+        {
+            target.names = configured.parameters;
+            if (!configured.parameter.empty())
+                target.names.push_back(configured.parameter);
+            target.variadic = configured.variadic;
+        }
+
+        if (target.names.empty())
+        {
+            configuredWarnings.push_back(std::string(label) + " must target parameter or parameters.");
+            return std::nullopt;
+        }
+        if (std::unordered_set<std::string>(target.names.begin(), target.names.end()).size() != target.names.size())
+        {
+            configuredWarnings.push_back(std::string(label) + " target contains duplicate parameters.");
+            return std::nullopt;
+        }
+        if (target.variadic && target.names.size() != 1)
+        {
+            configuredWarnings.push_back(std::string(label) + " cannot combine a variadic target with multiple parameters.");
+            return std::nullopt;
+        }
+        return target;
+    };
+
+    auto addResource =
+        [&](const std::string& symbol, LuduvoBindingTarget target, const std::string& group, bool pluralResourceNoun, std::string_view label)
+    {
+        if (symbol.empty() || target.names.size() != 1 || group.empty())
+        {
+            configuredWarnings.push_back(std::string(label) + " must define a symbol, one target parameter, and a group.");
             return;
         }
         resourceBindings.erase(std::remove_if(resourceBindings.begin(), resourceBindings.end(),
                                    [&](const ResourceBinding& existing)
                                    {
-                                       return existing.symbol == symbol && existing.parameter == parameter;
+                                       return existing.symbol == symbol && existing.target.names == target.names;
                                    }),
             resourceBindings.end());
-        resourceBindings.push_back({symbol, parameter, group, variadic, pluralResourceNoun});
+        resourceBindings.push_back({symbol, std::move(target), group, pluralResourceNoun});
     };
 
     for (size_t index = 0; index < configuration.resources.bindings.size(); ++index)
@@ -128,51 +146,56 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
                 "Legacy resource binding #" + std::to_string(index + 1) + " must define non-empty symbol, parameter, and kind values.");
             continue;
         }
-        addResource(configured.symbol, configured.parameter, configured.kind, configured.variadic, configured.pluralResourceNoun,
-            "Legacy resource binding #" + std::to_string(index + 1));
+        addResource(configured.symbol, {LuduvoBindingTargetKind::CallParameter, {configured.parameter}, configured.variadic}, configured.kind,
+            configured.pluralResourceNoun, "Legacy resource binding #" + std::to_string(index + 1));
     }
 
     for (size_t index = 0; index < configuration.bindings.size(); ++index)
     {
         const ClientLuduvoBindingConfiguration& configured = configuration.bindings[index];
         const std::string label = "Binding #" + std::to_string(index + 1);
-        if (configured.kind == "resource")
-        {
-            addResource(configured.symbol, configured.parameter, configured.group, configured.variadic, configured.pluralResourceNoun, label);
-            continue;
-        }
-        if (configured.kind != "color")
+        if (configured.kind != "resource" && configured.kind != "color")
         {
             configuredWarnings.push_back(label + " uses unsupported kind '" + configured.kind + "'. This version supports resource and color.");
             continue;
         }
+        const std::optional<LuduvoBindingTarget> target = configuredTarget(configured, label);
+        if (!target)
+            continue;
+        if (configured.kind == "resource")
+        {
+            addResource(configured.symbol, *target, configured.group, configured.pluralResourceNoun, label);
+            continue;
+        }
+        if (target->variadic)
+        {
+            configuredWarnings.push_back(label + " color target cannot be variadic.");
+            continue;
+        }
 
         const auto encoding = colorEncoding(configured.encoding);
-        std::vector<std::string> parameters = configured.parameters;
-        if (parameters.empty() && !configured.parameter.empty())
-            parameters.push_back(configured.parameter);
-        if (configured.symbol.empty() || !encoding || parameters.empty())
+        if (configured.symbol.empty() || !encoding)
         {
-            configuredWarnings.push_back(label + " must define a symbol, a supported color encoding, and parameter or parameters.");
+            configuredWarnings.push_back(label + " must define a symbol and a supported color encoding.");
             continue;
         }
         const size_t expectedParameters = (*encoding == ColorPresentationEncoding::Rgb || *encoding == ColorPresentationEncoding::Rgb255 ||
                                               *encoding == ColorPresentationEncoding::Hsv)
                                               ? 3
                                               : 1;
-        if (parameters.size() != expectedParameters)
+        if (target->names.size() != expectedParameters)
         {
-            configuredWarnings.push_back(label + " has " + std::to_string(parameters.size()) + " color parameters; encoding '" + configured.encoding +
-                                         "' requires " + std::to_string(expectedParameters) + ".");
+            configuredWarnings.push_back(label + " has " + std::to_string(target->names.size()) + " color parameters; encoding '" +
+                                         configured.encoding + "' requires " + std::to_string(expectedParameters) + ".");
             continue;
         }
         colorBindings.erase(std::remove_if(colorBindings.begin(), colorBindings.end(),
-                                [&](const LuduvoColorBinding& existing)
+                                [&](const ColorBinding& existing)
                                 {
                                     return existing.symbol == configured.symbol;
                                 }),
             colorBindings.end());
-        colorBindings.push_back({configured.symbol, std::move(parameters), *encoding});
+        colorBindings.push_back({configured.symbol, *target, *encoding});
     }
 }
 
@@ -188,63 +211,44 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoBindingRegistry::resolveResourc
     if (!canonicalSymbol)
         return {};
 
-    const std::vector<CallableOverload> functions = callableOverloads(callableType);
-
     std::vector<LuduvoResolvedResourceBinding> result;
     for (const ResourceBinding& binding : resourceBindings)
     {
         if (binding.symbol != *canonicalSymbol)
             continue;
+        if (binding.target.kind != LuduvoBindingTargetKind::CallParameter || binding.target.names.size() != 1)
+            continue;
+
+        const std::string& parameter = binding.target.names.front();
 
         bool foundParameter = false;
         bool foundCompatibleParameter = false;
-        for (const auto& [function, overloadIndex] : functions)
+        for (const luduvo::CallableTarget& target : luduvo::resolveCallableTarget(callableType, binding.target.names, binding.target.variadic))
         {
-            auto [arguments, tail] = Luau::flatten(function->argTypes);
-            std::optional<size_t> parameterIndex;
-            std::optional<Luau::TypeId> parameterType;
-            if (binding.variadic)
-            {
-                if (!tail)
-                    continue;
-                const auto variadicType = Luau::get<Luau::VariadicTypePack>(Luau::follow(*tail));
-                if (!variadicType)
-                    continue;
-                parameterIndex = arguments.size();
-                parameterType = variadicType->ty;
-            }
-            else
-            {
-                parameterIndex = namedParameterIndex(*function, binding.parameter);
-                if (parameterIndex)
-                    parameterType = arguments[*parameterIndex];
-            }
-
-            if (!parameterIndex || !parameterType)
-                continue;
             foundParameter = true;
-            if (!containsStringType(*parameterType))
+            if (target.types.size() != 1 || !containsStringType(target.types.front()))
                 continue;
             foundCompatibleParameter = true;
 
             const auto duplicate = std::find_if(result.begin(), result.end(),
                 [&](const LuduvoResolvedResourceBinding& existing)
                 {
-                    return existing.parameter == binding.parameter && existing.kind == binding.kind &&
-                           existing.typeParameterIndex == *parameterIndex && existing.variadic == binding.variadic &&
-                           existing.overloadIndex == overloadIndex;
+                    return existing.parameter == parameter && existing.kind == binding.kind &&
+                           existing.typeParameterIndex == target.indices.front() && existing.variadic == binding.target.variadic &&
+                           existing.overloadIndex == target.overloadIndex;
                 });
             if (duplicate == result.end())
-                result.push_back({binding.parameter, binding.kind, *parameterIndex, binding.variadic, binding.pluralResourceNoun, overloadIndex});
+                result.push_back(
+                    {parameter, binding.kind, target.indices.front(), binding.target.variadic, binding.pluralResourceNoun, target.overloadIndex});
         }
 
         if (warnings && !foundCompatibleParameter)
         {
             if (!foundParameter)
-                warnings->push_back(binding.symbol + ": " + (binding.variadic ? "variadic parameter '" : "parameter '") + binding.parameter +
+                warnings->push_back(binding.symbol + ": " + (binding.target.variadic ? "variadic parameter '" : "parameter '") + parameter +
                                     "' was not found in the callable type.");
             else
-                warnings->push_back(binding.symbol + ": parameter '" + binding.parameter + "' does not accept string resource names.");
+                warnings->push_back(binding.symbol + ": parameter '" + parameter + "' does not accept string resource names.");
         }
     }
 
@@ -254,32 +258,14 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoBindingRegistry::resolveResourc
 std::vector<LuduvoResolvedColorBinding> LuduvoBindingRegistry::resolveColors(std::string_view symbol, Luau::TypeId callableType) const
 {
     std::vector<LuduvoResolvedColorBinding> result;
-    for (const LuduvoColorBinding& binding : colorBindings)
+    for (const ColorBinding& binding : colorBindings)
     {
         if (binding.symbol != symbol)
             continue;
-        for (const CallableOverload& overload : callableOverloads(callableType))
-        {
-            std::vector<size_t> indices;
-            indices.reserve(binding.parameters.size());
-            for (const std::string& parameter : binding.parameters)
-            {
-                const auto index = namedParameterIndex(*overload.function, parameter);
-                if (!index)
-                {
-                    indices.clear();
-                    break;
-                }
-                indices.push_back(*index);
-            }
-            if (!indices.empty())
-                result.push_back({binding, std::move(indices), overload.index});
-        }
+        if (binding.target.kind != LuduvoBindingTargetKind::CallParameter)
+            continue;
+        for (luduvo::CallableTarget& target : luduvo::resolveCallableTarget(callableType, binding.target.names, binding.target.variadic))
+            result.push_back({binding.symbol, binding.encoding, std::move(target.indices), target.overloadIndex});
     }
     return result;
-}
-
-const std::vector<LuduvoColorBinding>& LuduvoBindingRegistry::colors() const
-{
-    return colorBindings;
 }

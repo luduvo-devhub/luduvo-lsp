@@ -21,9 +21,22 @@ struct LuduvoResolvedResourceBinding
 
 struct LuduvoResolvedColorBinding
 {
-    LuduvoColorBinding binding;
+    std::string symbol;
+    ColorPresentationEncoding encoding = ColorPresentationEncoding::Rgb;
     std::vector<size_t> typeParameterIndices;
     size_t overloadIndex = 0;
+};
+
+enum struct LuduvoBindingTargetKind
+{
+    CallParameter,
+};
+
+struct LuduvoBindingTarget
+{
+    LuduvoBindingTargetKind kind = LuduvoBindingTargetKind::CallParameter;
+    std::vector<std::string> names;
+    bool variadic = false;
 };
 
 class LuduvoBindingRegistry
@@ -31,13 +44,18 @@ class LuduvoBindingRegistry
     struct ResourceBinding
     {
         std::string symbol;
-        std::string parameter;
+        LuduvoBindingTarget target;
         std::string kind;
-        bool variadic = false;
         bool pluralResourceNoun = false;
     };
+    struct ColorBinding
+    {
+        std::string symbol;
+        LuduvoBindingTarget target;
+        ColorPresentationEncoding encoding = ColorPresentationEncoding::Rgb;
+    };
     std::vector<ResourceBinding> resourceBindings;
-    std::vector<LuduvoColorBinding> colorBindings;
+    std::vector<ColorBinding> colorBindings;
     std::vector<std::string> configuredWarnings;
 
 public:
@@ -49,5 +67,4 @@ public:
     std::vector<LuduvoResolvedResourceBinding> resolveResources(
         const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType, std::vector<std::string>* warnings = nullptr) const;
     std::vector<LuduvoResolvedColorBinding> resolveColors(std::string_view symbol, Luau::TypeId callableType) const;
-    const std::vector<LuduvoColorBinding>& colors() const;
 };

@@ -104,6 +104,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/LuduvoBindings.cpp
         src/platform/luduvo/LuduvoBindingRecords.cpp
         src/platform/luduvo/LuduvoSymbols.cpp
+        src/platform/luduvo/LuduvoTargetResolver.cpp
         src/platform/luduvo/LuduvoResourceCatalog.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp

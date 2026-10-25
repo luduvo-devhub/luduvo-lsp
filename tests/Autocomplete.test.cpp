@@ -318,7 +318,12 @@ TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
     config.platform.luduvo.resources.sources["test-prefabs"].values = {"Crate", "Folder/Enemy"};
     config.platform.luduvo.resources.groups["component"] = {"string", false, {"test-components"}};
     config.platform.luduvo.resources.groups["prefab"] = {"string", false, {"test-prefabs"}};
-    config.platform.luduvo.bindings.push_back({"MyLibrary.SpawnNamed", "resource", "asset", {}, "prefab"});
+    ClientLuduvoBindingConfiguration spawnBinding;
+    spawnBinding.symbol = "MyLibrary.SpawnNamed";
+    spawnBinding.kind = "resource";
+    spawnBinding.group = "prefab";
+    spawnBinding.target = ClientLuduvoBindingConfiguration::Target{"asset"};
+    config.platform.luduvo.bindings.push_back(std::move(spawnBinding));
     config.platform.luduvo.bindings.push_back({"MyLibrary.QueryMany", "resource", "components", {}, "component", {}, true, true});
     config.platform.luduvo.bindings.push_back({"MyLibrary.SetCount", "resource", "count", {}, "component"});
     LuduvoFixture fixture("luduvo_resource_completion", config, definitions, definitions);

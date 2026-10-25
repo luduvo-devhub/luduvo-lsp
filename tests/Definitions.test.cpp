@@ -383,20 +383,27 @@ TEST_CASE("luduvo_general_bindings_round_trip")
     const json input = json::parse(R"({
         "platform": {"luduvo": {
             "bindings": [
-                {"symbol": "MyLibrary.Spawn", "kind": "resource", "parameter": "name", "group": "prefab"},
+                {"symbol": "MyLibrary.Spawn", "kind": "resource", "target": {"parameter": "name"}, "group": "prefab"},
+                {"symbol": "Color3.fromRGB", "kind": "color", "target": {"parameters": ["r", "g", "b"]}, "encoding": "rgb255"},
                 {"symbol": "Color3.fromHex", "kind": "color", "parameter": "hex", "encoding": "hex"}
             ]
         }}
     })");
     const ClientConfiguration config = input.get<ClientConfiguration>();
-    REQUIRE_EQ(config.platform.luduvo.bindings.size(), 2);
+    REQUIRE_EQ(config.platform.luduvo.bindings.size(), 3);
     CHECK_EQ(config.platform.luduvo.bindings[0].kind, "resource");
     CHECK_EQ(config.platform.luduvo.bindings[0].group, "prefab");
-    CHECK_EQ(config.platform.luduvo.bindings[1].encoding, "hex");
+    REQUIRE(config.platform.luduvo.bindings[0].target);
+    CHECK_EQ(config.platform.luduvo.bindings[0].target->parameter, "name");
+    REQUIRE(config.platform.luduvo.bindings[1].target);
+    CHECK_EQ(config.platform.luduvo.bindings[1].target->parameters, std::vector<std::string>({"r", "g", "b"}));
+    CHECK_EQ(config.platform.luduvo.bindings[2].encoding, "hex");
 
     const json output = config;
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["group"], "prefab");
-    CHECK_EQ(output["platform"]["luduvo"]["bindings"][1]["kind"], "color");
+    CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["target"]["parameter"], "name");
+    CHECK_EQ(output["platform"]["luduvo"]["bindings"][1]["target"]["parameters"], json::array({"r", "g", "b"}));
+    CHECK_EQ(output["platform"]["luduvo"]["bindings"][2]["kind"], "color");
 }
 
 TEST_CASE("luduvo_binding_registry_rejects_unsupported_and_incomplete_bindings")
@@ -404,12 +411,20 @@ TEST_CASE("luduvo_binding_registry_rejects_unsupported_and_incomplete_bindings")
     ClientLuduvoConfiguration config;
     config.bindings.push_back({"Paint", "future-kind"});
     config.bindings.push_back({"Paint", "color", "red", {}, {}, "rgb"});
+    ClientLuduvoBindingConfiguration ambiguous;
+    ambiguous.symbol = "Paint";
+    ambiguous.kind = "resource";
+    ambiguous.parameter = "legacy";
+    ambiguous.group = "prefab";
+    ambiguous.target = ClientLuduvoBindingConfiguration::Target{"current"};
+    config.bindings.push_back(std::move(ambiguous));
 
     LuduvoBindingRegistry registry;
     registry.configure(config);
-    REQUIRE_EQ(registry.configurationWarnings().size(), 2);
+    REQUIRE_EQ(registry.configurationWarnings().size(), 3);
     CHECK(registry.configurationWarnings()[0].find("unsupported kind") != std::string::npos);
     CHECK(registry.configurationWarnings()[1].find("requires 3") != std::string::npos);
+    CHECK(registry.configurationWarnings()[2].find("cannot combine target") != std::string::npos);
 }
 
 TEST_CASE("luduvo_rich_hover_configuration_defaults")

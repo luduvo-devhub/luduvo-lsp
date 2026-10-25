@@ -406,7 +406,17 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourceBindingConfi
 
 struct ClientLuduvoBindingConfiguration
 {
-    /// Canonical function symbol, such as Color3.fromHex or MyLibrary.Spawn.
+    struct Target
+    {
+        /// One named callable parameter targeted by the binding.
+        std::string parameter{};
+        /// Multiple named callable parameters targeted as one semantic value.
+        std::vector<std::string> parameters{};
+        /// Whether parameter identifies the callable's variadic tail.
+        bool variadic = false;
+    };
+
+    /// Canonical API symbol, such as Color3.fromHex or MyLibrary.Spawn.
     std::string symbol{};
     /// Binding behavior. This release supports resource and color.
     std::string kind{};
@@ -422,9 +432,41 @@ struct ClientLuduvoBindingConfiguration
     bool variadic = false;
     /// Whether resource documentation should describe multiple resource names.
     bool pluralResourceNoun = false;
+    /// Structured target selection. Legacy flat parameter fields may be used instead, but not together with target.
+    std::optional<Target> target{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    ClientLuduvoBindingConfiguration, symbol, kind, parameter, parameters, group, encoding, variadic, pluralResourceNoun)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoBindingConfiguration::Target, parameter, parameters, variadic)
+
+inline void to_json(nlohmann::json& json, const ClientLuduvoBindingConfiguration& binding)
+{
+    json = nlohmann::json{
+        {"symbol", binding.symbol},
+        {"kind", binding.kind},
+        {"parameter", binding.parameter},
+        {"parameters", binding.parameters},
+        {"group", binding.group},
+        {"encoding", binding.encoding},
+        {"variadic", binding.variadic},
+        {"pluralResourceNoun", binding.pluralResourceNoun},
+    };
+    if (binding.target)
+        json["target"] = *binding.target;
+}
+
+inline void from_json(const nlohmann::json& json, ClientLuduvoBindingConfiguration& binding)
+{
+    binding.symbol = json.value("symbol", std::string{});
+    binding.kind = json.value("kind", std::string{});
+    binding.parameter = json.value("parameter", std::string{});
+    binding.parameters = json.value("parameters", std::vector<std::string>{});
+    binding.group = json.value("group", std::string{});
+    binding.encoding = json.value("encoding", std::string{});
+    binding.variadic = json.value("variadic", false);
+    binding.pluralResourceNoun = json.value("pluralResourceNoun", false);
+    binding.target.reset();
+    if (auto target = json.find("target"); target != json.end() && !target->is_null())
+        binding.target = target->get<ClientLuduvoBindingConfiguration::Target>();
+}
 
 struct ClientLuduvoResourceCompletionConfiguration
 {
@@ -527,7 +569,7 @@ struct ClientLuduvoConfiguration
     ClientLuduvoDiagnosticsConfiguration diagnostics{};
     ClientLuduvoHoverConfiguration hover{};
     ClientLuduvoResourcesConfiguration resources{};
-    /// Function argument semantics shared by completion, hover, and editor providers.
+    /// Semantic bindings shared by completion, hover, and editor providers.
     std::vector<ClientLuduvoBindingConfiguration> bindings{};
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, diagnostics, hover, resources, bindings)

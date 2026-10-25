@@ -1,11 +1,11 @@
 #include "Platform/luduvo/LuduvoPlatform.hpp"
 #include "Platform/luduvo/LuduvoLifecycle.hpp"
 #include "Platform/luduvo/LuduvoSymbols.hpp"
+#include "Platform/luduvo/LuduvoTargetResolver.hpp"
 
 #include "LSP/LuauExt.hpp"
 #include "LSP/TextDocument.hpp"
 #include "LSP/Workspace.hpp"
-#include "Luau/AstQuery.h"
 #include "Luau/StringUtils.h"
 #include "Luau/Type.h"
 
@@ -15,79 +15,6 @@
 
 namespace
 {
-std::optional<std::string> expressionPath(const Luau::AstExpr* expression)
-{
-    if (const auto global = expression->as<Luau::AstExprGlobal>())
-        return global->name.value;
-    if (const auto member = expression->as<Luau::AstExprIndexName>())
-    {
-        if (auto owner = expressionPath(member->expr))
-            return *owner + "." + member->index.value;
-    }
-    return std::nullopt;
-}
-
-std::optional<std::string> callableDocumentationSymbol(
-    const Luau::SourceModule& sourceModule, const Luau::Module& module, const Luau::AstExprCall& call, Luau::TypeId callableType)
-{
-    Luau::Location documentationLocation = call.func->location;
-    if (const auto member = call.func->as<Luau::AstExprIndexName>())
-        documentationLocation = member->indexLocation;
-
-    Luau::Position documentationPosition = documentationLocation.end;
-    if (documentationPosition.column > 0)
-        --documentationPosition.column;
-    if (auto direct = Luau::getDocumentationSymbolAtPosition(sourceModule, module, documentationPosition))
-        return direct;
-
-    if (const auto member = call.func->as<Luau::AstExprIndexName>())
-    {
-        if (const Luau::TypeId* owner = module.astTypes.find(member->expr))
-        {
-            Luau::TypeId ownerType = Luau::follow(*owner);
-            if (const auto table = Luau::get<Luau::TableType>(ownerType))
-            {
-                if (auto property = table->props.find(member->index.value); property != table->props.end())
-                {
-                    if (property->second.documentationSymbol)
-                        return property->second.documentationSymbol;
-                    if (auto path = expressionPath(call.func))
-                        return path;
-                }
-            }
-            else if (const Luau::ExternType* external = Luau::get<Luau::ExternType>(ownerType))
-            {
-                while (external)
-                {
-                    if (auto property = external->props.find(member->index.value); property != external->props.end())
-                    {
-                        if (property->second.documentationSymbol)
-                            return property->second.documentationSymbol;
-                        return external->name + "." + member->index.value;
-                    }
-                    external = external->parent ? Luau::get<Luau::ExternType>(*external->parent) : nullptr;
-                }
-            }
-            if (ownerType->documentationSymbol)
-                return *ownerType->documentationSymbol + "." + member->index.value;
-        }
-    }
-
-    callableType = Luau::follow(callableType);
-    if (callableType->documentationSymbol)
-        return callableType->documentationSymbol;
-    if (const auto intersection = Luau::get<Luau::IntersectionType>(callableType))
-    {
-        for (Luau::TypeId part : intersection->parts)
-        {
-            part = Luau::follow(part);
-            if (part->documentationSymbol)
-                return part->documentationSymbol;
-        }
-    }
-    return std::nullopt;
-}
-
 Luau::AstExprCall* callFromAncestry(const std::vector<Luau::AstNode*>& ancestry)
 {
     for (auto it = ancestry.rbegin(); it != ancestry.rend(); ++it)
@@ -274,7 +201,8 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
         return;
 
     Luau::TypeId callableType = Luau::follow(*callable);
-    const std::optional<std::string> documentationSymbol = callableDocumentationSymbol(sourceModule, *typedModule, *call, callableType);
+    const std::optional<std::string> documentationSymbol =
+        luduvo::resolveCallableDocumentationSymbol(sourceModule, *typedModule, *call, callableType);
     const std::optional<std::string> canonicalSymbol = canonicalLuduvoSymbol(documentationSymbol);
     if (!canonicalSymbol || contains(configuration.resources.completion.disabledApis, *canonicalSymbol))
         return;

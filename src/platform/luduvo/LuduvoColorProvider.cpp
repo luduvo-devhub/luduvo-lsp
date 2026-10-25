@@ -78,7 +78,7 @@ struct LuduvoColorVisitor : Luau::AstVisitor
         for (const LuduvoResolvedColorBinding& resolved : resolvedBindings)
         {
             std::optional<lsp::Color> color;
-            if (resolved.binding.encoding == ColorPresentationEncoding::Hex)
+            if (resolved.encoding == ColorPresentationEncoding::Hex)
             {
                 if (resolved.typeParameterIndices.size() != 1)
                     continue;
@@ -112,9 +112,9 @@ struct LuduvoColorVisitor : Luau::AstVisitor
                 auto values = numericArguments(call, resolved.typeParameterIndices);
                 if (!values)
                     continue;
-                if (resolved.binding.encoding == ColorPresentationEncoding::Rgb)
+                if (resolved.encoding == ColorPresentationEncoding::Rgb)
                     color = lsp::Color{(*values)[0], (*values)[1], (*values)[2], 1.0};
-                else if (resolved.binding.encoding == ColorPresentationEncoding::Rgb255)
+                else if (resolved.encoding == ColorPresentationEncoding::Rgb255)
                     color = lsp::Color{(*values)[0] / 255.0, (*values)[1] / 255.0, (*values)[2] / 255.0, 1.0};
                 else
                 {
@@ -201,27 +201,22 @@ lsp::ColorPresentationResult LuduvoPlatform::colorPresentation(const PlatformCol
     if (!visitor.symbol || !visitor.call)
         return {};
 
-    const auto binding = std::find_if(bindings.colors().begin(), bindings.colors().end(),
-        [&](const LuduvoColorBinding& candidate)
-        {
-            return candidate.symbol == *visitor.symbol;
-        });
-    if (binding == bindings.colors().end())
-        return {};
-
-    if (isBuiltinColor3Symbol(binding->symbol))
-        return color3Presentations(context.params.color);
-
     Luau::TypeId* callableType = context.module->astTypes.find(visitor.call->func);
     if (!callableType)
         return {};
-    for (const LuduvoResolvedColorBinding& resolved : bindings.resolveColors(*visitor.symbol, *callableType))
+    const std::vector<LuduvoResolvedColorBinding> resolvedBindings = bindings.resolveColors(*visitor.symbol, *callableType);
+    if (resolvedBindings.empty())
+        return {};
+    if (isBuiltinColor3Symbol(resolvedBindings.front().symbol))
+        return color3Presentations(context.params.color);
+
+    for (const LuduvoResolvedColorBinding& resolved : resolvedBindings)
     {
-        const std::vector<std::string> arguments = colorArguments(resolved.binding.encoding, context.params.color);
+        const std::vector<std::string> arguments = colorArguments(resolved.encoding, context.params.color);
         if (arguments.size() != resolved.typeParameterIndices.size())
             continue;
 
-        lsp::ColorPresentation presentation = colorCallPresentation(resolved.binding.symbol, resolved.binding.encoding, context.params.color);
+        lsp::ColorPresentation presentation = colorCallPresentation(resolved.symbol, resolved.encoding, context.params.color);
         std::vector<lsp::TextEdit> edits;
         for (size_t index = 0; index < arguments.size(); ++index)
         {

@@ -1,9 +1,8 @@
 #include "Platform/luduvo/diagnostics/LuduvoDiagnostics.hpp"
 
 #include "Platform/luduvo/diagnostics/LuduvoDiagnosticRules.hpp"
-#include "Platform/luduvo/LuduvoSymbols.hpp"
+#include "Platform/luduvo/LuduvoTargetResolver.hpp"
 
-#include "Luau/AstQuery.h"
 #include "Luau/ParseResult.h"
 
 #include <algorithm>
@@ -40,16 +39,6 @@ bool hasPathSegment(const std::filesystem::path& path, std::string_view expected
         {
             return lower(segment.string()) == expected;
         });
-}
-
-std::optional<std::string> globalExpressionPath(const Luau::AstExpr* expression)
-{
-    if (const auto global = expression->as<Luau::AstExprGlobal>())
-        return global->name.value;
-    if (const auto member = expression->as<Luau::AstExprIndexName>())
-        if (auto owner = globalExpressionPath(member->expr))
-            return *owner + "." + member->index.value;
-    return std::nullopt;
 }
 
 bool matchesAnySymbol(const std::vector<std::string_view>& expected, const std::vector<std::string>& actual)
@@ -243,28 +232,7 @@ bool LuduvoDiagnosticContext::isAutorunScript() const
 
 std::vector<std::string> LuduvoDiagnosticContext::resolvedCallSymbols(const Luau::AstExprCall& call) const
 {
-    std::vector<std::string> result;
-    if (auto path = globalExpressionPath(call.func))
-        result.push_back(std::move(*path));
-
-    if (!input.module)
-        return result;
-
-    Luau::Location documentationLocation = call.func->location;
-    if (const auto member = call.func->as<Luau::AstExprIndexName>())
-        documentationLocation = member->indexLocation;
-    Luau::Position documentationPosition = documentationLocation.end;
-    if (documentationPosition.column > 0)
-        --documentationPosition.column;
-    if (auto documentationSymbol = Luau::getDocumentationSymbolAtPosition(input.sourceModule, *input.module, documentationPosition))
-    {
-        if (auto identity = getLuduvoSymbolIdentity(documentationSymbol))
-        {
-            if (std::find(result.begin(), result.end(), identity->title) == result.end())
-                result.push_back(std::move(identity->title));
-        }
-    }
-    return result;
+    return luduvo::resolveCallSymbols(input.sourceModule, input.module.get(), call);
 }
 
 size_t LuduvoDiagnosticContext::explicitArgumentCount(const Luau::AstExprCall& call) const
