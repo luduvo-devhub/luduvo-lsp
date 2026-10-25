@@ -696,6 +696,49 @@ TEST_CASE("luduvo_rich_hover_keeps_resource_constraints_with_their_overloads")
     requireValidLuauCodeBlock(hover);
 }
 
+TEST_CASE("luduvo_rich_hover_preserves_local_overload_aliases")
+{
+    const std::string definitions = R"(
+        type World = {
+            Query: ((value: string) -> number) & ((self: World, value: number) -> number),
+        }
+        declare game: { World: World }
+    )";
+    LuduvoFixture fixture("luduvo_rich_hover_local_overload_alias", {}, definitions, definitions);
+    const Uri document = fixture.newDocument("alias.server.luau", "local query = game.World.Query\nquery");
+
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{document};
+    params.position = {1, 2};
+    const auto result = fixture.workspace.hover(params, nullptr);
+    REQUIRE(result);
+    const std::string code = extractLuauCodeBlock(result->contents.value);
+    CHECK(code.find("function query(value: string): number") != std::string::npos);
+    CHECK(code.find("function query(self: World, value: number): number") != std::string::npos);
+    CHECK(code.find("World.query") == std::string::npos);
+    CHECK(code.find("World:query") == std::string::npos);
+    requireValidLuauCodeBlock(result->contents.value);
+}
+
+TEST_CASE("luduvo_rich_hover_preserves_quoted_punctuation_in_overloads")
+{
+    const std::string definitions = R"LU(
+        declare overloaded: ((mode: "close)") -> number) & ((mode: "comma,") -> string)
+    )LU";
+    LuduvoFixture fixture("luduvo_rich_hover_quoted_overload", {}, definitions, definitions);
+    const Uri document = fixture.newDocument("quoted.server.luau", "overloaded");
+
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{document};
+    params.position = {0, 4};
+    const auto result = fixture.workspace.hover(params, nullptr);
+    REQUIRE(result);
+    const std::string code = extractLuauCodeBlock(result->contents.value);
+    CHECK(code.find("mode: \"close)\"") != std::string::npos);
+    CHECK(code.find("mode: \"comma,\"") != std::string::npos);
+    requireValidLuauCodeBlock(result->contents.value);
+}
+
 TEST_CASE("luduvo_rich_hover_marks_functions_with_uncheckable_arguments")
 {
     const std::string definitions = R"(

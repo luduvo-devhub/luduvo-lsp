@@ -122,13 +122,14 @@ lsp::DocumentColorResult WorkspaceFolder::documentColor(const lsp::DocumentColor
     if (!textDocument)
         throw JsonRpcException(lsp::ErrorCode::RequestFailed, "No managed text document for " + params.textDocument.uri.toString());
 
-    frontend.parse(moduleName);
+    checkStrict(moduleName, /* cancellationToken= */ nullptr, /* forAutocomplete= */ false);
 
     auto sourceModule = frontend.getSourceModule(moduleName);
-    if (!sourceModule)
+    const auto module = getModule(moduleName);
+    if (!sourceModule || !module)
         return {};
 
-    return platform->documentColor(*textDocument, *sourceModule);
+    return platform->documentColor({*textDocument, *sourceModule, module});
 }
 
 lsp::DocumentColorResult LanguageServer::documentColor(const lsp::DocumentColorParams& params)
@@ -144,12 +145,13 @@ lsp::ColorPresentationResult WorkspaceFolder::colorPresentation(const lsp::Color
     if (!textDocument)
         throw JsonRpcException(lsp::ErrorCode::RequestFailed, "No managed text document for " + params.textDocument.uri.toString());
 
-    frontend.parse(moduleName);
+    checkStrict(moduleName, /* cancellationToken= */ nullptr, /* forAutocomplete= */ false);
     const auto sourceModule = frontend.getSourceModule(moduleName);
-    if (!sourceModule)
+    const auto module = getModule(moduleName);
+    if (!sourceModule || !module)
         return {};
 
-    return platform->colorPresentation({params, *textDocument, *sourceModule});
+    return platform->colorPresentation({params, *textDocument, *sourceModule, module});
 }
 
 lsp::ColorPresentationResult LanguageServer::colorPresentation(const lsp::ColorPresentationParams& params)

@@ -243,6 +243,22 @@ TEST_CASE("analyze_file_reports_luduvo_platform_diagnostics")
     CHECK_FALSE(analyzeFile(workspace, filePath, ReportFormat::Default, false));
 }
 
+TEST_CASE("analyze_file_resolves_luduvo_diagnostics_through_local_aliases")
+{
+    ScopedFastFlag solverV2{FFlag::LuauSolverV2, true};
+    TempDir t("analyze_cli_luduvo_diagnostic_alias");
+    auto filePath = t.write_child("query.server.luau", "local world = game.World\nworld.Query()");
+
+    CliClient client;
+    initCliClient(client);
+    client.globalConfig.platform.type = LSPPlatformConfig::Luduvo;
+    client.globalConfig.platform.luduvo.dataDirectory = t.path();
+    WorkspaceFolder workspace(&client, "CLI", Uri::file(t.path()), std::nullopt);
+    setupCliWorkspace(client, workspace);
+
+    CHECK_FALSE(analyzeFile(workspace, filePath, ReportFormat::Default, false));
+}
+
 TEST_CASE("analyze_file_does_not_fail_for_luduvo_warnings")
 {
     ScopedFastFlag solverV2{FFlag::LuauSolverV2, true};

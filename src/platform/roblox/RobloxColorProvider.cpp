@@ -116,10 +116,10 @@ struct RobloxColorVisitor : public Luau::AstVisitor
     }
 };
 
-lsp::DocumentColorResult RobloxPlatform::documentColor(const TextDocument& textDocument, const Luau::SourceModule& module)
+lsp::DocumentColorResult RobloxPlatform::documentColor(const PlatformDocumentColorContext& context)
 {
-    RobloxColorVisitor visitor{&textDocument};
-    module.root->visit(&visitor);
+    RobloxColorVisitor visitor{&context.textDocument};
+    context.sourceModule.root->visit(&visitor);
     return visitor.colors;
 }
 

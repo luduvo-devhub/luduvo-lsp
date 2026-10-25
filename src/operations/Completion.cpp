@@ -729,8 +729,13 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
     if (!textDocument)
         throw JsonRpcException(lsp::ErrorCode::RequestFailed, "No managed text document for " + params.textDocument.uri.toString());
 
-    if (auto directiveItems = completeCommentDirective(*textDocument, params.position, *platform))
-        return *directiveItems;
+    frontend.parse(moduleName);
+    const Luau::SourceModule* directiveSourceModule = frontend.getSourceModule(moduleName);
+    if (directiveSourceModule)
+    {
+        if (auto directiveItems = completeCommentDirective(*textDocument, *directiveSourceModule, params.position, *platform))
+            return *directiveItems;
+    }
 
     std::unordered_set<std::string> tags;
 

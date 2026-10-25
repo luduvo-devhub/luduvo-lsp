@@ -68,14 +68,8 @@ lsp::DocumentDiagnosticReport WorkspaceFolder::documentDiagnostics(
     if (!textDocument)
         return report; // Bail early with empty report - file was likely closed
 
-    // Check the module
-    // In the new solver, we end up calling `checkStrict` (retain type graphs), because documentation diagnostics is typically
-    // on the file a user is working on. So, we will end up having to call checkStrict later for Hover etc. i.e., calling 2 typechecks
-    // for no reason.
-    // In the old solver, it doesn't really matter, because there is a differnce between module + moduleForAutocomplete. So we prefer
-    // using checkSimple as we won't use the type graphs
-    Luau::CheckResult cr =
-        FFlag::LuauSolverV2 ? checkStrict(moduleName, cancellationToken, /* forAutocomplete= */ false) : checkSimple(moduleName, cancellationToken);
+    // Retain type graphs when the solver or platform diagnostics need symbol identity. Otherwise use the cheaper diagnostic check.
+    Luau::CheckResult cr = checkForDiagnostics(moduleName, cancellationToken);
 
     throwIfCancelled(cancellationToken);
 
@@ -203,7 +197,7 @@ lsp::WorkspaceDiagnosticReport WorkspaceFolder::workspaceDiagnostics(const lsp::
             documentReport.version = document->version();
 
         // Compute new check result
-        Luau::CheckResult cr = checkSimple(moduleName, /* cancellationToken= */ nullptr);
+        Luau::CheckResult cr = checkForDiagnostics(moduleName, /* cancellationToken= */ nullptr);
 
         // If there was an error retrieving the source module, disregard this file
         // TODO: should we file a diagnostic?

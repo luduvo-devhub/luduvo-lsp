@@ -73,6 +73,18 @@ TEST_CASE("minimum_argument_rules_match_global_paths_and_named_type_members")
     CHECK_EQ(emptyQueryDiagnostics, 3);
 }
 
+TEST_CASE("workspace_diagnostics_resolve_luduvo_calls_through_local_aliases")
+{
+    ClientConfiguration config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.diagnostics.workspace = true;
+    LuduvoFixture fixture("luduvo_workspace_diagnostic_alias", config);
+    fixture.tempDir.write_child("query.server.luau", "local world = game.World\nworld.Query()");
+
+    const lsp::WorkspaceDiagnosticReport report = fixture.workspace.workspaceDiagnostics({});
+    REQUIRE_EQ(report.items.size(), 1);
+    CHECK(findDiagnostic(report.items[0].items, "empty-world-query"));
+}
+
 TEST_CASE("call_rules_do_not_match_user_types_with_luduvo_names")
 {
     LuduvoFixture fixture("luduvo_call_rule_user_type");

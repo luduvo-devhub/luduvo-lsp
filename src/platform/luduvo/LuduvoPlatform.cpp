@@ -222,6 +222,11 @@ bool LuduvoPlatform::isLintIgnored(const Luau::LintWarning& lint) const
     return false;
 }
 
+bool LuduvoPlatform::diagnosticsRequireFullTypeGraphs() const
+{
+    return diagnosticSettings.enabled;
+}
+
 std::vector<PlatformDiagnostic> LuduvoPlatform::collectDiagnostics(const PlatformDiagnosticContext& context)
 {
     return collectLuduvoPlatformDiagnostics(diagnosticSettings, context);

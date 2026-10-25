@@ -401,6 +401,13 @@ Luau::CheckResult WorkspaceFolder::checkStrict(
     return result;
 }
 
+Luau::CheckResult WorkspaceFolder::checkForDiagnostics(const Luau::ModuleName& moduleName, const LSPCancellationToken& cancellationToken)
+{
+    if (FFlag::LuauSolverV2 || platform->diagnosticsRequireFullTypeGraphs())
+        return checkStrict(moduleName, cancellationToken, /* forAutocomplete= */ false);
+    return checkSimple(moduleName, cancellationToken);
+}
+
 static const char* kIndexProgressToken = "luau/indexFiles";
 
 void WorkspaceFolder::indexFiles(const ClientConfiguration& config)

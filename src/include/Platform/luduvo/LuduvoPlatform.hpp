@@ -27,6 +27,7 @@ public:
     std::optional<std::string> getEnvironmentForModule(const Luau::ModuleName& moduleName) const override;
     void setupWithConfiguration(const ClientConfiguration& config) override;
     bool isLintIgnored(const Luau::LintWarning& lint) const override;
+    bool diagnosticsRequireFullTypeGraphs() const override;
     std::vector<PlatformDiagnostic> collectDiagnostics(const PlatformDiagnosticContext& context) override;
     std::vector<PlatformLintRuleCompletion> getLintRuleCompletions() const override;
     void handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
@@ -35,6 +36,6 @@ public:
     std::optional<lsp::MarkupContent> handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context) override;
     std::optional<lsp::MarkupContent> handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context) override;
     void handleSignatureHelp(const PlatformSignatureHelpContext& context) override;
-    lsp::DocumentColorResult documentColor(const TextDocument& textDocument, const Luau::SourceModule& module) override;
+    lsp::DocumentColorResult documentColor(const PlatformDocumentColorContext& context) override;
     lsp::ColorPresentationResult colorPresentation(const PlatformColorPresentationContext& context) override;
 };

@@ -82,9 +82,9 @@ bool analyzeFile(WorkspaceFolder& workspace, const std::string& path, ReportForm
 {
     Luau::ModuleName name = workspace.fileResolver.getModuleName(Uri::file(path));
 
-    // Use checkStrict when annotating to retain type graphs needed by attachTypeData
+    // Annotation and platform diagnostics can both require retained type graphs
     Luau::CheckResult cr = annotate ? workspace.checkStrict(name, /* cancellationToken= */ nullptr, /* forAutocomplete= */ false)
-                                    : workspace.checkSimple(name, /* cancellationToken= */ nullptr);
+                                    : workspace.checkForDiagnostics(name, /* cancellationToken= */ nullptr);
 
     if (!workspace.frontend.getSourceModule(name))
     {

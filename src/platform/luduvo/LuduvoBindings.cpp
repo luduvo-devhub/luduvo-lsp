@@ -51,6 +51,38 @@ bool containsStringType(Luau::TypeId type)
     std::unordered_set<Luau::TypeId> visited;
     return containsStringType(type, visited);
 }
+
+struct CallableOverload
+{
+    const Luau::FunctionType* function;
+    size_t index;
+};
+
+std::vector<CallableOverload> callableOverloads(Luau::TypeId callableType)
+{
+    std::vector<CallableOverload> result;
+    callableType = Luau::follow(callableType);
+    if (const auto function = Luau::get<Luau::FunctionType>(callableType))
+        result.push_back({function, 0});
+    else if (const auto intersection = Luau::get<Luau::IntersectionType>(callableType))
+    {
+        for (Luau::TypeId part : intersection->parts)
+            if (const auto function = Luau::get<Luau::FunctionType>(Luau::follow(part)))
+                result.push_back({function, result.size()});
+    }
+    return result;
+}
+
+std::optional<size_t> namedParameterIndex(const Luau::FunctionType& function, std::string_view parameter)
+{
+    auto [arguments, tail] = Luau::flatten(function.argTypes);
+    for (size_t index = 0; index < function.argNames.size() && index < arguments.size(); ++index)
+    {
+        if (function.argNames[index] && function.argNames[index]->name == parameter)
+            return index;
+    }
+    return std::nullopt;
+}
 } // namespace
 
 LuduvoBindingRegistry::LuduvoBindingRegistry()
@@ -156,22 +188,7 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoBindingRegistry::resolveResourc
     if (!canonicalSymbol)
         return {};
 
-    struct CallableOverload
-    {
-        const Luau::FunctionType* function;
-        size_t index;
-    };
-
-    std::vector<CallableOverload> functions;
-    callableType = Luau::follow(callableType);
-    if (const auto function = Luau::get<Luau::FunctionType>(callableType))
-        functions.push_back({function, 0});
-    else if (const auto intersection = Luau::get<Luau::IntersectionType>(callableType))
-    {
-        for (Luau::TypeId part : intersection->parts)
-            if (const auto function = Luau::get<Luau::FunctionType>(Luau::follow(part)))
-                functions.push_back({function, functions.size()});
-    }
+    const std::vector<CallableOverload> functions = callableOverloads(callableType);
 
     std::vector<LuduvoResolvedResourceBinding> result;
     for (const ResourceBinding& binding : resourceBindings)
@@ -198,15 +215,9 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoBindingRegistry::resolveResourc
             }
             else
             {
-                for (size_t index = 0; index < function->argNames.size() && index < arguments.size(); ++index)
-                {
-                    if (function->argNames[index] && function->argNames[index]->name == binding.parameter)
-                    {
-                        parameterIndex = index;
-                        parameterType = arguments[index];
-                        break;
-                    }
-                }
+                parameterIndex = namedParameterIndex(*function, binding.parameter);
+                if (parameterIndex)
+                    parameterType = arguments[*parameterIndex];
             }
 
             if (!parameterIndex || !parameterType)
@@ -237,6 +248,34 @@ std::vector<LuduvoResolvedResourceBinding> LuduvoBindingRegistry::resolveResourc
         }
     }
 
+    return result;
+}
+
+std::vector<LuduvoResolvedColorBinding> LuduvoBindingRegistry::resolveColors(std::string_view symbol, Luau::TypeId callableType) const
+{
+    std::vector<LuduvoResolvedColorBinding> result;
+    for (const LuduvoColorBinding& binding : colorBindings)
+    {
+        if (binding.symbol != symbol)
+            continue;
+        for (const CallableOverload& overload : callableOverloads(callableType))
+        {
+            std::vector<size_t> indices;
+            indices.reserve(binding.parameters.size());
+            for (const std::string& parameter : binding.parameters)
+            {
+                const auto index = namedParameterIndex(*overload.function, parameter);
+                if (!index)
+                {
+                    indices.clear();
+                    break;
+                }
+                indices.push_back(*index);
+            }
+            if (!indices.empty())
+                result.push_back({binding, std::move(indices), overload.index});
+        }
+    }
     return result;
 }
 

@@ -117,6 +117,22 @@ TEST_CASE("luduvo_nolint_completion_uses_the_diagnostic_rule_registry")
     CHECK_EQ(invalidDirective.detail, "Luduvo diagnostic rule · default: warning");
 }
 
+TEST_CASE_FIXTURE(Fixture, "comment_directive_completion_ignores_strings_and_long_comments")
+{
+    auto complete = [&](const std::string& name, const std::string& markedSource)
+    {
+        auto [source, marker] = sourceWithMarker(markedSource);
+        const Uri uri = newDocument(name, source);
+        lsp::CompletionParams params;
+        params.textDocument = lsp::TextDocumentIdentifier{uri};
+        params.position = marker;
+        return workspace.completion(params, nullptr);
+    };
+
+    CHECK(getItem(complete("directive-string.luau", "local value = [[\n--!nolint UnknownG|\n]]"), "UnknownGlobal") == std::nullopt);
+    CHECK(getItem(complete("directive-comment.luau", "--[[\n--!nolint UnknownG|\n]]"), "UnknownGlobal") == std::nullopt);
+}
+
 TEST_CASE("luduvo_lifecycle_completion_inserts_top_level_snippets")
 {
     LuduvoFixture fixture("luduvo_lifecycle_completion");

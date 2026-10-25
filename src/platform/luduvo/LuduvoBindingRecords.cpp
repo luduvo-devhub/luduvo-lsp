@@ -24,6 +24,6 @@ const std::vector<LuduvoBuiltinResourceBinding> luduvoBuiltinResourceBindings = 
 const std::vector<LuduvoColorBinding> luduvoBuiltinColorBindings = {
     {"Color3.new", {"r", "g", "b"}, ColorPresentationEncoding::Rgb},
     {"Color3.fromRGB", {"r", "g", "b"}, ColorPresentationEncoding::Rgb255},
-    {"Color3.fromHSV", {"h", "s", "v"}, ColorPresentationEncoding::Hsv},
+    {"Color3.fromHSV", {"hue", "saturation", "value"}, ColorPresentationEncoding::Hsv},
     {"Color3.fromHex", {"hex"}, ColorPresentationEncoding::Hex},
 };

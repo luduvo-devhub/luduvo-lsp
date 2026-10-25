@@ -34,31 +34,38 @@ RGB rgb255(const lsp::Color& color)
 }
 } // namespace
 
-lsp::ColorPresentation colorCallPresentation(std::string_view symbol, ColorPresentationEncoding encoding, const lsp::Color& color)
+std::vector<std::string> colorArguments(ColorPresentationEncoding encoding, const lsp::Color& color)
 {
-    std::string label(symbol);
-    label += '(';
-
     switch (encoding)
     {
     case ColorPresentationEncoding::Rgb:
-        label += formatDouble(color.red) + ", " + formatDouble(color.green) + ", " + formatDouble(color.blue);
-        break;
+        return {formatDouble(color.red), formatDouble(color.green), formatDouble(color.blue)};
     case ColorPresentationEncoding::Rgb255:
     {
         const RGB rgb = rgb255(color);
-        label += std::to_string(rgb.r) + ", " + std::to_string(rgb.g) + ", " + std::to_string(rgb.b);
-        break;
+        return {std::to_string(rgb.r), std::to_string(rgb.g), std::to_string(rgb.b)};
     }
     case ColorPresentationEncoding::Hsv:
     {
         const HSV hsv = rgbToHsv(rgb255(color));
-        label += formatDouble(hsv.h) + ", " + formatDouble(hsv.s) + ", " + formatDouble(hsv.v);
-        break;
+        return {formatDouble(hsv.h), formatDouble(hsv.s), formatDouble(hsv.v)};
     }
     case ColorPresentationEncoding::Hex:
-        label += "\"" + rgbToHex(rgb255(color)) + "\"";
-        break;
+        return {"\"" + rgbToHex(rgb255(color)) + "\""};
+    }
+    return {};
+}
+
+lsp::ColorPresentation colorCallPresentation(std::string_view symbol, ColorPresentationEncoding encoding, const lsp::Color& color)
+{
+    std::string label(symbol);
+    label += '(';
+    const std::vector<std::string> arguments = colorArguments(encoding, color);
+    for (size_t index = 0; index < arguments.size(); ++index)
+    {
+        if (index)
+            label += ", ";
+        label += arguments[index];
     }
 
     label += ')';

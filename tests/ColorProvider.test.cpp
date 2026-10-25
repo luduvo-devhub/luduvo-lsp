@@ -94,10 +94,11 @@ local invalid = Color3.fromHex("#f")
 
 TEST_CASE("luduvo_custom_color_binding_preserves_its_symbol_in_presentations")
 {
+    const std::string definitions = "declare Palette: { fromHex: (hex: string) -> number }";
     ClientConfiguration config = Luau::LanguageServer::defaultTestClientConfiguration();
     config.platform.luduvo.bindings.push_back({"Palette.fromHex", "color", "hex", {}, {}, "hex"});
 
-    LuduvoFixture fixture("luduvo_custom_color_presentation", config);
+    LuduvoFixture fixture("luduvo_custom_color_presentation", config, definitions, definitions);
     const Uri uri = fixture.newDocument("custom-color.client.luau", "local color = Palette.fromHex(\"#ff0000\")");
     const auto colors = fixture.workspace.documentColor({{uri}});
     REQUIRE_EQ(colors.size(), 1);
@@ -105,6 +106,33 @@ TEST_CASE("luduvo_custom_color_binding_preserves_its_symbol_in_presentations")
     const auto presentations = fixture.workspace.colorPresentation({{uri}, lsp::Color{0.0, 1.0, 0.0}, colors[0].range});
     REQUIRE_EQ(presentations.size(), 1);
     CHECK_EQ(presentations[0].label, "Palette.fromHex(\"#00ff00\")");
+}
+
+TEST_CASE("luduvo_color_bindings_resolve_named_parameters")
+{
+    const std::string definitions = R"(
+        declare Palette: {
+            make: (label: string, r: number, g: number, b: number) -> number,
+        }
+    )";
+    ClientConfiguration config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.bindings.push_back({"Palette.make", "color", {}, {"r", "g", "b"}, {}, "rgb", false, false});
+
+    LuduvoFixture fixture("luduvo_custom_color_parameters", config, definitions, definitions);
+    const Uri uri = fixture.newDocument("custom-color.client.luau", "local color = Palette.make(\"accent\", 1, 0.5, 0)");
+    const auto colors = fixture.workspace.documentColor({{uri}});
+    REQUIRE_EQ(colors.size(), 1);
+    CHECK(colors[0].color.red == doctest::Approx(1));
+    CHECK(colors[0].color.green == doctest::Approx(0.5));
+    CHECK(colors[0].color.blue == doctest::Approx(0));
+
+    const auto presentations = fixture.workspace.colorPresentation({{uri}, lsp::Color{0.0, 1.0, 0.0}, colors[0].range});
+    REQUIRE_EQ(presentations.size(), 1);
+    REQUIRE(presentations[0].textEdit);
+    std::vector<lsp::TextEdit> edits{*presentations[0].textEdit};
+    REQUIRE(presentations[0].additionalTextEdits);
+    edits.insert(edits.end(), presentations[0].additionalTextEdits->begin(), presentations[0].additionalTextEdits->end());
+    CHECK_EQ(applyEdit("local color = Palette.make(\"accent\", 1, 0.5, 0)", edits), "local color = Palette.make(\"accent\", 0, 1, 0)");
 }
 
 TEST_SUITE_END();

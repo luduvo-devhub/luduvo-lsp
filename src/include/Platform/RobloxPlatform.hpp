@@ -194,7 +194,7 @@ public:
     std::vector<lsp::TextEdit> computeAddAllMissingImportsEdits(
         const UnknownSymbolFixContext& ctx, const std::vector<Luau::TypeError>& errors) override;
 
-    lsp::DocumentColorResult documentColor(const TextDocument& textDocument, const Luau::SourceModule& module) override;
+    lsp::DocumentColorResult documentColor(const PlatformDocumentColorContext& context) override;
 
     lsp::ColorPresentationResult colorPresentation(const PlatformColorPresentationContext& context) override;
 

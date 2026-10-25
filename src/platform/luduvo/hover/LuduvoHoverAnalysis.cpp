@@ -644,56 +644,69 @@ std::vector<RichHoverOverload> makeRichHoverOverloads(Luau::TypeId type, const D
         break;
     }
 
-    auto removeFirstParameter = [](std::string& signature)
+    struct ParameterList
     {
-        const size_t open = signature.find('(');
-        if (open == std::string::npos)
-            return;
-        int depth = 0;
-        for (size_t index = open + 1; index < signature.size(); ++index)
-        {
-            const char character = signature[index];
-            if (character == '(' || character == '{' || character == '[' || character == '<')
-                ++depth;
-            else if (character == ')' || character == '}' || character == ']' || character == '>')
-            {
-                if (character == ')' && depth == 0)
-                {
-                    signature.erase(open + 1, index - open - 1);
-                    return;
-                }
-                --depth;
-            }
-            else if (character == ',' && depth == 0)
-            {
-                size_t following = index + 1;
-                while (following < signature.size() && signature[following] == ' ')
-                    ++following;
-                signature.erase(open + 1, following - open - 1);
-                return;
-            }
-        }
+        size_t open;
+        std::optional<size_t> firstComma;
+        size_t close;
     };
 
-    auto findParameterListClose = [](std::string_view signature) -> std::optional<size_t>
+    auto findParameterList = [](std::string_view signature) -> std::optional<ParameterList>
     {
         const size_t open = signature.find('(');
         if (open == std::string_view::npos)
             return std::nullopt;
 
         int depth = 0;
+        std::optional<size_t> firstComma;
+        char quote = '\0';
+        bool escaped = false;
         for (size_t index = open + 1; index < signature.size(); ++index)
         {
-            if (signature[index] == '(')
-                ++depth;
-            else if (signature[index] == ')')
+            const char character = signature[index];
+            if (quote)
             {
-                if (depth == 0)
-                    return index;
+                if (escaped)
+                    escaped = false;
+                else if (character == '\\')
+                    escaped = true;
+                else if (character == quote)
+                    quote = '\0';
+                continue;
+            }
+            if (character == '\'' || character == '"')
+            {
+                quote = character;
+                continue;
+            }
+            if (character == '(' || character == '{' || character == '[' || character == '<')
+                ++depth;
+            else if (character == ')' || character == '}' || character == ']' || character == '>')
+            {
+                if (character == ')' && depth == 0)
+                    return ParameterList{open, firstComma, index};
                 --depth;
             }
+            else if (character == ',' && depth == 0 && !firstComma)
+                firstComma = index;
         }
         return std::nullopt;
+    };
+
+    auto removeFirstParameter = [&](std::string& signature)
+    {
+        const auto parameters = findParameterList(signature);
+        if (!parameters)
+            return;
+        if (!parameters->firstComma)
+        {
+            signature.erase(parameters->open + 1, parameters->close - parameters->open - 1);
+            return;
+        }
+        size_t following = *parameters->firstComma + 1;
+        while (following < signature.size() && signature[following] == ' ')
+            ++following;
+        signature.erase(parameters->open + 1, following - parameters->open - 1);
     };
 
     std::vector<RichHoverOverload> overloads;
@@ -702,23 +715,22 @@ std::vector<RichHoverOverload> makeRichHoverOverloads(Luau::TypeId type, const D
     {
         RichHoverOverload overload;
         const bool methodCall = hasExplicitSelf(*functions[index]);
+        const bool renderAsMember = target.kind == DeclarationKind::Member && receiverName.has_value();
         std::string declarationName = target.name;
-        if (receiverName)
-        {
+        if (renderAsMember)
             declarationName = *receiverName + (methodCall ? ":" : ".") + target.name;
-        }
 
         Luau::ToStringOptions callableOptions = options;
         callableOptions.hideTableAliasExpansions = true;
         std::string signature = Luau::toStringNamedFunction(declarationName, *functions[index], callableOptions);
-        if (methodCall)
+        if (renderAsMember && methodCall)
             removeFirstParameter(signature);
 
-        if (const auto close = findParameterListClose(signature))
-            signature = signature.substr(0, *close + 1) + ": " + renderFunctionReturnPack(*functions[index], callableOptions);
+        if (const auto parameters = findParameterList(signature))
+            signature = signature.substr(0, parameters->close + 1) + ": " + renderFunctionReturnPack(*functions[index], callableOptions);
 
         overload.declaration = "function " + signature + "\nend";
-        if (hasDotCall && hasMethodCall)
+        if (renderAsMember && hasDotCall && hasMethodCall)
             overload.callStyle = methodCall ? "Method call" : "Dot call";
         for (const LuduvoResolvedResourceBinding& binding : constrainedResources)
             if (binding.overloadIndex == index)

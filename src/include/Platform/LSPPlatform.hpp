@@ -114,6 +114,14 @@ struct PlatformColorPresentationContext
     const lsp::ColorPresentationParams& params;
     const TextDocument& textDocument;
     const Luau::SourceModule& sourceModule;
+    const Luau::ModulePtr& module;
+};
+
+struct PlatformDocumentColorContext
+{
+    const TextDocument& textDocument;
+    const Luau::SourceModule& sourceModule;
+    const Luau::ModulePtr& module;
 };
 
 struct PlatformHoverContext
@@ -246,6 +254,11 @@ public:
         return {};
     }
 
+    virtual bool diagnosticsRequireFullTypeGraphs() const
+    {
+        return false;
+    }
+
     virtual void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata) {}
 
     virtual void onDidChangeWatchedFiles(const lsp::FileEvent& change) {}
@@ -324,7 +337,7 @@ public:
     virtual std::vector<lsp::TextEdit> computeAddAllMissingImportsEdits(
         const UnknownSymbolFixContext& ctx, const std::vector<Luau::TypeError>& errors);
 
-    virtual lsp::DocumentColorResult documentColor(const TextDocument& textDocument, const Luau::SourceModule& module)
+    virtual lsp::DocumentColorResult documentColor(const PlatformDocumentColorContext& context)
     {
         return {};
     }

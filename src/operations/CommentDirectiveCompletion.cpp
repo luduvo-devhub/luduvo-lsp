@@ -42,9 +42,11 @@ lsp::CompletionItem item(std::string label, std::string detail, std::string docu
 } // namespace
 
 std::optional<std::vector<lsp::CompletionItem>> completeCommentDirective(
-    const TextDocument& document, const lsp::Position& position, const LSPPlatform& platform)
+    const TextDocument& document, const Luau::SourceModule& sourceModule, const lsp::Position& position, const LSPPlatform& platform)
 {
     const Luau::Position cursor = document.convertPosition(position);
+    if (!Luau::isWithinHotComment(sourceModule, cursor))
+        return std::nullopt;
     const std::string line = document.getLine(cursor.line);
     if (cursor.column > line.size())
         return std::nullopt;

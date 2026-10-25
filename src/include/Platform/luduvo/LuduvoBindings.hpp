@@ -19,6 +19,13 @@ struct LuduvoResolvedResourceBinding
     size_t overloadIndex = 0;
 };
 
+struct LuduvoResolvedColorBinding
+{
+    LuduvoColorBinding binding;
+    std::vector<size_t> typeParameterIndices;
+    size_t overloadIndex = 0;
+};
+
 class LuduvoBindingRegistry
 {
     struct ResourceBinding
@@ -41,5 +48,6 @@ public:
 
     std::vector<LuduvoResolvedResourceBinding> resolveResources(
         const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType, std::vector<std::string>* warnings = nullptr) const;
+    std::vector<LuduvoResolvedColorBinding> resolveColors(std::string_view symbol, Luau::TypeId callableType) const;
     const std::vector<LuduvoColorBinding>& colors() const;
 };

@@ -119,6 +119,7 @@ public:
 
     Luau::CheckResult checkSimple(const Luau::ModuleName& moduleName, const LSPCancellationToken& cancellationToken);
     Luau::CheckResult checkStrict(const Luau::ModuleName& moduleName, const LSPCancellationToken& cancellationToken, bool forAutocomplete = true);
+    Luau::CheckResult checkForDiagnostics(const Luau::ModuleName& moduleName, const LSPCancellationToken& cancellationToken);
     // TODO: Clip once new type solver is live
     const Luau::ModulePtr getModule(const Luau::ModuleName& moduleName, bool forAutocomplete = false) const;
 
