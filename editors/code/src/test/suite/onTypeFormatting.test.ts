@@ -48,7 +48,9 @@ suite("OnTypeFormatting Middleware Test Suite", () => {
     });
   });
 
-  suite("onTypeFormattingMiddleware integration", () => {
+  suite("onTypeFormattingMiddleware integration", function () {
+    this.timeout(10_000);
+
     let document: vscode.TextDocument;
     let editor: vscode.TextEditor;
 

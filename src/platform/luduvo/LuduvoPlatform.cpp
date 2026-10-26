@@ -485,6 +485,19 @@ std::optional<json> LuduvoPlatform::handleWorkspaceCommand(std::string_view comm
         return json{{"success", result.success}, {"projectId", result.projectId}, {"error", result.error}};
     }
 
+    if (command == "luduvo.inspectProjectContext")
+    {
+        if (const auto scriptPath = commandScriptPath(arguments))
+            return contextProvider->inspect(*scriptPath);
+        std::string error;
+        const auto overview = contextProvider->contextStore().overview(&error);
+        if (!overview)
+            return json{{"error", std::move(error)}};
+        json result = *overview;
+        result["kind"] = "context";
+        return result;
+    }
+
     if (command == "luduvo.cleanProjectContext" || command == "luduvo.forgetProjectContext")
     {
         if (arguments.empty() || !arguments.front().is_object())
@@ -502,8 +515,6 @@ std::optional<json> LuduvoPlatform::handleWorkspaceCommand(std::string_view comm
     const auto scriptPath = commandScriptPath(arguments);
     if (!scriptPath)
         return json{{"enabled", true}, {"error", "The command requires a file URI in its first argument"}};
-    if (command == "luduvo.inspectProjectContext")
-        return contextProvider->inspect(*scriptPath);
     if (command == "luduvo.resolveProjectContext")
     {
         notifyContextState(lsp::DocumentUri::parse(arguments.front().at("uri").get<std::string>()), true);

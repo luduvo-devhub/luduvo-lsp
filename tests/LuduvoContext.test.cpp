@@ -138,6 +138,47 @@ TEST_CASE("project inspection shares script discovery with context updates")
     CHECK_EQ(catalog->projects.at(*updated.projectId).scripts, inspected.report->at("scripts").get<std::vector<std::string>>());
 }
 
+TEST_CASE("stored projects can be inspected by name or ID")
+{
+    TempDir temp("luduvo_context_inspect_stored_project");
+    const std::string state = temp.path() + "/state";
+    luduvo::ContextStore store(state);
+    REQUIRE(store.setActiveProject("Proving a point").success);
+    REQUIRE(store.attachScript("Proving a point", temp.path() + "/scripts/Test.server.luau").success);
+    temp.write_child("duplicate/project.json", R"({"name":"Proving a point","assets":{}})");
+    REQUIRE(store.updateProjectFiles(temp.path() + "/duplicate").success);
+
+    luduvo::ProjectInspectionRequest request;
+    request.name = "Proving a point";
+    const luduvo::ContextInspectionResult inspected = luduvo::inspectContextProject(request, state);
+    REQUIRE_MESSAGE(inspected.report, inspected.error.value_or(""));
+    CHECK_EQ(inspected.report->at("kind"), "projects");
+    CHECK_EQ(inspected.report->at("matchCount"), 2);
+    CHECK_EQ(inspected.report->at("projects").at(0).at("capturedContext").at("id"), "proving-a-point");
+    CHECK(inspected.report->at("projects").at(0).at("capturedContext").at("active").get<bool>());
+    CHECK_EQ(inspected.report->at("projects").at(0).at("summary").at("scriptCount"), 1);
+    const std::string rendered = luduvo::renderReportText(luduvo::buildContextInspectionReport(*inspected.report));
+    CHECK(rendered.find("Proving a point [active in Studio] [stale]") < rendered.find("Proving a point [fresh]"));
+    CHECK_EQ(rendered.find("Captured context [active in Studio]"), std::string::npos);
+
+    const std::string output = temp.path() + "/project.json";
+    luduvo::ContextCli cli;
+    cli.parser().parse_args(
+        {"context", "inspect", "project", "Proving a point", "--state-directory", state, "--format", "json", "--output", output});
+    REQUIRE_EQ(cli.execute(), 0);
+    const auto contents = Luau::FileUtils::readFile(output);
+    REQUIRE(contents);
+    const json report = json::parse(*contents);
+    CHECK_EQ(report.at("kind"), "projects");
+    CHECK_EQ(report.at("projects").at(0).at("capturedContext").at("id"), "proving-a-point");
+
+    luduvo::ProjectInspectionRequest idRequest;
+    idRequest.id = "proving-a-point";
+    const luduvo::ContextInspectionResult inspectedById = luduvo::inspectContextProject(idRequest, state);
+    REQUIRE(inspectedById.report);
+    CHECK_EQ(inspectedById.report->at("name"), "Proving a point");
+}
+
 TEST_CASE("configured project names retain autorun discovery without project json")
 {
     TempDir temp("luduvo_context_named_project");
@@ -390,6 +431,46 @@ TEST_CASE("context CLI reads Luduvo directories from LSP settings")
     CHECK_EQ(status.at("stateDirectory"), luduvo::normalizeContextPath(contextDirectory));
 }
 
+TEST_CASE("context status reports helper health while argument-free inspection reports stored projects")
+{
+    TempDir temp("luduvo_context_status_and_overview");
+    const std::string state = temp.path() + "/state";
+    luduvo::ContextStore store(state);
+    REQUIRE(store.setActiveProject("Example").success);
+
+    const auto identity = luduvo::currentProcessIdentity();
+    REQUIRE(identity);
+    std::error_code filesystemError;
+    std::filesystem::create_directories(std::filesystem::u8path(store.controlDirectory()) / "lock", filesystemError);
+    REQUIRE_FALSE(filesystemError);
+    REQUIRE(luduvo::writeProcessIdentity(store.ownerPath(), *identity));
+    REQUIRE(luduvo::writeProcessIdentity(store.leasesDirectory() + "/current.lease", *identity));
+
+    const std::string statusPath = temp.path() + "/status.json";
+    luduvo::ContextCli statusCli;
+    statusCli.parser().parse_args({"context", "status", "--state-directory", state, "--format", "json", "--output", statusPath});
+    REQUIRE_EQ(statusCli.execute(), 0);
+    const auto statusSource = Luau::FileUtils::readFile(statusPath);
+    REQUIRE(statusSource);
+    const json status = json::parse(*statusSource);
+    CHECK(status.at("running").get<bool>());
+    CHECK_EQ(status.at("helperProcessId"), identity->processId);
+    CHECK_EQ(status.at("clientProcessIds"), json::array({identity->processId}));
+    CHECK_EQ(status.at("activeProjectName"), "Example");
+    CHECK_FALSE(status.contains("catalog"));
+
+    const std::string overviewPath = temp.path() + "/overview.json";
+    luduvo::ContextCli inspectCli;
+    inspectCli.parser().parse_args({"context", "inspect", "--state-directory", state, "--format", "json", "--output", overviewPath});
+    REQUIRE_EQ(inspectCli.execute(), 0);
+    const auto overviewSource = Luau::FileUtils::readFile(overviewPath);
+    REQUIRE(overviewSource);
+    const json overview = json::parse(*overviewSource);
+    CHECK_EQ(overview.at("kind"), "context");
+    CHECK(overview.at("catalog").at("projects").contains("example"));
+    CHECK(overview.at("cleanup").contains("clients"));
+}
+
 TEST_CASE("context reports share composable tree formatting")
 {
     const json inspection = {{"kind", "script"}, {"inputPath", "scripts/chat.client.luau"}, {"side", "client"},
@@ -404,7 +485,7 @@ TEST_CASE("context reports share composable tree formatting")
     CHECK(output.find("Adventure Game (1)") < output.find("Sandbox (1)"));
     CHECK(output.find("Chat Window [Frame] [node 298]") != std::string::npos);
 
-    const json status = {{"running", true},
+    const json overview = {{"kind", "context"},
         {"stateDirectory", "C:/context"},
         {"catalog",
             {{"activeProjectId", "adventure"},
@@ -417,11 +498,33 @@ TEST_CASE("context reports share composable tree formatting")
                             {"worldScripts", json::array({"C:/Adventure/scripts/world.server.luau"})},
                             {"attachedScripts", json::array({"C:/Adventure/scripts/inferred.server.luau"})}}}}}}},
         {"cleanup", {{"clients", json::array()}, {"projects", json::array()}, {"snapshots", json::array()}}}};
+    const std::string overviewOutput = luduvo::renderReportText(luduvo::buildContextInspectionReport(overview));
+    CHECK(overviewOutput.find("Adventure Game [active in Studio] [fresh]") != std::string::npos);
+    CHECK(overviewOutput.find("Declared scripts (1)") != std::string::npos);
+    CHECK(overviewOutput.find("World scripts (1)") != std::string::npos);
+    CHECK(overviewOutput.find("Inferred scripts (1)") != std::string::npos);
+
+    const json status = {{"running", true},
+        {"stateDirectory", "C:/context"},
+        {"catalogPath", "C:/context/catalog.json"},
+        {"helperProcessId", 42},
+        {"catalogGeneration", 9},
+        {"projectCount", 1},
+        {"hasActiveProject", true},
+        {"activeProjectId", "adventure"},
+        {"activeProjectName", "Adventure Game"},
+        {"activeProjectFresh", true},
+        {"clientProcessIds", json::array({101, 202})},
+        {"deadClientCount", 1},
+        {"missingProjectCount", 2},
+        {"orphanedSnapshotCount", 3}};
     const std::string statusOutput = luduvo::renderReportText(luduvo::buildContextStatusReport(status));
-    CHECK(statusOutput.find("Adventure Game [active in Studio] [fresh]") != std::string::npos);
-    CHECK(statusOutput.find("Declared scripts (1)") != std::string::npos);
-    CHECK(statusOutput.find("World scripts (1)") != std::string::npos);
-    CHECK(statusOutput.find("Inferred scripts (1)") != std::string::npos);
+    CHECK(statusOutput.find("Luduvo context helper [running]") != std::string::npos);
+    CHECK(statusOutput.find("Helper process: PID 42") != std::string::npos);
+    CHECK(statusOutput.find("LSP clients (2)") != std::string::npos);
+    CHECK(statusOutput.find("Active Studio project: Adventure Game [fresh]") != std::string::npos);
+    CHECK(statusOutput.find("Cleanup candidates (6)") != std::string::npos);
+    CHECK(statusOutput.find("Projects (1)") == std::string::npos);
 }
 
 TEST_CASE("instance inspection searches project-local IDs and groups matches by project")
@@ -599,6 +702,16 @@ TEST_CASE("luduvo platform context commands use the workspace context provider")
     REQUIRE(added);
     CHECK(added->at("success").get<bool>());
     CHECK_EQ(added->at("projectId"), "command-project");
+
+    const auto overview = platform.handleWorkspaceCommand("luduvo.inspectProjectContext", {json::object()});
+    REQUIRE(overview);
+    CHECK_EQ(overview->at("kind"), "context");
+    CHECK(overview->at("catalog").at("projects").contains("command-project"));
+
+    const auto status = platform.handleWorkspaceCommand("luduvo.contextHelperStatus", {json::object()});
+    REQUIRE(status);
+    CHECK(status->contains("clientProcessIds"));
+    CHECK_FALSE(status->contains("catalog"));
 
     const json argument = {{"uri", Uri::file(scriptPath).toString()}};
     const auto inspected = platform.handleWorkspaceCommand("luduvo.inspectProjectContext", {argument});

@@ -72,10 +72,30 @@ struct ContextStatus
 {
     bool running = false;
     std::string stateDirectory;
+    std::string catalogPath;
+    uint64_t helperProcessId = 0;
+    uint64_t catalogGeneration = 0;
+    size_t projectCount = 0;
+    bool hasActiveProject = false;
+    std::string activeProjectId;
+    std::string activeProjectName;
+    bool activeProjectFresh = false;
+    std::vector<uint64_t> clientProcessIds;
+    size_t deadClientCount = 0;
+    size_t missingProjectCount = 0;
+    size_t orphanedSnapshotCount = 0;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContextStatus, running, stateDirectory, catalogPath, helperProcessId, catalogGeneration, projectCount,
+    hasActiveProject, activeProjectId, activeProjectName, activeProjectFresh, clientProcessIds, deadClientCount, missingProjectCount,
+    orphanedSnapshotCount)
+
+struct ContextOverview
+{
+    std::string stateDirectory;
     ContextCatalog catalog;
     ContextCleanupSummary cleanup;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContextStatus, running, stateDirectory, catalog, cleanup)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContextOverview, stateDirectory, catalog, cleanup)
 
 class ContextStore
 {
@@ -108,6 +128,7 @@ public:
     std::optional<WorldDumpSnapshot> loadWorld(const std::string& projectId, std::string* error = nullptr) const;
     ContextCleanupSummary cleanupCandidates() const;
     std::optional<ContextStatus> status(std::string* error = nullptr) const;
+    std::optional<ContextOverview> overview(std::string* error = nullptr) const;
     ContextStoreResult clean(const std::string& kind, const std::vector<std::string>& selectors, bool all) const;
     ContextStoreResult forget(const std::string& kind, const std::vector<std::string>& selectors, bool all) const;
 };

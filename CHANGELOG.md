@@ -26,12 +26,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Luduvo LSP can now see data from your Luduvo projects via the new (beta) project context system! It watches Luduvo Studio, imports successful `world.dump` captures, and keeps a shared local catalog of known projects, scripts, instances, hierarchy, and context freshness. The beta can inspect or select a script's project context, request a new dump when context becomes stale, and provide quick fixes when `World` or `self` is stale or cannot be otherwise resolved. Outside of that it isn't hooked into anything major (yet)
 - A new `luduvo.context.enabled` setting to enable or disable the context beta. False by default because the beta is untested, useless (as in it doesn't really do anything currently), and generally still in development.
 - 6 new VS Code commands for managing context:
-  - `Luduvo: Add Project to Context`, which adds or reindexes a Luduvo project selected from a folder picker
-  - `Luduvo: Inspect Project Context`, which gives data about every project the currently opened script is apart of
-  - `Luduvo: Choose Project Context`, which lets you select a different project context if the LSP gets it wrong
-  - `Luduvo: Refresh Project Context`, which manually "generates" a command for you to run inside Luduvo to refresh the current project's context
-  - `Luduvo: Reset Project Context Choice`, which resets the current project context choice
-  - `Luduvo: Show Project Context Status`, which shows debug information about the helper and the entire project database
+- `Luduvo: Add Project to Context`, which adds or reindexes a Luduvo project selected from a folder picker
+- `Luduvo: Inspect Project Context`, which inspects the currently opened script when one is available and otherwise shows the complete stored project catalog
+- `Luduvo: Choose Project Context`, which lets you select a different project context if the LSP gets it wrong
+- `Luduvo: Refresh Project Context`, which manually "generates" a command for you to run inside Luduvo to refresh the current project's context
+- `Luduvo: Reset Project Context Choice`, which resets the current project context choice
+- `Luduvo: Show Project Context Status`, which shows helper health, the active Studio project, registered LSP clients, and cleanup counts
 - A new `context` CLI command with 8 subcommands that also manages the context helper:
 ```text
   - luduvo-lsp context parse <world-dump.txt> [--format text|json] [--output <path>]

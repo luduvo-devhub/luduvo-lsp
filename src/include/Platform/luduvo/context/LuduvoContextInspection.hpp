@@ -50,8 +50,16 @@ struct InstanceInspectionRequest
     std::vector<std::string> sections;
 };
 
+struct ProjectInspectionRequest
+{
+    std::optional<std::string> name;
+    std::optional<std::string> id;
+    std::optional<std::string> directory;
+};
+
 ProjectFileInspectionResult inspectProjectFiles(const std::string& path, std::optional<std::string> configuredProjectName = std::nullopt);
 ContextInspectionResult inspectContextInput(const std::string& path, const std::string& stateDirectory = {});
+ContextInspectionResult inspectContextProject(const ProjectInspectionRequest& request, const std::string& stateDirectory = {});
 ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& request, const std::string& stateDirectory = {});
 
 } // namespace luduvo

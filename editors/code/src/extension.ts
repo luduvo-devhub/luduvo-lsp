@@ -92,8 +92,7 @@ type ContextCleanupCandidate = {
   path: string;
 };
 
-type ProjectContextStatus = {
-  enabled: boolean;
+type ProjectContextOverview = {
   error?: string;
   cleanup: {
     clients: ContextCleanupCandidate[];
@@ -185,16 +184,10 @@ const registerProjectContextCommands = (languageClient: LanguageClient) => {
     vscode.commands.registerCommand(
       `${EDITOR_NAMESPACE}.inspectProjectContext`,
       async (value?: string | vscode.Uri) => {
-        const uri = requireUri(value);
-        if (!uri) {
-          return;
-        }
-        const result =
-          await executeLuduvoContextCommand<ProjectContextInspection>(
-            languageClient,
-            "luduvo.inspectProjectContext",
-            uri,
-          );
+        const uri = activeLuauUri(value);
+        const result = await executeLuduvoContextCommand<
+          ProjectContextInspection | ProjectContextOverview
+        >(languageClient, "luduvo.inspectProjectContext", uri);
         const document = await vscode.workspace.openTextDocument({
           language: "json",
           content: JSON.stringify(result, null, 2),
@@ -310,14 +303,14 @@ const registerProjectContextCommands = (languageClient: LanguageClient) => {
     vscode.commands.registerCommand(
       `${EDITOR_NAMESPACE}.cleanProjectContext`,
       async () => {
-        const status = await executeLuduvoContextCommand<ProjectContextStatus>(
-          languageClient,
-          "luduvo.contextHelperStatus",
-          activeLuauUri(),
-        );
+        const overview =
+          await executeLuduvoContextCommand<ProjectContextOverview>(
+            languageClient,
+            "luduvo.inspectProjectContext",
+          );
         const candidates = (["client", "project", "snapshot"] as const).flatMap(
           (kind) =>
-            status.cleanup[`${kind}s`].map((candidate) => ({
+            overview.cleanup[`${kind}s`].map((candidate) => ({
               label: candidate.label,
               description: kind,
               detail: candidate.path,
@@ -369,12 +362,12 @@ const registerProjectContextCommands = (languageClient: LanguageClient) => {
     vscode.commands.registerCommand(
       `${EDITOR_NAMESPACE}.forgetProjectContext`,
       async () => {
-        const status = await executeLuduvoContextCommand<ProjectContextStatus>(
-          languageClient,
-          "luduvo.contextHelperStatus",
-          activeLuauUri(),
-        );
-        const projects = Object.values(status.catalog.projects).sort(
+        const overview =
+          await executeLuduvoContextCommand<ProjectContextOverview>(
+            languageClient,
+            "luduvo.inspectProjectContext",
+          );
+        const projects = Object.values(overview.catalog.projects).sort(
           (left, right) =>
             left.name.localeCompare(right.name) ||
             left.directory.localeCompare(right.directory),

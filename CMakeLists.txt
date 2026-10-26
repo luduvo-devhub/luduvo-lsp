@@ -6,6 +6,9 @@ option(LSP_BUILD_ASAN "Build with ASAN" OFF)
 option(LSP_STATIC_CRT "Link with the static CRT (/MT)" OFF)
 option(LSP_BUILD_WITH_SENTRY "Build with Sentry (crash reporting)" OFF)
 option(LSP_WERROR "Warnings as errors" ON)
+if (WIN32)
+    option(LSP_KILL_BEFORE_LINK "Windows only: terminate processes running the CLI target executable before linking" OFF)
+endif ()
 
 set(LSP_VERSION "1.70.4L-alpha")
 set(LSP_NAME "Luduvo Luau")
@@ -266,6 +269,22 @@ target_compile_options(Luau.LanguageServer.CLI PRIVATE ${LUAU_LSP_OPTIONS})
 target_include_directories(Luau.LanguageServer.CLI PRIVATE src/include)
 target_include_directories(Luau.LanguageServer.CLI SYSTEM PRIVATE ${EXTERN_INCLUDES})
 target_link_libraries(Luau.LanguageServer.CLI PRIVATE Luau.LanguageServer Luau.Analysis)
+
+if (WIN32 AND LSP_KILL_BEFORE_LINK)
+    find_program(LSP_POWERSHELL_EXECUTABLE NAMES powershell pwsh REQUIRED)
+    add_custom_command(
+        TARGET Luau.LanguageServer.CLI PRE_LINK
+        COMMAND "${LSP_POWERSHELL_EXECUTABLE}"
+            -NoLogo
+            -NoProfile
+            -NonInteractive
+            -ExecutionPolicy Bypass
+            -File "${CMAKE_CURRENT_SOURCE_DIR}/scripts/luduvo/StopLspProcessesBeforeLink.ps1"
+            -TargetPath "$<TARGET_FILE:Luau.LanguageServer.CLI>"
+        COMMENT "Stopping processes that are using $<TARGET_FILE_NAME:Luau.LanguageServer.CLI>"
+        VERBATIM
+    )
+endif ()
 
 target_compile_options(Luau.LanguageServer.Test PRIVATE ${LUAU_LSP_OPTIONS})
 target_include_directories(Luau.LanguageServer.Test PRIVATE tests)

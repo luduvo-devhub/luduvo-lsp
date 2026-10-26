@@ -237,11 +237,16 @@ static ContextInspectionResult inspectScript(const std::string& path, const std:
             {"staleReason", project.staleReason},
             {"sources", sources},
             {"attachments", attachments}};
-        candidate["selected"] = !workspaceSelections.empty() &&
-                                std::any_of(workspaceSelections.begin(), workspaceSelections.end(), [&](const auto& selection)
-                                    {
-                                        return selection.second == projectId;
-                                    });
+        bool selected = false;
+        for (const auto& selection : workspaceSelections)
+        {
+            if (selection.second == projectId)
+            {
+                selected = true;
+                break;
+            }
+        }
+        candidate["selected"] = selected;
         if (world)
             candidate["snapshot"] = {{"tick", world->tick},
                 {"commandSequence", world->commandSequence},
@@ -370,6 +375,116 @@ ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& 
             return left.value("directory", "") < right.value("directory", "");
         });
     return {json{{"kind", "instance"}, {"matchCount", matchCount}, {"projects", std::move(projects)}}, std::nullopt};
+}
+
+static json storedProjectReport(const ContextCatalog& catalog, const std::string& projectId, const ContextProject& project, const ContextStore& store)
+{
+    json report = {{"kind", "project"},
+        {"inputPath", project.directory},
+        {"projectFile", project.directory.empty() ? "" : (std::filesystem::u8path(project.directory) / "project.json").generic_u8string()},
+        {"name", project.name},
+        {"directory", project.directory},
+        {"summary",
+            {{"assetCount", 0},
+                {"scriptAssetCount", project.declaredScripts.size()},
+                {"autorunScriptCount", project.autorunScripts.size()},
+                {"scriptCount", project.scripts.size()},
+                {"missingScriptCount", 0},
+                {"assetTypes", json::object()}}},
+        {"declaredScripts", project.declaredScripts},
+        {"autorunScripts", project.autorunScripts},
+        {"scripts", project.scripts},
+        {"missingScripts", json::array()},
+        {"attachments", json::array()},
+        {"capturedContext", project}};
+    report["capturedContext"]["active"] = catalog.activeProjectId == projectId;
+    if (const auto world = store.loadWorld(projectId))
+    {
+        report["capturedContext"]["snapshot"] = {{"tick", world->tick},
+            {"commandSequence", world->commandSequence},
+            {"capturedAtUnixMs", world->capturedAtUnixMs},
+            {"sourcePath", world->sourcePath}};
+        for (const WorldInstance& instance : world->instances)
+        {
+            if (instance.scripts.empty())
+                continue;
+            report["attachments"].push_back({{"nodeId", instance.nodeId},
+                {"instanceId", instance.instanceId},
+                {"name", instance.name},
+                {"type", instance.type},
+                {"scripts", instance.scripts}});
+        }
+    }
+    return report;
+}
+
+static json inspectMatchedProject(
+    const ContextCatalog& catalog, const std::string& projectId, const ContextProject& project, const ContextStore& store, const std::string& stateDirectory)
+{
+    if (!project.directory.empty())
+    {
+        std::error_code filesystemError;
+        if (std::filesystem::is_directory(std::filesystem::u8path(project.directory), filesystemError))
+        {
+            ContextInspectionResult live = inspectContextInput(project.directory, stateDirectory);
+            if (live.report)
+                return std::move(*live.report);
+        }
+    }
+    return storedProjectReport(catalog, projectId, project, store);
+}
+
+ContextInspectionResult inspectContextProject(const ProjectInspectionRequest& request, const std::string& stateDirectory)
+{
+    if (!request.name && !request.id && !request.directory)
+        return {std::nullopt, "project inspection requires a project name, ID, or directory"};
+
+    const ContextStore store(stateDirectory.empty() ? defaultContextStateDirectory() : stateDirectory);
+    std::string error;
+    const auto catalog = store.load(&error);
+    if (!catalog)
+        return {std::nullopt, error};
+
+    std::vector<std::pair<std::string, const ContextProject*>> matches;
+    for (const auto& [projectId, project] : catalog->projects)
+    {
+        if (request.name && project.name != *request.name)
+            continue;
+        if (request.id && projectId != *request.id)
+            continue;
+        if (request.directory && normalizeContextPath(project.directory) != normalizeContextPath(*request.directory))
+            continue;
+        matches.emplace_back(projectId, &project);
+    }
+    if (matches.empty())
+        return {std::nullopt, "no stored project matched the requested selector"};
+
+    std::sort(matches.begin(), matches.end(), [&](const auto& left, const auto& right)
+        {
+            const bool leftActive = left.first == catalog->activeProjectId;
+            const bool rightActive = right.first == catalog->activeProjectId;
+            if (leftActive != rightActive)
+                return leftActive;
+            if (left.second->fresh != right.second->fresh)
+                return left.second->fresh;
+            const std::string leftDirectory = normalizeContextPath(left.second->directory);
+            const std::string rightDirectory = normalizeContextPath(right.second->directory);
+            if (leftDirectory != rightDirectory)
+                return leftDirectory < rightDirectory;
+            return left.first < right.first;
+        });
+
+    if (matches.size() > 1)
+    {
+        json projects = json::array();
+        for (const auto& [projectId, project] : matches)
+            projects.push_back(inspectMatchedProject(*catalog, projectId, *project, store, stateDirectory));
+        const std::string selector = request.name.value_or(request.id.value_or(request.directory.value_or("")));
+        return {json{{"kind", "projects"}, {"selector", selector}, {"matchCount", projects.size()}, {"projects", std::move(projects)}}, std::nullopt};
+    }
+
+    const auto& [projectId, project] = matches.front();
+    return {inspectMatchedProject(*catalog, projectId, *project, store, stateDirectory), std::nullopt};
 }
 
 ContextInspectionResult inspectContextInput(const std::string& path, const std::string& stateDirectory)

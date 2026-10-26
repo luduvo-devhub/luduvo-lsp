@@ -93,17 +93,20 @@ When Context is enabled, the LSP will start a helper process that watches Luduvo
 Currently, the LSP doesn't do much with this information (which is why its off by default). Right now, only the lifecycle and project management parts are hooked into the LSP. That means that you can inspect project contexts, reselect project contexts if the LSP gets it wrong for the file its linting, automatic stale-context warnings and instructions, and VSCode code actions for all of this on `game.World` and `self` if the LSP detects that the project is stale or otherwise unresolved. The LSP also sends standard editor notifications when a new world dump updates context or an attached script is inferred. Commands for context inspection and management are available via the VSCode extension as the following:
 
 - `Luduvo: Add Project to Context`, which adds or reindexes a Luduvo project selected from a folder picker
-- `Luduvo: Inspect Project Context`, which gives data about every project the currently opened script is apart of
+- `Luduvo: Inspect Project Context`, which inspects the currently opened script when one is available and otherwise shows the complete stored project catalog
 - `Luduvo: Choose Project Context`, which lets you select a different project context if the LSP gets it wrong
 - `Luduvo: Refresh Project Context`, which manually "generates" a command for you to run inside Luduvo to refresh the current project's context
 - `Luduvo: Reset Project Context Choice`, which resets the current project context choice
-- `Luduvo: Show Project Context Status`, which shows debug information about the helper and the entire project database
+- `Luduvo: Show Project Context Status`, which shows helper health, the active Studio project, registered LSP clients, and cleanup counts
 
 If you don't have VSCode installed, Luduvo LSP's CLI also got extended (which a lot more effort went into):
 
 ```text
 luduvo-lsp context parse <world-dump.txt> [--format text|json] [--output <path>]
+luduvo-lsp context inspect [--format text|json] [--output <path>]
 luduvo-lsp context inspect <dump|project|script> <path> [--format text|json] [--output <path>]
+luduvo-lsp context inspect project <stored-project-name>
+luduvo-lsp context inspect project <--project NAME|--project-id ID|--project-directory DIRECTORY>
 luduvo-lsp context inspect instance <--node-id ID|--instance-id ID|--name NAME> [project selector] [--section <name>]
 luduvo-lsp context update <project|dump> <path> [--project <name>] [--project-directory <path>]
 luduvo-lsp context clean [client|project|snapshot] [selectors...] [--all]
@@ -122,7 +125,8 @@ Commands that can access a project database also can accept your LSP config via 
 `parse` parses a dump and turns it into a snapshot of some kind (depends on what you specify). Note that merely pasring a project does not add it to the project database. Use `update` for that.
 
 `inspect` gives information about the thing that you provide it as an input in some way (depends on what you specify). It can be:
-- a project (via its directory or `project.json`), which reports all of its assets, its asset types, autorun scripts, attached scripts, and relavent cleanup information if files are missing and whatnot
+  - all projects (if nothing other than `inspect` is provided), which reports surfscenlevel information about all stored projects including indexed scripts, captured instances, freshness, and named cleanup candidates.
+- a project (via its directory, `project.json`, project name, or project ID), which reports all of its assets, its asset types, autorun scripts, attached scripts, and relavent cleanup information if files are missing and whatnot
 - a script path, which reports every known project containing that script, how it was found to be apart of said project, its selected and active context, freshness, snapshot metadata, and attached world instances. Script inspection reads the shared catalog from `--state-directory` or the default helper project state directory decided by the config file or your OSes' default.
 - a tracked instance's name or ID, which returns information about all tracked projects that the instance could belong to. It will do nothing if the instance's name or ID doesn't belong to a project inside of the LSP's project database. If found, it reports its basic information, its hierarchy, attached scripts, and more.
 - a dump, which it reports instance, instance hierarchy, and script counts.
@@ -131,7 +135,7 @@ Both `parse` and `inspect` can display its output in a human-readable format or 
 
 `update` reindexes the project database, either by reindexing project scripts or checking for a dump to import, then reports the resulting catalog if anything changed. If the project dir given to update isn't already in the database, it will add it
 
-`status` gives information about the helper and project database, including every indexed project, its freshness, dump path, and its declared, autorun, world-dump, and inferred scripts. It also lists everything that has been detected to be stale and needs to be cleaned up.
+`status` gives operational information about the helper, including its process, state and catalog paths, catalog generation, active Studio project, registered LSP clients, and cleanup candidate counts. Use argument-free `inspect` for the stored projects and the full cleanup-candidate list.
 
 `clean` deletes anything that you tell it to provided that the helper has proven that its stale or otherwise invalid, such as dead client registrations deleted projects, etc. You can just clean everything all at once with `clean --all`, or clean only specific categories with `clean <category> --all`.
 
@@ -539,6 +543,7 @@ cmake --build build/luduvo/[platform] --target Luau.LanguageServer.CLI Luau.Lang
 
 I was able to build successfully on both Windows and Linux (via WSL). Using MSVC's equivalents should still work fine as well, but mileage will vary. If you need a quick build, configure with
 `-DCMAKE_CXX_FLAGS_RELEASE="-O0 -DNDEBUG"`.
+If you are on Windows and need to rebuild the project after just using it, you may also find  `-DLSP_KILL_BEFORE_LINK=ON` helpful. Windows locks processes and prevetns other files from writing over it, so if Luduvo LSP is running while you are attempting to rebuild it, it errors in the linking steps. Before it wasn't much of an issue to stop everything yourself, but now you need to also stop the helper is its running and that annoyed me. If on, it prevents a running LSP or context helper from locking `luduvo-lsp.exe` by killing all running processes of it everywhere. This wont do anything on macOS or Linux because they don't have this problem (lucky you)
 
 ## Current limitations
 

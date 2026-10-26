@@ -655,7 +655,57 @@ std::optional<ContextStatus> ContextStore::status(std::string* error) const
     const auto catalog = load(error);
     if (!catalog)
         return std::nullopt;
-    return ContextStatus{helperRunning(), directory(), *catalog, cleanupCandidates()};
+
+    ContextStatus result;
+    result.stateDirectory = directory();
+    result.catalogPath = this->catalogPath();
+    result.catalogGeneration = catalog->generation;
+    result.projectCount = catalog->projects.size();
+
+    if (const auto owner = readProcessIdentity(ownerPath()); owner && isProcessAlive(*owner))
+    {
+        result.running = true;
+        result.helperProcessId = owner->processId;
+    }
+
+    if (const auto active = catalog->projects.find(catalog->activeProjectId); active != catalog->projects.end())
+    {
+        result.hasActiveProject = true;
+        result.activeProjectId = active->first;
+        result.activeProjectName = active->second.name;
+        result.activeProjectFresh = active->second.fresh;
+    }
+
+    std::error_code filesystemError;
+    const std::filesystem::path clients = std::filesystem::u8path(leasesDirectory());
+    if (std::filesystem::is_directory(clients, filesystemError))
+    {
+        for (std::filesystem::directory_iterator iterator(clients, filesystemError), end; iterator != end && !filesystemError;
+             iterator.increment(filesystemError))
+        {
+            if (!iterator->is_regular_file(filesystemError) || filesystemError)
+                continue;
+            const auto identity = readProcessIdentity(iterator->path().generic_u8string());
+            if (identity && isProcessAlive(*identity))
+                result.clientProcessIds.push_back(identity->processId);
+        }
+    }
+    std::sort(result.clientProcessIds.begin(), result.clientProcessIds.end());
+    result.clientProcessIds.erase(std::unique(result.clientProcessIds.begin(), result.clientProcessIds.end()), result.clientProcessIds.end());
+
+    const ContextCleanupSummary cleanup = cleanupCandidates();
+    result.deadClientCount = cleanup.clients.size();
+    result.missingProjectCount = cleanup.projects.size();
+    result.orphanedSnapshotCount = cleanup.snapshots.size();
+    return result;
+}
+
+std::optional<ContextOverview> ContextStore::overview(std::string* error) const
+{
+    const auto catalog = load(error);
+    if (!catalog)
+        return std::nullopt;
+    return ContextOverview{directory(), *catalog, cleanupCandidates()};
 }
 
 ContextStoreResult ContextStore::clean(const std::string& kind, const std::vector<std::string>& selectors, bool all) const

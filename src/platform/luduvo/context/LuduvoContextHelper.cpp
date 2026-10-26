@@ -17,6 +17,12 @@
 #include <iostream>
 #include <thread>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#endif
+
 namespace luduvo
 {
 
@@ -90,6 +96,30 @@ static std::optional<std::string> contextStateDirectory(const argparse::Argument
     return argumentOr(program, "--state-directory", defaultContextStateDirectory(configuration->directories.local, configuration->directories.context));
 }
 
+static void writeStandardOutput(const std::string& output)
+{
+#ifdef _WIN32
+    const HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD consoleMode = 0;
+    if (console != INVALID_HANDLE_VALUE && console != nullptr && GetConsoleMode(console, &consoleMode))
+    {
+        const std::wstring wideOutput = Luau::FileUtils::fromUtf8(output);
+        size_t offset = 0;
+        while (offset < wideOutput.size())
+        {
+            DWORD written = 0;
+            const DWORD remaining = DWORD(std::min<size_t>(wideOutput.size() - offset, DWORD(-1)));
+            if (!WriteConsoleW(console, wideOutput.data() + offset, remaining, &written, nullptr) || written == 0)
+                break;
+            offset += written;
+        }
+        if (offset == wideOutput.size())
+            return;
+    }
+#endif
+    std::cout << output;
+}
+
 static int writeOutput(const argparse::ArgumentParser& program, const json& value, const ReportNode& report)
 {
     const std::string output = program.get<std::string>("--format") == "json" ? value.dump(2) + "\n" : renderReportText(report);
@@ -100,7 +130,7 @@ static int writeOutput(const argparse::ArgumentParser& program, const json& valu
             return printError(error);
     }
     else
-        std::cout << output;
+        writeStandardOutput(output);
     return 0;
 }
 
@@ -127,8 +157,40 @@ static int inspectCommand(const argparse::ArgumentParser& program)
         return printError(configurationError);
     const std::string kind = program.get<std::string>("kind");
     const auto input = program.present<std::string>("input");
-    if (kind != "instance" && !input)
+    if (kind.empty())
+    {
+        const ContextStore store(*stateDirectory);
+        std::string error;
+        const auto overview = store.overview(&error);
+        if (!overview)
+            return printError(error);
+        json result = *overview;
+        result["kind"] = "context";
+        return writeOutput(program, result, buildContextInspectionReport(result));
+    }
+    if (kind != "instance" && kind != "project" && !input)
         return printError("context inspect " + kind + " requires an input path");
+    if (kind == "project")
+    {
+        ProjectInspectionRequest request;
+        request.name = program.present<std::string>("--project");
+        request.id = program.present<std::string>("--project-id");
+        request.directory = program.present<std::string>("--project-directory");
+        if (input && !request.name && !request.id && !request.directory)
+        {
+            const ContextInspectionResult pathInspection = inspectContextInput(*input, *stateDirectory);
+            if (pathInspection.report && pathInspection.report->value("kind", "") == "project")
+                return writeOutput(program, *pathInspection.report, buildContextInspectionReport(*pathInspection.report));
+            request.name = *input;
+        }
+        else if (input)
+            return printError("context inspect project accepts either an input path or project selectors, not both");
+
+        const ContextInspectionResult inspected = inspectContextProject(request, *stateDirectory);
+        if (!inspected.report)
+            return printError(inspected.error.value_or("could not inspect project"));
+        return writeOutput(program, *inspected.report, buildContextInspectionReport(*inspected.report));
+    }
     if (kind == "instance")
     {
         InstanceInspectionRequest request;
@@ -151,7 +213,6 @@ static int inspectCommand(const argparse::ArgumentParser& program)
     if (!inspected.report)
         return printError(inspected.error.value_or("could not inspect input"));
     if ((kind == "dump" && inspected.report->value("kind", "") != "worldDump") ||
-        (kind == "project" && inspected.report->value("kind", "") != "project") ||
         (kind == "script" && inspected.report->value("kind", "") != "script"))
         return printError("input is not a " + kind);
     return writeOutput(program, *inspected.report, buildContextInspectionReport(*inspected.report));
@@ -455,7 +516,7 @@ ContextCli::ContextCli()
         .scan<'i', int>()
         .default_value(30);
 
-    statusParser.add_description("Show helper, project, and cleanup status");
+    statusParser.add_description("Show context helper health and active LSP clients");
     addStateDirectoryArgument(statusParser);
     addOutputArguments(statusParser);
 
@@ -466,9 +527,16 @@ ContextCli::ContextCli()
     parseParser.add_argument("input").help("world dump path").metavar("DUMP");
     addOutputArguments(parseParser);
 
-    inspectParser.add_description("Inspect a world dump, project, script, or captured instance");
-    inspectParser.add_argument("kind").choices("dump", "project", "script", "instance").metavar("KIND");
-    inspectParser.add_argument("input").help("input path; omitted for instance inspection").metavar("INPUT").nargs(argparse::nargs_pattern::optional);
+    inspectParser.add_description("Inspect stored project context or a world dump, project, script, or captured instance");
+    inspectParser.add_argument("kind")
+        .choices("", "dump", "project", "script", "instance")
+        .metavar("KIND")
+        .nargs(argparse::nargs_pattern::optional)
+        .default_value(std::string{});
+    inspectParser.add_argument("input")
+        .help("input path or stored project name; omitted for context and selector-based inspection")
+        .metavar("INPUT")
+        .nargs(argparse::nargs_pattern::optional);
     inspectParser.add_argument("--node-id").help("match an instance by node ID").scan<'u', uint64_t>().metavar("ID");
     inspectParser.add_argument("--instance-id").help("match an instance by runtime instance ID").scan<'u', uint64_t>().metavar("ID");
     inspectParser.add_argument("--name").help("match instances by name").metavar("NAME");

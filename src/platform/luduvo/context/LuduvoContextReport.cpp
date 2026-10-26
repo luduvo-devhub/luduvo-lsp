@@ -145,7 +145,7 @@ static ReportNode buildWorldDumpReport(const json& inspection)
     return root;
 }
 
-static ReportNode buildProjectReport(const json& inspection)
+static ReportNode buildProjectReport(const json& inspection, bool promoteContextTags = false)
 {
     ReportNode root{"Project: " + inspection.value("name", "<unnamed>")};
     root.fields.push_back({"Directory", inspection.value("directory", "")});
@@ -180,10 +180,19 @@ static ReportNode buildProjectReport(const json& inspection)
         root.children.push_back(std::move(scripts));
     if (const auto context = inspection.find("capturedContext"); context != inspection.end() && context->is_object())
     {
+        if (promoteContextTags)
+        {
+            if (context->value("active", false))
+                root.tags.push_back("active in Studio");
+            root.tags.push_back(context->value("fresh", false) ? "fresh" : "stale");
+        }
         ReportNode captured{"Captured context"};
-        if (context->value("active", false))
-            captured.tags.push_back("active in Studio");
-        captured.tags.push_back(context->value("fresh", false) ? "fresh" : "stale");
+        if (!promoteContextTags)
+        {
+            if (context->value("active", false))
+                captured.tags.push_back("active in Studio");
+            captured.tags.push_back(context->value("fresh", false) ? "fresh" : "stale");
+        }
         captured.fields.push_back({"ID", context->value("id", "")});
         captured.fields.push_back({"Instances", std::to_string(context->value("instanceCount", size_t(0)))});
         captured.fields.push_back({"Script attachments", std::to_string(context->value("scriptAttachmentCount", size_t(0)))});
@@ -197,6 +206,22 @@ static ReportNode buildProjectReport(const json& inspection)
         for (const json& attachment : *attachments)
             attachmentList.children.push_back(scriptAttachmentNode(attachment));
         root.children.push_back(std::move(attachmentList));
+    }
+    return root;
+}
+
+static ReportNode buildProjectMatchesReport(const json& inspection)
+{
+    const auto projects = inspection.find("projects");
+    const size_t matchCount = projects != inspection.end() && projects->is_array() ? projects->size() : 0;
+    ReportNode root{"Project matches: " + inspection.value("selector", "") + " (" + std::to_string(matchCount) + ")"};
+    if (projects == inspection.end() || !projects->is_array())
+        return root;
+    for (const json& project : *projects)
+    {
+        ReportNode child = buildProjectReport(project, true);
+        child.label = project.value("name", "<unnamed>");
+        root.children.push_back(std::move(child));
     }
     return root;
 }
@@ -224,15 +249,21 @@ static ReportNode buildInstanceInspectionReport(const json& inspection)
     return root;
 }
 
+static ReportNode buildContextOverviewReport(const json& inspection);
+
 ReportNode buildContextInspectionReport(const json& inspection)
 {
     const std::string kind = inspection.value("kind", "unknown");
+    if (kind == "context")
+        return buildContextOverviewReport(inspection);
     if (kind == "script")
         return buildScriptInspectionReport(inspection);
     if (kind == "worldDump")
         return buildWorldDumpReport(inspection);
     if (kind == "project")
         return buildProjectReport(inspection);
+    if (kind == "projects")
+        return buildProjectMatchesReport(inspection);
     if (kind == "instance")
         return buildInstanceInspectionReport(inspection);
     return ReportNode{"Context inspection", {}, {{"Data", inspection.dump()}}};
@@ -255,12 +286,11 @@ static ReportNode candidateGroup(const std::string& label, const json& values)
     return group;
 }
 
-ReportNode buildContextStatusReport(const json& status)
+static ReportNode buildContextOverviewReport(const json& inspection)
 {
-    ReportNode root{"Luduvo context"};
-    root.tags.push_back(status.value("running", false) ? "running" : "stopped");
-    root.fields.push_back({"State directory", status.value("stateDirectory", "")});
-    if (const auto catalog = status.find("catalog"); catalog != status.end() && catalog->is_object())
+    ReportNode root{"Project context"};
+    root.fields.push_back({"State directory", inspection.value("stateDirectory", "")});
+    if (const auto catalog = inspection.find("catalog"); catalog != inspection.end() && catalog->is_object())
     {
         root.fields.push_back({"Projects", std::to_string(catalog->value("projects", json::object()).size())});
         std::string activeProject = catalog->value("activeProjectId", "");
@@ -315,7 +345,7 @@ ReportNode buildContextStatusReport(const json& status)
             root.children.push_back(std::move(projectList));
         }
     }
-    if (const auto cleanup = status.find("cleanup"); cleanup != status.end() && cleanup->is_object())
+    if (const auto cleanup = inspection.find("cleanup"); cleanup != inspection.end() && cleanup->is_object())
     {
         size_t total = 0;
         for (const auto& [_, values] : cleanup->items())
@@ -327,6 +357,46 @@ ReportNode buildContextStatusReport(const json& status)
         candidates.children.push_back(candidateGroup("Orphaned snapshots", cleanup->value("snapshots", json::array())));
         root.children.push_back(std::move(candidates));
     }
+    return root;
+}
+
+ReportNode buildContextStatusReport(const json& status)
+{
+    ReportNode root{"Luduvo context helper"};
+    root.tags.push_back(status.value("running", false) ? "running" : "stopped");
+    root.fields.push_back({"State directory", status.value("stateDirectory", "")});
+    root.fields.push_back({"Catalog", status.value("catalogPath", "")});
+    root.fields.push_back({"Catalog generation", std::to_string(status.value("catalogGeneration", uint64_t(0)))});
+    root.fields.push_back({"Known projects", std::to_string(status.value("projectCount", size_t(0)))});
+    if (status.value("running", false))
+        root.fields.push_back({"Helper process", "PID " + std::to_string(status.value("helperProcessId", uint64_t(0)))});
+    else
+        root.fields.push_back({"Helper process", "none"});
+
+    if (status.value("hasActiveProject", false))
+    {
+        ReportNode active{"Active Studio project: " + status.value("activeProjectName", status.value("activeProjectId", "<unknown>"))};
+        active.tags.push_back(status.value("activeProjectFresh", false) ? "fresh" : "stale");
+        active.fields.push_back({"ID", status.value("activeProjectId", "")});
+        root.children.push_back(std::move(active));
+    }
+    else
+        root.fields.push_back({"Active Studio project", "none"});
+
+    const std::vector<uint64_t> clients = status.value("clientProcessIds", std::vector<uint64_t>{});
+    ReportNode clientList{"LSP clients (" + std::to_string(clients.size()) + ")"};
+    for (uint64_t processId : clients)
+        clientList.children.push_back({"PID " + std::to_string(processId)});
+    root.children.push_back(std::move(clientList));
+
+    const size_t deadClients = status.value("deadClientCount", size_t(0));
+    const size_t missingProjects = status.value("missingProjectCount", size_t(0));
+    const size_t orphanedSnapshots = status.value("orphanedSnapshotCount", size_t(0));
+    ReportNode cleanup{"Cleanup candidates (" + std::to_string(deadClients + missingProjects + orphanedSnapshots) + ")"};
+    cleanup.fields.push_back({"Dead clients", std::to_string(deadClients)});
+    cleanup.fields.push_back({"Missing projects", std::to_string(missingProjects)});
+    cleanup.fields.push_back({"Orphaned snapshots", std::to_string(orphanedSnapshots)});
+    root.children.push_back(std::move(cleanup));
     return root;
 }
 
