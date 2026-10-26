@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.71.0L-alpha] - 2026-10-26
+
 ### Added
 
 - Custom Luduvo-specific errors via a new diagnostics system! For now it's just a proof of concept with a check for `self` in `autorun` scripts as well as a check for empty query errors because those were easy to code. However, it's built in such a way that makes it pretty easily extensible for errors that are basically the same thing. Later updates will add more as demand arises.
@@ -33,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Luduvo: Reset Project Context Choice`, which resets the current project context choice
 - `Luduvo: Show Project Context Status`, which shows helper health, the active Studio project, registered LSP clients, and cleanup counts
 - A new `context` CLI command with 8 subcommands that also manages the context helper:
+
 ```text
   - luduvo-lsp context parse <world-dump.txt> [--format text|json] [--output <path>]
   - luduvo-lsp context inspect <dump|project|script> <path> [--format text|json] [--output <path>]
@@ -44,7 +47,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - luduvo-lsp context status [--state-directory <directory>] [--format text|json] [--output <path>]
   - luduvo-lsp context stop [--state-directory <directory>]
 ```
+
 They are all explained in the README, so give it a look
+
 - Notifications when a world dump updates project context or an attached script is newly inferred.
 - 4 new settings for configuring the context preview and the Luduvo directories it uses:
   - `luau-lsp.platform.luduvo.context.enabled`
@@ -64,6 +69,7 @@ They are all explained in the README, so give it a look
     - `target.variadic` now tells the LSP that the affected parameter takes in unlimited values instead of `variadic`.
 
 In practice, it looks like this now:
+
 ```jsonc
 "luduvo": {
   "bindings": [
@@ -80,6 +86,7 @@ In practice, it looks like this now:
   ]
 }
 ```
+
 - `luduvo.dataDirectory` has also been depreciated and replaced with `luduvo.directories.roaming` because I realized that the name was confusing now that Luduvo LSP needs BOTH the local and roaming data directories.
 
 ### Fixed
@@ -87,7 +94,7 @@ In practice, it looks like this now:
 - The README actually describes how to use the more interesting Luduvo LSP-exclusive features in more detail than just a giant table. I'm sory Igor for ever getting upset at the lack of documentation. This took forever.
 - Hovering over overloaded functions no longer shows the type info for its parent instead of its own
 - game.World.Pair no longer internally has components as its resource for the relation parameter
-    - Hovering global variables no longer incorrectly shows Luduvo API documentation. At this point, the hover bugs will be here forever...
+  - Hovering global variables no longer incorrectly shows Luduvo API documentation. At this point, the hover bugs will be here forever...
 
 ## [1.70.4L-alpha] - 2026-10-18
 
