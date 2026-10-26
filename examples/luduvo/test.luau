@@ -1,7 +1,7 @@
 --!strict
 --!nolint luduvo/unused-local
 
--- Tested in Zed. Complete the unfinished `game.` declare on line 11, or try hovering any of the luduvo-speciifc data types!
+-- Tested in Zed. Complete the unfinished `game.` declare on line 13, or try hovering any of the luduvo-speciifc data types!
 local part: Instance? = game.Prefabs.Spawn("Part")
 if part then
     part.Position = Vector3.new(0, 10, 0)
