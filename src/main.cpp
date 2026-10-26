@@ -7,6 +7,8 @@
 #include "argparse/argparse.hpp"
 #include "LuauFileUtils.hpp"
 #include "LSP/RequireGraph.hpp"
+#include "Platform/luduvo/context/LuduvoContextHelper.hpp"
+#include "Platform/luduvo/context/LuduvoContextProvider.hpp"
 
 #include "LSP/Transport/StdioTransport.hpp"
 #ifndef _WIN32
@@ -215,6 +217,7 @@ int main(int argc, char** argv)
         .help("display all the currently available Luau FFlags and their values")
         .default_value(false)
         .implicit_value(true);
+    luduvo::ContextCli contextCli;
 
     // Analyze arguments
     argparse::ArgumentParser analyze_command("analyze");
@@ -300,6 +303,7 @@ int main(int argc, char** argv)
     program.add_subparser(analyze_command);
     program.add_subparser(lsp_command);
     program.add_subparser(require_graph_command);
+    program.add_subparser(contextCli.parser());
 
     try
     {
@@ -309,8 +313,12 @@ int main(int argc, char** argv)
         // Use GetCommandLineW() and CommandLineToArgvW() to get proper UTF-8 encoded arguments.
         // See: https://github.com/JohnnyMorganz/luau-lsp/issues/1191
         auto utf8Args = Luau::FileUtils::getUtf8CommandLineArgs();
+        if (!utf8Args.empty())
+            luduvo::setContextHelperExecutablePath(utf8Args.front());
         program.parse_args(utf8Args);
 #else
+        if (argc > 0)
+            luduvo::setContextHelperExecutablePath(argv[0]);
         program.parse_args(argc, argv);
 #endif
     }
@@ -342,9 +350,11 @@ int main(int argc, char** argv)
         processFFlags(require_graph_command);
         return startRequireGraph(require_graph_command);
     }
+    else if (program.is_subcommand_used("context"))
+        return contextCli.execute();
 
     // No sub-command specified
-    std::cerr << "Specify a particular mode to run the program (analyze/lsp/require-graph)" << '\n';
+    std::cerr << "Specify a particular mode to run the program (analyze/lsp/require-graph/context)" << '\n';
     std::cerr << program;
     return 1;
 }

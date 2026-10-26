@@ -152,9 +152,83 @@
         "command": "luduvo-lsp.requireGraphForFile",
         "title": "Luau: View Require Graph for current file",
         "enablement": "resourceLangId == luau"
+      },
+      {
+        "command": "luduvo-lsp.addProjectContext",
+        "title": "Luduvo: Add Project to Context",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled"
+      },
+      {
+        "command": "luduvo-lsp.inspectProjectContext",
+        "title": "Luduvo: Inspect Project Context",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled && resourceLangId == luau"
+      },
+      {
+        "command": "luduvo-lsp.chooseProjectContext",
+        "title": "Luduvo: Choose Project Context",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled && resourceLangId == luau"
+      },
+      {
+        "command": "luduvo-lsp.refreshProjectContext",
+        "title": "Luduvo: Refresh Project Context",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled && resourceLangId == luau"
+      },
+      {
+        "command": "luduvo-lsp.resetProjectContext",
+        "title": "Luduvo: Reset Project Context Choice",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled && resourceLangId == luau"
+      },
+      {
+        "command": "luduvo-lsp.projectContextStatus",
+        "title": "Luduvo: Show Project Context Status",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled"
+      },
+      {
+        "command": "luduvo-lsp.cleanProjectContext",
+        "title": "Luduvo: Clean Project Context",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled"
+      },
+      {
+        "command": "luduvo-lsp.forgetProjectContext",
+        "title": "Luduvo: Forget Project Context",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled"
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "luduvo-lsp.addProjectContext",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        },
+        {
+          "command": "luduvo-lsp.inspectProjectContext",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        },
+        {
+          "command": "luduvo-lsp.chooseProjectContext",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        },
+        {
+          "command": "luduvo-lsp.refreshProjectContext",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        },
+        {
+          "command": "luduvo-lsp.resetProjectContext",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        },
+        {
+          "command": "luduvo-lsp.projectContextStatus",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        },
+        {
+          "command": "luduvo-lsp.cleanProjectContext",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        },
+        {
+          "command": "luduvo-lsp.forgetProjectContext",
+          "when": "config.luduvo-lsp.platform.luduvo.context.enabled"
+        }
+      ],
       "editor/title": [
         {
           "when": "resourceLangId == luau",
@@ -252,6 +326,30 @@
           "markdownDescription": "Luduvo's per-user Client data directory. Leave empty to use the operating-system default",
           "type": "string",
           "default": "",
+          "scope": "window"
+        },
+        "luduvo-lsp.platform.luduvo.directories.roaming": {
+          "markdownDescription": "Root of Luduvo's roaming per-user data. Leave empty to use the operating-system default. This takes precedence over the legacy `#luduvo-lsp.platform.luduvo.dataDirectory#` setting",
+          "type": "string",
+          "default": "",
+          "scope": "window"
+        },
+        "luduvo-lsp.platform.luduvo.directories.local": {
+          "markdownDescription": "Root of Luduvo's local per-user data. Leave empty to use the operating-system default",
+          "type": "string",
+          "default": "",
+          "scope": "window"
+        },
+        "luduvo-lsp.platform.luduvo.directories.context": {
+          "markdownDescription": "Directory containing Luduvo LSP's project-context database. Leave empty to derive it from the local data directory. This setting must name a directory; database filenames are managed by the LSP",
+          "type": "string",
+          "default": "",
+          "scope": "window"
+        },
+        "luduvo-lsp.platform.luduvo.context.enabled": {
+          "markdownDescription": "Enables the experimental Luduvo context integration. This preview setting is disabled by default",
+          "type": "boolean",
+          "default": false,
           "scope": "window"
         },
         "luduvo-lsp.platform.luduvo.definitions.serverOverride": {

@@ -106,6 +106,14 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/LuduvoSymbols.cpp
         src/platform/luduvo/LuduvoTargetResolver.cpp
         src/platform/luduvo/LuduvoResourceCatalog.cpp
+        src/platform/luduvo/context/LuduvoWorldDump.cpp
+        src/platform/luduvo/context/LuduvoContextStore.cpp
+        src/platform/luduvo/context/LuduvoContextHelper.cpp
+        src/platform/luduvo/context/LuduvoContextInspection.cpp
+        src/platform/luduvo/context/LuduvoContextLogProcessor.cpp
+        src/platform/luduvo/context/LuduvoProcessIdentity.cpp
+        src/platform/luduvo/context/LuduvoContextReport.cpp
+        src/platform/luduvo/context/LuduvoContextProvider.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
         src/platform/roblox/InstanceRequireAutoImporter.cpp
@@ -185,6 +193,7 @@ target_sources(Luau.LanguageServer.Test PRIVATE
         tests/SignatureHelp.test.cpp
         tests/Diagnostics.test.cpp
         tests/LuduvoDiagnostics.test.cpp
+        tests/LuduvoContext.test.cpp
         tests/GoToDefinition.test.cpp
         tests/Glob.test.cpp
         tests/Workspace.test.cpp

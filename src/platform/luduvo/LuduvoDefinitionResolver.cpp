@@ -64,7 +64,9 @@ std::optional<LuduvoActiveContent> resolveActiveLuduvoContent(const ClientLuduvo
     };
 
     std::optional<std::string> dataDirectory;
-    if (!configuration.dataDirectory.empty())
+    if (!configuration.directories.roaming.empty())
+        dataDirectory = joinPath(resolvePath(configuration.directories.roaming), "Client");
+    else if (!configuration.dataDirectory.empty())
         dataDirectory = resolvePath(configuration.dataDirectory);
     else
         dataDirectory = getDefaultLuduvoDataDirectory();

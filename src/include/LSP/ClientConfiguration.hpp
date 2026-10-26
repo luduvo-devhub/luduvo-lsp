@@ -561,10 +561,30 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfigurati
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Source, provider, values)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration, groups, sources, bindings, completion)
 
+struct ClientLuduvoDirectoriesConfiguration
+{
+    /// Root of Luduvo's roaming per-user data. The Client content store lives below this directory.
+    std::string roaming{};
+    /// Root of Luduvo's local per-user data.
+    std::string local{};
+    /// Root of Luduvo LSP's project-context database. Files are derived below this directory.
+    std::string context{};
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoDirectoriesConfiguration, roaming, local, context)
+
+struct ClientLuduvoContextConfiguration
+{
+    /// Whether the experimental Luduvo context integration is enabled.
+    bool enabled = false;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoContextConfiguration, enabled)
+
 struct ClientLuduvoConfiguration
 {
     /// Luduvo's per-user Client directory. The content store lives below this directory.
     std::string dataDirectory{};
+    ClientLuduvoDirectoriesConfiguration directories{};
+    ClientLuduvoContextConfiguration context{};
     ClientLuduvoDefinitionsConfiguration definitions{};
     ClientLuduvoDiagnosticsConfiguration diagnostics{};
     ClientLuduvoHoverConfiguration hover{};
@@ -572,7 +592,8 @@ struct ClientLuduvoConfiguration
     /// Semantic bindings shared by completion, hover, and editor providers.
     std::vector<ClientLuduvoBindingConfiguration> bindings{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoConfiguration, dataDirectory, definitions, diagnostics, hover, resources, bindings)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
+    ClientLuduvoConfiguration, dataDirectory, directories, context, definitions, diagnostics, hover, resources, bindings)
 
 struct ClientPlatformConfiguration
 {

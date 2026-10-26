@@ -43,6 +43,14 @@ TEST_CASE("luduvo_resource_catalog_resolves_group_sources")
     REQUIRE_EQ(catalog.group("prefab")->resources.size(), 2);
     CHECK(catalog.group("prefab")->resources[0].builtIn);
 
+    TempDir roaming("luduvo_resource_catalog_roaming");
+    roaming.write_child("Client/content/current", "50\n");
+    roaming.touch_child("Client/content/versions/50/prefabs/Preferred.ldv");
+    config.directories.roaming = roaming.path();
+    catalog.configure(config);
+    CHECK_EQ(catalog.names("prefab"), std::vector<std::string>({"Preferred"}));
+    config.directories.roaming.clear();
+
     config.resources.sources["custom-components"].values = {
         "Custom", ClientLuduvoResourcesConfiguration::Source::Value{"Documented", "Project component documentation"}};
     config.resources.sources["default-states"].values = {"Running", "Idle"};
@@ -314,10 +322,13 @@ TEST_CASE("luduvo_platform_ignores_unused_lifecycle_functions")
 TEST_CASE("luduvo_platform_configuration_round_trips")
 {
     auto config = json::parse(
-        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096},"resources":{"groups":{"component":{"dataType":"string","includeBuiltins":false,"sources":["test-components"]},"prefab":{"dataType":"string","includeBuiltins":false,"sources":[]}},"sources":{"test-components":{"provider":"static","values":["Health",{"name":"Position","documentation":"World-space position"}]}},"bindings":[{"symbol":"MyLibrary.Query","parameter":"components","kind":"component","variadic":true,"pluralResourceNoun":true}],"completion":{"enabled":false,"disabledKinds":["component"],"disabledApis":["game.World.Query"]}}}}})")
+        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","directories":{"roaming":"roaming-data","local":"local-data"},"context":{"enabled":true},"definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096},"resources":{"groups":{"component":{"dataType":"string","includeBuiltins":false,"sources":["test-components"]},"prefab":{"dataType":"string","includeBuiltins":false,"sources":[]}},"sources":{"test-components":{"provider":"static","values":["Health",{"name":"Position","documentation":"World-space position"}]}},"bindings":[{"symbol":"MyLibrary.Query","parameter":"components","kind":"component","variadic":true,"pluralResourceNoun":true}],"completion":{"enabled":false,"disabledKinds":["component"],"disabledApis":["game.World.Query"]}}}}})")
                       .get<ClientConfiguration>();
     CHECK(config.platform.type == LSPPlatformConfig::Luduvo);
     CHECK_EQ(config.platform.luduvo.dataDirectory, "data");
+    CHECK_EQ(config.platform.luduvo.directories.roaming, "roaming-data");
+    CHECK_EQ(config.platform.luduvo.directories.local, "local-data");
+    CHECK(config.platform.luduvo.context.enabled);
     CHECK_EQ(config.platform.luduvo.definitions.serverOverride, "server.luau");
     CHECK_EQ(config.platform.luduvo.definitions.clientOverride, "client.luau");
     CHECK(config.platform.luduvo.definitions.defaultScriptSide == LuduvoScriptSide::Client);
@@ -349,6 +360,9 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
     CHECK_EQ(config.platform.luduvo.resources.completion.disabledKinds, std::vector<std::string>{"component"});
     CHECK_EQ(config.platform.luduvo.resources.completion.disabledApis, std::vector<std::string>{"game.World.Query"});
     CHECK(json(config)["platform"]["type"] == "luduvo");
+    CHECK(json(config)["platform"]["luduvo"]["directories"]["roaming"] == "roaming-data");
+    CHECK(json(config)["platform"]["luduvo"]["directories"]["local"] == "local-data");
+    CHECK(json(config)["platform"]["luduvo"]["context"]["enabled"]);
     CHECK(json(config)["platform"]["luduvo"]["definitions"]["defaultScriptSide"] == "client");
     CHECK(json(config)["platform"]["luduvo"]["definitions"]["globalPolicy"] == "preferDefinitionFiles");
     CHECK(json(config)["platform"]["luduvo"]["hover"]["presentation"] == "standard");
@@ -370,6 +384,9 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
 TEST_CASE("luduvo_resource_configuration_defaults")
 {
     ClientConfiguration config;
+    CHECK(config.platform.luduvo.directories.roaming.empty());
+    CHECK(config.platform.luduvo.directories.local.empty());
+    CHECK_FALSE(config.platform.luduvo.context.enabled);
     CHECK(config.platform.luduvo.resources.groups.empty());
     CHECK(config.platform.luduvo.resources.sources.empty());
     CHECK(config.platform.luduvo.resources.bindings.empty());

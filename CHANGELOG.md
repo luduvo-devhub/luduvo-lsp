@@ -18,34 +18,73 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     - `information` (blue squiggles)
     - `hint` (grayish-blue squiggles)
     - `off` (no squiggles)
-- Luduvo `--!nolint` diagnostics support (i.e. `--!nolint luduvo/empty-world-query`)
+- Luduvo-specific `--!nolint` diagnostics support (i.e. `--!nolint luduvo/empty-world-query`)
 - Comment-directive (--!optimize, --!nolint, etc.) are now autocompletable
 - Autocomplete snippets for Luduvo's `Update`, `PhysicsUpdate`, and `Migrate` lifecycle functions.
 - Color preview support from Roblox got ported to Luduvo Color3 constructors! You can now preview colors and change their RGB values via an interactive (editor-provided) color picker.
-- Color picker functionality can be configured for custom functions and properties via the new `luduvo.bindings` field in the project config
+- Color picker functionality can be configured for custom functions via the new `luduvo.bindings` field in the project config
+- Luduvo LSP can now see data from your Luduvo projects via the new (beta) project context system! It watches Luduvo Studio, imports successful `world.dump` captures, and keeps a shared local catalog of known projects, scripts, instances, hierarchy, and context freshness. The beta can inspect or select a script's project context, request a new dump when context becomes stale, and provide quick fixes when `World` or `self` is stale or cannot be otherwise resolved. Outside of that it isn't hooked into anything major (yet)
+- A new `luduvo.context.enabled` setting to enable or disable the context beta. False by default because the beta is untested, useless (as in it doesn't really do anything currently), and generally still in development.
+- 6 new VS Code commands for managing context:
+  - `Luduvo: Add Project to Context`, which adds or reindexes a Luduvo project selected from a folder picker
+  - `Luduvo: Inspect Project Context`, which gives data about every project the currently opened script is apart of
+  - `Luduvo: Choose Project Context`, which lets you select a different project context if the LSP gets it wrong
+  - `Luduvo: Refresh Project Context`, which manually "generates" a command for you to run inside Luduvo to refresh the current project's context
+  - `Luduvo: Reset Project Context Choice`, which resets the current project context choice
+  - `Luduvo: Show Project Context Status`, which shows debug information about the helper and the entire project database
+- A new `context` CLI command with 8 subcommands that also manages the context helper:
+```text
+  - luduvo-lsp context parse <world-dump.txt> [--format text|json] [--output <path>]
+  - luduvo-lsp context inspect <dump|project|script> <path> [--format text|json] [--output <path>]
+  - luduvo-lsp context inspect instance <--node-id ID|--instance-id ID|--name NAME> [project selector] [--section <name>]
+  - luduvo-lsp context update <project|dump> <path> [--project <name>] [--project-directory <path>]
+  - luduvo-lsp context clean [client|project|snapshot] [selectors...] [--all]
+  - luduvo-lsp context forget [project|script] [selectors...] [--all] [--yes]
+  - luduvo-lsp context run [--commands-log <path>] [--studio-log <path>] [--state-directory <directory>] [--poll-interval <milliseconds>] [--idle-timeout <seconds>]
+  - luduvo-lsp context status [--state-directory <directory>] [--format text|json] [--output <path>]
+  - luduvo-lsp context stop [--state-directory <directory>]
+```
+They are all explained in the README, so give it a look
+- Notifications when a world dump updates project context or an attached script is newly inferred.
+- 4 new settings for configuring the context preview and the Luduvo directories it uses:
+  - `luau-lsp.platform.luduvo.context.enabled`
+  - `luau-lsp.platform.luduvo.directories.roaming`
+  - `luau-lsp.platform.luduvo.directories.local`
+  - `luau-lsp.platform.luduvo.directories.context`
 
 ### Changed
 
 - Many Luduvo-related files got reorganized into subdirectories because I couldn't stand it all being flat anymore
 - Rich hovers now render function overloads as separate declarations for better readability. In respects to the resource system, resource constraints that all overloads share still get appended to the end of doc strings, while overload-specific constraints are now commented beside the overload they affect.
-- Bindings have been completely overhauled to support the new `luduvo.bindings` field in the project config instead of the old `luduvo.reosources.bindings` because I realized that more than just resources needed this functionality. As of now, `luduvo.reosources.bindings` is "deprecated"
-  - To migrate, bindings should more or less look like this:
+- Bindings have been completely overhauled to support the new `luduvo.bindings` field in the project config instead of the old `luduvo.reosources.bindings` because I realized that more than just resources needed this functionality. As of now, `luduvo.reosources.bindings` is "deprecated" (though it still works)
+  - In respect to `luduvo.reosources.bindings`, this is what changed during the migration to the new `luduvo.bindings` interface:
+    - You must specify `kind` as `resource` to use the resource as a binding type.
+    - `group` now selects the resource group instead of `kind`.
+    - `target.parameter` now selects the affected parameter instead of `parameter`.
+    - `target.variadic` now tells the LSP that the affected parameter takes in unlimited values instead of `variadic`.
 
+In practice, it looks like this now:
 ```jsonc
 "luduvo": {
   "bindings": [
     {
       "symbol": "MyLibrary.Test", // The exact same thing as the old "symbol" field
       "kind": "resource", // This "kind" field designates that the binding is for a luduvo resource. NOT THE SAME AS THE OLD "kind" FIELD!!!
-      "parameter": "name", // The exact same thing as the old "parameter" field
+      "target": {
+        "parameter": "name", // The exact same thing as the old "parameter" field
+        "variadic": false // The exact same thing as the old "variadic" field
+      },
+      "pluralResourceNoun": true, // The exact same thing as the old "pluralResourceNoun" field
       "group": "prefab" // The exact same thing as the old "kind" field. Use this instead
     }
   ]
 }
 ```
+- `luduvo.dataDirectory` has also been depreciated and replaced with `luduvo.directories.roaming` because I realized that the name was confusing now that Luduvo LSP needs BOTH the local and roaming data directories.
 
 ### Fixed
 
+- The README actually describes how to use the more interesting Luduvo LSP-exclusive features in more detail than just a giant table. I'm sory Igor for ever getting upset at the lack of documentation. This took forever.
 - Hovering over overloaded functions no longer shows the type info for its parent instead of its own
 - game.World.Pair no longer internally has components as its resource for the relation parameter
     - Hovering global variables no longer incorrectly shows Luduvo API documentation. At this point, the hover bugs will be here forever...
@@ -198,7 +237,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed string-require autocomplete stripping everything after the last `.` from directory names, so accepting a folder like `Folder.suffix` inserted `./Folder` instead of `./Folder.suffix` ([#1614](https://github.com/JohnnyMorganz/luau-lsp/issues/1614))
 - Fixed Roblox string-require auto-imports producing `require("@alias/Module/init")` for modules backed by an `init.luau` file when a `.luaurc` alias is used. The directory is now required instead, e.g. `require("@alias/Module")` ([#1590](https://github.com/JohnnyMorganz/luau-lsp/issues/1590))
 - VSCode extension: `luau-lsp.server.path` now expands a leading `~/` (or `~\`) to the user's home directory, matching the existing behaviour of `luau-lsp.server.baseLuaurc` ([#1635](https://github.com/JohnnyMorganz/luau-lsp/issues/1635))
-- Renaming a local variable (e.g. `local jecs = require(...)`) now correctly renames its uses as a type reference prefix (e.g. `jecs.Entity<Player>`), including when the rename is triggered from that prefix itself, which previously failed with "Unable to find symbol to rename". Matching is now done against the resolved local rather than by name, so shadowed locals with the same name are no longer confused ([#1203](https://github.com/JohnnyMorganz/luau-lsp/issues/1203))
+- Renaming a local variable (e.g. `local jecs = require(...)`) now correctly renames its uses as a type reference prefix (e.g. `jecs.Instance<Player>`), including when the rename is triggered from that prefix itself, which previously failed with "Unable to find symbol to rename". Matching is now done against the resolved local rather than by name, so shadowed locals with the same name are no longer confused ([#1203](https://github.com/JohnnyMorganz/luau-lsp/issues/1203))
 - String require auto-imports are no longer suggested for files that have been renamed or deleted ([#1045](https://github.com/JohnnyMorganz/luau-lsp/issues/1045))
 - Fixed Signature Help showing the implicit first argument of a `__call` metamethod, which is supplied by the table being called rather than by the caller ([#1597](https://github.com/JohnnyMorganz/luau-lsp/issues/1597))
 

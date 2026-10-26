@@ -142,6 +142,12 @@ struct DocumentOnTypeFormattingOptions
 };
 NLOHMANN_DEFINE_OPTIONAL(DocumentOnTypeFormattingOptions, firstTriggerCharacter, moreTriggerCharacter);
 
+struct ExecuteCommandOptions
+{
+    std::vector<std::string> commands{};
+};
+NLOHMANN_DEFINE_OPTIONAL(ExecuteCommandOptions, commands);
+
 struct ServerCapabilities
 {
     PositionEncodingKind positionEncoding = PositionEncodingKind::UTF16;
@@ -176,6 +182,7 @@ struct ServerCapabilities
      * The server provides workspace symbol support.
      */
     bool workspaceSymbolProvider = false;
+    std::optional<ExecuteCommandOptions> executeCommandProvider = std::nullopt;
     /**
      * The server provides call hierarchy support.
      *
@@ -189,5 +196,5 @@ struct ServerCapabilities
 NLOHMANN_DEFINE_OPTIONAL(ServerCapabilities, positionEncoding, textDocumentSync, completionProvider, hoverProvider, signatureHelpProvider,
     declarationProvider, definitionProvider, typeDefinitionProvider, implementationProvider, referencesProvider, documentSymbolProvider,
     codeActionProvider, documentLinkProvider, colorProvider, renameProvider, foldingRangeProvider, inlayHintProvider, diagnosticProvider,
-    workspaceSymbolProvider, callHierarchyProvider, semanticTokensProvider, documentOnTypeFormattingProvider, workspace);
+    workspaceSymbolProvider, executeCommandProvider, callHierarchyProvider, semanticTokensProvider, documentOnTypeFormattingProvider, workspace);
 } // namespace lsp

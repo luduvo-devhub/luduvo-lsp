@@ -104,7 +104,8 @@ TEST_CASE("global_self_is_rejected_only_inside_autorun_directories")
     const Uri attached = fixture.newDocument("scripts/start.client.luau", "print(self.Name)");
     const Uri localSelf = fixture.newDocument("scripts/autorun/local.client.luau", "local self = { Name = 'safe' }\nprint(self.Name)");
 
-    const lsp::Diagnostic* diagnostic = findDiagnostic(diagnosticsFor(fixture, autorun), "autorun-self-access");
+    const auto autorunDiagnostics = diagnosticsFor(fixture, autorun);
+    const lsp::Diagnostic* diagnostic = findDiagnostic(autorunDiagnostics, "autorun-self-access");
     REQUIRE(diagnostic);
     CHECK_EQ(diagnostic->severity, lsp::DiagnosticSeverity::Error);
     CHECK_EQ(diagnostic->message, "'self' is nil in scripts inside an autorun directory.");
@@ -282,7 +283,8 @@ TEST_CASE("invalid_nolint_directive_is_a_configurable_luduvo_diagnostic")
         LuduvoFixture fixture("luduvo_invalid_nolint_severity", config);
         const Uri document = fixture.newDocument("query.server.luau", "--!nolint luduvo/not-a-rule");
 
-        const lsp::Diagnostic* diagnostic = findDiagnostic(diagnosticsFor(fixture, document), "invalid-nolint-directive");
+        const auto diagnostics = diagnosticsFor(fixture, document);
+        const lsp::Diagnostic* diagnostic = findDiagnostic(diagnostics, "invalid-nolint-directive");
         REQUIRE(diagnostic);
         CHECK_EQ(diagnostic->severity, lsp::DiagnosticSeverity::Hint);
     }

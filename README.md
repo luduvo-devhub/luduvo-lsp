@@ -84,6 +84,61 @@ The type snapshot can also be updated without using the website reference at all
 python scripts/luduvo/dumpLuduvoTypes.py
 ```
 
+## Project Context (Beta)
+
+Luduvo LSP has a helper process that captures project context from Luduvo Studio's studio and command logs to aid in releases slated for future releases. If you want to try it out, set `luau-lsp.platform.luduvo.context.enabled` to `true` and restart the LSP.
+
+When Context is enabled, the LSP will start a helper process that watches Luduvo Studio's project and command logs to automatically import successful `world.dump` outputs into a shared local "database" (AKA some folders and a json file lol). This data allows Luduvo LSP to know exactly what scripts are available in any given project, what instance each script is attached to, and gives other important data like your project's world hierachy. If Luduvo LSP ever detects that the data in the project database is stale and it can't do anything to correct it on its own, it will automatically prompt you for another `world.dump` that the LSP will automatically parse and organize by project.
+
+Currently, the LSP doesn't do much with this information (which is why its off by default). Right now, only the lifecycle and project management parts are hooked into the LSP. That means that you can inspect project contexts, reselect project contexts if the LSP gets it wrong for the file its linting, automatic stale-context warnings and instructions, and VSCode code actions for all of this on `game.World` and `self` if the LSP detects that the project is stale or otherwise unresolved. The LSP also sends standard editor notifications when a new world dump updates context or an attached script is inferred. Commands for context inspection and management are available via the VSCode extension as the following:
+
+- `Luduvo: Add Project to Context`, which adds or reindexes a Luduvo project selected from a folder picker
+- `Luduvo: Inspect Project Context`, which gives data about every project the currently opened script is apart of
+- `Luduvo: Choose Project Context`, which lets you select a different project context if the LSP gets it wrong
+- `Luduvo: Refresh Project Context`, which manually "generates" a command for you to run inside Luduvo to refresh the current project's context
+- `Luduvo: Reset Project Context Choice`, which resets the current project context choice
+- `Luduvo: Show Project Context Status`, which shows debug information about the helper and the entire project database
+
+If you don't have VSCode installed, Luduvo LSP's CLI also got extended (which a lot more effort went into):
+
+```text
+luduvo-lsp context parse <world-dump.txt> [--format text|json] [--output <path>]
+luduvo-lsp context inspect <dump|project|script> <path> [--format text|json] [--output <path>]
+luduvo-lsp context inspect instance <--node-id ID|--instance-id ID|--name NAME> [project selector] [--section <name>]
+luduvo-lsp context update <project|dump> <path> [--project <name>] [--project-directory <path>]
+luduvo-lsp context clean [client|project|snapshot] [selectors...] [--all]
+luduvo-lsp context forget [project|script] [selectors...] [--all] [--yes]
+luduvo-lsp context run [--commands-log <path>] [--studio-log <path>] [--state-directory <directory>] [--poll-interval <milliseconds>] [--idle-timeout <seconds>]
+luduvo-lsp context status [--state-directory <directory>] [--format text|json] [--output <path>]
+luduvo-lsp context stop [--state-directory <directory>]
+```
+
+Commands that can access a project database also can accept your LSP config via `--settings <path>`, like with other LSP command from upstream (namely `luduvo-lsp analyze`). If you share other arguments that may conflict with the information in `--settings`, said arguments will take precedence
+
+`run` starts up the context helper and it'll start watching for changes in the project's `--commands-log` and `--studio-log`. If blank, it'll fall back on the default directories depending on the OS. If it finds new dumps, it'll parse them and update the global project database at `--state-directory`. Finally, it'll stop itself if it can't find any running Luduvo LSPs every `--poll-interval` ms and its been `--idle-timeout` seconds without any sign of the LSPs coming back
+
+`stop` also stops the context helper but without any of the autmoated checks
+
+`parse` parses a dump and turns it into a snapshot of some kind (depends on what you specify). Note that merely pasring a project does not add it to the project database. Use `update` for that.
+
+`inspect` gives information about the thing that you provide it as an input in some way (depends on what you specify). It can be:
+- a project (via its directory or `project.json`), which reports all of its assets, its asset types, autorun scripts, attached scripts, and relavent cleanup information if files are missing and whatnot
+- a script path, which reports every known project containing that script, how it was found to be apart of said project, its selected and active context, freshness, snapshot metadata, and attached world instances. Script inspection reads the shared catalog from `--state-directory` or the default helper project state directory decided by the config file or your OSes' default.
+- a tracked instance's name or ID, which returns information about all tracked projects that the instance could belong to. It will do nothing if the instance's name or ID doesn't belong to a project inside of the LSP's project database. If found, it reports its basic information, its hierarchy, attached scripts, and more.
+- a dump, which it reports instance, instance hierarchy, and script counts.
+
+Both `parse` and `inspect` can display its output in a human-readable format or JSON via `--format`, then output it to some path via `--output`
+
+`update` reindexes the project database, either by reindexing project scripts or checking for a dump to import, then reports the resulting catalog if anything changed. If the project dir given to update isn't already in the database, it will add it
+
+`status` gives information about the helper and project database, including every indexed project, its freshness, dump path, and its declared, autorun, world-dump, and inferred scripts. It also lists everything that has been detected to be stale and needs to be cleaned up.
+
+`clean` deletes anything that you tell it to provided that the helper has proven that its stale or otherwise invalid, such as dead client registrations deleted projects, etc. You can just clean everything all at once with `clean --all`, or clean only specific categories with `clean <category> --all`.
+
+`forget` is like `clean`, but removes anything regardless of if the LSP thinks its stale or not. You will need a confirmation unless `--yes` is in the prompt, and it only accepts projects and scripts instead of everythig that `clean` takes in. Otherwise, its command structure is identical
+
+Neither `clean` nor `forget` will actually delete any of your Luduvo projects/source files. It only delete's the LSP context
+
 ## Usage
 
 If you install Luduvo LSP or point your editor's `luau-lsp.binary.path` to the builds in the releases tab, Luduvo will be automatically entered as the default platform provided that you don't override it with `luau-lsp.platform.type`. You can also select it explicitly with `luau-lsp.platform.type = "luduvo"`, or use `luau-lsp analyze --platform=luduvo path/to/script.luau`. The other platforms (`roblox` and `standard`) still exist and work.
@@ -150,6 +205,10 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 |---|---|---:|---|
 | `luau-lsp.platform.type` | `"standard"`, `"roblox"`, or `"luduvo"` | `"luduvo"` | Selects the platform integration. Luduvo LSP adds the `luduvo` option and makes it the default. |
 | `luau-lsp.platform.luduvo.dataDirectory` | string | `""` | Overrides Luduvo's per-user Client data directory. An empty value uses the operating-system default. |
+| `luau-lsp.platform.luduvo.directories.roaming` | string | `""` | Overrides the root of Luduvo's roaming per-user data. An empty value uses the operating-system default. This takes precedence over the legacy `dataDirectory` setting. |
+| `luau-lsp.platform.luduvo.directories.local` | string | `""` | Overrides the root of Luduvo's local per-user data. An empty value uses the operating-system default. |
+| `luau-lsp.platform.luduvo.directories.context` | string | `""` | Overrides the directory containing Luduvo LSP's project-context database. An empty value derives it from the local data directory. |
+| `luau-lsp.platform.luduvo.context.enabled` | boolean | `false` | Enables the experimental Luduvo context integration. The Release 1 preview remains opt-in. |
 | `luau-lsp.platform.luduvo.definitions.serverOverride` | string | `""` | Uses the specified Luau declaration file for server scripts before trying the installed or bundled server declarations. |
 | `luau-lsp.platform.luduvo.definitions.clientOverride` | string | `""` | Uses the specified Luau declaration file for client scripts before trying the installed or bundled client declarations. |
 | `luau-lsp.platform.luduvo.definitions.defaultScriptSide` | `"server"` or `"client"` | `"server"` | Selects the declarations used by files without a recognized client or server suffix. |
@@ -163,18 +222,226 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `luau-lsp.platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
 | `luau-lsp.platform.luduvo.resources.groups` | map of resource-group names to group dictionaries | `{}` | Each group defines `dataType`, `includeBuiltins` (boolean that decides whether or not to auto-include LSP-maintained Luduvo built-in sources), and a list of source names. Missing built-in groups implicitly use their active Luduvo built-ins. Currently, only the `string` data type is supported. |
 | `luau-lsp.platform.luduvo.resources.sources` | map of source names to source dictionaries | `{}` | Defines the resources that each resource group uses. Static `values` entries may be strings or dictionaries containing `name` and optional Markdown `documentation`; a source may be shared by multiple groups. |
-| `luau-lsp.platform.luduvo.resources.bindings` | array of binding dictionaries | `[]` | Adds resource constraints for custom function parameters. `kind` selects a resource group (such as `component` or `prefab`); the other fields are `symbol` (string of the endpoint you want to bind resources to), `parameter` (string of the parameter name to bind resources to in the function), `variadic` (boolean indicating whether the parameter takes an arbitrary amount of said resources), and `pluralResourceNoun` (boolean indicating whether the resource parameter's name is meant to be described as plural). The metadata is shared by completion, rich hovers, and signature highlighting. |
+| `luau-lsp.platform.luduvo.bindings` | array of binding dictionaries | `[]` | Adds resource constraints for custom function parameters. `group` selects a resource group (such as `component` or `prefab`); the other fields are `symbol` (string of the endpoint you want to bind resources to), `target`, which contains both a `parameter` (string of the parameter name to bind resources to in the function) and `variadic` (boolean indicating whether the parameter takes an arbitrary amount of said resources) field, and `pluralResourceNoun` (boolean indicating whether the resource parameter's name is meant to be described as plural). The metadata is shared by completion, rich hovers, and signature highlighting. |
 | `luau-lsp.platform.luduvo.resources.completion.enabled` | boolean | `true` | Enables resource-name suggestions in resource-constrained arguments. Disabling it does not hide resource metadata from hovers or signature highlighting. |
 | `luau-lsp.platform.luduvo.resources.completion.disabledKinds` | string array | `[]` | Disables resource-name completion for the listed resource kinds. |
 | `luau-lsp.platform.luduvo.resources.completion.disabledApis` | string array | `[]` | Disables resource-name completion for the listed canonical API symbols. |
 
+## Bindings
+
+Bindings are a way to associate special LSP behavior with specific methods and functions. For now its usecases are somewhat limited but they'll expand in the future. While the exact binding fields will vary depending on the kind of binding you define, they all share the same 3 required fields:
+
+1. `symbol` is the name of the function or method to bind, like `MyLibrary.Spawn`, `Color3.new`, etc. It's a bit unintuitive, but this also supports bindings to functions in types like `Instance`, `World`, etc. So if you wanted `self:AddAccessory` to get a custom type, you would use `Instance.AddAccessory` as the symbol name.
+  - Currently, (most) bindings will NOT work with normal functions because they are too vague and can pop up in multiple places defined differently thanks to scope-related issues. If you want to bind a local function, you must declare it in a `.d.luau` file, add it to your config via `luau-lsp.types.definitionFiles`, then change `luduvo.definitions.globalPolicy` to `combine`. If the Luduvo declarations and your custom declarations conflict with each other, also change `luduvo.definitions.conflictWinner` to `definitionFiles`. Future releases will make this process easier, I promise.
+2. `kind` is the type of binding to apply to the symbol. Right now the only bindings I made are `resource`s and `color`, but more will be added in the future.
+3. `target` is the name of the parameter(s) that get affects or gets affected by your chosen binding alongside additional information that might be needed to better resolve the binding for said parameter(s). It's hard to explain what this does in words since every binding kind could use `target` in different ways. Depending on the kind of binding, this can be a single parameter name or a list of parameter names.
+
+For example, to bind `MyLibrary.Spawn` to `coolBinding` that affects its `cool` parameter I'd write:
+
+```json
+{
+    "bindings": [
+      {
+        "symbol": "MyLibrary.Spawn", // note that the symbol is literally just the function's name. Do not include the rest of the API path like `@luduvo/client/globaltype/MyLibrary.Spawn`
+        "kind": "coolBinding",
+        "target": {
+          "parameter": "cool"
+        }
+      }
+    ]
+}
+```
+
+### Colors
+
+Colors are a type of binding that provides LSP color picker for previewing and argument autofill for the functions and parameters that are binded to it. Since colors can be filled in a variety of ways, the color binding supports a special `encoding` field that allows you to specify a custom color palette to use for the color picker.
+
+For example, an RGB-autofiller color picker is specified like this:
+
+```json
+{
+  "bindings": [
+    {
+      "symbol": "MyLibrary.Color",
+      "kind": "color",
+      "target": {
+        "parameters": ["r", "g", "b"]
+      },
+      "encoding": "rgb"
+    }
+  ]
+}
+```
+
+While something like an Hexadecimal-autofiller color picker is specified like this:
+
+```json
+{
+  "bindings": [
+    {
+      "symbol": "MyLibrary.Color",
+      "kind": "color",
+      "target": {
+        "parameter": "hexColor"
+      },
+      "encoding": "hex"
+    }
+  ]
+}
+```
+Note that you should only be mentioning the **affected** parameters in your target, as Luduvo LSP will only change those. If the target has extra parameters other than the ones mentioned, they will be ignored.
+
+Currently, the full list of supported encodings are:
+
+| Color Encoding | Parameters |
+|---|---|
+| `rgb` | `r: number(0-1)`, `g: number(0-1)`, `b: number(0-1)` |
+| `rgb255` | `r: number(0-255)`, `g: number(0-255)`, `b: number(0-255)` |
+| `hex` | `hexColor: string` |
+| `hsv` | `hue: number(0-360)`, `saturation: number(0-1)`, `value: number(0-1)` |
+
 ### Resources
 
-Resource are a way to extend autocomplete to provide enum-like name suggestions for function arguments that aren't actually enums. Explicitly configuring a group controls its full membership: set `includeBuiltins` to retain that catalog, or leave it false for a custom-only group. `includeBuiltins` doubles as a way to override the default built-in resource sources. An empty source list with `includeBuiltins` set to `false` intentionally provides no names.
+Resources are a type of binding that extends autocomplete to provide enum-like name suggestions for function arguments that aren't actually typed enums. These come in handy with respect to Luduvo's API, as there are many generic strings that don't actually act as enums when they should.
 
-While Prefab resources come from the active Luduvo installation, components currently use the generated bundled catalog because Luduvo does not expose a live component-name source. When Luduvo LSP cannot find the active installation, prefab resources fall back to a precompiled version that is bundled with the LSP.
+To create and bind resources, there are 3 main systems in play:
 
-For example, you can extend the built-in prefabs with your own project prefabs, create a custom "animation-state" group, and mark a custom function parameter as accepting prefab names:
+#### Sources
+
+In order to use assemble a resource, you must first tell Luduvo LSP where to find its contents. To do so, you need to give Luduvo LSP a list of providers to use for resource autocomplete called `sources`.
+
+To make a source, you need to add them to a dictionary in `resources.sources`. Each key in the dictionary is the name of the source, and the value is another dictionary that defines how Luduvo LSP should fetch the resource values. Each source dictionary can define some `provider`, and that provider may have additional fields that define how the provider should be used. If not defined, it defaults to `static`.
+
+With that said, the only supported provider is also just `static`, which defines a static list of `values` to use for autocomplete. These values can just be plain strings that are used as-is, or they can be `name`ed dictionaries that describe markdown `documentation` fields that will appear fully rendered in the autocomplete's enum tooltip:
+
+```json
+{
+  "resources": {
+    "sources": {
+      "sourcelist-name": {
+        "provider": "static",
+        "values": [
+          {
+            "name": "Test",
+            "documentation": "This is my awesome test description."
+          },
+          "Test2 with no documentation"
+        ]
+      }
+    }
+  }
+}
+```
+
+#### Groups
+
+After defining your sources, you can define groups that apply those sources to your code. When making a group, you need to specify 3 things:
+
+- The name of the group via naming the dictionary key that references the group the group's name
+- The `sources` the group is using, and optionally `includeBuiltins` if the group is meant to build on top of existing built-in resources with the same name. An empty source list with `includeBuiltins` set to `false` intentionally provides no names, so if you need to "disable" a resource, you can.
+  - Currently, the names of the builtin resources are `prefab` and `component`. If you make a group with a those names, it will be treated as overriding those builtin groups. 
+  - And if you're curious, this is how the builtin groups are defined:
+    - `prefab` resources come from the builtin core prefabs defined in your active Luduvo installation. When Luduvo LSP cannot find your Luduvo installation, it falls back to a precompiled version that is bundled with the LSP.
+    - `component` resources are only precompiled names gathered from dumps preformed by Luduvo LSP when it's being built because Luduvo hardcodes components directly into their EXE. As such, they won't update dynamically like how `prefab` can. 
+- The `dataType` the group is using, which can only be a `string` for now
+
+These 3-4ish settings must go into a new dictionary inside `resources` called `groups`. For example:
+
+```json
+{
+  "resources": {
+    "groups": {
+      "group-name": {
+        "sources": [
+          "sourcelist-name"
+        ],
+        "dataType": "string",
+        "includeBuiltins": false
+      }
+    }
+  }
+}
+```
+
+When you need to apply custom resources to your code, these are the names that you need to refer to your resource as so remember them good. You will never refer to a resource by its source name-- it has to be this.
+
+#### Bindings
+
+Finally, after defining your resource groups, you need to tell Luduvo LSP how to bind them to your code. This would be where the `bindings` come in. To use resource bindings, you need to define the new binding kind as `resource`, then specify the group name and the parameter name to bind it to like so:
+
+```json
+"bindings": [
+  {
+    "symbol": "MyLibrary.Spawn",
+    "kind": "resource",
+    "target": {
+      "parameter": "name" // The name of the parameter in the symbol's signature
+    },
+    "group": "prefab" // The name of the resource group that needs to be binded to this symbol
+  }
+]
+```
+Resource bindings intentionally only take one parameter name at a time because different parameters might want different resource groups to bind to. As such, you need to make a separate binding for each parameter:
+
+```json
+"bindings": [
+  {
+    "symbol": "MyLibrary.Spawn",
+    "kind": "resource",
+    "target": {
+      "parameter": "name" // The name of the parameter in the symbol's signature
+    },
+    "group": "test" // The name of the resource group that needs to be binded to this symbol
+  },
+  {
+    "symbol": "MyLibrary.Spawn",
+    "kind": "resource",
+    "target": {
+      "parameter": "newName" // A different name in the same symbol's signature
+    },
+    "group": "test2"
+  }
+]
+```
+There is a chance that said parameter is a varadic, or accepts multiple values than just one. If so, you can specify it via a `varadic` field in the `target` section like so:
+
+```json
+"bindings": [
+  {
+    "symbol": "MyLibrary.Spawn",
+    "kind": "resource",
+    "target": {
+      "parameter": "name", // The name of the parameter in the symbol's signature
+      "varadic": true // Whether the parameter accepts multiple values
+    },
+    "group": "test" // The name of the resource group that needs to be binded to this symbol
+  }
+]
+```
+This should go without saying, but there are a few more things to keep in mind when configuring resource bindings to a specific parameter:
+
+- The parameter name must match the name of the parameter in the symbol's signature (its case sensitive)
+- The binded parameter must match the `dataType` of the resource group it is being binded to (which again is just `string` for now)
+- The last binding defined for a given symbol/parameter combo will overwrite any previous bindings (including bindings that are predefined internally by Luduvo LSP)
+
+Once this is done, Luduvo LSP will automatically update any tooltip references to this parameter in your code. For grammar reasons, you might also need to tell Luduvo that the parameter is a plural noun:
+
+```json
+"bindings": [
+  {
+    "symbol": "MyLibrary.Spawn",
+    "kind": "resource",
+    "target": {
+      "parameter": "name", // The name of the parameter in the symbol's signature
+      "varadic": true, // Whether the parameter accepts multiple values
+    },
+    "group": "test", // The name of the resource group that needs to be binded to this symbol
+    "pluralResourceNoun": true
+  }
+]
+```
+
+To combine everything together, take this for example that extends the built-in prefabs with your own project prefabs, create a custom "animation-state" group, and mark a custom function parameter as accepting prefab names:
 
 ```jsonc
 {
@@ -209,12 +476,14 @@ For example, you can extend the built-in prefabs with your own project prefabs, 
         }
       },
       "bindings": [
-        {
-          "symbol": "MyLibrary.Spawn", // note that the symbol is literally just the function's name. Do not include the rest of the API path like `@luduvo/client/globaltype/MyLibrary.Spawn`
-          "kind": "resource",
-          "parameter": "name",
-          "group": "prefab"
-        }
+          {
+            "symbol": "MyLibrary.Spawn", // note that the symbol is literally just the function's name. Do not include the rest of the API path like `@luduvo/client/globaltype/MyLibrary.Spawn`
+            "kind": "resource",
+            "target": {
+              "parameter": "name"
+            },
+            "group": "prefab"
+          }
       ]
     }
   }
@@ -249,15 +518,15 @@ If you feel the need, severities can be changed without globally disabling every
 }
 ```
 
-Supported values are `default`, `error`, `warning`, `information`, `hint`, and `off`.
+Supported values for rules are `default`, `error`, `warning`, `information`, `hint`, and `off`.
 
-Just like normal lints, Luduvo lints can be suppressed via `--!nolint`:
+Just like normal lints, Luduvo lints can also be suppressed via `--!nolint`:
 
 ```luau
 --!nolint luduvo/empty-world-query
 ```
 
-Normal `nolint` still applies. Only 1 rule per line is supported. A bare `--!nolint` suppresses all Luau lint warnings and all Luduvo diagnostic rules in the file. It does not suppress type errors. An unknown `luduvo/` rule produces a diagnostic and suggests a nearby ID when possible.
+Only 1 rule per line is supported. A bare `--!nolint` suppresses all Luduvo lints alongside Luau's built-in ones
 
 ## Building
 
@@ -273,6 +542,6 @@ I was able to build successfully on both Windows and Linux (via WSL). Using MSVC
 
 ## Current limitations
 
-Resource-name completion does not yet discover custom components or prefabs from the current workspace. You can define project-specific static sources through `resources.sources` and attach them through `resources.groups`. Workspace and sourcemap-backed providers will be handled separately so they can update as project files change.
+Resource-name completion does not yet discover custom components or prefabs from within your project (but it will for prefabs soon). For now, you will need to define project-specific static sources through `resources.sources` and attach them through `resources.groups`. 
 
-Dynamic component fields and event columns are currently `any` instead of a more specific type. While queryable component names are generated from the current engine snapshot, there's no smart detection for any column to hone type detection to only the components you queried for. Same goes for event column fields. I'm aiming to improve this in a later version, but it'll take more work because I have to reverse engineer Luduvo's `.ldv` file format first. If you want to help, do this for me!
+Dynamic component fields and event columns are currently `any` instead of a more specific type. While queryable component names are generated from the current engine snapshot, there's no smart detection for any column to hone type detection to only the components you queried for. Same goes for event column fields. I'm aiming to improve this in a later version, and hopefully it'll be done in a couple releases from now.

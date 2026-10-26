@@ -65,6 +65,360 @@ const FFLAG_KINDS = ["FFlag", "FInt", "DFFlag", "DFInt"];
 type FFlags = Record<string, string>;
 type FFlagsEndpoint = { applicationSettings: FFlags };
 
+type ProjectContextProject = {
+  id: string;
+  name: string;
+  directory: string;
+  fresh: boolean;
+  staleReason: string;
+};
+
+type ProjectContextInspection = {
+  script: string;
+  candidates: Array<ProjectContextProject & { hasSnapshot: boolean }>;
+  error?: string;
+};
+
+type ProjectContextCommandResult = {
+  success: boolean;
+  command?: string;
+  outputPath?: string;
+  error?: string;
+};
+
+type ContextCleanupCandidate = {
+  id: string;
+  label: string;
+  path: string;
+};
+
+type ProjectContextStatus = {
+  enabled: boolean;
+  error?: string;
+  cleanup: {
+    clients: ContextCleanupCandidate[];
+    projects: ContextCleanupCandidate[];
+    snapshots: ContextCleanupCandidate[];
+  };
+  catalog: {
+    projects: Record<string, ProjectContextProject>;
+  };
+};
+
+type ContextMutationResult = {
+  success: boolean;
+  affected: number;
+  projectId?: string;
+  error?: string;
+};
+
+const activeLuauUri = (value?: string | vscode.Uri) => {
+  if (value instanceof vscode.Uri) {
+    return value;
+  }
+  if (typeof value === "string") {
+    return vscode.Uri.parse(value);
+  }
+  const editor = vscode.window.activeTextEditor;
+  return editor?.document.languageId === "luau"
+    ? editor.document.uri
+    : undefined;
+};
+
+const executeLuduvoContextCommand = <T>(
+  languageClient: LanguageClient,
+  command: string,
+  uri?: vscode.Uri,
+  extra: Record<string, unknown> = {},
+) =>
+  languageClient.sendRequest<T>("workspace/executeCommand", {
+    command,
+    arguments: [{ ...(uri ? { uri: uri.toString() } : {}), ...extra }],
+  });
+
+const registerProjectContextCommands = (languageClient: LanguageClient) => {
+  const requireUri = (value?: string | vscode.Uri) => {
+    const uri = activeLuauUri(value);
+    if (!uri) {
+      vscode.window.showWarningMessage(
+        "Open a Luau file before running this project-context command.",
+      );
+    }
+    return uri;
+  };
+
+  return [
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.copyText`,
+      (value: string) => vscode.env.clipboard.writeText(value),
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.addProjectContext`,
+      async () => {
+        const selected = await vscode.window.showOpenDialog({
+          canSelectFiles: false,
+          canSelectFolders: true,
+          canSelectMany: false,
+          openLabel: "Add Project to Context",
+          title: "Choose a Luduvo project directory",
+        });
+        if (!selected?.[0]) {
+          return;
+        }
+        const result = await executeLuduvoContextCommand<ContextMutationResult>(
+          languageClient,
+          "luduvo.addProjectContext",
+          undefined,
+          { directory: selected[0].fsPath },
+        );
+        if (!result.success) {
+          vscode.window.showErrorMessage(
+            result.error ?? "Could not add the project to Luduvo context.",
+          );
+          return;
+        }
+        vscode.window.showInformationMessage(
+          `Added '${vscode.workspace.asRelativePath(selected[0], false)}' to Luduvo project context.`,
+        );
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.inspectProjectContext`,
+      async (value?: string | vscode.Uri) => {
+        const uri = requireUri(value);
+        if (!uri) {
+          return;
+        }
+        const result =
+          await executeLuduvoContextCommand<ProjectContextInspection>(
+            languageClient,
+            "luduvo.inspectProjectContext",
+            uri,
+          );
+        const document = await vscode.workspace.openTextDocument({
+          language: "json",
+          content: JSON.stringify(result, null, 2),
+        });
+        await vscode.window.showTextDocument(document, { preview: true });
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.chooseProjectContext`,
+      async (value?: string | vscode.Uri) => {
+        const uri = requireUri(value);
+        if (!uri) {
+          return;
+        }
+        const inspection =
+          await executeLuduvoContextCommand<ProjectContextInspection>(
+            languageClient,
+            "luduvo.inspectProjectContext",
+            uri,
+          );
+        if (inspection.error) {
+          vscode.window.showErrorMessage(inspection.error);
+          return;
+        }
+        if (inspection.candidates.length === 0) {
+          vscode.window.showInformationMessage(
+            "No captured Luduvo project contains this script.",
+          );
+          return;
+        }
+        const selected = await vscode.window.showQuickPick(
+          inspection.candidates.map((project) => ({
+            label: project.name,
+            description: project.fresh ? "current" : "stale",
+            detail: project.directory,
+            projectId: project.id,
+          })),
+          { placeHolder: "Choose the Luduvo project context for this script" },
+        );
+        if (selected) {
+          await executeLuduvoContextCommand(
+            languageClient,
+            "luduvo.chooseProjectContext",
+            uri,
+            { projectId: selected.projectId },
+          );
+        }
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.refreshProjectContext`,
+      async (value?: string | vscode.Uri) => {
+        const uri = requireUri(value);
+        if (!uri) {
+          return;
+        }
+        const result =
+          await executeLuduvoContextCommand<ProjectContextCommandResult>(
+            languageClient,
+            "luduvo.refreshProjectContext",
+            uri,
+          );
+        if (!result.success || !result.command) {
+          vscode.window.showWarningMessage(
+            result.error ?? "A world.dump command could not be generated.",
+          );
+          return;
+        }
+        const action = await vscode.window.showInformationMessage(
+          `Run this command in Luduvo Studio:\n${result.command}`,
+          "Copy command",
+          "Copy output path",
+        );
+        if (action === "Copy command") {
+          await vscode.env.clipboard.writeText(result.command);
+        } else if (action === "Copy output path" && result.outputPath) {
+          await vscode.env.clipboard.writeText(result.outputPath);
+        }
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.resetProjectContext`,
+      async (value?: string | vscode.Uri) => {
+        const uri = requireUri(value);
+        if (!uri) {
+          return;
+        }
+        await executeLuduvoContextCommand(
+          languageClient,
+          "luduvo.resetProjectContext",
+          uri,
+        );
+        vscode.window.showInformationMessage(
+          "The manual project-context choice for this script was cleared.",
+        );
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.projectContextStatus`,
+      async () => {
+        const result = await executeLuduvoContextCommand<unknown>(
+          languageClient,
+          "luduvo.contextHelperStatus",
+          activeLuauUri(),
+        );
+        const document = await vscode.workspace.openTextDocument({
+          language: "json",
+          content: JSON.stringify(result, null, 2),
+        });
+        await vscode.window.showTextDocument(document, { preview: true });
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.cleanProjectContext`,
+      async () => {
+        const status = await executeLuduvoContextCommand<ProjectContextStatus>(
+          languageClient,
+          "luduvo.contextHelperStatus",
+          activeLuauUri(),
+        );
+        const candidates = (["client", "project", "snapshot"] as const).flatMap(
+          (kind) =>
+            status.cleanup[`${kind}s`].map((candidate) => ({
+              label: candidate.label,
+              description: kind,
+              detail: candidate.path,
+              candidate,
+              contextKind: kind,
+            })),
+        );
+        if (candidates.length === 0) {
+          vscode.window.showInformationMessage(
+            "Luduvo project context has no cleanup candidates.",
+          );
+          return;
+        }
+        const selected = await vscode.window.showQuickPick(candidates, {
+          canPickMany: true,
+          placeHolder: "Choose invalid context records to clean",
+        });
+        if (!selected || selected.length === 0) {
+          return;
+        }
+        let affected = 0;
+        for (const kind of ["client", "project", "snapshot"] as const) {
+          const selectors = selected
+            .filter((candidate) => candidate.contextKind === kind)
+            .map((candidate) => candidate.candidate.id);
+          if (selectors.length === 0) {
+            continue;
+          }
+          const result =
+            await executeLuduvoContextCommand<ContextMutationResult>(
+              languageClient,
+              "luduvo.cleanProjectContext",
+              undefined,
+              { kind, selectors },
+            );
+          if (!result.success) {
+            vscode.window.showErrorMessage(
+              result.error ?? `Could not clean ${kind} context.`,
+            );
+            return;
+          }
+          affected += result.affected;
+        }
+        vscode.window.showInformationMessage(
+          `Cleaned ${affected} Luduvo context record${affected === 1 ? "" : "s"}.`,
+        );
+      },
+    ),
+    vscode.commands.registerCommand(
+      `${EDITOR_NAMESPACE}.forgetProjectContext`,
+      async () => {
+        const status = await executeLuduvoContextCommand<ProjectContextStatus>(
+          languageClient,
+          "luduvo.contextHelperStatus",
+          activeLuauUri(),
+        );
+        const projects = Object.values(status.catalog.projects).sort(
+          (left, right) =>
+            left.name.localeCompare(right.name) ||
+            left.directory.localeCompare(right.directory),
+        );
+        const selected = await vscode.window.showQuickPick(
+          projects.map((project) => ({
+            label: project.name,
+            description: project.fresh ? "current" : "stale",
+            detail: project.directory,
+            project,
+          })),
+          { placeHolder: "Choose cached project context to forget" },
+        );
+        if (!selected) {
+          return;
+        }
+        const confirmed = await vscode.window.showWarningMessage(
+          `Permanently forget cached context for '${selected.project.name}'? This does not delete its Luduvo project or source files.`,
+          { modal: true },
+          "Forget context",
+        );
+        if (confirmed !== "Forget context") {
+          return;
+        }
+        const result = await executeLuduvoContextCommand<ContextMutationResult>(
+          languageClient,
+          "luduvo.forgetProjectContext",
+          undefined,
+          { kind: "project", selectors: [selected.project.id] },
+        );
+        if (!result.success) {
+          vscode.window.showErrorMessage(
+            result.error ?? "Could not forget project context.",
+          );
+          return;
+        }
+        vscode.window.showInformationMessage(
+          `Forgot cached context for '${selected.project.name}'.`,
+        );
+      },
+    ),
+  ];
+};
+
 const getFFlags = async () => {
   return vscode.window.withProgress(
     {
@@ -644,6 +998,7 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
   clientDisposables.push(...registerComputeCodeGen(context, client));
   clientDisposables.push(...registerRequireGraph(context, client));
   clientDisposables.push(...registerViewInternalSource(context, client));
+  clientDisposables.push(...registerProjectContextCommands(client));
   clientDisposables.push(
     vscode.commands.registerCommand(
       `${EDITOR_NAMESPACE}.openWalkthrough`,

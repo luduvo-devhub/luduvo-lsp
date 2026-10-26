@@ -293,5 +293,6 @@ void LSPClient::handleResponse(const JsonRpcMessage& message)
 
 void LSPClient::sendRawMessage(const json& message) const
 {
+    std::lock_guard guard(*transportMutex);
     json_rpc::sendRawMessage(transport.get(), message);
 }

@@ -141,6 +141,9 @@ lsp::ServerCapabilities LanguageServer::getServerCapabilities()
     capabilities.diagnosticProvider = {"luau", /* interFileDependencies: */ true, /* workspaceDiagnostics: */ true};
     // Workspace Symbols Provider
     capabilities.workspaceSymbolProvider = true;
+    capabilities.executeCommandProvider = lsp::ExecuteCommandOptions{
+        {"luduvo.addProjectContext", "luduvo.inspectProjectContext", "luduvo.chooseProjectContext", "luduvo.refreshProjectContext", "luduvo.resetProjectContext",
+            "luduvo.resolveProjectContext", "luduvo.contextHelperStatus", "luduvo.cleanProjectContext", "luduvo.forgetProjectContext"}};
     // Call Hierarchy Provider
     capabilities.callHierarchyProvider = true;
     // Semantic Tokens Provider
@@ -364,6 +367,42 @@ void LanguageServer::onRequest(const id_type& id, const std::string& method, std
                 result.insert(result.end(), std::make_move_iterator(report->begin()), std::make_move_iterator(report->end()));
         }
         response = result;
+    }
+    else if (method == "workspace/executeCommand")
+    {
+        ASSERT_PARAMS(baseParams, "workspace/executeCommand")
+        const auto params = baseParams->get<lsp::ExecuteCommandParams>();
+        std::optional<lsp::DocumentUri> targetUri;
+        if (!params.arguments.empty() && params.arguments.front().is_object())
+        {
+            const json& context = params.arguments.front();
+            if (const auto uri = context.find("uri"); uri != context.end() && uri->is_string())
+                targetUri = lsp::DocumentUri::parse(uri->get<std::string>());
+        }
+
+        std::vector<WorkspaceFolderPtr> candidates;
+        if (targetUri)
+            candidates.push_back(findWorkspace(*targetUri));
+        else
+            candidates = workspaceFolders;
+        if (candidates.empty())
+            candidates.push_back(nullWorkspace);
+
+        bool handled = false;
+        for (const WorkspaceFolderPtr& workspace : candidates)
+        {
+            workspace->lazyInitialize();
+            if (!workspace->platform)
+                continue;
+            if (auto result = workspace->platform->handleWorkspaceCommand(params.command, params.arguments))
+            {
+                response = std::move(*result);
+                handled = true;
+                break;
+            }
+        }
+        if (!handled)
+            throw JsonRpcException(lsp::ErrorCode::InvalidParams, "unsupported workspace command: " + params.command);
     }
     else if (method == "luau-lsp/bytecode")
     {

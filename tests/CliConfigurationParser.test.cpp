@@ -57,7 +57,10 @@ TEST_CASE("convert dotted Luduvo resource configuration")
             "luau-lsp.platform.luduvo.resources.completion.enabled": false
             ,"luau-lsp.platform.luduvo.bindings": [
                 {"symbol": "Color3.fromHex", "kind": "color", "target": {"parameter": "hex"}, "encoding": "hex"}
-            ]
+            ],
+            "luau-lsp.platform.luduvo.directories.roaming": "roaming-data",
+            "luau-lsp.platform.luduvo.directories.local": "local-data",
+            "luau-lsp.platform.luduvo.context.enabled": true
         }
     )DOTTED_CONFIG");
 
@@ -74,6 +77,9 @@ TEST_CASE("convert dotted Luduvo resource configuration")
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["kind"], "color");
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["encoding"], "hex");
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["target"]["parameter"], "hex");
+    CHECK_EQ(output["platform"]["luduvo"]["directories"]["roaming"], "roaming-data");
+    CHECK_EQ(output["platform"]["luduvo"]["directories"]["local"], "local-data");
+    CHECK(output["platform"]["luduvo"]["context"]["enabled"]);
 }
 
 TEST_SUITE_END();

@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <mutex>
 #include "Luau/Documentation.h"
 #include "Protocol/Lifecycle.hpp"
 #include "Protocol/ClientCapabilities.hpp"
@@ -110,6 +111,7 @@ public:
 
 private:
     std::unique_ptr<Transport> transport;
+    std::shared_ptr<std::mutex> transportMutex = std::make_shared<std::mutex>();
     /// The request id for the next request
     int nextRequestId = 0;
     std::unordered_map<id_type, ResponseHandler> responseHandler{};

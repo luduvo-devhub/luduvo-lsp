@@ -43,6 +43,22 @@ TEST_CASE("language_server_accepts_an_editor_configuration_namespace")
     server.shutdown();
 }
 
+TEST_CASE("language_server_advertises_luduvo_context_commands")
+{
+    const lsp::ServerCapabilities capabilities = LanguageServer::getServerCapabilities();
+    REQUIRE(capabilities.executeCommandProvider);
+    const std::vector<std::string>& commands = capabilities.executeCommandProvider->commands;
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.addProjectContext") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.inspectProjectContext") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.chooseProjectContext") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.refreshProjectContext") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.resetProjectContext") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.resolveProjectContext") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.contextHelperStatus") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.cleanProjectContext") != commands.end());
+    CHECK(std::find(commands.begin(), commands.end(), "luduvo.forgetProjectContext") != commands.end());
+}
+
 TEST_CASE("language_server_lazily_initializes_workspace_folders")
 {
     TestClient client;

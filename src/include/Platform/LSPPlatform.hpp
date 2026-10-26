@@ -263,6 +263,8 @@ public:
 
     virtual void onDidChangeWatchedFiles(const lsp::FileEvent& change) {}
 
+    virtual void onDidOpenTextDocument(const lsp::DocumentUri& uri) {}
+
     virtual void setupWithConfiguration(const ClientConfiguration& config) {}
 
     virtual std::unique_ptr<Luau::RequireSuggester> getRequireSuggester();
@@ -373,6 +375,14 @@ public:
     virtual bool handleNotification(const std::string& method, std::optional<json> params)
     {
         return false;
+    }
+
+    /// Handles a workspace command owned by this platform. A missing optional
+    /// means that the command is not owned by the platform; a JSON null value
+    /// is a successfully handled command with no result.
+    virtual std::optional<json> handleWorkspaceCommand(std::string_view command, const std::vector<json>& arguments)
+    {
+        return std::nullopt;
     }
 
     static std::unique_ptr<LSPPlatform> getPlatform(

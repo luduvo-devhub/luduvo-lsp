@@ -25,6 +25,13 @@ struct ConfigurationParams
 };
 NLOHMANN_DEFINE_OPTIONAL(ConfigurationParams, items)
 
+struct ExecuteCommandParams
+{
+    std::string command;
+    std::vector<json> arguments{};
+};
+NLOHMANN_DEFINE_OPTIONAL(ExecuteCommandParams, command, arguments)
+
 using GetConfigurationResponse = std::vector<json>;
 
 using Pattern = std::string;

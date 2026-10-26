@@ -56,6 +56,7 @@ void WorkspaceFolder::openTextDocument(const lsp::DocumentUri& uri, const lsp::D
     // Mark the file as dirty as we don't know what changes were made to it
     auto moduleName = fileResolver.getModuleName(uri);
     frontend.markDirty(moduleName);
+    platform->onDidOpenTextDocument(uri);
 }
 
 static bool isWorkspaceDiagnosticsEnabled(const Client* client, const ClientConfiguration& config)
