@@ -24,6 +24,25 @@ suite("Extension Test Suite", () => {
     );
   });
 
+  test("extension defaults match the recommended Luduvo configuration", () => {
+    const configuration = vscode.workspace.getConfiguration("luduvo-lsp");
+    const recommended: Array<[string, string | boolean]> = [
+      ["platform.type", "luduvo"],
+      ["analyzeLuaFiles", true],
+      ["fflags.enableNewSolver", true],
+      ["sourcemap.enabled", false],
+      ["sourcemap.autogenerate", false],
+      ["diagnostics.workspace", true],
+    ];
+    for (const [key, value] of recommended) {
+      assert.strictEqual(
+        configuration.inspect(key)?.defaultValue,
+        value,
+        `unexpected default for luduvo-lsp.${key}`,
+      );
+    }
+  });
+
   test("contributed commands use and register the Luduvo namespace", async () => {
     const extension = vscode.extensions.all.find(
       (candidate) => candidate.packageJSON.name === "luduvo-lsp",

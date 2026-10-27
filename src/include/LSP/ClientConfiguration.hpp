@@ -576,8 +576,12 @@ struct ClientLuduvoContextConfiguration
 {
     /// Whether the experimental Luduvo context integration is enabled.
     bool enabled = false;
+    /// Whether stale project context should be refreshed through a disposable Luduvo Editor process.
+    bool autoDump = true;
+    /// Refresh on demand when true; refresh tracked projects as soon as they become stale when false.
+    bool lazyRefresh = true;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoContextConfiguration, enabled)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoContextConfiguration, enabled, autoDump, lazyRefresh)
 
 struct ClientLuduvoConfiguration
 {
@@ -585,6 +589,8 @@ struct ClientLuduvoConfiguration
     std::string dataDirectory{};
     ClientLuduvoDirectoriesConfiguration directories{};
     ClientLuduvoContextConfiguration context{};
+    /// Per-notification enablement overrides, keyed by stable Luduvo notification identifier.
+    std::map<std::string, bool> notifications{};
     ClientLuduvoDefinitionsConfiguration definitions{};
     ClientLuduvoDiagnosticsConfiguration diagnostics{};
     ClientLuduvoHoverConfiguration hover{};
@@ -593,7 +599,7 @@ struct ClientLuduvoConfiguration
     std::vector<ClientLuduvoBindingConfiguration> bindings{};
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    ClientLuduvoConfiguration, dataDirectory, directories, context, definitions, diagnostics, hover, resources, bindings)
+    ClientLuduvoConfiguration, dataDirectory, directories, context, notifications, definitions, diagnostics, hover, resources, bindings)
 
 struct ClientPlatformConfiguration
 {

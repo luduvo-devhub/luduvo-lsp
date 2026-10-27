@@ -1,31 +1,21 @@
 #include "Platform/luduvo/context/LuduvoContextLogProcessor.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <charconv>
-#include <chrono>
 #include <filesystem>
 #include <iostream>
-#include <thread>
 
 namespace luduvo
 {
 
-static std::optional<std::string> openedProjectName(const std::string& line)
+namespace
 {
-    constexpr std::string_view prefix = "Opened project '";
-    const size_t begin = line.find(prefix);
-    if (begin == std::string::npos)
-        return std::nullopt;
-    const size_t nameStart = begin + prefix.size();
-    const size_t end = line.find("' with ", nameStart);
-    if (end == std::string::npos)
-        return std::nullopt;
-    return line.substr(nameStart, end - nameStart);
-}
 
 static bool isWorldMutation(std::string_view command)
 {
-    return command.find("edit.") == 0 || command.find("insert.") == 0 || command.find("component.") == 0 || command.find("tag.") == 0 ||
-           command == "file.import" || command == "file.new";
+    return command.find("edit.") == 0 || command.find("insert.") == 0 || command.find("component.") == 0 ||
+           command.find("tag.") == 0 || command == "file.import" || command == "file.new";
 }
 
 static std::pair<std::string, std::string> splitCommand(std::string_view line)
@@ -36,18 +26,21 @@ static std::pair<std::string, std::string> splitCommand(std::string_view line)
     return {std::string(line.substr(0, separator)), std::string(line.substr(separator + 1))};
 }
 
-static WorldDumpParseResult parseCompletedWorldDump(const std::string& path)
+static std::string unquote(std::string value)
 {
-    WorldDumpParseResult parsed;
-    for (int attempt = 0; attempt < 6; ++attempt)
-    {
-        parsed = parseWorldDumpFile(path);
-        if (parsed.snapshot)
-            return parsed;
-        if (attempt != 5)
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-    return parsed;
+    if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+        return value.substr(1, value.size() - 2);
+    return value;
+}
+
+static bool isScriptFile(const std::filesystem::path& path)
+{
+    std::string extension = path.extension().generic_u8string();
+    std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char value)
+        {
+            return char(std::tolower(value));
+        });
+    return extension == ".lua" || extension == ".luau";
 }
 
 static void reportStoreFailure(std::string_view operation, const ContextStoreResult& result)
@@ -56,78 +49,47 @@ static void reportStoreFailure(std::string_view operation, const ContextStoreRes
         std::cerr << "Luduvo context helper could not " << operation << ": " << result.error.value_or("unknown error") << '\n';
 }
 
+} // namespace
+
 ContextLogProcessor::ContextLogProcessor(ContextStore store)
     : store(std::move(store))
 {
+    const auto files = scanScriptFiles();
+    for (const auto& [path, _] : files)
+        knownScriptFiles.insert(path);
 }
 
-void ContextLogProcessor::ingestStudioLine(const std::string& line)
+std::map<std::string, std::string> ContextLogProcessor::scanScriptFiles() const
 {
-    if (auto project = openedProjectName(line))
+    std::map<std::string, std::string> result;
+    const auto catalog = store.load();
+    if (!catalog)
+        return result;
+    const std::vector<std::string> liveValues = store.liveProjectIds();
+    const std::set<std::string> live(liveValues.begin(), liveValues.end());
+    for (const auto& [projectId, project] : catalog->projects)
     {
-        activeProject = *project;
-        reportStoreFailure("set the active project", store.setActiveProject(activeProject));
+        if (!live.count(projectId) || project.directory.empty())
+            continue;
+        std::error_code error;
+        const std::filesystem::path directory = std::filesystem::u8path(project.directory);
+        if (!std::filesystem::is_directory(directory, error))
+            continue;
+        for (std::filesystem::recursive_directory_iterator iterator(directory, error), end; iterator != end && !error; iterator.increment(error))
+        {
+            if (!iterator->is_regular_file(error) || error || !isScriptFile(iterator->path()))
+                continue;
+            result[normalizeContextPath(iterator->path().generic_u8string())] = projectId;
+        }
     }
+    return result;
 }
 
-void ContextLogProcessor::completeCommand(const PendingCommand& pending)
+void ContextLogProcessor::staleLiveProjects(std::string reason, const std::vector<std::string>& preferred)
 {
-    if (pending.projectName.empty())
-        return;
-    const auto [command, arguments] = splitCommand(pending.commandLine);
-    if (command == "world.dump")
-    {
-        WorldDumpParseResult parsed = parseCompletedWorldDump(arguments);
-        if (!parsed.snapshot)
-        {
-            std::cerr << "Luduvo context helper rejected " << arguments << ": " << parsed.error.value_or("invalid world dump") << '\n';
-            return;
-        }
-
-        std::string projectName = pending.projectName;
-        std::optional<std::string> projectDirectory;
-        const std::filesystem::path dumpDirectory = std::filesystem::u8path(arguments).parent_path();
-        if (std::filesystem::is_regular_file(dumpDirectory / "project.json"))
-        {
-            const ContextStoreResult files = store.updateProjectFiles(dumpDirectory.generic_u8string());
-            std::string error;
-            const auto catalog = store.load(&error);
-            if (files.success && files.projectId && catalog && catalog->projects.count(*files.projectId))
-            {
-                projectName = catalog->projects.at(*files.projectId).name;
-                projectDirectory = dumpDirectory.generic_u8string();
-            }
-        }
-        else
-        {
-            std::string error;
-            const auto catalog = store.load(&error);
-            if (catalog)
-            {
-                const std::string normalizedDump = normalizeContextPath(arguments);
-                for (const auto& [_, project] : catalog->projects)
-                {
-                    const std::string expected = normalizeContextPath(
-                        (std::filesystem::u8path(store.directory()) / "projects" / project.id / "world.dump.txt").generic_u8string());
-                    if (normalizedDump == expected)
-                    {
-                        projectName = project.name;
-                        if (!project.directory.empty())
-                            projectDirectory = project.directory;
-                        break;
-                    }
-                }
-            }
-        }
-        reportStoreFailure("publish a world dump", store.updateWorld(std::move(*parsed.snapshot), projectName, projectDirectory));
-    }
-    else if (command == "script.attach" && !arguments.empty())
-        reportStoreFailure("attach a script", store.attachScript(pending.projectName, arguments));
-    else if (command == "script.client" || command == "script.server")
-        reportStoreFailure("mark a project stale",
-            store.markProjectStale(pending.projectName, command + " created and attached a script after the last world dump"));
-    else if (isWorldMutation(command))
-        reportStoreFailure("mark a project stale", store.markProjectStale(pending.projectName, command + " changed the world after the last world dump"));
+    const std::vector<std::string> projects = preferred.empty() ? store.liveProjectIds() : preferred;
+    if (!projects.empty())
+        reportStoreFailure("mark live projects stale", store.markProjectsStale(projects, std::move(reason)));
 }
 
 void ContextLogProcessor::ingestCommandLine(const std::string& line)
@@ -141,29 +103,115 @@ void ContextLogProcessor::ingestCommandLine(const std::string& line)
     if (parsed.ec != std::errc{} || parsed.ptr != sequenceText.data() + sequenceText.size())
         return;
     const std::string value = line.substr(separator + 1);
-    const auto pending = pendingCommands.find(sequence);
-    if (value == "ok")
+    if (value == "ok" || value.empty())
+        return;
+
+    const auto [command, rawArguments] = splitCommand(value);
+    const std::string arguments = unquote(rawArguments);
+    if (command == "world.dump" && !arguments.empty())
     {
-        if (pending != pendingCommands.end())
-        {
-            completeCommand(pending->second);
-            pendingCommands.erase(pending);
-        }
+        pendingDumps.push_back({normalizeContextPath(arguments), std::chrono::steady_clock::now()});
+        return;
     }
-    else if (pending != pendingCommands.end())
-        pendingCommands.erase(pending);
-    else
-        pendingCommands[sequence] = {value, activeProject};
+    if (command == "script.attach" && !arguments.empty())
+    {
+        std::vector<std::string> matches;
+        const auto catalog = store.load();
+        const std::vector<std::string> live = store.liveProjectIds();
+        if (catalog)
+        {
+            const std::string normalized = normalizeContextPath(arguments);
+            for (const std::string& projectId : live)
+            {
+                const auto project = catalog->projects.find(projectId);
+                if (project != catalog->projects.end() &&
+                    std::find(project->second.scripts.begin(), project->second.scripts.end(), normalized) != project->second.scripts.end())
+                    matches.push_back(projectId);
+            }
+        }
+        if (matches.size() == 1)
+        {
+            reportStoreFailure("attach a script", store.attachScriptById(matches.front(), arguments));
+            staleLiveProjects("script.attach changed the world after the last world dump", matches);
+        }
+        else
+            staleLiveProjects("script.attach may have changed a live project after the last world dump");
+        return;
+    }
+    if (command == "script.client" || command == "script.server")
+    {
+        pendingScriptCreation = std::chrono::steady_clock::now();
+        return;
+    }
+    if (isWorldMutation(command))
+        staleLiveProjects(command + " changed or may have changed a live project after the last world dump");
 }
 
-const std::string& ContextLogProcessor::activeProjectName() const
+void ContextLogProcessor::pollFilesystem()
 {
-    return activeProject;
+    const auto files = scanScriptFiles();
+    std::map<std::string, std::string> added;
+    for (const auto& [path, projectId] : files)
+        if (!knownScriptFiles.count(path))
+            added[path] = projectId;
+    knownScriptFiles.clear();
+    for (const auto& [path, _] : files)
+        knownScriptFiles.insert(path);
+
+    if (pendingScriptCreation)
+    {
+        std::set<std::string> projects;
+        for (const auto& [_, projectId] : added)
+            projects.insert(projectId);
+        if (projects.size() == 1)
+        {
+            staleLiveProjects("script.client or script.server created and attached a script after the last world dump", {*projects.begin()});
+            pendingScriptCreation.reset();
+        }
+        else if (!projects.empty() || std::chrono::steady_clock::now() - *pendingScriptCreation > std::chrono::seconds(2))
+        {
+            staleLiveProjects("script.client or script.server may have changed a live project after the last world dump");
+            pendingScriptCreation.reset();
+        }
+    }
+
+    const auto catalog = store.load();
+    const std::vector<std::string> live = store.liveProjectIds();
+    for (auto pending = pendingDumps.begin(); pending != pendingDumps.end();)
+    {
+        WorldDumpParseResult parsed = parseWorldDumpFile(pending->path);
+        if (parsed.snapshot && catalog)
+        {
+            std::vector<std::string> matches;
+            for (const auto& [projectId, project] : catalog->projects)
+            {
+                const std::string expected = normalizeContextPath(
+                    (std::filesystem::u8path(store.directory()) / "projects" / project.id / "world.dump.txt").generic_u8string());
+                if (pending->path == expected)
+                    matches.push_back(projectId);
+            }
+            if (matches.empty() && live.size() == 1)
+                matches = live;
+            if (matches.size() == 1)
+            {
+                const auto project = catalog->projects.find(matches.front());
+                const bool alreadyPublished = project != catalog->projects.end() && project->second.fresh &&
+                                              normalizeContextPath(project->second.dumpPath) == pending->path;
+                if (!alreadyPublished)
+                    reportStoreFailure("publish a world dump", store.updateWorldForProject(std::move(*parsed.snapshot), matches.front()));
+            }
+            pending = pendingDumps.erase(pending);
+        }
+        else if (std::chrono::steady_clock::now() - pending->observedAt > std::chrono::seconds(45))
+            pending = pendingDumps.erase(pending);
+        else
+            ++pending;
+    }
 }
 
 size_t ContextLogProcessor::pendingCommandCount() const
 {
-    return pendingCommands.size();
+    return pendingDumps.size() + (pendingScriptCreation ? 1 : 0);
 }
 
 } // namespace luduvo

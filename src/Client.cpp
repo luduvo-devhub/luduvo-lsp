@@ -118,6 +118,21 @@ void LSPClient::sendWorkDoneProgressEnd(const lsp::ProgressToken& token, std::op
     sendProgress(lsp::ProgressParams{token, workDone});
 }
 
+bool Client::isNotificationSuppressed(std::string_view id) const
+{
+    std::lock_guard guard(notificationSuppression->mutex);
+    return notificationSuppression->ids.count(std::string(id)) != 0;
+}
+
+void Client::setNotificationSuppressed(std::string id, bool suppressed)
+{
+    std::lock_guard guard(notificationSuppression->mutex);
+    if (suppressed)
+        notificationSuppression->ids.insert(std::move(id));
+    else
+        notificationSuppression->ids.erase(id);
+}
+
 void LSPClient::sendLogMessage(const lsp::MessageType& type, const std::string& message) const
 {
     json params{

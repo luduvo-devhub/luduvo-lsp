@@ -8,8 +8,8 @@ Hasn't been tested anywhere other than the Zed editor, but should theoretically 
 
 These won't affect 99% of users, but there's a few gatchas to be aware of when using Luduvo LSP (for now):
 
-- Make sure `luau-lsp.diagnostics.workspace` inside your editor is set to `false` if you're using Luduvo LSP inside of the Luduvo LSP's repo. There seems to be some issues with hangs and whatnot triggering editor's crash monitor and subsequently killing the server
-- Avoid combining `luau-lsp.fflags.enable_by_default: false` with `luau-lsp.fflags.enable_new_solver: true` unless every required companion FFlag is explicitly enabled. Weird FFlag combinations can cause the luau anyalzer to crash, and it doesn't help that Luduvo LSP requires the `SolverV2` fflag to be enabled in most cases
+- Make sure `diagnostics.workspace` inside your editor is set to `false` if you're using Luduvo LSP inside of the Luduvo LSP's repo. There seems to be some issues with hangs and whatnot triggering editor's crash monitor and subsequently killing the server
+- Avoid combining `fflags.enable_by_default: false` with `fflags.enable_new_solver: true` unless every required companion FFlag is explicitly enabled. Weird FFlag combinations can cause the luau anyalzer to crash, and it doesn't help that Luduvo LSP requires the `SolverV2` fflag to be enabled in most cases
 
 If your settings look something like this:
 
@@ -84,20 +84,22 @@ The type snapshot can also be updated without using the website reference at all
 python scripts/luduvo/dumpLuduvoTypes.py
 ```
 
-## Project Context (Beta)
+## Project context (Beta)
 
-Luduvo LSP has a helper process that captures project context from Luduvo Studio's studio and command logs to aid in releases slated for future releases. If you want to try it out, set `luau-lsp.platform.luduvo.context.enabled` to `true` and restart the LSP.
+Luduvo LSP has a helper process that captures project context from world dumps and watches Luduvo Studio's command log. If you want to try it out, set `platform.luduvo.context.enabled` to `true` and restart the LSP.
 
-When Context is enabled, the LSP will start a helper process that watches Luduvo Studio's project and command logs to automatically import successful `world.dump` outputs into a shared local "database" (AKA some folders and a json file lol). This data allows Luduvo LSP to know exactly what scripts are available in any given project, what instance each script is attached to, and gives other important data like your project's world hierachy. If Luduvo LSP ever detects that the data in the project database is stale and it can't do anything to correct it on its own, it will automatically prompt you for another `world.dump` that the LSP will automatically parse and organize by project.
+When Context is enabled, the LSP starts a helper process that imports project-associated `world.dump` outputs into a shared local database. Captures include script attachments, instances, and the world hierarchy. Commands that may change the world mark tracked context stale. Studio's log is not watched, and the helper does not attempt to identify which projects are open in Studio.
 
 Currently, the LSP doesn't do much with this information (which is why its off by default). Right now, only the lifecycle and project management parts are hooked into the LSP. That means that you can inspect project contexts, reselect project contexts if the LSP gets it wrong for the file its linting, automatic stale-context warnings and instructions, and VSCode code actions for all of this on `game.World` and `self` if the LSP detects that the project is stale or otherwise unresolved. The LSP also sends standard editor notifications when a new world dump updates context or an attached script is inferred. Commands for context inspection and management are available via the VSCode extension as the following:
 
 - `Luduvo: Add Project to Context`, which adds or reindexes a Luduvo project selected from a folder picker
 - `Luduvo: Inspect Project Context`, which inspects the currently opened script when one is available and otherwise shows the complete stored project catalog
 - `Luduvo: Choose Project Context`, which lets you select a different project context if the LSP gets it wrong
-- `Luduvo: Refresh Project Context`, which manually "generates" a command for you to run inside Luduvo to refresh the current project's context
+- `Luduvo: Refresh Project Context`, which starts an automatic, offscreen dump when `context.autoDump` is enabled and otherwise generates the manual `world.dump` command
 - `Luduvo: Reset Project Context Choice`, which resets the current project context choice
-- `Luduvo: Show Project Context Status`, which shows helper health, the active Studio project, registered LSP clients, and cleanup counts
+- `Luduvo: Show Project Context Status`, which shows helper health, refresh settings, registered LSP clients, and cleanup counts
+
+### Context CLI
 
 If you don't have VSCode installed, Luduvo LSP's CLI also got extended (which a lot more effort went into):
 
@@ -111,14 +113,14 @@ luduvo-lsp context inspect instance <--node-id ID|--instance-id ID|--name NAME> 
 luduvo-lsp context update <project|dump> <path> [--project <name>] [--project-directory <path>]
 luduvo-lsp context clean [client|project|snapshot] [selectors...] [--all]
 luduvo-lsp context forget [project|script] [selectors...] [--all] [--yes]
-luduvo-lsp context run [--commands-log <path>] [--studio-log <path>] [--state-directory <directory>] [--poll-interval <milliseconds>] [--idle-timeout <seconds>]
+luduvo-lsp context run [--commands-log <path>] [--state-directory <directory>] [--poll-interval <milliseconds>] [--idle-timeout <seconds>]
 luduvo-lsp context status [--state-directory <directory>] [--format text|json] [--output <path>]
 luduvo-lsp context stop [--state-directory <directory>]
 ```
 
 Commands that can access a project database also can accept your LSP config via `--settings <path>`, like with other LSP command from upstream (namely `luduvo-lsp analyze`). If you share other arguments that may conflict with the information in `--settings`, said arguments will take precedence
 
-`run` starts up the context helper and it'll start watching for changes in the project's `--commands-log` and `--studio-log`. If blank, it'll fall back on the default directories depending on the OS. If it finds new dumps, it'll parse them and update the global project database at `--state-directory`. Finally, it'll stop itself if it can't find any running Luduvo LSPs every `--poll-interval` ms and its been `--idle-timeout` seconds without any sign of the LSPs coming back
+`run` starts the context helper and watches `--commands-log`, using the operating-system default location when omitted. It imports project-associated dumps into `--state-directory` and checks client registrations every `--poll-interval` milliseconds. If no live LSP registrations remain for `--idle-timeout` seconds, it exits.
 
 `stop` also stops the context helper but without any of the autmoated checks
 
@@ -143,13 +145,67 @@ Both `parse` and `inspect` can display its output in a human-readable format or 
 
 Neither `clean` nor `forget` will actually delete any of your Luduvo projects/source files. It only delete's the LSP context
 
-## Usage
+## Installing & Usage
 
-If you install Luduvo LSP or point your editor's `luau-lsp.binary.path` to the builds in the releases tab, Luduvo will be automatically entered as the default platform provided that you don't override it with `luau-lsp.platform.type`. You can also select it explicitly with `luau-lsp.platform.type = "luduvo"`, or use `luau-lsp analyze --platform=luduvo path/to/script.luau`. The other platforms (`roblox` and `standard`) still exist and work.
+For now, there is no official "auto updater" for Luduvo LSP (largely because making one might conflict with other autoupdaters already packaged inside your LSP). Maybe one will exist in the future if I decide that I no longer care (like with what happened with platform=luduvo), but for now you will need to manually reinstall it via the instructions below.
 
-Another thing to note is that while Luduvo uses Luau for its underlying engine, Luduvo generates `.client.lua` and `.server.lua` files when attaching new scripts to your game. I recommend either setting `luau-lsp.analyzeLuaFiles` to `true` in your editor's config file, or associate those 2 file patterns with Luduvo Luau in your editor's file associations.
+### Via the `luduvo-lsp` extension
 
-Finally, Luduvo's official global files use features only available under Luau's SolverV2 flag. If Luduvo LSP attempts to load official client/server definition files while `luau-lsp.fflags.enableNewSolver` is false, the LSP reports an error and skips loading those files at all. If you set `luau-lsp.platform.luduvo.definitions.globalPolicy` to `"definitionFilesOnly"`, Luduvo LSP won't cause any flag any issues.
+If you install the `luduvo-lsp` VSCode extension, it will automatically use the Luduvo LSP binary from the releases tab and apply the necessary configuration and reccomended defaults for you without you needing to do much of anything. It just works. For transparency, these are the settings that changed:
+
+- `luau-lsp.platform.type` -> `"luduvo"`
+- `luau-lsp.analyzeLuaFiles` -> `true`
+- `luau-lsp.fflags.enableNewSolver` -> `true`
+- `luau-lsp.sourcemap.enabled` -> `false`
+- `luau-lsp.sourcemap.autogenerate` -> `false`
+- `luau-lsp.diagnostics.workspace` -> `true`
+
+You can still rechange these in your config and it will override these defaults.
+
+Since the `luduvo-lsp` extension is not on the VSCode/VSCodium Marketplace, you will need to manually install it. Here's how to do that:
+
+1. Download the latest release from the [releases tab](https://github.com/luduvo/luduvo-lsp/releases)
+2. Extract the contents of the release archive
+3. Open VSCode/VSCodium and go to `Extensions` (or `Preferences` > `Extensions`)
+4. Click the `...` button in the top right corner and select `Install from VSIX...`
+5. Navigate to the extracted release archive and select the `.vsix` file
+6. Restart VSCode/VSCodium
+
+Even though Luduvo LSP doesn't have auto updates, you can still use [VSIX Manager](https://marketplace.visualstudio.com/items?itemName=zokugun.vsix-manager) ([Codeium version](https://open-vsx.org/extension/zokugun/vsix-manager)) to add this repo as a custom extension source for automatic updates. A quick tutorial on that as well:
+
+1. Download VSIX manager and make sure its running
+2. Navigate to your VS Code JSON settings (not the regular settings page)
+3. Add the following entry to `vsix.extensions`:
+```json
+{
+  "vsix.extensions": [
+    "github:luduvo-devhub/luduvo-lsp!luduvo-lsp"
+  ]
+}
+```
+4. Run **VSIX Manager: Adopt unmanaged extensions**
+  - If you didn't install luduvo lsp beforehand, you can run **VSIX Manager: Synchronize extensions** instead
+5. Run **VSIX Manager: Update extensions** anytime you want to check for updates
+
+To *automatically* update, VSIX Manager wants you to use their accompanying [Cron Tasks](https://marketplace.visualstudio.com/items?itemName=zokugun.cron-tasks) extension ([Codeium version](https://open-vsx.org/extension/zokugun/cron-tasks)):
+
+```json
+{
+  "cronTasks.tasks": [
+    { "at": "0 12 * * *", "run": "vsix.update" }
+  ]
+}
+```
+
+One final note, though this is probably not necessary. Anywhere you see config paths start with `luau-lsp`, use `luduvo-lsp` instead. Other than that, you can use luduvo lsp just as you would if it were luau lsp.
+
+### Via the `luau-lsp` extension
+
+If you install Luduvo LSP or point your editor's `binary.path` to the builds in the releases tab, Luduvo will be automatically entered as the default platform provided that you don't override it with `platform.type`. You can also select it explicitly with `platform.type = "luduvo"`, or use `luau-lsp analyze --platform=luduvo path/to/script.luau`. Otherwise, its just a drag and drop replacement. The other platforms (`roblox` and `standard`) still exist and will work with minor (but theoretically invisible) changes.
+
+Another thing to note is that while Luduvo uses Luau for its underlying engine, Luduvo generates `.client.lua` and `.server.lua` files when attaching new scripts to your game. I recommend either setting `analyzeLuaFiles` to `true` in your editor's config file, or associate those 2 file patterns with Luduvo Luau in your editor's file associations.
+
+Finally, Luduvo's official global files use features only available under Luau's SolverV2 flag. If Luduvo LSP attempts to load official client/server definition files while `fflags.enableNewSolver` is false, the LSP reports an error and skips loading those files at all. If you set `platform.luduvo.definitions.globalPolicy` to `"definitionFilesOnly"`, Luduvo LSP won't cause any flag any issues.
 
 For example, this is what I put in my `.zed/settings.json`:
 
@@ -207,36 +263,39 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 
 | Setting | Type | Default | Description |
 |---|---|---:|---|
-| `luau-lsp.platform.type` | `"standard"`, `"roblox"`, or `"luduvo"` | `"luduvo"` | Selects the platform integration. Luduvo LSP adds the `luduvo` option and makes it the default. |
-| `luau-lsp.platform.luduvo.dataDirectory` | string | `""` | Overrides Luduvo's per-user Client data directory. An empty value uses the operating-system default. |
-| `luau-lsp.platform.luduvo.directories.roaming` | string | `""` | Overrides the root of Luduvo's roaming per-user data. An empty value uses the operating-system default. This takes precedence over the legacy `dataDirectory` setting. |
-| `luau-lsp.platform.luduvo.directories.local` | string | `""` | Overrides the root of Luduvo's local per-user data. An empty value uses the operating-system default. |
-| `luau-lsp.platform.luduvo.directories.context` | string | `""` | Overrides the directory containing Luduvo LSP's project-context database. An empty value derives it from the local data directory. |
-| `luau-lsp.platform.luduvo.context.enabled` | boolean | `false` | Enables the experimental Luduvo context integration. The Release 1 preview remains opt-in. |
-| `luau-lsp.platform.luduvo.definitions.serverOverride` | string | `""` | Uses the specified Luau declaration file for server scripts before trying the installed or bundled server declarations. |
-| `luau-lsp.platform.luduvo.definitions.clientOverride` | string | `""` | Uses the specified Luau declaration file for client scripts before trying the installed or bundled client declarations. |
-| `luau-lsp.platform.luduvo.definitions.defaultScriptSide` | `"server"` or `"client"` | `"server"` | Selects the declarations used by files without a recognized client or server suffix. |
-| `luau-lsp.platform.luduvo.definitions.globalPolicy` | `"luduvoOnly"`, `"definitionFilesOnly"`, `"preferLuduvo"`, `"preferDefinitionFiles"`, or `"combine"` | `"combine"` | Controls how official Luduvo declarations interact with `types.definitionFiles`. |
-| `luau-lsp.platform.luduvo.definitions.conflictWinner` | `"luduvo"` or `"definitionFiles"` | `"luduvo"` | Chooses which source owns a duplicate global when `globalPolicy` is `combine`. |
-| `luau-lsp.platform.luduvo.definitions.exposePrivateTypes` | boolean | `false` | For some reason, official Luduvo definition files purposely hides certain types. If you enable this, Luduvo LSP will force all top-level `type` aliases from Luduvo definition files into exported globals. May cause issues with type checking and Luduvo's own type checker likely won't like that you are using, so it's disabled by default. |
-| `luau-lsp.platform.luduvo.diagnostics.enabled` | boolean | `true` | Globally enables diagnostics for Luduvo-specific runtime rules |
-| `luau-lsp.platform.luduvo.diagnostics.rules` | map of rule IDs to severity | `{}` | Overrides individual Luduvo diagnostics with `default`, `error`, `warning`, `information`, `hint`, or `off`. |
-| `luau-lsp.platform.luduvo.hover.presentation` | `"rich"` or `"standard"` | `"rich"` | Selects Luduvo's API-aware hover layout or the upstream-compatible hover layout. Standard hovers keep documentation above the type definition. |
-| `luau-lsp.platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits visible rich-hover title length while preserving provenance text. URLs do not count toward the limit; `null` disables truncation. |
-| `luau-lsp.platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
-| `luau-lsp.platform.luduvo.resources.groups` | map of resource-group names to group dictionaries | `{}` | Each group defines `dataType`, `includeBuiltins` (boolean that decides whether or not to auto-include LSP-maintained Luduvo built-in sources), and a list of source names. Missing built-in groups implicitly use their active Luduvo built-ins. Currently, only the `string` data type is supported. |
-| `luau-lsp.platform.luduvo.resources.sources` | map of source names to source dictionaries | `{}` | Defines the resources that each resource group uses. Static `values` entries may be strings or dictionaries containing `name` and optional Markdown `documentation`; a source may be shared by multiple groups. |
-| `luau-lsp.platform.luduvo.bindings` | array of binding dictionaries | `[]` | Adds resource constraints for custom function parameters. `group` selects a resource group (such as `component` or `prefab`); the other fields are `symbol` (string of the endpoint you want to bind resources to), `target`, which contains both a `parameter` (string of the parameter name to bind resources to in the function) and `variadic` (boolean indicating whether the parameter takes an arbitrary amount of said resources) field, and `pluralResourceNoun` (boolean indicating whether the resource parameter's name is meant to be described as plural). The metadata is shared by completion, rich hovers, and signature highlighting. |
-| `luau-lsp.platform.luduvo.resources.completion.enabled` | boolean | `true` | Enables resource-name suggestions in resource-constrained arguments. Disabling it does not hide resource metadata from hovers or signature highlighting. |
-| `luau-lsp.platform.luduvo.resources.completion.disabledKinds` | string array | `[]` | Disables resource-name completion for the listed resource kinds. |
-| `luau-lsp.platform.luduvo.resources.completion.disabledApis` | string array | `[]` | Disables resource-name completion for the listed canonical API symbols. |
+| `platform.type` | `"standard"`, `"roblox"`, or `"luduvo"` | `"luduvo"` | Selects the platform integration. Luduvo LSP adds the `luduvo` option and makes it the default. |
+| `platform.luduvo.dataDirectory` | string | `""` | Overrides Luduvo's per-user Client data directory. An empty value uses the operating-system default. |
+| `platform.luduvo.directories.roaming` | string | `""` | Overrides the root of Luduvo's roaming per-user data. An empty value uses the operating-system default. This takes precedence over the legacy `dataDirectory` setting. |
+| `platform.luduvo.directories.local` | string | `""` | Overrides the root of Luduvo's local per-user data. An empty value uses the operating-system default. |
+| `platform.luduvo.directories.context` | string | `""` | Overrides the directory containing Luduvo LSP's project-context database. An empty value derives it from the local data directory. |
+| `platform.luduvo.context.enabled` | boolean | `false` | Enables the experimental Luduvo context integration. The Release 1 preview remains opt-in. |
+| `platform.luduvo.context.autoDump` | boolean | `true` | Refreshes stale context through a disposable, offscreen Luduvo Editor process when context integration is enabled. If it is disabled or fails, the LSP provides the manual `world.dump` command instead. |
+| `platform.luduvo.context.lazyRefresh` | boolean | `true` | Waits until context is needed before refreshing. Set to `false` with `context.autoDump: true` to refresh tracked projects as soon as they become stale. Reported by `context status`. |
+| `platform.luduvo.notifications` | map of notification IDs to booleans | `{}` | Overrides notification defaults. Set an ID such as `context.project-stale` to `false` to suppress its popup without disabling tracking or refresh. See the notification table above. |
+| `platform.luduvo.definitions.serverOverride` | string | `""` | Uses the specified Luau declaration file for server scripts before trying the installed or bundled server declarations. |
+| `platform.luduvo.definitions.clientOverride` | string | `""` | Uses the specified Luau declaration file for client scripts before trying the installed or bundled client declarations. |
+| `platform.luduvo.definitions.defaultScriptSide` | `"server"` or `"client"` | `"server"` | Selects the declarations used by files without a recognized client or server suffix. |
+| `platform.luduvo.definitions.globalPolicy` | `"luduvoOnly"`, `"definitionFilesOnly"`, `"preferLuduvo"`, `"preferDefinitionFiles"`, or `"combine"` | `"combine"` | Controls how official Luduvo declarations interact with `types.definitionFiles`. |
+| `platform.luduvo.definitions.conflictWinner` | `"luduvo"` or `"definitionFiles"` | `"luduvo"` | Chooses which source owns a duplicate global when `globalPolicy` is `combine`. |
+| `platform.luduvo.definitions.exposePrivateTypes` | boolean | `false` | For some reason, official Luduvo definition files purposely hides certain types. If you enable this, Luduvo LSP will force all top-level `type` aliases from Luduvo definition files into exported globals. May cause issues with type checking and Luduvo's own type checker likely won't like that you are using, so it's disabled by default. |
+| `platform.luduvo.diagnostics.enabled` | boolean | `true` | Globally enables diagnostics for Luduvo-specific runtime rules |
+| `platform.luduvo.diagnostics.rules` | map of rule IDs to severity | `{}` | Overrides individual Luduvo diagnostics with `default`, `error`, `warning`, `information`, `hint`, or `off`. |
+| `platform.luduvo.hover.presentation` | `"rich"` or `"standard"` | `"rich"` | Selects Luduvo's API-aware hover layout or the upstream-compatible hover layout. Standard hovers keep documentation above the type definition. |
+| `platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits visible rich-hover title length while preserving provenance text. URLs do not count toward the limit; `null` disables truncation. |
+| `platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
+| `platform.luduvo.resources.groups` | map of resource-group names to group dictionaries | `{}` | Each group defines `dataType`, `includeBuiltins` (boolean that decides whether or not to auto-include LSP-maintained Luduvo built-in sources), and a list of source names. Missing built-in groups implicitly use their active Luduvo built-ins. Currently, only the `string` data type is supported. |
+| `platform.luduvo.resources.sources` | map of source names to source dictionaries | `{}` | Defines the resources that each resource group uses. Static `values` entries may be strings or dictionaries containing `name` and optional Markdown `documentation`; a source may be shared by multiple groups. |
+| `platform.luduvo.bindings` | array of binding dictionaries | `[]` | Adds resource constraints for custom function parameters. `group` selects a resource group (such as `component` or `prefab`); the other fields are `symbol` (string of the endpoint you want to bind resources to), `target`, which contains both a `parameter` (string of the parameter name to bind resources to in the function) and `variadic` (boolean indicating whether the parameter takes an arbitrary amount of said resources) field, and `pluralResourceNoun` (boolean indicating whether the resource parameter's name is meant to be described as plural). The metadata is shared by completion, rich hovers, and signature highlighting. |
+| `platform.luduvo.resources.completion.enabled` | boolean | `true` | Enables resource-name suggestions in resource-constrained arguments. Disabling it does not hide resource metadata from hovers or signature highlighting. |
+| `platform.luduvo.resources.completion.disabledKinds` | string array | `[]` | Disables resource-name completion for the listed resource kinds. |
+| `platform.luduvo.resources.completion.disabledApis` | string array | `[]` | Disables resource-name completion for the listed canonical API symbols. |
 
 ## Bindings
 
 Bindings are a way to associate special LSP behavior with specific methods and functions. For now its usecases are somewhat limited but they'll expand in the future. While the exact binding fields will vary depending on the kind of binding you define, they all share the same 3 required fields:
 
 1. `symbol` is the name of the function or method to bind, like `MyLibrary.Spawn`, `Color3.new`, etc. It's a bit unintuitive, but this also supports bindings to functions in types like `Instance`, `World`, etc. So if you wanted `self:AddAccessory` to get a custom type, you would use `Instance.AddAccessory` as the symbol name.
-  - Currently, (most) bindings will NOT work with normal functions because they are too vague and can pop up in multiple places defined differently thanks to scope-related issues. If you want to bind a local function, you must declare it in a `.d.luau` file, add it to your config via `luau-lsp.types.definitionFiles`, then change `luduvo.definitions.globalPolicy` to `combine`. If the Luduvo declarations and your custom declarations conflict with each other, also change `luduvo.definitions.conflictWinner` to `definitionFiles`. Future releases will make this process easier, I promise.
+  - Currently, (most) bindings will NOT work with normal functions because they are too vague and can pop up in multiple places defined differently thanks to scope-related issues. If you want to bind a local function, you must declare it in a `.d.luau` file, add it to your config via `types.definitionFiles`, then change `luduvo.definitions.globalPolicy` to `combine`. If the Luduvo declarations and your custom declarations conflict with each other, also change `luduvo.definitions.conflictWinner` to `definitionFiles`. Future releases will make this process easier, I promise.
 2. `kind` is the type of binding to apply to the symbol. Right now the only bindings I made are `resource`s and `color`, but more will be added in the future.
 3. `target` is the name of the parameter(s) that get affects or gets affected by your chosen binding alongside additional information that might be needed to better resolve the binding for said parameter(s). It's hard to explain what this does in words since every binding kind could use `target` in different ways. Depending on the kind of binding, this can be a single parameter name or a list of parameter names.
 
@@ -532,6 +591,43 @@ Just like normal lints, Luduvo lints can also be suppressed via `--!nolint`:
 
 Only 1 rule per line is supported. A bare `--!nolint` suppresses all Luduvo lints alongside Luau's built-in ones
 
+## Notification suppression
+
+Since context notifications can get annoying, Luduvo can now selectively suppress them through `platform.luduvo.notifications`. For example:
+
+```json
+{
+  "platform": {
+    "luduvo": {
+      "notifications": {
+        "context.project-stale": false, // Suppress/disables the "project stale" notification
+      }
+    }
+  }
+}
+```
+
+The key is a notification ID that is at the bottom of all suppressable notifications. Set an ID to `true` to enable its popup or `false` to suppress it. Below is the full list of notification IDs and their default values:
+
+| Notification ID | Default | Appears when... |
+|---|---|---|
+| `configuration.invalid` | On | Invalid Luduvo diagnostics, bindings, or resource settings are ignored |
+| `definitions.fallback` | On | Installed or overridden Luduvo definitions cannot be loaded and fallback definitions are used |
+| `server.crash-reporting-suggestion` | On | The VS Code extension crashes after an unexpected exit, though only if the binary its using has reporting support. For Luduvo LSP specifically, you will likely never natually see it |
+| `context.project-tracking-started` | On | The first live LSP begins tracking a project |
+| `context.project-tracking-stopped` | Off | The last live LSP stops tracking a project during a registration update. A forcibly terminated LSP cannot send this message |
+| `context.project-stale` | On | A tracked project's context becomes stale, or tracking begins with stale context. Exclusive to people with lazy refreshing on |
+| `context.files-added` | On | Newly inferred script attachments are added to context. Multiple additions may be grouped into one message |
+| `context.autodump-started` | Off | An offscreen automatic dump starts |
+| `context.updated` | Off | A new world dump replaces captured project context. Multiple updates may be grouped |
+| `context.autodump-failed` | On | An automatic dump fails. Includes the manual `world.dump` command as a fallback |
+| `context.refresh-required` | On | Fresh context is needed for whatever action you are about to preform but said project's content is stale. Also will appear if automatic dumps are enabled and it can't refresh on its own for whatever reason |
+| `context.selection-required` | On | Luduvo LSP doesn't know which project context to use for an opened script that belongs to multiple projects |
+| `context.state` | Off | A context-state check reports that no project matches or that the selected capture is current |
+| `context.error` | On | Some error occurs while reading context or updating project tracking |
+
+VSCode users also get a "Do not show again" option to do all of this automatically. Lucky them.
+
 ## Building
 
 Since I'm on Windows and I don't have a lot of disk space, I built this with MinGW GCC, CMake, and Ninja:
@@ -541,9 +637,16 @@ cmake -S . -B build/luduvo/[platform] -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAK
 cmake --build build/luduvo/[platform] --target Luau.LanguageServer.CLI Luau.LanguageServer.Test -j 2
 ```
 
-I was able to build successfully on both Windows and Linux (via WSL). Using MSVC's equivalents should still work fine as well, but mileage will vary. If you need a quick build, configure with
+I was able to build successfully on both Windows and Linux (via WSL). Using MSVC's equivalents should still work fine as well, but mileage will vary. 
+
+If you need a quick build, configure with
 `-DCMAKE_CXX_FLAGS_RELEASE="-O0 -DNDEBUG"`.
-If you are on Windows and need to rebuild the project after just using it, you may also find  `-DLSP_KILL_BEFORE_LINK=ON` helpful. Windows locks processes and prevetns other files from writing over it, so if Luduvo LSP is running while you are attempting to rebuild it, it errors in the linking steps. Before it wasn't much of an issue to stop everything yourself, but now you need to also stop the helper is its running and that annoyed me. If on, it prevents a running LSP or context helper from locking `luduvo-lsp.exe` by killing all running processes of it everywhere. This wont do anything on macOS or Linux because they don't have this problem (lucky you)
+
+If you are on Windows and test new Luduvo LSP builds directly from the build directory like I do, you may also find `-DLSP_KILL_BEFORE_LINK=ON` helpful. Especially since killing Luduvo LSP through Zed's LSP process killer won't also kill the helper process, meaning that builds still fail on Windows with permission errors. If on, this flag stops that by killing all running processes of it everywhere. This wont do anything on macOS or Linux because they don't have this problem (lucky you)
+
+On final note that pertains to crash reporting: You have to provide your own Sentry DSN now. Alongside `LSP_BUILD_WITH_SENTRY=ON`, you also need `LSP_SENTRY_DSN` and a URL to your own Sentry project. 
+
+Runtime reporting still requires the user to enable `luduvo-lsp.server.crashReporting.enabled` or pass `lsp --enable-crash-reporting`
 
 ## Current limitations
 

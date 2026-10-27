@@ -22,6 +22,8 @@ import {
 } from "./bytecode";
 
 import { onTypeFormattingMiddleware } from "./onTypeFormattingMiddleware";
+import { showNotification, suppressNotification } from "./notifications";
+import { getServerCapabilities } from "./serverCapabilities";
 
 import { registerRequireGraph } from "./requireGraph";
 
@@ -81,6 +83,7 @@ type ProjectContextInspection = {
 
 type ProjectContextCommandResult = {
   success: boolean;
+  automatic?: boolean;
   command?: string;
   outputPath?: string;
   error?: string;
@@ -250,9 +253,18 @@ const registerProjectContextCommands = (languageClient: LanguageClient) => {
             "luduvo.refreshProjectContext",
             uri,
           );
-        if (!result.success || !result.command) {
+        if (!result.success) {
           vscode.window.showWarningMessage(
             result.error ?? "A world.dump command could not be generated.",
+          );
+          return;
+        }
+        if (result.automatic) {
+          return;
+        }
+        if (!result.command) {
+          vscode.window.showWarningMessage(
+            "A world.dump command could not be generated.",
           );
           return;
         }
@@ -437,24 +449,13 @@ const isCrashReportingEnabled = () => {
   return config.get("crashReporting.enabled", false);
 };
 
-const DO_NOT_SHOW_CRASH_REPORTING_SUGGESTION_KEY =
-  "doNotShowCrashReportingSuggestion";
-
-const shouldShowEnableCrashReportsMessage = (
-  context: vscode.ExtensionContext,
-) => {
-  return !context.globalState.get<boolean>(
-    DO_NOT_SHOW_CRASH_REPORTING_SUGGESTION_KEY,
-  );
-};
-
 class ClientErrorHandler implements ErrorHandler {
   private readonly restarts: number[];
   private recommendedCrashReporting: boolean = false;
 
   constructor(
-    private context: vscode.ExtensionContext,
     private maxRestartCount: number,
+    private crashReportingAvailable: boolean,
   ) {
     this.restarts = [];
   }
@@ -472,34 +473,26 @@ class ClientErrorHandler implements ErrorHandler {
 
   public closed(): CloseHandlerResult {
     if (
+      this.crashReportingAvailable &&
       !this.recommendedCrashReporting &&
-      !isCrashReportingEnabled() &&
-      shouldShowEnableCrashReportsMessage(this.context)
+      !isCrashReportingEnabled()
     ) {
       this.recommendedCrashReporting = true;
-      vscode.window
-        .showInformationMessage(
-          "The Luau Language server exited unexpected. Would you like to enable crash reporting?",
-          "Enable",
-          "Not now",
-          "Do not show again",
-        )
-        .then((value) => {
-          if (value === "Enable") {
-            vscode.workspace
-              .getConfiguration(`${EDITOR_NAMESPACE}.server`)
-              .update(
-                "crashReporting.enabled",
-                true,
-                vscode.ConfigurationTarget.Global,
-              );
-          } else if (value === "Do not show again") {
-            this.context.globalState.update(
-              DO_NOT_SHOW_CRASH_REPORTING_SUGGESTION_KEY,
+      showNotification(
+        "server.crash-reporting-suggestion",
+        "The Luduvo Language Server exited unexpectedly. Would you like to enable crash reporting to the endpoint configured by this server's distributor?",
+        ["Enable", "Not now"],
+      ).then((value) => {
+        if (value === "Enable") {
+          vscode.workspace
+            .getConfiguration(`${EDITOR_NAMESPACE}.server`)
+            .update(
+              "crashReporting.enabled",
               true,
+              vscode.ConfigurationTarget.Global,
             );
-          }
-        });
+        }
+      });
     }
 
     this.restarts.push(Date.now());
@@ -809,7 +802,8 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
     addArg("--delay-startup");
   }
 
-  if (isCrashReportingEnabled()) {
+  const serverCapabilities = await getServerCapabilities(serverBinPath);
+  if (serverCapabilities.crashReporting && isCrashReportingEnabled()) {
     addArg("--enable-crash-reporting");
     addArg(
       `--crash-report-directory=${vscode.Uri.joinPath(context.globalStorageUri, "sentry").fsPath}`,
@@ -894,7 +888,7 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
     markdown: {
       supportHtml: true,
     },
-    errorHandler: new ClientErrorHandler(context, 4),
+    errorHandler: new ClientErrorHandler(4, serverCapabilities.crashReporting),
     middleware: {
       provideOnTypeFormattingEdits: onTypeFormattingMiddleware,
     },
@@ -911,6 +905,14 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
 
   // Register commands
   client.onNotification("$/command", (params) => {
+    if (params.command === "luduvo-lsp.suppressNotification") {
+      if (typeof params.data === "string") {
+        void suppressNotification(params.data).catch((error) => {
+          console.error("Could not save notification suppression", error);
+        });
+      }
+      return;
+    }
     const data =
       params.command === "workbench.action.openSettings" &&
       typeof params.data === "string"
@@ -1089,7 +1091,14 @@ export async function activate(context: vscode.ExtensionContext) {
         e.affectsConfiguration(`${EDITOR_NAMESPACE}.types`) ||
         e.affectsConfiguration(`${EDITOR_NAMESPACE}.platform.type`) ||
         e.affectsConfiguration(`${EDITOR_NAMESPACE}.analyzeLuaFiles`) ||
-        e.affectsConfiguration(`${EDITOR_NAMESPACE}.platform.luduvo`)
+        Object.keys(
+          context.extension.packageJSON.contributes.configuration.properties,
+        ).some(
+          (key) =>
+            key.startsWith(`${EDITOR_NAMESPACE}.platform.luduvo.`) &&
+            key !== `${EDITOR_NAMESPACE}.platform.luduvo.notifications` &&
+            e.affectsConfiguration(key),
+        )
       ) {
         vscode.window
           .showInformationMessage(

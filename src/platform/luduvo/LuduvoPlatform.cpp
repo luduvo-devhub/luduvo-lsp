@@ -1,4 +1,5 @@
 #include "Platform/luduvo/LuduvoPlatform.hpp"
+#include "Platform/luduvo/LuduvoNotifications.hpp"
 #include "Platform/luduvo/diagnostics/LuduvoDiagnosticAdapter.hpp"
 #include "Platform/luduvo/LuduvoLifecycle.hpp"
 #include "Platform/luduvo/LuduvoDefinitionResolver.hpp"
@@ -13,9 +14,36 @@
 #include <array>
 #include <cctype>
 #include <filesystem>
+#include <string_view>
 
 static constexpr const char* kServerEnvironment = "LuduvoServer";
 static constexpr const char* kClientEnvironment = "LuduvoClient";
+static constexpr std::string_view kAutoDumpStartedNotification = "context.autodump-started";
+static constexpr std::string_view kAutoDumpFailedNotification = "context.autodump-failed";
+static constexpr std::string_view kContextUpdatedNotification = "context.updated";
+static constexpr std::string_view kContextFilesAddedNotification = "context.files-added";
+static constexpr std::string_view kContextRefreshRequiredNotification = "context.refresh-required";
+static constexpr std::string_view kContextStateNotification = "context.state";
+static constexpr std::string_view kContextSelectionRequiredNotification = "context.selection-required";
+static constexpr std::string_view kContextErrorNotification = "context.error";
+static constexpr std::string_view kContextTrackingStartedNotification = "context.project-tracking-started";
+static constexpr std::string_view kContextTrackingStoppedNotification = "context.project-tracking-stopped";
+static constexpr std::string_view kContextStaleNotification = "context.project-stale";
+
+static void sendManualDumpRequest(
+    Client* client, const luduvo::WorldDumpRequest& request, std::string message, std::string_view notificationId, bool showPopup)
+{
+    message += "\n" + request.command;
+    const luduvo::NotificationSender sender(client, {{std::string(notificationId), showPopup}});
+    sender.request(notificationId, lsp::MessageType::Warning, message, {{"Copy command"}, {"Copy output path"}},
+        [client, command = request.command, outputPath = request.outputPath](const JsonRpcMessage& response)
+        {
+            if (!response.result || response.result->is_null())
+                return;
+            const std::string title = response.result->get<lsp::MessageActionItem>().title;
+            client->sendNotification("$/command", json{{"command", "luduvo-lsp.copyText"}, {"data", title == "Copy command" ? command : outputPath}});
+        });
+}
 
 static bool isAutorunScriptPath(const std::string& path)
 {
@@ -35,6 +63,36 @@ static bool isAutorunScriptPath(const std::string& path)
 
 LUAU_FASTFLAG(LuauSolverV2)
 
+static bool startAutomaticDump(Client* client, const std::shared_ptr<luduvo::ContextHelperSession>& session, const std::weak_ptr<int>& lifetime,
+    const luduvo::WorldDumpRequest& request, const std::map<std::string, bool>& notifications);
+
+static void handleStaleProject(Client* client, const std::weak_ptr<int>& lifetime, const std::weak_ptr<luduvo::ContextHelperSession>& session,
+    const std::shared_ptr<luduvo::ContextProvider>& provider, const ClientLuduvoContextConfiguration& context,
+    const std::map<std::string, bool>& notifications, const luduvo::ContextClientProject& project)
+{
+    const auto request = provider->createProjectDumpRequest(project.id);
+    if (!request)
+        return;
+    if (!context.lazyRefresh && context.autoDump)
+        if (auto helper = session.lock(); helper && startAutomaticDump(client, helper, lifetime, *request, notifications))
+            return;
+    const luduvo::NotificationSender sender(client, notifications);
+    sender.request(kContextStaleNotification, lsp::MessageType::Info, "Project context for '" + project.name + "' is stale.",
+        {{"Autodump"}, {"Manual dump command"}},
+        [client, lifetime, session, provider, notifications, projectId = project.id](const JsonRpcMessage& response)
+        {
+            if (lifetime.expired() || !response.result || response.result->is_null())
+                return;
+            const auto request = provider->createProjectDumpRequest(projectId);
+            if (!request)
+                return;
+            if (response.result->get<lsp::MessageActionItem>().title == "Autodump")
+                if (auto helper = session.lock(); helper && startAutomaticDump(client, helper, lifetime, *request, notifications))
+                    return;
+            sendManualDumpRequest(client, *request, "Run this command in Luduvo Studio:", kContextRefreshRequiredNotification, true);
+        });
+}
+
 LuduvoPlatform::LuduvoPlatform(const ClientLuduvoConfiguration& configuration, WorkspaceFileResolver* fileResolver, WorkspaceFolder* workspaceFolder)
     : LSPPlatform(fileResolver, workspaceFolder)
     , configuration(configuration)
@@ -46,12 +104,14 @@ LuduvoPlatform::LuduvoPlatform(const ClientLuduvoConfiguration& configuration, W
 
 void LuduvoPlatform::configureContext()
 {
+    contextCallbackLifetime.reset();
     contextNotificationSubscription.reset();
     contextProvider.reset();
     contextHelperSession.reset();
     reportedContextStates.clear();
     if (!configuration.context.enabled || !workspaceFolder || workspaceFolder->rootUri.scheme != "file")
         return;
+    contextCallbackLifetime = std::make_shared<int>(0);
 
     contextProvider = std::make_shared<luduvo::ContextProvider>(
         luduvo::defaultContextStateDirectory(configuration.directories.local, configuration.directories.context), workspaceFolder->rootUri.fsPath());
@@ -60,17 +120,35 @@ void LuduvoPlatform::configureContext()
     contextHelperSession = luduvo::acquireContextHelper(configuration, &helperError);
     if (!contextHelperSession && !helperError.empty())
         workspaceFolder->client->sendLogMessage(lsp::MessageType::Warning, "Luduvo context helper is unavailable: " + helperError);
+    subscribeContextNotifications();
+    updateContextRegistration();
+}
+
+void LuduvoPlatform::subscribeContextNotifications()
+{
+    contextNotificationSubscription.reset();
     if (contextHelperSession)
     {
         Client* client = workspaceFolder->client;
+        const std::weak_ptr<int> lifetime = contextCallbackLifetime;
+        const std::map<std::string, bool> notificationOverrides = configuration.notifications;
+        const std::weak_ptr<luduvo::ContextHelperSession> helperSession = contextHelperSession;
+        const auto provider = contextProvider;
+        const auto context = configuration.context;
         contextNotificationSubscription = luduvo::subscribeContextUpdates(contextHelperSession, client,
-            [client](const luduvo::ContextUpdates& updates)
+            [client, lifetime, notificationOverrides, helperSession, provider, context](const luduvo::ContextUpdates& updates)
             {
-                std::vector<std::string> messages;
+                if (lifetime.expired())
+                    return;
+                for (const auto& project : updates.staleProjects)
+                    handleStaleProject(client, lifetime, helperSession, provider, context, notificationOverrides, project);
+                const luduvo::NotificationSender sender(client, notificationOverrides);
                 if (updates.updatedWorlds.size() == 1)
-                    messages.push_back("Updated project context for '" + updates.updatedWorlds.front() + "' from a new world dump.");
+                    sender.show(kContextUpdatedNotification, lsp::MessageType::Info,
+                        "Updated project context for '" + updates.updatedWorlds.front() + "' from a new world dump.");
                 else if (!updates.updatedWorlds.empty())
-                    messages.push_back("Updated project context for " + std::to_string(updates.updatedWorlds.size()) + " projects from new world dumps.");
+                    sender.show(kContextUpdatedNotification, lsp::MessageType::Info,
+                        "Updated project context for " + std::to_string(updates.updatedWorlds.size()) + " projects from new world dumps.");
 
                 size_t inferredCount = 0;
                 for (const auto& project : updates.inferredScripts)
@@ -79,21 +157,99 @@ void LuduvoPlatform::configureContext()
                 {
                     const auto& inferred = updates.inferredScripts.front();
                     const std::string name = std::filesystem::u8path(inferred.scripts.front()).filename().generic_u8string();
-                    messages.push_back("Added '" + name + "' to project context for '" + inferred.projectName + "'.");
+                    sender.show(kContextFilesAddedNotification, lsp::MessageType::Info,
+                        "Added '" + name + "' to project context for '" + inferred.projectName + "'.");
                 }
                 else if (inferredCount > 1)
-                    messages.push_back("Added " + std::to_string(inferredCount) + " inferred files to project context across " +
-                                       std::to_string(updates.inferredScripts.size()) +
-                                       (updates.inferredScripts.size() == 1 ? " project." : " projects."));
-
-                if (messages.empty())
-                    return;
-                std::string message = messages.front();
-                for (size_t index = 1; index < messages.size(); ++index)
-                    message += " " + messages[index];
-                client->sendWindowMessage(lsp::MessageType::Info, message);
+                    sender.show(kContextFilesAddedNotification, lsp::MessageType::Info,
+                        "Added " + std::to_string(inferredCount) + " inferred files to project context across " +
+                            std::to_string(updates.inferredScripts.size()) + (updates.inferredScripts.size() == 1 ? " project." : " projects."));
             });
     }
+}
+
+void LuduvoPlatform::updateContextRegistration()
+{
+    if (!contextProvider || !contextHelperSession || !workspaceFolder)
+        return;
+
+    std::vector<std::string> scripts(openContextScripts.begin(), openContextScripts.end());
+    std::string error;
+    const std::vector<luduvo::ContextClientProject> projects = contextProvider->projectsForScripts(scripts, &error);
+    if (!error.empty())
+    {
+        sendPassiveNotification(kContextErrorNotification, lsp::MessageType::Warning, "Luduvo project tracking could not be updated: " + error);
+        return;
+    }
+
+    const luduvo::ContextClientUpdate update = luduvo::updateContextClientProjects(contextHelperSession, workspaceFolder->rootUri.fsPath(), projects);
+    if (!update.result.success)
+    {
+        sendPassiveNotification(kContextErrorNotification, lsp::MessageType::Warning,
+            "Luduvo project tracking could not be updated: " + update.result.error.value_or("unknown error"));
+        return;
+    }
+
+    for (const luduvo::ContextClientProject& project : update.startedTracking)
+        sendPassiveNotification(
+            kContextTrackingStartedNotification, lsp::MessageType::Info, "Started tracking Luduvo project context for '" + project.name + "'.");
+    for (const luduvo::ContextClientProject& project : update.stoppedTracking)
+        sendPassiveNotification(
+            kContextTrackingStoppedNotification, lsp::MessageType::Info, "Stopped tracking Luduvo project context for '" + project.name + "'.");
+}
+
+bool LuduvoPlatform::notificationEnabled(std::string_view id) const
+{
+    return luduvo::NotificationSender(workspaceFolder ? workspaceFolder->client : nullptr, configuration.notifications).enabled(id);
+}
+
+void LuduvoPlatform::sendPassiveNotification(std::string_view id, lsp::MessageType type, const std::string& message) const
+{
+    if (!workspaceFolder)
+        return;
+    luduvo::NotificationSender(workspaceFolder->client, configuration.notifications).show(id, type, message);
+}
+
+void LuduvoPlatform::showManualDumpRequest(const luduvo::WorldDumpRequest& request, std::string message, std::string_view notificationId) const
+{
+    if (!workspaceFolder)
+        return;
+    sendManualDumpRequest(workspaceFolder->client, request, std::move(message), notificationId, notificationEnabled(notificationId));
+}
+
+bool LuduvoPlatform::startAutomaticDump(const luduvo::WorldDumpRequest& request) const
+{
+    if (!workspaceFolder || !contextHelperSession)
+        return false;
+    return ::startAutomaticDump(workspaceFolder->client, contextHelperSession, contextCallbackLifetime, request, configuration.notifications);
+}
+
+static bool startAutomaticDump(Client* client, const std::shared_ptr<luduvo::ContextHelperSession>& session, const std::weak_ptr<int>& lifetime,
+    const luduvo::WorldDumpRequest& request, const std::map<std::string, bool>& notifications)
+{
+    const luduvo::NotificationSender sender(client, notifications);
+    const bool showFailure = sender.enabled(kAutoDumpFailedNotification);
+    const luduvo::AutomaticWorldDumpRequestStatus status = luduvo::requestAutomaticWorldDump(session, request,
+        [client, lifetime, request, showFailure](const luduvo::AutomaticWorldDumpResult& result)
+        {
+            if (result.success || lifetime.expired())
+                return;
+            sendManualDumpRequest(client, request,
+                "Automatic project-context refresh for '" + request.projectName + "' failed: " + result.error +
+                    "\nOpen that project in Luduvo Studio and run this command instead:",
+                kAutoDumpFailedNotification, showFailure);
+        });
+    if (status == luduvo::AutomaticWorldDumpRequestStatus::AlreadyRunning)
+    {
+        sender.log(
+            kAutoDumpStartedNotification, lsp::MessageType::Info, "A project-context refresh for '" + request.projectName + "' is already running.");
+        return true;
+    }
+    if (status == luduvo::AutomaticWorldDumpRequestStatus::Failed)
+        return false;
+    const std::string message = "Refreshing project context for '" + request.projectName + "' with Luduvo Editor.";
+    sender.show(kAutoDumpStartedNotification, lsp::MessageType::Info, message);
+    return true;
 }
 
 void LuduvoPlatform::reportConfigurationWarnings(std::string_view area, const std::vector<std::string>& warnings)
@@ -112,15 +268,16 @@ void LuduvoPlatform::reportConfigurationWarnings(std::string_view area, const st
     for (const std::string& warning : newWarnings)
         message += "\n- " + warning;
 
-    workspaceFolder->client->sendWindowMessageRequest(lsp::MessageType::Warning, message, {{"Open Luduvo Settings"}},
-        [client = workspaceFolder->client](const JsonRpcMessage& response)
-        {
-            if (!response.result || response.result->is_null())
-                return;
-            const auto action = response.result->get<lsp::MessageActionItem>();
-            if (action.title == "Open Luduvo Settings")
-                client->sendNotification("$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo"}});
-        });
+    luduvo::NotificationSender(workspaceFolder->client, configuration.notifications)
+        .request("configuration.invalid", lsp::MessageType::Warning, message, {{"Open Luduvo Settings"}},
+            [client = workspaceFolder->client](const JsonRpcMessage& response)
+            {
+                if (!response.result || response.result->is_null())
+                    return;
+                const auto action = response.result->get<lsp::MessageActionItem>();
+                if (action.title == "Open Luduvo Settings")
+                    client->sendNotification("$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo"}});
+            });
 }
 
 std::vector<LuduvoResolvedResourceBinding> LuduvoPlatform::resolveResourceBindings(
@@ -223,16 +380,17 @@ void LuduvoPlatform::reportDefinitionLoadWarnings(Client* client, const std::vec
     for (const std::string& warning : warnings)
         message += "\n" + warning;
 
-    client->sendWindowMessageRequest(lsp::MessageType::Warning, message, {{"Open Luduvo Settings"}},
-        [client](const JsonRpcMessage& response)
-        {
-            if (!response.result || response.result->is_null())
-                return;
-            const auto action = response.result->get<lsp::MessageActionItem>();
-            if (action.title == "Open Luduvo Settings")
-                client->sendNotification(
-                    "$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo.dataDirectory"}});
-        });
+    luduvo::NotificationSender(client, configuration.notifications)
+        .request("definitions.fallback", lsp::MessageType::Warning, message, {{"Open Luduvo Settings"}},
+            [client](const JsonRpcMessage& response)
+            {
+                if (!response.result || response.result->is_null())
+                    return;
+                const auto action = response.result->get<lsp::MessageActionItem>();
+                if (action.title == "Open Luduvo Settings")
+                    client->sendNotification(
+                        "$/command", json{{"command", "workbench.action.openSettings"}, {"data", "luau-lsp.platform.luduvo.dataDirectory"}});
+            });
 }
 
 std::optional<std::string> LuduvoPlatform::getEnvironmentForModule(const Luau::ModuleName& moduleName) const
@@ -255,12 +413,22 @@ std::optional<std::string> LuduvoPlatform::getEnvironmentForModule(const Luau::M
 void LuduvoPlatform::setupWithConfiguration(const ClientConfiguration& config)
 {
     const bool defaultChanged = configuration.definitions.defaultScriptSide != config.platform.luduvo.definitions.defaultScriptSide;
+    const bool contextChanged = !contextProvider || json(configuration.context) != json(config.platform.luduvo.context) ||
+                                json(configuration.directories) != json(config.platform.luduvo.directories);
+    const bool notificationsChanged = configuration.notifications != config.platform.luduvo.notifications;
     configuration = config.platform.luduvo;
+    if (workspaceFolder)
+        for (const auto& [id, enabled] : configuration.notifications)
+            if (enabled)
+                workspaceFolder->client->setNotificationSuppressed(id, false);
     const LuduvoDiagnosticConfigurationResult diagnosticConfiguration = resolveLuduvoDiagnosticConfiguration(configuration.diagnostics);
     diagnosticSettings = diagnosticConfiguration.settings;
     resourceCatalog.configure(configuration);
     bindings.configure(configuration);
-    configureContext();
+    if (contextChanged)
+        configureContext();
+    else if (notificationsChanged)
+        subscribeContextNotifications();
     reportedConfigurationWarnings.clear();
     reportConfigurationWarnings("diagnostics", diagnosticConfiguration.warnings);
     reportConfigurationWarnings("binding or resource", resourceCatalog.configurationWarnings());
@@ -342,14 +510,14 @@ void LuduvoPlatform::notifyContextState(const lsp::DocumentUri& uri, bool force)
     {
         const std::string state = uri.toString() + ":error:" + error;
         if (force || reportedContextStates.insert(state).second)
-            workspaceFolder->client->sendWindowMessage(lsp::MessageType::Warning, "Luduvo project context could not be read: " + error);
+            sendPassiveNotification(kContextErrorNotification, lsp::MessageType::Warning, "Luduvo project context could not be read: " + error);
         return;
     }
     if (candidates.empty())
     {
         if (force)
-            workspaceFolder->client->sendWindowMessage(
-                lsp::MessageType::Info, "No captured Luduvo project contains this script. Open or attach it in Luduvo Studio, then run world.dump.");
+            sendPassiveNotification(kContextStateNotification, lsp::MessageType::Info,
+                "No captured Luduvo project contains this script. Open or attach it in Luduvo Studio, then run world.dump.");
         return;
     }
     if (candidates.size() > 1)
@@ -357,6 +525,12 @@ void LuduvoPlatform::notifyContextState(const lsp::DocumentUri& uri, bool force)
         const std::string state = uri.toString() + ":ambiguous:" + std::to_string(candidates.size());
         if (!force && !reportedContextStates.insert(state).second)
             return;
+        if (!notificationEnabled(kContextSelectionRequiredNotification))
+        {
+            workspaceFolder->client->sendLogMessage(
+                lsp::MessageType::Info, "This script belongs to " + std::to_string(candidates.size()) + " captured Luduvo projects.");
+            return;
+        }
         if (candidates.size() <= 3)
         {
             std::vector<lsp::MessageActionItem> actions;
@@ -369,35 +543,37 @@ void LuduvoPlatform::notifyContextState(const lsp::DocumentUri& uri, bool force)
                 actions.push_back({title});
                 choices.emplace_back(std::move(title), candidate.project.id);
             }
-            workspaceFolder->client->sendWindowMessageRequest(lsp::MessageType::Info,
-                "This script belongs to more than one captured Luduvo project. Choose the project context to use.", actions,
-                [provider = std::weak_ptr<luduvo::ContextProvider>(contextProvider), scriptPath = uri.fsPath(), choices = std::move(choices)](
-                    const JsonRpcMessage& response)
-                {
-                    if (!response.result || response.result->is_null())
-                        return;
-                    const std::string title = response.result->get<lsp::MessageActionItem>().title;
-                    const auto choice = std::find_if(choices.begin(), choices.end(),
-                        [&](const auto& item)
-                        {
-                            return item.first == title;
-                        });
-                    if (choice != choices.end())
-                        if (const auto locked = provider.lock())
-                            locked->select(scriptPath, choice->second);
-                });
+            luduvo::NotificationSender(workspaceFolder->client, configuration.notifications)
+                .request(kContextSelectionRequiredNotification, lsp::MessageType::Info,
+                    "This script belongs to more than one captured Luduvo project. Choose the project context to use.", actions,
+                    [provider = std::weak_ptr<luduvo::ContextProvider>(contextProvider), scriptPath = uri.fsPath(), choices = std::move(choices)](
+                        const JsonRpcMessage& response)
+                    {
+                        if (!response.result || response.result->is_null())
+                            return;
+                        const std::string title = response.result->get<lsp::MessageActionItem>().title;
+                        const auto choice = std::find_if(choices.begin(), choices.end(),
+                            [&](const auto& item)
+                            {
+                                return item.first == title;
+                            });
+                        if (choice != choices.end())
+                            if (const auto locked = provider.lock())
+                                locked->select(scriptPath, choice->second);
+                    });
         }
         else
         {
-            workspaceFolder->client->sendWindowMessageRequest(lsp::MessageType::Info,
-                "This script belongs to " + std::to_string(candidates.size()) +
-                    " captured Luduvo projects. Use Choose Luduvo Project Context to select one.",
-                {{"Choose Project Context"}},
-                [client = workspaceFolder->client, uri](const JsonRpcMessage& response)
-                {
-                    if (response.result && !response.result->is_null())
-                        client->sendNotification("$/command", json{{"command", "luduvo-lsp.chooseProjectContext"}, {"data", uri.toString()}});
-                });
+            luduvo::NotificationSender(workspaceFolder->client, configuration.notifications)
+                .request(kContextSelectionRequiredNotification, lsp::MessageType::Info,
+                    "This script belongs to " + std::to_string(candidates.size()) +
+                        " captured Luduvo projects. Use Choose Luduvo Project Context to select one.",
+                    {{"Choose Project Context"}},
+                    [client = workspaceFolder->client, uri](const JsonRpcMessage& response)
+                    {
+                        if (response.result && !response.result->is_null())
+                            client->sendNotification("$/command", json{{"command", "luduvo-lsp.chooseProjectContext"}, {"data", uri.toString()}});
+                    });
         }
         return;
     }
@@ -406,51 +582,44 @@ void LuduvoPlatform::notifyContextState(const lsp::DocumentUri& uri, bool force)
     if (project.fresh)
     {
         if (force)
-            workspaceFolder->client->sendWindowMessage(
-                lsp::MessageType::Info, "Luduvo project context for '" + project.name + "' is current as of the last world.dump.");
+            sendPassiveNotification(kContextStateNotification, lsp::MessageType::Info,
+                "Luduvo project context for '" + project.name + "' is current as of the last world.dump.");
         return;
     }
 
     std::string catalogError;
-    const auto catalog = contextProvider->contextStore().load(&catalogError);
-    if (!catalog)
-    {
-        workspaceFolder->client->sendWindowMessage(lsp::MessageType::Warning, "Luduvo project context could not be read: " + catalogError);
-        return;
-    }
-    const bool active = catalog->activeProjectId == project.id;
-    const std::string state = uri.toString() + ":stale:" + project.id + ":" + project.staleReason + (active ? ":active" : ":inactive");
+    const std::string state = uri.toString() + ":stale:" + project.id + ":" + project.staleReason;
     if (!force && !reportedContextStates.insert(state).second)
         return;
-    if (!active)
-    {
-        workspaceFolder->client->sendWindowMessage(
-            lsp::MessageType::Warning, "The captured project context for '" + project.name +
-                                           "' is stale, but that project is not active in Luduvo Studio. Open it there before refreshing the dump.");
-        return;
-    }
 
     const auto request = contextProvider->createDumpRequest(uri.fsPath(), &error);
     if (!request)
     {
-        workspaceFolder->client->sendWindowMessage(lsp::MessageType::Warning, "Luduvo project context needs refreshing. " + error);
+        sendPassiveNotification(kContextRefreshRequiredNotification, lsp::MessageType::Warning, "Luduvo project context needs refreshing. " + error);
         return;
     }
-    const std::string message = "Luduvo project context for '" + project.name + "' is stale. Run this command in Luduvo Studio:\n" + request->command;
-    workspaceFolder->client->sendWindowMessageRequest(lsp::MessageType::Warning, message, {{"Copy command"}, {"Copy output path"}},
-        [client = workspaceFolder->client, command = request->command, outputPath = request->outputPath](const JsonRpcMessage& response)
-        {
-            if (!response.result || response.result->is_null())
-                return;
-            const std::string title = response.result->get<lsp::MessageActionItem>().title;
-            const std::string value = title == "Copy command" ? command : outputPath;
-            client->sendNotification("$/command", json{{"command", "luduvo-lsp.copyText"}, {"data", value}});
-        });
+    if (configuration.context.autoDump && startAutomaticDump(*request))
+        return;
+    showManualDumpRequest(*request,
+        "Luduvo project context for '" + project.name + "' is stale. Run this command in Luduvo Studio:", kContextRefreshRequiredNotification);
 }
 
 void LuduvoPlatform::onDidOpenTextDocument(const lsp::DocumentUri& uri)
 {
+    if (uri.scheme == "file")
+    {
+        openContextScripts.insert(luduvo::normalizeContextPath(uri.fsPath()));
+        updateContextRegistration();
+    }
     notifyContextState(uri, false);
+}
+
+void LuduvoPlatform::onDidCloseTextDocument(const lsp::DocumentUri& uri)
+{
+    if (uri.scheme != "file")
+        return;
+    openContextScripts.erase(luduvo::normalizeContextPath(uri.fsPath()));
+    updateContextRegistration();
 }
 
 std::optional<json> LuduvoPlatform::handleWorkspaceCommand(std::string_view command, const std::vector<json>& arguments)
@@ -471,6 +640,8 @@ std::optional<json> LuduvoPlatform::handleWorkspaceCommand(std::string_view comm
             return json{{"enabled", true}, {"error", std::move(error)}};
         json result = *status;
         result["enabled"] = true;
+        result["configuration"] = {{"enabled", configuration.context.enabled}, {"autoDump", configuration.context.autoDump},
+            {"lazyRefresh", configuration.context.lazyRefresh}};
         return result;
     }
 
@@ -540,6 +711,8 @@ std::optional<json> LuduvoPlatform::handleWorkspaceCommand(std::string_view comm
         const auto request = contextProvider->createDumpRequest(*scriptPath, &error);
         if (!request)
             return json{{"success", false}, {"error", error}};
+        if (configuration.context.autoDump && startAutomaticDump(*request))
+            return json{{"success", true}, {"automatic", true}, {"projectId", request->projectId}};
         return json{{"success", true}, {"command", request->command}, {"outputPath", request->outputPath}, {"projectId", request->projectId}};
     }
     return std::nullopt;

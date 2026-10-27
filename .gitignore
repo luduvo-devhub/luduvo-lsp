@@ -58,3 +58,6 @@ trace.json
 
 # Editor settings
 /.zed/
+
+# Testing/Debug output
+*.log

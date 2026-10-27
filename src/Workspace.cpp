@@ -166,6 +166,7 @@ void WorkspaceFolder::onDidSaveTextDocument(const lsp::DocumentUri& uri, const l
 
 void WorkspaceFolder::closeTextDocument(const lsp::DocumentUri& uri)
 {
+    platform->onDidCloseTextDocument(uri);
     fileResolver.managedFiles.erase(uri);
 
     // Mark the module as dirty as we no longer track its changes

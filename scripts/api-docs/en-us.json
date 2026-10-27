@@ -114265,7 +114265,7 @@
     "code_sample": ""
   },
   "@roblox/global/Enum.ScreenOrientation": {
-    "documentation": "The preference of in-game screen orientation on hand-held devices.",
+    "documentation": "The preference of in-game screen orientation on hand-hostage devices.",
     "keys": {
       "LandscapeLeft": "@roblox/enum/ScreenOrientation.LandscapeLeft",
       "LandscapeRight": "@roblox/enum/ScreenOrientation.LandscapeRight",

@@ -265,6 +265,8 @@ public:
 
     virtual void onDidOpenTextDocument(const lsp::DocumentUri& uri) {}
 
+    virtual void onDidCloseTextDocument(const lsp::DocumentUri& uri) {}
+
     virtual void setupWithConfiguration(const ClientConfiguration& config) {}
 
     virtual std::unique_ptr<Luau::RequireSuggester> getRequireSuggester();

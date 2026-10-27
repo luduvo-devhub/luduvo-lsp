@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Per-notification suppression now exists through `luau-lsp.platform.luduvo.notifications`! Most notifications Luduvo will send are from the context helper, and during testing I found that the notifications can get quite annoying depending on your config. The shared notification system also adds **Do not show again** automatically to notifications that you can supress if you are on VSCode. Check the README for more details on how to use it
+- After some embarrassingly simple R&D done with the help of @TechHog, Luduvo LSP can now automatically refresh world dumps in the "background" (you may notice a flying baseplate in the top left corner of your screen) without you needing to manually trigger it through `luau-lsp.platform.luduvo.context.autoDump`. The existing manual-command workflow still exists as a fallback if automatic dumps fail or when autodumping is disabled
+  - Note that while autodumps do not automatically save your project, they will (temporarily) rename the original autosave inside its project directory and restore it afterward, assuming that there are no later problems. The LSP will tell you if something goes wrong, and even if it does, the autosave editing is designed in such a way that are very easy to recover. Conflicting autosaves are preserved beside the project with a timestamp (milliseconds are included for collision reasons)
+- `luau-lsp.platform.luduvo.context.lazyRefresh`, which makes it so context only ever refreshes whenever the LSP actually needs to use it. Disabling it with `context.autoDump` enabled makes it so projects are refreshed as soon as they become stale (which will happen often)
+  - A new stale-project notification with Autodump and Manual dump options can appear if the project becomes stale while lazy refreshing is disabled
+- `context status` includes reporting of the 2 new `context.autoDump` and `context.lazyRefresh` settings for better debugging
+- `--section` got completely reworked and now refers to the actual sections of the report instead of being a junk drawer for every section that I deemed too big to include in a summary. Every relevant command supports this feature. You can also now see all sectionable sections in any given report via `--list-sections` on context commands that produce reports
+- Every report across the board has had sweeping changes made to them to make them more useful. To compensate for the extra information, all reports (save for parse and status) now includes a summary section. You're welcome, totally real people who will use these commands.
+- The LSP intelligently switches to the JSON output formatter when `--output` ends in a JSON file extension
+- `context parse` actually tells you when it successfully writes content to an output file along with if there were any errors while doing so
+
+### Changed
+
+- All notifications now report their new notification IDs so its easier to suppress the ones you don't like
+- The context helper has been simplified dramatically, as I found that the old one that relied on studio logs and attempted to track which projects were open on which editor was pretty dumb when you remember that people can have multiple projects open at the same time. Especially since `studio.log` doesn't actually tell you when a project closes, nor does it tell you the actual filepath of the file it opens/closes (problematic because Luduvo allows identical names for projects). This is what happens when you overengineer a problem... The context helper still watches `commands.log`, but `studio.log` is no longer used and the LSP no longer tries to infer which projects you have open in Studio
+  - The new method of tracking now relies on LSP registrations to derive "open" projects from the scripts you open in your code.
+- Any potential world-changing commands reported in the command log now stale all tracked projects indiscriminately because I have no idea how many instances of Luduvo are running and modifying the same shared command log at once. Expect projects to need to refresh significantly more frequently than before
+- `script.attach` and files created immediately after a `script.client` or `script.server` commands narrow staleness only to the affected project, provided that no other complications arise
+- The `--studio-log` context helper argument is dead, alongside `luau-lsp.platform.luduvo.context.studioLog` if I ever added it (I know I was considering it at some point)
+- Projects now stale when projects are opened for the first time by a live LSP after a period without any LSP tracking it
+- Dumps now use project-specific output paths and publish their snapshots using a unique project ID
+- `context status` got completely overhauled to better focus on general meta information rather than general project information. It now reports helper health, registered LSP clients and their referenced projects, refresh configuration, and cleanup information. The old stored project overview remains available through argless `context inspect` commands
+- `context inspect dump` now gives more usful information when outputting it through `--format text`. It reports project scripts, attached instances, full captured instance listings, and a summary
+
+### Fixed
+
+- Luduvo binaries can no longer harass upstream's luau-lsp Sentry crash reporter. You have to provide the `LSP_SENTRY_DSN` yourself now during building
+- `context inspect dump` now uses associated project files if it is able to make the connection
+- Unavailable project paths and counts appear as `unknown` in text and `null` in JSON instead of giving empty strings or lying to you with misleading 0s
+- The helper's idle timeout now measures time without live LSP clients rather than resetting only when dead registrations are removed
+- Command-log dump imports no longer break when multiple projects attempt to dump at the same time, causing the `ok` to be desynced from where it is expected
+
 ## [1.71.0L-alpha] - 2026-10-26
 
 ### Added

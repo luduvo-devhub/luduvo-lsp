@@ -1,7 +1,11 @@
 #include "Platform/luduvo/context/LuduvoContextReport.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
+#include <functional>
+#include <map>
+#include <set>
 #include <sstream>
 
 namespace luduvo
@@ -16,8 +20,13 @@ static std::string displayValue(const json& value)
     if (value.is_boolean())
         return value.get<bool>() ? "yes" : "no";
     if (value.is_null())
-        return "none";
+        return "unknown";
     return value.dump();
+}
+
+static ReportField reportField(std::string name, const json& value)
+{
+    return {std::move(name), displayValue(value), value.is_null()};
 }
 
 static void renderNode(std::ostringstream& output, const ReportNode& node, const std::string& indentation, bool last, bool root)
@@ -29,7 +38,7 @@ static void renderNode(std::ostringstream& output, const ReportNode& node, const
         output << " [" << tag << ']';
     output << '\n';
 
-    const std::string childIndentation = root ? std::string{} : indentation + (last ? "    " : u8"\u2502   ");
+    const std::string childIndentation = root ? std::string{} : indentation + (last ? "    " : "|   ");
     const size_t itemCount = node.fields.size() + node.children.size();
     size_t itemIndex = 0;
     for (const ReportField& field : node.fields)
@@ -48,6 +57,117 @@ std::string renderReportText(const ReportNode& root)
     return output.str();
 }
 
+static std::string sectionSlug(std::string_view label)
+{
+    std::string result;
+    bool separator = false;
+    for (unsigned char character : label)
+    {
+        if (character == '(')
+            break;
+        if (std::isalnum(character))
+        {
+            if (separator && !result.empty())
+                result.push_back('-');
+            result.push_back(char(std::tolower(character)));
+            separator = false;
+        }
+        else
+            separator = true;
+    }
+    return result.empty() ? "section" : result;
+}
+
+static void assignReportSections(ReportNode& node, bool root = false)
+{
+    if (root)
+        node.section.clear();
+
+    std::map<std::string, size_t> duplicates;
+    for (ReportNode& child : node.children)
+    {
+        std::string sectionName = sectionSlug(child.label);
+        if (!child.section.empty())
+        {
+            const size_t separator = child.section.find_last_of('.');
+            sectionName = child.section.substr(separator == std::string::npos ? 0 : separator + 1);
+        }
+        const std::string base = node.section.empty() ? sectionName : node.section + "." + sectionName;
+        const size_t occurrence = ++duplicates[base];
+        child.section = occurrence == 1 ? base : base + "-" + std::to_string(occurrence);
+        assignReportSections(child);
+    }
+}
+
+static json reportNodeJson(const ReportNode& node)
+{
+    json result = {{"section", node.section}, {"label", node.label}, {"tags", node.tags}, {"fields", json::object()}, {"children", json::array()}};
+    for (const ReportField& field : node.fields)
+        result["fields"][field.name] = field.unknown ? json(nullptr) : json(field.value);
+    for (const ReportNode& child : node.children)
+        result["children"].push_back(reportNodeJson(child));
+    return result;
+}
+
+json reportToJson(const ReportNode& report)
+{
+    ReportNode root = report;
+    assignReportSections(root, true);
+    return reportNodeJson(root);
+}
+
+static void appendReportSections(const ReportNode& node, std::vector<std::pair<std::string, std::string>>& result)
+{
+    if (!node.section.empty())
+        result.emplace_back(node.section, node.label);
+    for (const ReportNode& child : node.children)
+        appendReportSections(child, result);
+}
+
+std::vector<std::pair<std::string, std::string>> listReportSections(ReportNode root)
+{
+    assignReportSections(root, true);
+    std::vector<std::pair<std::string, std::string>> result;
+    appendReportSections(root, result);
+    return result;
+}
+
+static std::optional<ReportNode> filterReportNode(const ReportNode& node, const std::set<std::string>& selected)
+{
+    if (selected.count(node.section))
+        return node;
+    ReportNode result = node;
+    result.fields.clear();
+    result.children.clear();
+    for (const ReportNode& child : node.children)
+        if (auto filtered = filterReportNode(child, selected))
+            result.children.push_back(std::move(*filtered));
+    if (result.children.empty())
+        return std::nullopt;
+    return result;
+}
+
+std::optional<ReportNode> selectReportSections(ReportNode root, const std::vector<std::string>& sections, std::string* error)
+{
+    assignReportSections(root, true);
+    if (sections.empty())
+        return root;
+
+    const auto available = listReportSections(root);
+    std::set<std::string> availableIds;
+    for (const auto& [id, _] : available)
+        availableIds.insert(id);
+    for (const std::string& section : sections)
+    {
+        if (availableIds.count(section))
+            continue;
+        if (error)
+            *error = "unknown report section '" + section + "'; use --list-sections to see valid section IDs";
+        return std::nullopt;
+    }
+    return filterReportNode(root, std::set<std::string>(sections.begin(), sections.end()));
+}
+
 static ReportNode scriptAttachmentNode(const json& attachment)
 {
     ReportNode result{attachment.value("name", "<unnamed>")};
@@ -58,9 +178,8 @@ static ReportNode scriptAttachmentNode(const json& attachment)
     if (const auto instanceId = attachment.find("instanceId"); instanceId != attachment.end())
         result.fields.push_back({"Instance ID", displayValue(*instanceId)});
     if (const auto position = attachment.find("position"); position != attachment.end() && position->is_object())
-        result.fields.push_back(
-            {"Position", displayValue(position->value("x", 0.0)) + ", " + displayValue(position->value("y", 0.0)) + ", " +
-                             displayValue(position->value("z", 0.0))});
+        result.fields.push_back({"Position", displayValue(position->value("x", 0.0)) + ", " + displayValue(position->value("y", 0.0)) + ", " +
+                                                 displayValue(position->value("z", 0.0))});
     if (const auto parent = attachment.find("parent"); parent != attachment.end() && parent->is_object())
     {
         ReportNode parentNode{"Parent: " + parent->value("name", "<unnamed>")};
@@ -85,15 +204,22 @@ static ReportNode scriptAttachmentNode(const json& attachment)
     return result;
 }
 
+static ReportNode buildProjectReport(const json& inspection, bool promoteContextTags);
+
 static ReportNode buildScriptInspectionReport(const json& inspection)
 {
     ReportNode root{"Script: " + inspection.value("inputPath", "<unknown>")};
-    root.fields.push_back({"Side", inspection.value("side", "unspecified")});
+    ReportNode summary{"Summary"};
+    summary.section = "summary";
+    summary.fields.push_back({"Side", inspection.value("side", "unspecified")});
+    summary.fields.push_back({"Matching projects", std::to_string(inspection.value("projectCount", size_t(0)))});
+    root.children.push_back(std::move(summary));
 
     std::vector<json> projects;
     if (const auto values = inspection.find("projects"); values != inspection.end() && values->is_array())
         projects.assign(values->begin(), values->end());
-    std::sort(projects.begin(), projects.end(), [](const json& left, const json& right)
+    std::sort(projects.begin(), projects.end(),
+        [](const json& left, const json& right)
         {
             const std::string leftName = left.value("name", "");
             const std::string rightName = right.value("name", "");
@@ -110,8 +236,6 @@ static ReportNode buildScriptInspectionReport(const json& inspection)
         ReportNode projectNode{project.value("name", "<unnamed>")};
         if (project.value("selected", false))
             projectNode.tags.push_back("active in LSP");
-        if (project.value("active", false))
-            projectNode.tags.push_back("active in Studio");
         projectNode.tags.push_back(project.value("fresh", false) ? "fresh" : "stale");
         projectNode.fields.push_back({"Directory", project.value("directory", "")});
         projectList.children.push_back(std::move(projectNode));
@@ -136,11 +260,52 @@ static ReportNode buildWorldDumpReport(const json& inspection)
     ReportNode root{"World dump: " + inspection.value("inputPath", "<unknown>")};
     if (const auto summary = inspection.find("summary"); summary != inspection.end() && summary->is_object())
     {
-        root.fields.push_back({"Tick", displayValue(summary->value("tick", 0))});
-        root.fields.push_back({"Command sequence", displayValue(summary->value("commandSequence", 0))});
-        root.fields.push_back({"Instances", displayValue(summary->value("instanceCount", 0))});
-        root.fields.push_back({"Root instances", displayValue(summary->value("rootInstanceCount", 0))});
-        root.fields.push_back({"Script attachments", displayValue(summary->value("scriptAttachmentCount", 0))});
+        ReportNode summaryNode{"Summary"};
+        summaryNode.section = "summary";
+        summaryNode.fields.push_back({"Tick", displayValue(summary->value("tick", 0))});
+        summaryNode.fields.push_back({"Command sequence", displayValue(summary->value("commandSequence", 0))});
+        summaryNode.fields.push_back({"Instances", displayValue(summary->value("instanceCount", 0))});
+        summaryNode.fields.push_back({"Root instances", displayValue(summary->value("rootInstanceCount", 0))});
+        summaryNode.fields.push_back({"Script attachments", displayValue(summary->value("scriptAttachmentCount", 0))});
+        root.children.push_back(std::move(summaryNode));
+    }
+    if (const auto instances = inspection.find("instances"); instances != inspection.end() && instances->is_array())
+    {
+        std::map<uint64_t, std::vector<const json*>> children;
+        for (const json& instance : *instances)
+            children[instance.value("parentNodeId", uint64_t(0))].push_back(&instance);
+        std::function<ReportNode(const json&)> buildInstance = [&](const json& instance)
+        {
+            ReportNode node = scriptAttachmentNode(instance);
+            for (const json* child : children[instance.value("nodeId", uint64_t(0))])
+                node.children.push_back(buildInstance(*child));
+            return node;
+        };
+        ReportNode hierarchy{"Instances (" + std::to_string(instances->size()) + ")"};
+        hierarchy.section = "instances";
+        for (const json* instance : children[0])
+            hierarchy.children.push_back(buildInstance(*instance));
+        root.children.push_back(std::move(hierarchy));
+    }
+    if (const auto scripts = inspection.find("scripts"); scripts != inspection.end() && scripts->is_array())
+    {
+        ReportNode scriptList{"Scripts (" + std::to_string(scripts->size()) + ")"};
+        scriptList.section = "scripts";
+        for (const json& script : *scripts)
+            scriptList.children.push_back({displayValue(script)});
+        root.children.push_back(std::move(scriptList));
+    }
+    if (const auto projects = inspection.find("projects"); projects != inspection.end() && projects->is_array() && !projects->empty())
+    {
+        ReportNode projectList{"Associated projects (" + std::to_string(projects->size()) + ")"};
+        projectList.section = "projects";
+        for (const json& project : *projects)
+        {
+            ReportNode projectNode = buildProjectReport(project, true);
+            projectNode.label = project.value("name", "<unnamed>");
+            projectList.children.push_back(std::move(projectNode));
+        }
+        root.children.push_back(std::move(projectList));
     }
     return root;
 }
@@ -148,14 +313,17 @@ static ReportNode buildWorldDumpReport(const json& inspection)
 static ReportNode buildProjectReport(const json& inspection, bool promoteContextTags = false)
 {
     ReportNode root{"Project: " + inspection.value("name", "<unnamed>")};
-    root.fields.push_back({"Directory", inspection.value("directory", "")});
-    root.fields.push_back({"Project file", inspection.value("projectFile", "")});
+    ReportNode summaryNode{"Summary"};
+    summaryNode.section = "summary";
+    summaryNode.fields.push_back(reportField("Directory", inspection.value("directory", json(nullptr))));
+    summaryNode.fields.push_back(reportField("Project file", inspection.value("projectFile", json(nullptr))));
     if (const auto summary = inspection.find("summary"); summary != inspection.end() && summary->is_object())
     {
-        root.fields.push_back({"Assets", displayValue(summary->value("assetCount", 0))});
-        root.fields.push_back({"Scripts", displayValue(summary->value("scriptCount", 0))});
-        root.fields.push_back({"Missing scripts", displayValue(summary->value("missingScriptCount", 0))});
+        summaryNode.fields.push_back(reportField("Assets", summary->value("assetCount", json(nullptr))));
+        summaryNode.fields.push_back(reportField("Scripts", summary->value("scriptCount", json(nullptr))));
+        summaryNode.fields.push_back(reportField("Missing scripts", summary->value("missingScriptCount", json(nullptr))));
     }
+    root.children.push_back(std::move(summaryNode));
     ReportNode scripts{"Project scripts"};
     const auto addScripts = [&](const char* field, const char* label, const char* tag)
     {
@@ -182,15 +350,11 @@ static ReportNode buildProjectReport(const json& inspection, bool promoteContext
     {
         if (promoteContextTags)
         {
-            if (context->value("active", false))
-                root.tags.push_back("active in Studio");
             root.tags.push_back(context->value("fresh", false) ? "fresh" : "stale");
         }
         ReportNode captured{"Captured context"};
         if (!promoteContextTags)
         {
-            if (context->value("active", false))
-                captured.tags.push_back("active in Studio");
             captured.tags.push_back(context->value("fresh", false) ? "fresh" : "stale");
         }
         captured.fields.push_back({"ID", context->value("id", "")});
@@ -215,6 +379,10 @@ static ReportNode buildProjectMatchesReport(const json& inspection)
     const auto projects = inspection.find("projects");
     const size_t matchCount = projects != inspection.end() && projects->is_array() ? projects->size() : 0;
     ReportNode root{"Project matches: " + inspection.value("selector", "") + " (" + std::to_string(matchCount) + ")"};
+    ReportNode summary{"Summary"};
+    summary.section = "summary";
+    summary.fields.push_back({"Matches", std::to_string(matchCount)});
+    root.children.push_back(std::move(summary));
     if (projects == inspection.end() || !projects->is_array())
         return root;
     for (const json& project : *projects)
@@ -231,6 +399,11 @@ static ReportNode buildInstanceInspectionReport(const json& inspection)
     const auto matches = inspection.find("projects");
     const size_t projectCount = matches != inspection.end() && matches->is_array() ? matches->size() : 0;
     ReportNode root{"Instance matches (" + std::to_string(inspection.value("matchCount", 0)) + ")"};
+    ReportNode summary{"Summary"};
+    summary.section = "summary";
+    summary.fields.push_back({"Matches", std::to_string(inspection.value("matchCount", 0))});
+    summary.fields.push_back({"Projects", std::to_string(projectCount)});
+    root.children.push_back(std::move(summary));
     if (projectCount == 0)
         return root;
 
@@ -239,8 +412,6 @@ static ReportNode buildInstanceInspectionReport(const json& inspection)
         const auto instances = project.find("instances");
         const size_t count = instances != project.end() && instances->is_array() ? instances->size() : 0;
         ReportNode projectNode{project.value("name", "<unnamed>") + " (" + std::to_string(count) + ")"};
-        if (project.value("active", false))
-            projectNode.tags.push_back("active in Studio");
         if (instances != project.end() && instances->is_array())
             for (const json& instance : *instances)
                 projectNode.children.push_back(scriptAttachmentNode(instance));
@@ -289,19 +460,12 @@ static ReportNode candidateGroup(const std::string& label, const json& values)
 static ReportNode buildContextOverviewReport(const json& inspection)
 {
     ReportNode root{"Project context"};
-    root.fields.push_back({"State directory", inspection.value("stateDirectory", "")});
+    ReportNode summary{"Summary"};
+    summary.section = "summary";
+    summary.fields.push_back({"State directory", inspection.value("stateDirectory", "")});
     if (const auto catalog = inspection.find("catalog"); catalog != inspection.end() && catalog->is_object())
     {
-        root.fields.push_back({"Projects", std::to_string(catalog->value("projects", json::object()).size())});
-        std::string activeProject = catalog->value("activeProjectId", "");
-        if (!activeProject.empty())
-        {
-            const auto projects = catalog->find("projects");
-            if (projects != catalog->end() && projects->is_object())
-                if (const auto project = projects->find(activeProject); project != projects->end())
-                    activeProject = project->value("name", activeProject);
-        }
-        root.fields.push_back({"Active project", activeProject.empty() ? "none" : activeProject});
+        summary.fields.push_back({"Projects", std::to_string(catalog->value("projects", json::object()).size())});
         const auto projects = catalog->find("projects");
         if (projects != catalog->end() && projects->is_object())
         {
@@ -309,8 +473,6 @@ static ReportNode buildContextOverviewReport(const json& inspection)
             for (const auto& [projectId, project] : projects->items())
             {
                 ReportNode item{project.value("name", projectId)};
-                if (projectId == catalog->value("activeProjectId", ""))
-                    item.tags.push_back("active in Studio");
                 item.tags.push_back(project.value("fresh", false) ? "fresh" : "stale");
                 item.fields.push_back({"ID", projectId});
                 item.fields.push_back({"Directory", project.value("directory", "")});
@@ -345,6 +507,7 @@ static ReportNode buildContextOverviewReport(const json& inspection)
             root.children.push_back(std::move(projectList));
         }
     }
+    root.children.insert(root.children.begin(), std::move(summary));
     if (const auto cleanup = inspection.find("cleanup"); cleanup != inspection.end() && cleanup->is_object())
     {
         size_t total = 0;
@@ -368,25 +531,40 @@ ReportNode buildContextStatusReport(const json& status)
     root.fields.push_back({"Catalog", status.value("catalogPath", "")});
     root.fields.push_back({"Catalog generation", std::to_string(status.value("catalogGeneration", uint64_t(0)))});
     root.fields.push_back({"Known projects", std::to_string(status.value("projectCount", size_t(0)))});
+    if (const auto configuration = status.find("configuration"); configuration != status.end() && configuration->is_object())
+    {
+        ReportNode settings{"Configuration"};
+        settings.fields.push_back({"Enabled", configuration->value("enabled", false) ? "yes" : "no"});
+        settings.fields.push_back({"Automatic dumps", configuration->value("autoDump", true) ? "enabled" : "disabled"});
+        settings.fields.push_back({"Lazy refresh", configuration->value("lazyRefresh", true) ? "enabled" : "disabled"});
+        root.children.push_back(std::move(settings));
+    }
     if (status.value("running", false))
         root.fields.push_back({"Helper process", "PID " + std::to_string(status.value("helperProcessId", uint64_t(0)))});
     else
         root.fields.push_back({"Helper process", "none"});
 
-    if (status.value("hasActiveProject", false))
-    {
-        ReportNode active{"Active Studio project: " + status.value("activeProjectName", status.value("activeProjectId", "<unknown>"))};
-        active.tags.push_back(status.value("activeProjectFresh", false) ? "fresh" : "stale");
-        active.fields.push_back({"ID", status.value("activeProjectId", "")});
-        root.children.push_back(std::move(active));
-    }
-    else
-        root.fields.push_back({"Active Studio project", "none"});
-
-    const std::vector<uint64_t> clients = status.value("clientProcessIds", std::vector<uint64_t>{});
-    ReportNode clientList{"LSP clients (" + std::to_string(clients.size()) + ")"};
-    for (uint64_t processId : clients)
-        clientList.children.push_back({"PID " + std::to_string(processId)});
+    const json clients = status.value("clients", json::array());
+    ReportNode clientList{"LSP clients (" + std::to_string(clients.is_array() ? clients.size() : 0) + ")"};
+    if (clients.is_array())
+        for (const json& client : clients)
+        {
+            ReportNode clientNode{"PID " + std::to_string(client.value("processId", uint64_t(0)))};
+            clientNode.tags.push_back(client.value("live", false) ? "live" : "dead");
+            const json projects = client.value("projects", json::array());
+            ReportNode projectList{"Projects (" + std::to_string(projects.is_array() ? projects.size() : 0) + ")"};
+            if (projects.is_array())
+                for (const json& project : projects)
+                {
+                    ReportNode projectNode{project.value("name", project.value("id", "<unknown>"))};
+                    projectNode.fields.push_back({"ID", project.value("id", "")});
+                    if (!project.value("directory", "").empty())
+                        projectNode.fields.push_back({"Directory", project.value("directory", "")});
+                    projectList.children.push_back(std::move(projectNode));
+                }
+            clientNode.children.push_back(std::move(projectList));
+            clientList.children.push_back(std::move(clientNode));
+        }
     root.children.push_back(std::move(clientList));
 
     const size_t deadClients = status.value("deadClientCount", size_t(0));

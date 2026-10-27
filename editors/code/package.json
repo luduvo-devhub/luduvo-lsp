@@ -282,7 +282,7 @@
           "default": false
         },
         "luduvo-lsp.server.crashReporting.enabled": {
-          "markdownDescription": "Upload crash reports to Sentry",
+          "markdownDescription": "Upload crash reports to the Sentry endpoint configured by the binary's distributor. Requires a binary built with crash reporting support and an explicitly configured endpoint; disabled builds ignore this setting",
           "type": "boolean",
           "default": false,
           "tags": [
@@ -347,9 +347,102 @@
           "scope": "window"
         },
         "luduvo-lsp.platform.luduvo.context.enabled": {
-          "markdownDescription": "Enables the experimental Luduvo context integration. This preview setting is disabled by default",
+          "markdownDescription": "Enables the experimental Luduvo context integration. Currently disabled by default",
           "type": "boolean",
           "default": false,
+          "scope": "window"
+        },
+        "luduvo-lsp.platform.luduvo.context.autoDump": {
+          "markdownDescription": "Automatically refreshes stale project context through a disposable, offscreen Luduvo Editor process. When disabled or when automatic dumping fails, Luduvo LSP provides the `world.dump` command to run manually",
+          "type": "boolean",
+          "default": true,
+          "scope": "window"
+        },
+        "luduvo-lsp.platform.luduvo.context.lazyRefresh": {
+          "markdownDescription": "Waits until context is needed before refreshing stale projects. Disable to refresh tracked projects as soon as they become stale. Automatic refresh requires `context.autoDump`",
+          "type": "boolean",
+          "default": true,
+          "scope": "window"
+        },
+        "luduvo-lsp.platform.luduvo.notifications": {
+          "markdownDescription": "Per-notification enablement overrides keyed by the notification ID shown in Luduvo LSP messages. Omitted IDs use their built-in defaults.",
+          "type": "object",
+          "properties": {
+            "server.crash-reporting-suggestion": {
+              "type": "boolean",
+              "default": true,
+              "description": "Suggest enabling crash reporting after an unexpected exit, only when the selected binary supports reporting"
+            },
+            "configuration.invalid": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when invalid Luduvo diagnostics, bindings, or resource configuration entries are ignored"
+            },
+            "definitions.fallback": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when installed or overridden Luduvo definitions cannot be loaded and a fallback is used"
+            },
+            "context.project-tracking-started": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when the first live LSP starts tracking a project"
+            },
+            "context.project-tracking-stopped": {
+              "type": "boolean",
+              "default": false,
+              "description": "Notify when the last live LSP stops tracking a project"
+            },
+            "context.files-added": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when inferred attached scripts are added to project context"
+            },
+            "context.project-stale": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when tracked project context becomes stale, with actions to autodump or obtain a manual dump command"
+            },
+            "context.autodump-started": {
+              "type": "boolean",
+              "default": false,
+              "description": "Notify when an automatic world dump starts"
+            },
+            "context.updated": {
+              "type": "boolean",
+              "default": false,
+              "description": "Notify when a world dump updates project context"
+            },
+            "context.autodump-failed": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when an automatic world dump fails"
+            },
+            "context.refresh-required": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when stale context requires a manual world dump"
+            },
+            "context.selection-required": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when a script belongs to multiple projects and needs a context selection"
+            },
+            "context.state": {
+              "type": "boolean",
+              "default": false,
+              "description": "Show informational project-context state messages"
+            },
+            "context.error": {
+              "type": "boolean",
+              "default": true,
+              "description": "Notify when project context cannot be loaded or updated"
+            }
+          },
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "default": {},
           "scope": "window"
         },
         "luduvo-lsp.platform.luduvo.definitions.serverOverride": {
@@ -410,7 +503,7 @@
           "scope": "resource"
         },
         "luduvo-lsp.platform.luduvo.diagnostics.rules": {
-          "markdownDescription": "Overrides Luduvo diagnostic severities by stable rule ID. `default` uses the rule's built-in severity and `off` disables it",
+          "markdownDescription": "Overrides Luduvo diagnostic severities by their ID. `default` uses the rule's built-in severity and `off` disables it",
           "type": "object",
           "default": {},
           "properties": {
@@ -741,13 +834,13 @@
         "luduvo-lsp.sourcemap.enabled": {
           "markdownDescription": "Whether Rojo sourcemap parsing is enabled",
           "type": "boolean",
-          "default": true,
+          "default": false,
           "scope": "resource"
         },
         "luduvo-lsp.sourcemap.autogenerate": {
           "markdownDescription": "Automatically run the `rojo sourcemap` command to regenerate sourcemaps on changes",
           "type": "boolean",
-          "default": true,
+          "default": false,
           "scope": "resource"
         },
         "luduvo-lsp.sourcemap.rojoPath": {
@@ -800,7 +893,7 @@
         "luduvo-lsp.fflags.enableNewSolver": {
           "markdownDescription": "Enables the flags required for Luau's new type solver. These flags can be overriden by `#luduvo-lsp.fflags.override#`",
           "type": "boolean",
-          "default": false,
+          "default": true,
           "scope": "window",
           "tags": [
             "preview"
@@ -833,7 +926,7 @@
         "luduvo-lsp.diagnostics.workspace": {
           "markdownDescription": "Compute diagnostics for the whole workspace",
           "type": "boolean",
-          "default": false,
+          "default": true,
           "scope": "resource"
         },
         "luduvo-lsp.diagnostics.strictDatamodelTypes": {

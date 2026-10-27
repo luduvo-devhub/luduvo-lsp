@@ -1,6 +1,9 @@
 #pragma once
 #include <optional>
 #include <mutex>
+#include <memory>
+#include <string_view>
+#include <unordered_set>
 #include "Luau/Documentation.h"
 #include "Protocol/Lifecycle.hpp"
 #include "Protocol/ClientCapabilities.hpp"
@@ -26,7 +29,19 @@ struct DocumentationMetadata
 /// Virtual methods with empty bodies are no-ops by default.
 struct Client
 {
+private:
+    struct NotificationSuppressionState
+    {
+        std::mutex mutex;
+        std::unordered_set<std::string> ids;
+    };
+    std::shared_ptr<NotificationSuppressionState> notificationSuppression = std::make_shared<NotificationSuppressionState>();
+
+public:
     virtual ~Client() = default;
+
+    bool isNotificationSuppressed(std::string_view id) const;
+    void setNotificationSuppressed(std::string id, bool suppressed);
 
     lsp::ClientCapabilities capabilities;
     /// A registered definitions file passed by the client

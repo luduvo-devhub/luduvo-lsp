@@ -5,6 +5,7 @@ option(LUAU_ENABLE_TIME_TRACE "Build with Luau TimeTrace" OFF)
 option(LSP_BUILD_ASAN "Build with ASAN" OFF)
 option(LSP_STATIC_CRT "Link with the static CRT (/MT)" OFF)
 option(LSP_BUILD_WITH_SENTRY "Build with Sentry (crash reporting)" OFF)
+set(LSP_SENTRY_DSN "" CACHE STRING "Sentry endpoint owned by this distribution; required when LSP_BUILD_WITH_SENTRY is enabled")
 option(LSP_WERROR "Warnings as errors" ON)
 if (WIN32)
     option(LSP_KILL_BEFORE_LINK "Windows only: terminate processes running the CLI target executable before linking" OFF)
@@ -26,6 +27,10 @@ project(Luau.LanguageServer LANGUAGES CXX)
 
 # Sentry setup
 if (LSP_BUILD_WITH_SENTRY)
+    string(STRIP "${LSP_SENTRY_DSN}" LSP_SENTRY_DSN)
+    if (LSP_SENTRY_DSN STREQUAL "")
+        message(FATAL_ERROR "LSP_BUILD_WITH_SENTRY requires LSP_SENTRY_DSN to be explicitly configured for your own Sentry project. No upstream endpoint is provided.")
+    endif ()
     include(FetchContent)
     set(SENTRY_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     set(SENTRY_BACKEND "crashpad" CACHE STRING "" FORCE)
@@ -94,6 +99,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/LSPPlatform.cpp
         src/platform/PlatformDefinitionLoader.cpp
         src/platform/luduvo/LuduvoPlatform.cpp
+        src/platform/luduvo/LuduvoNotifications.cpp
         src/platform/luduvo/LuduvoDefinitionResolver.cpp
         src/platform/luduvo/diagnostics/LuduvoDiagnostics.cpp
         src/platform/luduvo/diagnostics/LuduvoDiagnosticAdapter.cpp
@@ -110,6 +116,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/LuduvoTargetResolver.cpp
         src/platform/luduvo/LuduvoResourceCatalog.cpp
         src/platform/luduvo/context/LuduvoWorldDump.cpp
+        src/platform/luduvo/context/LuduvoAutoDump.cpp
         src/platform/luduvo/context/LuduvoContextStore.cpp
         src/platform/luduvo/context/LuduvoContextHelper.cpp
         src/platform/luduvo/context/LuduvoContextInspection.cpp
@@ -197,6 +204,7 @@ target_sources(Luau.LanguageServer.Test PRIVATE
         tests/Diagnostics.test.cpp
         tests/LuduvoDiagnostics.test.cpp
         tests/LuduvoContext.test.cpp
+        tests/LuduvoNotifications.test.cpp
         tests/GoToDefinition.test.cpp
         tests/Glob.test.cpp
         tests/Workspace.test.cpp
@@ -292,6 +300,7 @@ target_include_directories(Luau.LanguageServer.Test SYSTEM PRIVATE ${EXTERN_INCL
 target_link_libraries(Luau.LanguageServer.Test PRIVATE Luau.Ast Luau.Analysis Luau.LanguageServer)
 
 if (LSP_BUILD_WITH_SENTRY)
+    target_compile_definitions(Luau.LanguageServer.CLI PRIVATE LSP_SENTRY_DSN="${LSP_SENTRY_DSN}")
     target_link_libraries(Luau.LanguageServer PRIVATE sentry)
     target_link_libraries(Luau.LanguageServer.CLI PRIVATE sentry)
 

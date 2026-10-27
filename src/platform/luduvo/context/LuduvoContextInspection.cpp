@@ -94,7 +94,7 @@ ProjectFileInspectionResult inspectProjectFiles(const std::string& path, std::op
     if (std::filesystem::is_directory(autorun, filesystemError))
     {
         for (std::filesystem::recursive_directory_iterator iterator(autorun, filesystemError), end; iterator != end && !filesystemError;
-             iterator.increment(filesystemError))
+            iterator.increment(filesystemError))
         {
             if (!iterator->is_regular_file(filesystemError) || filesystemError || !isLuauFile(iterator->path()))
                 continue;
@@ -141,12 +141,9 @@ static ContextInspectionResult inspectWorldDump(const std::string& path)
         {"uniqueScriptCount", uniqueScripts.size()},
         {"instanceTypes", instanceTypes},
     };
-    return {json{{"kind", "worldDump"},
-                {"inputPath", normalizeContextPath(path)},
-                {"sourcePath", parsed.snapshot->sourcePath},
-                {"summary", std::move(summary)},
-                {"warnings", parsed.warnings},
-                {"scripts", uniqueScripts}},
+    return {
+        json{{"kind", "worldDump"}, {"inputPath", normalizeContextPath(path)}, {"sourcePath", parsed.snapshot->sourcePath},
+            {"summary", std::move(summary)}, {"warnings", parsed.warnings}, {"scripts", uniqueScripts}, {"instances", parsed.snapshot->instances}},
         std::nullopt};
 }
 
@@ -213,30 +210,21 @@ static ContextInspectionResult inspectScript(const std::string& path, const std:
                 {
                     if (script.compare(0, 7, "core://") == 0)
                         continue;
-                    const std::string attachedPath = normalizeContextPath(
-                        (std::filesystem::u8path(project.directory) / std::filesystem::u8path(script)).generic_u8string());
+                    const std::string attachedPath =
+                        normalizeContextPath((std::filesystem::u8path(project.directory) / std::filesystem::u8path(script)).generic_u8string());
                     if (attachedPath != normalizedPath)
                         continue;
                     sources.insert("worldDump");
-                    attachments.push_back({{"nodeId", instance.nodeId},
-                        {"instanceId", instance.instanceId},
-                        {"parentNodeId", instance.parentNodeId},
-                        {"name", instance.name},
-                        {"type", instance.type}});
+                    attachments.push_back({{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"parentNodeId", instance.parentNodeId},
+                        {"name", instance.name}, {"type", instance.type}});
                 }
             }
         }
         if (sources.empty())
             continue;
 
-        json candidate = {{"id", projectId},
-            {"name", project.name},
-            {"directory", project.directory},
-            {"active", catalog->activeProjectId == projectId},
-            {"fresh", project.fresh},
-            {"staleReason", project.staleReason},
-            {"sources", sources},
-            {"attachments", attachments}};
+        json candidate = {{"id", projectId}, {"name", project.name}, {"directory", project.directory}, {"fresh", project.fresh},
+            {"staleReason", project.staleReason}, {"sources", sources}, {"attachments", attachments}};
         bool selected = false;
         for (const auto& selection : workspaceSelections)
         {
@@ -248,20 +236,14 @@ static ContextInspectionResult inspectScript(const std::string& path, const std:
         }
         candidate["selected"] = selected;
         if (world)
-            candidate["snapshot"] = {{"tick", world->tick},
-                {"commandSequence", world->commandSequence},
-                {"capturedAtUnixMs", world->capturedAtUnixMs},
-                {"sourcePath", world->sourcePath}};
+            candidate["snapshot"] = {{"tick", world->tick}, {"commandSequence", world->commandSequence},
+                {"capturedAtUnixMs", world->capturedAtUnixMs}, {"sourcePath", world->sourcePath}};
         candidates.push_back(std::move(candidate));
     }
 
-    return {json{{"kind", "script"},
-                {"inputPath", normalizedPath},
-                {"exists", std::filesystem::is_regular_file(std::filesystem::u8path(path))},
-                {"side", scriptSide(path)},
-                {"workspaceSelections", workspaceSelections},
-                {"projectCount", candidates.size()},
-                {"projects", candidates}},
+    return {
+        json{{"kind", "script"}, {"inputPath", normalizedPath}, {"exists", std::filesystem::is_regular_file(std::filesystem::u8path(path))},
+            {"side", scriptSide(path)}, {"workspaceSelections", workspaceSelections}, {"projectCount", candidates.size()}, {"projects", candidates}},
         std::nullopt};
 }
 
@@ -284,7 +266,8 @@ static bool projectMatches(const ContextProject& project, const InstanceInspecti
         return false;
     if (request.scriptPath && !containsPath(project.scripts, normalizeContextPath(*request.scriptPath)))
         return false;
-    if (request.scriptDirectory && !std::any_of(project.scripts.begin(), project.scripts.end(), [&](const std::string& script)
+    if (request.scriptDirectory && !std::any_of(project.scripts.begin(), project.scripts.end(),
+                                       [&](const std::string& script)
                                        {
                                            return pathWithin(script, *request.scriptDirectory);
                                        }))
@@ -340,7 +323,8 @@ ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& 
             if (request.name && instance.name != *request.name)
                 continue;
 
-            json value = {{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"name", instance.name}, {"type", instance.type}, {"shape", instance.shape}};
+            json value = {{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"name", instance.name}, {"type", instance.type},
+                {"shape", instance.shape}};
             if (includesSection(request, "position"))
                 value["position"] = instance.position;
             if (includesSection(request, "scripts"))
@@ -353,22 +337,20 @@ ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& 
                     value["parent"] = nullptr;
                 value["children"] = json::array();
                 for (const WorldInstance* child : childrenByParent[instance.nodeId])
-                    value["children"].push_back({{"nodeId", child->nodeId}, {"instanceId", child->instanceId}, {"name", child->name}, {"type", child->type}});
+                    value["children"].push_back(
+                        {{"nodeId", child->nodeId}, {"instanceId", child->instanceId}, {"name", child->name}, {"type", child->type}});
             }
             matches.push_back(std::move(value));
             ++matchCount;
         }
         if (matches.empty())
             continue;
-        projects.push_back({{"id", projectId},
-            {"name", project.name},
-            {"directory", project.directory},
-            {"active", catalog->activeProjectId == projectId},
-            {"fresh", project.fresh},
+        projects.push_back({{"id", projectId}, {"name", project.name}, {"directory", project.directory}, {"fresh", project.fresh},
             {"instances", std::move(matches)}});
     }
 
-    std::sort(projects.begin(), projects.end(), [](const json& left, const json& right)
+    std::sort(projects.begin(), projects.end(),
+        [](const json& left, const json& right)
         {
             if (left.value("name", "") != right.value("name", ""))
                 return left.value("name", "") < right.value("name", "");
@@ -377,49 +359,31 @@ ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& 
     return {json{{"kind", "instance"}, {"matchCount", matchCount}, {"projects", std::move(projects)}}, std::nullopt};
 }
 
-static json storedProjectReport(const ContextCatalog& catalog, const std::string& projectId, const ContextProject& project, const ContextStore& store)
+static json storedProjectReport(const std::string& projectId, const ContextProject& project, const ContextStore& store)
 {
-    json report = {{"kind", "project"},
-        {"inputPath", project.directory},
-        {"projectFile", project.directory.empty() ? "" : (std::filesystem::u8path(project.directory) / "project.json").generic_u8string()},
-        {"name", project.name},
-        {"directory", project.directory},
-        {"summary",
-            {{"assetCount", 0},
-                {"scriptAssetCount", project.declaredScripts.size()},
-                {"autorunScriptCount", project.autorunScripts.size()},
-                {"scriptCount", project.scripts.size()},
-                {"missingScriptCount", 0},
-                {"assetTypes", json::object()}}},
-        {"declaredScripts", project.declaredScripts},
-        {"autorunScripts", project.autorunScripts},
-        {"scripts", project.scripts},
-        {"missingScripts", json::array()},
-        {"attachments", json::array()},
-        {"capturedContext", project}};
-    report["capturedContext"]["active"] = catalog.activeProjectId == projectId;
+    const json directory = project.directory.empty() ? json(nullptr) : json(project.directory);
+    json report = {{"kind", "project"}, {"inputPath", directory}, {"projectFile", nullptr}, {"name", project.name}, {"directory", directory},
+        {"summary", {{"assetCount", nullptr}, {"scriptAssetCount", nullptr}, {"autorunScriptCount", nullptr}, {"scriptCount", nullptr},
+                        {"missingScriptCount", nullptr}, {"assetTypes", nullptr}}},
+        {"declaredScripts", project.declaredScripts}, {"autorunScripts", project.autorunScripts}, {"scripts", project.scripts},
+        {"missingScripts", nullptr}, {"attachments", json::array()}, {"capturedContext", project}};
     if (const auto world = store.loadWorld(projectId))
     {
-        report["capturedContext"]["snapshot"] = {{"tick", world->tick},
-            {"commandSequence", world->commandSequence},
-            {"capturedAtUnixMs", world->capturedAtUnixMs},
-            {"sourcePath", world->sourcePath}};
+        report["capturedContext"]["snapshot"] = {{"tick", world->tick}, {"commandSequence", world->commandSequence},
+            {"capturedAtUnixMs", world->capturedAtUnixMs}, {"sourcePath", world->sourcePath}};
         for (const WorldInstance& instance : world->instances)
         {
             if (instance.scripts.empty())
                 continue;
-            report["attachments"].push_back({{"nodeId", instance.nodeId},
-                {"instanceId", instance.instanceId},
-                {"name", instance.name},
-                {"type", instance.type},
-                {"scripts", instance.scripts}});
+            report["attachments"].push_back({{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"name", instance.name},
+                {"type", instance.type}, {"scripts", instance.scripts}});
         }
     }
     return report;
 }
 
 static json inspectMatchedProject(
-    const ContextCatalog& catalog, const std::string& projectId, const ContextProject& project, const ContextStore& store, const std::string& stateDirectory)
+    const std::string& projectId, const ContextProject& project, const ContextStore& store, const std::string& stateDirectory)
 {
     if (!project.directory.empty())
     {
@@ -431,7 +395,7 @@ static json inspectMatchedProject(
                 return std::move(*live.report);
         }
     }
-    return storedProjectReport(catalog, projectId, project, store);
+    return storedProjectReport(projectId, project, store);
 }
 
 ContextInspectionResult inspectContextProject(const ProjectInspectionRequest& request, const std::string& stateDirectory)
@@ -459,12 +423,9 @@ ContextInspectionResult inspectContextProject(const ProjectInspectionRequest& re
     if (matches.empty())
         return {std::nullopt, "no stored project matched the requested selector"};
 
-    std::sort(matches.begin(), matches.end(), [&](const auto& left, const auto& right)
+    std::sort(matches.begin(), matches.end(),
+        [&](const auto& left, const auto& right)
         {
-            const bool leftActive = left.first == catalog->activeProjectId;
-            const bool rightActive = right.first == catalog->activeProjectId;
-            if (leftActive != rightActive)
-                return leftActive;
             if (left.second->fresh != right.second->fresh)
                 return left.second->fresh;
             const std::string leftDirectory = normalizeContextPath(left.second->directory);
@@ -478,13 +439,13 @@ ContextInspectionResult inspectContextProject(const ProjectInspectionRequest& re
     {
         json projects = json::array();
         for (const auto& [projectId, project] : matches)
-            projects.push_back(inspectMatchedProject(*catalog, projectId, *project, store, stateDirectory));
+            projects.push_back(inspectMatchedProject(projectId, *project, store, stateDirectory));
         const std::string selector = request.name.value_or(request.id.value_or(request.directory.value_or("")));
         return {json{{"kind", "projects"}, {"selector", selector}, {"matchCount", projects.size()}, {"projects", std::move(projects)}}, std::nullopt};
     }
 
     const auto& [projectId, project] = matches.front();
-    return {inspectMatchedProject(*catalog, projectId, *project, store, stateDirectory), std::nullopt};
+    return {inspectMatchedProject(projectId, *project, store, stateDirectory), std::nullopt};
 }
 
 ContextInspectionResult inspectContextInput(const std::string& path, const std::string& stateDirectory)
@@ -500,23 +461,13 @@ ContextInspectionResult inspectContextInput(const std::string& path, const std::
         if (!inspected.project)
             return {std::nullopt, inspected.error.value_or("could not inspect project")};
         const ProjectFileInspection& project = *inspected.project;
-        json report = {{"kind", "project"},
-            {"inputPath", normalizeContextPath(path)},
-            {"projectFile", project.projectFile},
-            {"name", project.name},
+        json report = {{"kind", "project"}, {"inputPath", normalizeContextPath(path)}, {"projectFile", project.projectFile}, {"name", project.name},
             {"directory", project.directory},
-            {"summary",
-                {{"assetCount", project.assetCount},
-                    {"scriptAssetCount", project.scriptAssetCount},
-                    {"autorunScriptCount", project.autorunScriptCount},
-                    {"scriptCount", project.scripts.size()},
-                    {"missingScriptCount", project.missingScripts.size()},
-                    {"assetTypes", project.assetTypes}}},
-            {"declaredScripts", project.declaredScripts},
-            {"autorunScripts", project.autorunScripts},
-            {"scripts", project.scripts},
-            {"missingScripts", project.missingScripts},
-            {"attachments", json::array()}};
+            {"summary", {{"assetCount", project.assetCount}, {"scriptAssetCount", project.scriptAssetCount},
+                            {"autorunScriptCount", project.autorunScriptCount}, {"scriptCount", project.scripts.size()},
+                            {"missingScriptCount", project.missingScripts.size()}, {"assetTypes", project.assetTypes}}},
+            {"declaredScripts", project.declaredScripts}, {"autorunScripts", project.autorunScripts}, {"scripts", project.scripts},
+            {"missingScripts", project.missingScripts}, {"attachments", json::array()}};
 
         const ContextStore store(stateDirectory.empty() ? defaultContextStateDirectory() : stateDirectory);
         const auto catalog = store.load();
@@ -527,23 +478,17 @@ ContextInspectionResult inspectContextInput(const std::string& path, const std::
                 if (normalizeContextPath(captured.directory) != normalizeContextPath(project.directory))
                     continue;
                 report["capturedContext"] = captured;
-                report["capturedContext"]["active"] = catalog->activeProjectId == projectId;
                 const auto world = store.loadWorld(projectId);
                 if (world)
                 {
-                    report["capturedContext"]["snapshot"] = {{"tick", world->tick},
-                        {"commandSequence", world->commandSequence},
-                        {"capturedAtUnixMs", world->capturedAtUnixMs},
-                        {"sourcePath", world->sourcePath}};
+                    report["capturedContext"]["snapshot"] = {{"tick", world->tick}, {"commandSequence", world->commandSequence},
+                        {"capturedAtUnixMs", world->capturedAtUnixMs}, {"sourcePath", world->sourcePath}};
                     for (const WorldInstance& instance : world->instances)
                     {
                         if (instance.scripts.empty())
                             continue;
-                        report["attachments"].push_back({{"nodeId", instance.nodeId},
-                            {"instanceId", instance.instanceId},
-                            {"name", instance.name},
-                            {"type", instance.type},
-                            {"scripts", instance.scripts}});
+                        report["attachments"].push_back({{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"name", instance.name},
+                            {"type", instance.type}, {"scripts", instance.scripts}});
                     }
                 }
                 break;
@@ -555,7 +500,25 @@ ContextInspectionResult inspectContextInput(const std::string& path, const std::
         return inspectScript(path, stateDirectory);
     if (!std::filesystem::is_regular_file(input, error))
         return {std::nullopt, "input is not a file or project directory: " + path};
-    return inspectWorldDump(path);
+    ContextInspectionResult dump = inspectWorldDump(path);
+    if (!dump.report)
+        return dump;
+
+    dump.report->operator[]("projects") = json::array();
+    const ContextStore store(stateDirectory.empty() ? defaultContextStateDirectory() : stateDirectory);
+    const auto catalog = store.load();
+    if (!catalog)
+        return dump;
+    const std::string normalized = normalizeContextPath(path);
+    for (const auto& [projectId, project] : catalog->projects)
+    {
+        bool matches = !project.dumpPath.empty() && normalizeContextPath(project.dumpPath) == normalized;
+        const auto world = store.loadWorld(projectId);
+        matches = matches || (world && !world->sourcePath.empty() && normalizeContextPath(world->sourcePath) == normalized);
+        if (matches)
+            (*dump.report)["projects"].push_back(inspectMatchedProject(projectId, project, store, stateDirectory));
+    }
+    return dump;
 }
 
 } // namespace luduvo

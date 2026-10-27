@@ -60,7 +60,10 @@ TEST_CASE("convert dotted Luduvo resource configuration")
             ],
             "luau-lsp.platform.luduvo.directories.roaming": "roaming-data",
             "luau-lsp.platform.luduvo.directories.local": "local-data",
-            "luau-lsp.platform.luduvo.context.enabled": true
+            "luau-lsp.platform.luduvo.context.enabled": true,
+            "luau-lsp.platform.luduvo.context.autoDump": true,
+            "luau-lsp.platform.luduvo.context.lazyRefresh": false,
+            "luau-lsp.platform.luduvo.notifications": {"context.updated": false}
         }
     )DOTTED_CONFIG");
 
@@ -78,6 +81,9 @@ TEST_CASE("convert dotted Luduvo resource configuration")
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["encoding"], "hex");
     CHECK_EQ(output["platform"]["luduvo"]["bindings"][0]["target"]["parameter"], "hex");
     CHECK_EQ(output["platform"]["luduvo"]["directories"]["roaming"], "roaming-data");
+    CHECK(output["platform"]["luduvo"]["context"]["autoDump"]);
+    CHECK_FALSE(output["platform"]["luduvo"]["context"]["lazyRefresh"]);
+    CHECK_FALSE(output["platform"]["luduvo"]["notifications"]["context.updated"]);
     CHECK_EQ(output["platform"]["luduvo"]["directories"]["local"], "local-data");
     CHECK(output["platform"]["luduvo"]["context"]["enabled"]);
 }

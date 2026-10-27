@@ -11,6 +11,7 @@
 #include "LuauFileUtils.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -93,7 +94,8 @@ static std::optional<std::string> contextStateDirectory(const argparse::Argument
     const auto configuration = contextConfiguration(program, error);
     if (!configuration)
         return std::nullopt;
-    return argumentOr(program, "--state-directory", defaultContextStateDirectory(configuration->directories.local, configuration->directories.context));
+    return argumentOr(
+        program, "--state-directory", defaultContextStateDirectory(configuration->directories.local, configuration->directories.context));
 }
 
 static void writeStandardOutput(const std::string& output)
@@ -120,9 +122,52 @@ static void writeStandardOutput(const std::string& output)
     std::cout << output;
 }
 
-static int writeOutput(const argparse::ArgumentParser& program, const json& value, const ReportNode& report)
+static std::string outputFormat(const argparse::ArgumentParser& program)
 {
-    const std::string output = program.get<std::string>("--format") == "json" ? value.dump(2) + "\n" : renderReportText(report);
+    if (const auto explicitFormat = program.present<std::string>("--format"))
+        return *explicitFormat;
+    if (const auto outputPath = program.present<std::string>("--output"))
+    {
+        std::string extension = std::filesystem::u8path(*outputPath).extension().generic_u8string();
+        std::transform(extension.begin(), extension.end(), extension.begin(),
+            [](unsigned char character)
+            {
+                return char(std::tolower(character));
+            });
+        if (extension == ".json")
+            return "json";
+    }
+    return "text";
+}
+
+static int writeOutput(const argparse::ArgumentParser& program, const json& value, ReportNode report)
+{
+    const std::vector<std::string> requestedSections = program.get<std::vector<std::string>>("--section");
+    const bool listSections = program.get<bool>("--list-sections");
+    const std::string format = outputFormat(program);
+    std::string output;
+    if (listSections)
+    {
+        const auto sections = listReportSections(report);
+        if (format == "json")
+        {
+            json sectionValues = json::array();
+            for (const auto& [id, label] : sections)
+                sectionValues.push_back({{"id", id}, {"label", label}});
+            output = sectionValues.dump(2) + "\n";
+        }
+        else
+            for (const auto& [id, label] : sections)
+                output += id + "\t" + label + "\n";
+    }
+    else
+    {
+        std::string error;
+        const auto selected = selectReportSections(std::move(report), requestedSections, &error);
+        if (!selected)
+            return printError(error);
+        output = format == "json" ? (requestedSections.empty() ? value : reportToJson(*selected)).dump(2) + "\n" : renderReportText(*selected);
+    }
     if (const auto outputPath = program.present<std::string>("--output"))
     {
         std::string error;
@@ -146,7 +191,11 @@ static int parseCommand(const argparse::ArgumentParser& program)
         result["warnings"] = parsed.warnings;
     const ContextInspectionResult inspected = inspectContextInput(input);
     const ReportNode report = inspected.report ? buildContextInspectionReport(*inspected.report) : ReportNode{"Parsed world dump"};
-    return writeOutput(program, result, report);
+    const int written = writeOutput(program, result, report);
+    if (written == 0)
+        if (const auto outputPath = program.present<std::string>("--output"))
+            writeStandardOutput("Parsed world dump and wrote " + *outputPath + "\n");
+    return written;
 }
 
 static int inspectCommand(const argparse::ArgumentParser& program)
@@ -202,9 +251,7 @@ static int inspectCommand(const argparse::ArgumentParser& program)
         request.projectDirectory = program.present<std::string>("--project-directory");
         request.scriptPath = program.present<std::string>("--script");
         request.scriptDirectory = program.present<std::string>("--script-directory");
-        request.sections = program.get<std::vector<std::string>>("--section");
-        const ContextInspectionResult inspected =
-            inspectContextInstance(request, *stateDirectory);
+        const ContextInspectionResult inspected = inspectContextInstance(request, *stateDirectory);
         if (!inspected.report)
             return printError(inspected.error.value_or("could not inspect instance"));
         return writeOutput(program, *inspected.report, buildContextInspectionReport(*inspected.report));
@@ -323,23 +370,20 @@ struct LogReader
 class ContextWatcher
 {
     ContextLogProcessor processor;
-    LogReader studioLog;
     LogReader commandsLog;
 
 public:
-    ContextWatcher(ContextStore store, std::string studioLogPath, std::string commandsLogPath)
+    ContextWatcher(ContextStore store, std::string commandsLogPath)
         : processor(std::move(store))
-        , studioLog(std::move(studioLogPath))
         , commandsLog(std::move(commandsLogPath), true)
     {
     }
 
     void poll()
     {
-        for (const std::string& line : studioLog.readLines())
-            processor.ingestStudioLine(line);
         for (const std::string& line : commandsLog.readLines())
             processor.ingestCommandLine(line);
+        processor.pollFilesystem();
     }
 };
 
@@ -382,10 +426,9 @@ static int runCommand(const argparse::ArgumentParser& program)
     const auto configuration = contextConfiguration(program, &configurationError);
     if (!configuration)
         return printError(configurationError);
-    const std::string stateDirectory = argumentOr(
-        program, "--state-directory", defaultContextStateDirectory(configuration->directories.local, configuration->directories.context));
+    const std::string stateDirectory =
+        argumentOr(program, "--state-directory", defaultContextStateDirectory(configuration->directories.local, configuration->directories.context));
     const std::string commandsLog = argumentOr(program, "--commands-log", defaultCommandsLogPath(configuration->directories.roaming));
-    const std::string studioLog = argumentOr(program, "--studio-log", defaultStudioLogPath(configuration->directories.local));
     const int pollMilliseconds = program.get<int>("--poll-interval");
     const int idleTimeoutSeconds = program.get<int>("--idle-timeout");
     ContextStore store(stateDirectory);
@@ -405,14 +448,14 @@ static int runCommand(const argparse::ArgumentParser& program)
         return 0;
 
     std::filesystem::remove(std::filesystem::u8path(store.stopPath()), error);
-    ContextWatcher watcher(store, studioLog, commandsLog);
+    ContextWatcher watcher(store, commandsLog);
     std::optional<std::chrono::steady_clock::time_point> withoutClientsSince;
     while (true)
     {
         watcher.poll();
         if (std::filesystem::exists(std::filesystem::u8path(store.stopPath())))
             break;
-        if (removeDeadProcessRegistrations(store.leasesDirectory()) > 0)
+        if (store.liveClientCount() > 0)
             withoutClientsSince.reset();
         else if (!withoutClientsSince)
             withoutClientsSince = std::chrono::steady_clock::now();
@@ -428,15 +471,19 @@ static int runCommand(const argparse::ArgumentParser& program)
 static int statusCommand(const argparse::ArgumentParser& program)
 {
     std::string configurationError;
-    const auto stateDirectory = contextStateDirectory(program, &configurationError);
-    if (!stateDirectory)
+    const auto configuration = contextConfiguration(program, &configurationError);
+    if (!configuration)
         return printError(configurationError);
-    const ContextStore store(*stateDirectory);
+    const std::string stateDirectory =
+        argumentOr(program, "--state-directory", defaultContextStateDirectory(configuration->directories.local, configuration->directories.context));
+    const ContextStore store(stateDirectory);
     std::string error;
     const auto status = store.status(&error);
     if (!status)
         return printError(error);
-    const json result = *status;
+    json result = *status;
+    result["configuration"] = {{"enabled", configuration->context.enabled}, {"autoDump", configuration->context.autoDump},
+        {"lazyRefresh", configuration->context.lazyRefresh}};
     return writeOutput(program, result, buildContextStatusReport(result));
 }
 
@@ -489,8 +536,10 @@ static void addStateDirectoryArgument(argparse::ArgumentParser& parser)
 
 static void addOutputArguments(argparse::ArgumentParser& parser)
 {
-    parser.add_argument("--format").help("output format").choices("text", "json").default_value(std::string("text"));
+    parser.add_argument("--format").help("output format; inferred as JSON from a .json output path").choices("text", "json");
     parser.add_argument("--output").help("write output to a file instead of stdout").metavar("PATH");
+    parser.add_argument("--section").help("include a report section; repeat to include more than one").append().default_value<std::vector<std::string>>({});
+    parser.add_argument("--list-sections").help("list selectable report section IDs").default_value(false).implicit_value(true);
 }
 
 ContextCli::ContextCli()
@@ -509,7 +558,6 @@ ContextCli::ContextCli()
     runParser.add_description("Run the shared Luduvo context helper");
     addStateDirectoryArgument(runParser);
     runParser.add_argument("--commands-log").help("Luduvo Studio commands.log path").metavar("PATH");
-    runParser.add_argument("--studio-log").help("Luduvo Studio studio.log path").metavar("PATH");
     runParser.add_argument("--poll-interval").help("log polling interval in milliseconds").scan<'i', int>().default_value(500);
     runParser.add_argument("--idle-timeout")
         .help("seconds without a live LSP client before the helper exits; -1 disables the timeout")
@@ -545,7 +593,6 @@ ContextCli::ContextCli()
     inspectParser.add_argument("--project-directory").help("select a project by its directory").metavar("DIRECTORY");
     inspectParser.add_argument("--script").help("select projects containing this script").metavar("PATH");
     inspectParser.add_argument("--script-directory").help("select projects containing scripts below this directory").metavar("DIRECTORY");
-    inspectParser.add_argument("--section").help("include only a named report section").append().default_value<std::vector<std::string>>({});
     addStateDirectoryArgument(inspectParser);
     addOutputArguments(inspectParser);
 

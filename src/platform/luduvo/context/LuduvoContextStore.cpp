@@ -404,10 +404,32 @@ ContextStoreResult ContextStore::updateWorld(
     project.name = projectName;
     if (!directory.empty())
         project.directory = normalizeContextPath(directory);
+    return updateWorldLocked(*catalog, std::move(snapshot), id);
+}
+
+ContextStoreResult ContextStore::updateWorldForProject(WorldDumpSnapshot snapshot, const std::string& projectId) const
+{
+    std::string error;
+    CatalogWriteLock lock(stateDirectory, &error);
+    if (!lock)
+        return {false, std::nullopt, std::move(error)};
+    auto catalog = load(&error);
+    if (!catalog)
+        return {false, std::nullopt, std::move(error)};
+    if (!catalog->projects.count(projectId))
+        return {false, projectId, "unknown context project: " + projectId};
+    return updateWorldLocked(*catalog, std::move(snapshot), projectId);
+}
+
+ContextStoreResult ContextStore::updateWorldLocked(ContextCatalog& catalog, WorldDumpSnapshot snapshot, const std::string& projectId) const
+{
+    std::string error;
+    ContextProject& project = catalog.projects.at(projectId);
+    const std::string& id = projectId;
     project.snapshotPath = joinPath(joinPath(stateDirectory, "projects"), id + "/world.json");
     project.dumpPath = snapshot.sourcePath;
     project.updatedAtUnixMs = unixTimeMilliseconds();
-    project.worldGeneration = catalog->generation + 1;
+    project.worldGeneration = catalog.generation + 1;
     project.instanceCount = snapshot.instances.size();
     project.scriptAttachmentCount = 0;
     for (const WorldInstance& instance : snapshot.instances)
@@ -430,12 +452,12 @@ ContextStoreResult ContextStore::updateWorld(
 
     if (!writeAtomically(project.snapshotPath, json(snapshot).dump(2) + "\n", &error))
         return {false, id, std::move(error)};
-    ContextStoreResult saved = save(*catalog);
+    ContextStoreResult saved = save(catalog);
     saved.projectId = id;
     return saved;
 }
 
-ContextStoreResult ContextStore::setActiveProject(const std::string& projectName) const
+ContextStoreResult ContextStore::markProjectsStale(const std::vector<std::string>& projectIds, std::string reason) const
 {
     std::string error;
     CatalogWriteLock lock(stateDirectory, &error);
@@ -444,15 +466,27 @@ ContextStoreResult ContextStore::setActiveProject(const std::string& projectName
     auto catalog = load(&error);
     if (!catalog)
         return {false, std::nullopt, std::move(error)};
-    const std::string id = selectProjectId(*catalog, projectName, "");
-    ContextProject& project = catalog->projects[id];
-    project.id = id;
-    project.name = projectName;
-    project.updatedAtUnixMs = unixTimeMilliseconds();
-    catalog->activeProjectId = id;
+    size_t affected = 0;
+    for (const std::string& id : projectIds)
+    {
+        const auto project = catalog->projects.find(id);
+        if (project == catalog->projects.end() || !project->second.fresh)
+            continue;
+        project->second.updatedAtUnixMs = unixTimeMilliseconds();
+        project->second.fresh = false;
+        project->second.staleReason = reason;
+        ++affected;
+    }
+    if (affected == 0)
+        return {true, std::nullopt, std::nullopt, 0};
     ContextStoreResult saved = save(*catalog);
-    saved.projectId = id;
+    saved.affected = affected;
     return saved;
+}
+
+ContextStoreResult ContextStore::markProjectStaleById(const std::string& projectId, std::string reason) const
+{
+    return markProjectsStale({projectId}, std::move(reason));
 }
 
 ContextStoreResult ContextStore::markProjectStale(const std::string& projectName, std::string reason) const
@@ -468,11 +502,40 @@ ContextStoreResult ContextStore::markProjectStale(const std::string& projectName
     ContextProject& project = catalog->projects[id];
     project.id = id;
     project.name = projectName;
+    if (!project.fresh)
+        return {true, id, std::nullopt, 0};
     project.updatedAtUnixMs = unixTimeMilliseconds();
     project.fresh = false;
     project.staleReason = std::move(reason);
     ContextStoreResult saved = save(*catalog);
     saved.projectId = id;
+    saved.affected = 1;
+    return saved;
+}
+
+ContextStoreResult ContextStore::attachScriptById(const std::string& projectId, const std::string& scriptPath) const
+{
+    std::string error;
+    CatalogWriteLock lock(stateDirectory, &error);
+    if (!lock)
+        return {false, std::nullopt, std::move(error)};
+    auto catalog = load(&error);
+    if (!catalog)
+        return {false, std::nullopt, std::move(error)};
+    const auto found = catalog->projects.find(projectId);
+    if (found == catalog->projects.end())
+        return {false, projectId, "unknown context project: " + projectId};
+    ContextProject& project = found->second;
+    std::string path = scriptPath;
+    if (!project.directory.empty() && !std::filesystem::u8path(path).is_absolute())
+        path = joinPath(project.directory, path);
+    project.attachedScripts.push_back(normalizeContextPath(path));
+    std::sort(project.attachedScripts.begin(), project.attachedScripts.end());
+    project.attachedScripts.erase(std::unique(project.attachedScripts.begin(), project.attachedScripts.end()), project.attachedScripts.end());
+    rebuildProjectScripts(project);
+    project.updatedAtUnixMs = unixTimeMilliseconds();
+    ContextStoreResult saved = save(*catalog);
+    saved.projectId = projectId;
     return saved;
 }
 
@@ -580,6 +643,128 @@ std::optional<WorldDumpSnapshot> ContextStore::loadWorld(const std::string& proj
     }
 }
 
+std::vector<ContextClientRegistration> ContextStore::clientRegistrations(bool includeDead) const
+{
+    std::vector<ContextClientRegistration> result;
+    std::error_code error;
+    const std::filesystem::path directory = std::filesystem::u8path(leasesDirectory());
+    if (!std::filesystem::is_directory(directory, error))
+        return result;
+    for (std::filesystem::directory_iterator iterator(directory, error), end; iterator != end && !error; iterator.increment(error))
+    {
+        if (!iterator->is_regular_file(error) || error)
+            continue;
+        std::ifstream input(iterator->path(), std::ios::binary);
+        if (!input)
+            continue;
+        try
+        {
+            ContextClientRegistration registration = json::parse(input).get<ContextClientRegistration>();
+            const ProcessIdentity identity{registration.processId, registration.startToken};
+            if (includeDead || isProcessAlive(identity))
+                result.push_back(std::move(registration));
+        }
+        catch (const json::exception&)
+        {
+        }
+    }
+    std::sort(result.begin(), result.end(), [](const ContextClientRegistration& left, const ContextClientRegistration& right)
+        {
+            return left.processId < right.processId;
+        });
+    return result;
+}
+
+std::vector<std::string> ContextStore::liveProjectIds() const
+{
+    std::set<std::string> result;
+    for (const ContextClientRegistration& registration : clientRegistrations(false))
+        for (const auto& [_, projects] : registration.workspaces)
+            for (const ContextClientProject& project : projects)
+                result.insert(project.id);
+    return {result.begin(), result.end()};
+}
+
+size_t ContextStore::liveClientCount() const
+{
+    std::set<uint64_t> clients;
+    for (const ContextClientRegistration& registration : clientRegistrations(false))
+        clients.insert(registration.processId);
+    return clients.size();
+}
+
+ContextClientUpdate ContextStore::updateClientProjects(uint64_t clientProcessId, uint64_t startToken, const std::string& workspaceDirectory,
+    const std::vector<ContextClientProject>& projects) const
+{
+    std::string error;
+    CatalogWriteLock lock(stateDirectory, &error);
+    if (!lock)
+        return {{false, std::nullopt, std::move(error)}, {}, {}};
+
+    const std::vector<std::string> beforeValues = liveProjectIds();
+    const std::set<std::string> before(beforeValues.begin(), beforeValues.end());
+    const std::string path = joinPath(leasesDirectory(), std::to_string(clientProcessId) + ".lease");
+    ContextClientRegistration registration{clientProcessId, startToken, {}};
+    if (const auto source = Luau::FileUtils::readFile(path))
+    {
+        try
+        {
+            registration = json::parse(*source).get<ContextClientRegistration>();
+        }
+        catch (const json::exception&)
+        {
+        }
+    }
+    registration.processId = clientProcessId;
+    registration.startToken = startToken;
+    const std::string workspace = normalizeContextPath(workspaceDirectory);
+    if (projects.empty())
+        registration.workspaces.erase(workspace);
+    else
+        registration.workspaces[workspace] = projects;
+    if (!writeAtomically(path, json(registration).dump(2) + "\n", &error))
+        return {{false, std::nullopt, std::move(error)}, {}, {}};
+
+    const std::vector<std::string> afterValues = liveProjectIds();
+    const std::set<std::string> after(afterValues.begin(), afterValues.end());
+    auto catalog = load(&error);
+    if (!catalog)
+        return {{false, std::nullopt, std::move(error)}, {}, {}};
+
+    ContextClientUpdate result{{true, std::nullopt, std::nullopt}, {}, {}};
+    for (const std::string& id : after)
+    {
+        if (before.count(id))
+            continue;
+        const auto project = catalog->projects.find(id);
+        if (project == catalog->projects.end())
+            continue;
+        result.startedTracking.push_back({id, project->second.name, project->second.directory});
+        if (project->second.fresh)
+        {
+            project->second.fresh = false;
+            project->second.staleReason = "the project began a new LSP tracking session";
+            project->second.updatedAtUnixMs = unixTimeMilliseconds();
+            ++result.result.affected;
+        }
+    }
+    for (const std::string& id : before)
+    {
+        if (after.count(id))
+            continue;
+        const auto project = catalog->projects.find(id);
+        if (project != catalog->projects.end())
+            result.stoppedTracking.push_back({id, project->second.name, project->second.directory});
+    }
+    if (result.result.affected > 0)
+    {
+        const size_t affected = result.result.affected;
+        result.result = save(*catalog);
+        result.result.affected = affected;
+    }
+    return result;
+}
+
 static bool matchesCandidate(const ContextCleanupCandidate& candidate, const std::string& selector)
 {
     return selector == candidate.id || selector == candidate.label || normalizeContextPath(selector) == normalizeContextPath(candidate.path);
@@ -668,30 +853,18 @@ std::optional<ContextStatus> ContextStore::status(std::string* error) const
         result.helperProcessId = owner->processId;
     }
 
-    if (const auto active = catalog->projects.find(catalog->activeProjectId); active != catalog->projects.end())
+    for (const ContextClientRegistration& registration : clientRegistrations(true))
     {
-        result.hasActiveProject = true;
-        result.activeProjectId = active->first;
-        result.activeProjectName = active->second.name;
-        result.activeProjectFresh = active->second.fresh;
+        const bool live = isProcessAlive({registration.processId, registration.startToken});
+        std::map<std::string, ContextClientProject> projects;
+        for (const auto& [_, workspaceProjects] : registration.workspaces)
+            for (const ContextClientProject& project : workspaceProjects)
+                projects[project.id] = project;
+        json client = {{"processId", registration.processId}, {"live", live}, {"projects", json::array()}};
+        for (const auto& [_, project] : projects)
+            client["projects"].push_back(project);
+        result.clients.push_back(std::move(client));
     }
-
-    std::error_code filesystemError;
-    const std::filesystem::path clients = std::filesystem::u8path(leasesDirectory());
-    if (std::filesystem::is_directory(clients, filesystemError))
-    {
-        for (std::filesystem::directory_iterator iterator(clients, filesystemError), end; iterator != end && !filesystemError;
-             iterator.increment(filesystemError))
-        {
-            if (!iterator->is_regular_file(filesystemError) || filesystemError)
-                continue;
-            const auto identity = readProcessIdentity(iterator->path().generic_u8string());
-            if (identity && isProcessAlive(*identity))
-                result.clientProcessIds.push_back(identity->processId);
-        }
-    }
-    std::sort(result.clientProcessIds.begin(), result.clientProcessIds.end());
-    result.clientProcessIds.erase(std::unique(result.clientProcessIds.begin(), result.clientProcessIds.end()), result.clientProcessIds.end());
 
     const ContextCleanupSummary cleanup = cleanupCandidates();
     result.deadClientCount = cleanup.clients.size();
@@ -803,8 +976,6 @@ ContextStoreResult ContextStore::clean(const std::string& kind, const std::vecto
             if (!project->second.snapshotPath.empty())
                 projectDirectories.push_back(std::filesystem::u8path(project->second.snapshotPath).parent_path().generic_u8string());
             catalog->projects.erase(project);
-            if (catalog->activeProjectId == candidate.id)
-                catalog->activeProjectId.clear();
             for (auto& [_, selections] : catalog->workspaceScriptSelections)
                 for (auto selection = selections.begin(); selection != selections.end();)
                     selection = selection->second == candidate.id ? selections.erase(selection) : std::next(selection);
@@ -920,8 +1091,6 @@ ContextStoreResult ContextStore::forget(const std::string& kind, const std::vect
             if (!project->second.snapshotPath.empty())
                 projectDirectories.push_back(std::filesystem::u8path(project->second.snapshotPath).parent_path().generic_u8string());
             const std::string projectId = project->first;
-            if (catalog->activeProjectId == projectId)
-                catalog->activeProjectId.clear();
             for (auto& [_, selections] : catalog->workspaceScriptSelections)
                 for (auto selection = selections.begin(); selection != selections.end();)
                     selection = selection->second == projectId ? selections.erase(selection) : std::next(selection);
@@ -959,6 +1128,25 @@ ContextStoreResult ContextStore::forget(const std::string& kind, const std::vect
             return {false, std::nullopt, "could not remove " + directory + ": " + filesystemError.message(), affected};
     }
     return {true, std::nullopt, std::nullopt, affected};
+}
+
+std::string defaultLuduvoLocalDirectory(const std::string& configuredLocalDirectory)
+{
+    if (!configuredLocalDirectory.empty())
+        return normalizeContextPath(configuredLocalDirectory);
+#ifdef _WIN32
+    if (auto local = environmentVariable("LOCALAPPDATA"))
+        return joinPath(*local, "Luduvo");
+#elif defined(__APPLE__)
+    if (auto home = getHomeDirectory())
+        return joinPath(*home, "Library/Application Support/Luduvo");
+#else
+    if (auto data = environmentVariable("XDG_DATA_HOME"))
+        return joinPath(*data, "Luduvo");
+    if (auto home = getHomeDirectory())
+        return joinPath(*home, ".local/share/Luduvo");
+#endif
+    return "Luduvo";
 }
 
 std::string defaultContextStateDirectory(const std::string& configuredLocalDirectory, const std::string& configuredContextDirectory)
@@ -999,25 +1187,6 @@ std::string defaultCommandsLogPath(const std::string& configuredRoamingDirectory
         return joinPath(*home, ".local/share/Luduvo/Luduvo Studio/commands.log");
 #endif
     return "commands.log";
-}
-
-std::string defaultStudioLogPath(const std::string& configuredLocalDirectory)
-{
-    if (!configuredLocalDirectory.empty())
-        return joinPath(configuredLocalDirectory, "studio.log");
-#ifdef _WIN32
-    if (auto local = environmentVariable("LOCALAPPDATA"))
-        return joinPath(*local, "Luduvo/studio.log");
-#elif defined(__APPLE__)
-    if (auto home = getHomeDirectory())
-        return joinPath(*home, "Library/Logs/Luduvo/studio.log");
-#else
-    if (auto state = environmentVariable("XDG_STATE_HOME"))
-        return joinPath(*state, "Luduvo/studio.log");
-    if (auto home = getHomeDirectory())
-        return joinPath(*home, ".local/state/Luduvo/studio.log");
-#endif
-    return "studio.log";
 }
 
 } // namespace luduvo

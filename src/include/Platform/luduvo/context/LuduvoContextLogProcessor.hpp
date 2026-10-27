@@ -2,32 +2,37 @@
 
 #include "Platform/luduvo/context/LuduvoContextStore.hpp"
 
+#include <chrono>
 #include <map>
+#include <optional>
+#include <set>
 #include <string>
+#include <vector>
 
 namespace luduvo
 {
 
 class ContextLogProcessor
 {
-    struct PendingCommand
+    struct PendingDump
     {
-        std::string commandLine;
-        std::string projectName;
+        std::string path;
+        std::chrono::steady_clock::time_point observedAt;
     };
 
     ContextStore store;
-    std::string activeProject;
-    std::map<uint64_t, PendingCommand> pendingCommands;
+    std::set<std::string> knownScriptFiles;
+    std::optional<std::chrono::steady_clock::time_point> pendingScriptCreation;
+    std::vector<PendingDump> pendingDumps;
 
-    void completeCommand(const PendingCommand& pending);
+    std::map<std::string, std::string> scanScriptFiles() const;
+    void staleLiveProjects(std::string reason, const std::vector<std::string>& preferred = {});
 
 public:
     explicit ContextLogProcessor(ContextStore store);
 
-    void ingestStudioLine(const std::string& line);
     void ingestCommandLine(const std::string& line);
-    const std::string& activeProjectName() const;
+    void pollFilesystem();
     size_t pendingCommandCount() const;
 };
 

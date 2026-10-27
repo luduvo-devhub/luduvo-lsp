@@ -54,7 +54,7 @@ int startLanguageServer(const argparse::ArgumentParser& program)
         std::optional<std::string> crashReportDirectory = program.present<std::string>("--crash-report-directory");
 
         sentry_options_t* options = sentry_options_new();
-        sentry_options_set_dsn(options, "https://bc658c75485d1aecbaf1c0c1f7980922@o4509305213026304.ingest.de.sentry.io/4509305221283920");
+        sentry_options_set_dsn(options, LSP_SENTRY_DSN);
 
         if (crashReportDirectory.has_value())
         {
@@ -65,8 +65,12 @@ int startLanguageServer(const argparse::ArgumentParser& program)
 #endif
         }
 
-        sentry_options_set_release(options, "luau-lsp@" LSP_VERSION);
-        sentry_init(options);
+        sentry_options_set_release(options, "luduvo-lsp@" LSP_VERSION);
+        if (sentry_init(options) != 0)
+        {
+            std::cerr << "Could not initialize crash reporting; continuing without it\n";
+            isCrashReportingEnabled = false;
+        }
 #else
         std::cerr << "Ignoring '--enable-crash-reporting' as this server was not built with crash reporting features\n";
 #endif
@@ -217,6 +221,7 @@ int main(int argc, char** argv)
         .help("display all the currently available Luau FFlags and their values")
         .default_value(false)
         .implicit_value(true);
+    program.add_argument("--show-capabilities").help("print build capabilities as JSON and exit").default_value(false).implicit_value(true);
     luduvo::ContextCli contextCli;
 
     // Analyze arguments
@@ -332,6 +337,16 @@ int main(int argc, char** argv)
     if (program.is_used("--show-flags"))
     {
         displayFlags();
+        return 0;
+    }
+    if (program.is_used("--show-capabilities"))
+    {
+#ifdef LSP_BUILD_WITH_SENTRY
+        constexpr bool crashReporting = true;
+#else
+        constexpr bool crashReporting = false;
+#endif
+        std::cout << json{{"crashReporting", crashReporting}}.dump() << '\n';
         return 0;
     }
 
