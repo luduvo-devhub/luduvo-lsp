@@ -11,7 +11,7 @@ if (WIN32)
     option(LSP_KILL_BEFORE_LINK "Windows only: terminate processes running the CLI target executable before linking" OFF)
 endif ()
 
-set(LSP_VERSION "1.71.0L-alpha")
+set(LSP_VERSION "1.71.1L-alpha")
 set(LSP_NAME "Luduvo Luau")
 
 if (LSP_STATIC_CRT)

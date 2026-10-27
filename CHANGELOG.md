@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.71.1L-alpha] - 2026-10-27
+
 ### Added
 
 - Per-notification suppression now exists through `luau-lsp.platform.luduvo.notifications`! Most notifications Luduvo will send are from the context helper, and during testing I found that the notifications can get quite annoying depending on your config. The shared notification system also adds **Do not show again** automatically to notifications that you can supress if you are on VSCode. Check the README for more details on how to use it
