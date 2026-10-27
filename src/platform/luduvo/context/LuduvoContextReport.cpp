@@ -470,8 +470,10 @@ static ReportNode buildContextOverviewReport(const json& inspection)
         if (projects != catalog->end() && projects->is_object())
         {
             ReportNode projectList{"Projects (" + std::to_string(projects->size()) + ")"};
-            for (const auto& [projectId, project] : projects->items())
+            for (const auto& entry : projects->items())
             {
+                const auto& projectId = entry.key();
+                const auto& project = entry.value();
                 ReportNode item{project.value("name", projectId)};
                 item.tags.push_back(project.value("fresh", false) ? "fresh" : "stale");
                 item.fields.push_back({"ID", projectId});

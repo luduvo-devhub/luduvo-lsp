@@ -25,6 +25,11 @@ endif ()
 
 project(Luau.LanguageServer LANGUAGES CXX)
 
+# Everything needs to be c++17 only for MacOS' sake
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Sentry setup
 if (LSP_BUILD_WITH_SENTRY)
     string(STRIP "${LSP_SENTRY_DSN}" LSP_SENTRY_DSN)
@@ -228,6 +233,19 @@ if (MSVC)
     endif ()
 else ()
     list(APPEND LUAU_LSP_OPTIONS -Wall)
+endif ()
+
+# Ban C++20 extensions just in case the earlier C++17 mode is not sufficient. We are C++17 only now, not C++17 or higher
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if (MSVC)
+        list(APPEND LUAU_LSP_OPTIONS /clang:-Werror=c++20-extensions)
+    else ()
+        list(APPEND LUAU_LSP_OPTIONS -Werror=c++20-extensions)
+    endif ()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    list(APPEND LUAU_LSP_OPTIONS -pedantic-errors)
+elseif (MSVC)
+    list(APPEND LUAU_LSP_OPTIONS /permissive-)
 endif ()
 
 if (LSP_WERROR)
