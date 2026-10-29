@@ -119,7 +119,7 @@ void LuduvoPlatform::configureContext()
     std::string helperError;
     contextHelperSession = luduvo::acquireContextHelper(configuration, &helperError);
     if (!contextHelperSession && !helperError.empty())
-        workspaceFolder->client->sendLogMessage(lsp::MessageType::Warning, "Luduvo context helper is unavailable: " + helperError);
+        workspaceFolder->client->log(logging::Level::Warning, "other", "Luduvo context helper is unavailable: " + helperError);
     subscribeContextNotifications();
     updateContextRegistration();
 }
@@ -527,8 +527,7 @@ void LuduvoPlatform::notifyContextState(const lsp::DocumentUri& uri, bool force)
             return;
         if (!notificationEnabled(kContextSelectionRequiredNotification))
         {
-            workspaceFolder->client->sendLogMessage(
-                lsp::MessageType::Info, "This script belongs to " + std::to_string(candidates.size()) + " captured Luduvo projects.");
+            workspaceFolder->client->log(logging::Level::Info, "other", "This script belongs to " + std::to_string(candidates.size()) + " captured Luduvo projects.");
             return;
         }
         if (candidates.size() <= 3)

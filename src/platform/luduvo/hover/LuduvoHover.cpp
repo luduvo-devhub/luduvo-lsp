@@ -13,7 +13,8 @@ using namespace luduvo::hover;
 
 std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverContext& context)
 {
-    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich || isLiteralPosition(context.sourceModule, context.position))
+    const auto& subject = context.subject;
+    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich || subject.literal)
         return std::nullopt;
 
     Luau::ToStringOptions options;
@@ -22,71 +23,35 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     options.functionTypeArguments = true;
     options.hideNamedFunctionTypeParameters = false;
     options.hideTableKind = !context.showTableKinds;
-    options.scope = context.scope;
+    options.scope = subject.scope;
     options.maxTableLength = 0;
     options.maxTypeLength = 0;
 
-    const std::string rawType = Luau::toString(context.type, options);
-    const DeclarationTarget declarationTarget = getDeclarationTarget(context.sourceModule, context.exprOrLocal, context.node, context.position);
-    const Luau::AstLocal* hoveredLocal = context.exprOrLocal.getLocal();
-    if (!hoveredLocal)
-        if (auto localExpression = context.node->as<Luau::AstExprLocal>())
-            hoveredLocal = localExpression->local;
-    const bool directMemberInitializer = localHasDirectMemberInitializer(context.sourceModule, hoveredLocal);
+    const std::string rawType = Luau::toString(subject.type, options);
+    const auto& declarationTarget = subject.declaration;
+    const bool directMemberInitializer = subject.directMemberInitializer;
 
-    std::optional<std::string> documentationSymbol = context.documentationSymbol;
-    bool directIdentityBelongsToHover = !((declarationTarget.kind == DeclarationKind::Local && !directMemberInitializer) || context.node->asType());
-    if (directIdentityBelongsToHover && declarationTarget.kind == DeclarationKind::Global)
-    {
-        const auto identity = getLuduvoSymbolIdentity(documentationSymbol);
-        directIdentityBelongsToHover = !identity || identity->title == declarationTarget.name;
-    }
-    if (!directIdentityBelongsToHover)
-        documentationSymbol = std::nullopt;
-    documentationSymbol = resolveDocumentationSymbol(context.type, documentationSymbol, getEnvironmentForModule(context.moduleName));
-
+    const auto& documentationSymbol = subject.documentationSymbol;
     std::optional<PrintedDocumentation> documentation;
-    if (workspaceFolder && documentationSymbol)
-        documentation =
-            getDocumentation(workspaceFolder->client->documentation, *documentationSymbol, &workspaceFolder->client->documentationMetadata);
-    if (!documentation && workspaceFolder)
-    {
-        if (directIdentityBelongsToHover)
-        {
-            if (auto fallback = workspaceFolder->getDocumentationForType(context.type); fallback && !fallback->empty())
-                documentation = PrintedDocumentation{*fallback, std::nullopt};
-        }
-        if (!documentation)
-        {
-            auto fallback = workspaceFolder->getDocumentationForAstNode(context.moduleName, context.node, context.scope);
-            if (fallback && !fallback->empty())
-                documentation = PrintedDocumentation{*fallback, std::nullopt};
-        }
-        if (!documentation && context.documentationLocation)
-        {
-            auto fallbackComments = printMoonwaveDocumentation(
-                workspaceFolder->getComments(context.documentationLocation->moduleName, context.documentationLocation->location));
-            if (!fallbackComments.empty())
-                documentation = PrintedDocumentation{std::move(fallbackComments), std::nullopt};
-        }
-    }
+    if (subject.documentation)
+        documentation = *subject.documentation;
 
-    const Luau::TypeId resolvedType = Luau::follow(context.type);
+    const Luau::TypeId resolvedType = Luau::follow(subject.type);
     std::optional<std::string> fallbackTitle = types::getTypeName(resolvedType);
     if (!fallbackTitle && Luau::is<Luau::PrimitiveType, Luau::SingletonType, Luau::UnionType, Luau::IntersectionType>(resolvedType))
         fallbackTitle = rawType;
-    if (!fallbackTitle && context.exprOrLocal.getName())
-        fallbackTitle = context.exprOrLocal.getName()->value;
+    if (!fallbackTitle && !declarationTarget.name.empty())
+        fallbackTitle = declarationTarget.name;
 
-    const std::string expandedType = getRichHoverTypeDefinition(context.type, options);
-    const std::string declaration = makeDeclaration(context.type, normalizeRichHoverType(context.type, options), expandedType, declarationTarget);
+    const std::string expandedType = getRichHoverTypeDefinition(subject.type, options);
+    const std::string declaration = makeDeclaration(subject.type, normalizeRichHoverType(subject.type, options), expandedType, declarationTarget);
     std::optional<Luau::Property> property;
-    if (context.hoveredProperty)
-        property = *context.hoveredProperty;
-    const auto constrainedResources = resolveResourceBindings(documentationSymbol, context.type);
+    if (subject.property)
+        property = *subject.property;
+    const auto constrainedResources = resolveResourceBindings(documentationSymbol, subject.type);
     RichHoverInput hoverInput{
-        context.type, declaration, documentationSymbol, std::move(property), documentation, fallbackTitle, directMemberInitializer, true};
-    hoverInput.overloads = makeRichHoverOverloads(context.type, declarationTarget, options, constrainedResources);
+        subject.type, declaration, documentationSymbol, std::move(property), documentation, fallbackTitle, directMemberInitializer, true};
+    hoverInput.overloads = makeRichHoverOverloads(subject.type, declarationTarget, options, constrainedResources);
     return lsp::Hover{{lsp::MarkupKind::Markdown, renderRichHover(configuration.hover, analyzeRichHover(constrainedResources, hoverInput))}};
 }
 

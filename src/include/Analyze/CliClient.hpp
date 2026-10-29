@@ -27,14 +27,15 @@ struct CliClient : public Client
         return globalConfig;
     }
 
-    void sendLogMessage(const lsp::MessageType& type, const std::string& message) const override
+    void sendLogMessage(const lsp::MessageType&, const std::string& message) const override
     {
-        std::cerr << "[" << getMessageTypeString(type) << "] " << message << "\n";
+        // Operational records have already been formatted by the shared logger.
+        std::cerr << message << "\n";
     }
 
     void sendWindowMessage(const lsp::MessageType& type, const std::string& message) const override
     {
-        sendLogMessage(type, message);
+        std::cerr << "[" << getMessageTypeString(type) << "] " << message << "\n";
     }
 
     // In the CLI, this is only used for config errors right now

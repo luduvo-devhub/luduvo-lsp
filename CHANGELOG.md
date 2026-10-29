@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- After trying to troubleshoot the LSP with techog to fix errors, I found that the LSP needed to do a better job at logging things. You can now configure how verbosely Luduvo LSP logs things through `logs.default` and (dotted) category/subcategory overrides where appropiate. The logs still get sent to the editor's own LSP-specific log file, but they are better formetted, gives more context/data and easier to read. See the README for more details on how to use it
+- The context helper now has OS-specific smoke tests during compilation/verification so I ever embarass myself again
+
+### Fixed
+
+- Hover tooltips should now never report `Instance.Action` doc tooltips ever again. Bit the bullet and just flat out rewrote the whole thing. If you ever see hover in this changelog again, know that I am just as mad as you are
+- Transient Windows access-denied errors when replacing context registrations while another process is reading them
+- Autodump no longer uses broken `-platform offscreen` args in its LuduvEditor spawn
+- Linux paths for finding the editor from an installation should now find them correctly
+
 ## [1.71.1L-alpha] - 2026-10-27
 
 ### Added

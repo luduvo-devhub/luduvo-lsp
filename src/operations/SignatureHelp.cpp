@@ -267,6 +267,8 @@ std::optional<lsp::SignatureHelp> WorkspaceFolder::signatureHelp(
         }
     }
 
+    logging::write(logging::Level::Debug, "requests.signatureHelp", "Resolved " + std::to_string(signatures.size()) +
+        " signatures; active signature " + std::to_string(activeSignature.value_or(0)) + "; active parameter " + std::to_string(activeParameter));
     lsp::SignatureHelp help = lsp::SignatureHelp{signatures, activeSignature.value_or(0), activeParameter};
     platform->handleSignatureHelp(
         PlatformSignatureHelpContext{moduleName, *textDocument, *sourceModule, position, followedId, documentationSymbol, help});

@@ -167,6 +167,10 @@ void LanguageServer::onRequest(const id_type& id, const std::string& method, std
 {
     LUAU_TIMETRACE_SCOPE("LanguageServer::onRequest", "LSP");
     LUAU_TIMETRACE_ARGUMENT("method", method.c_str());
+    const std::string logCategory = method == "textDocument/hover" ? "requests.hover" :
+        method == "textDocument/completion" || method == "completionItem/resolve" ? "requests.completion" :
+        method == "textDocument/signatureHelp" ? "requests.signatureHelp" : "requests";
+    logging::Operation operation(logCategory, method + " request " + json(id).dump());
 
     // Handle request
     // If a request has been sent before the server is initialized, we should error
@@ -522,7 +526,7 @@ void LanguageServer::onNotification(const std::string& method, std::optional<jso
         }
 
         if (!handled)
-            client->sendLogMessage(lsp::MessageType::Warning, "unknown notification method: " + method);
+            client->log(logging::Level::Warning, "server.communication", "unknown notification method: " + method);
     }
 }
 
@@ -740,17 +744,17 @@ lsp::InitializeResult LanguageServer::onInitialize(const lsp::InitializeParams& 
                     options.fflags,
                     [this](const std::string& message)
                     {
-                        client->sendLogMessage(lsp::MessageType::Error, message);
+                        client->log(logging::Level::Error, "server.lifecycle", message);
                     },
                     [this](const std::string& message)
                     {
-                        client->sendLogMessage(lsp::MessageType::Info, message);
+                        client->log(logging::Level::Info, "server.lifecycle", message);
                     });
             }
         }
         catch (const json::exception& err)
         {
-            client->sendLogMessage(lsp::MessageType::Error, std::string("Failed to parse initialization options: ") + err.what());
+            client->log(logging::Level::Error, "server.configuration", std::string("Failed to parse initialization options: ") + err.what());
         }
     }
 
@@ -783,7 +787,7 @@ lsp::InitializeResult LanguageServer::onInitialize(const lsp::InitializeParams& 
             positionEncoding() = encodings[0];
     }
     result.capabilities.positionEncoding = positionEncoding();
-    client->sendLogMessage(lsp::MessageType::Info, "negotiated position encoding: " + json(positionEncoding()).dump());
+    client->log(logging::Level::Info, "server.lifecycle", "negotiated position encoding: " + json(positionEncoding()).dump());
 
     client->sendTrace("server capabilities:" + json(result).dump(), std::nullopt);
     return result;
@@ -794,8 +798,8 @@ void LanguageServer::onInitialized([[maybe_unused]] const lsp::InitializedParams
     LUAU_TIMETRACE_SCOPE("LanguageServer::onInitialized", "LSP");
 
     // Client received result of initialize
-    client->sendLogMessage(lsp::MessageType::Info, "server initialized!");
-    client->sendLogMessage(lsp::MessageType::Info, "trace level: " + json(client->traceMode).dump());
+    client->log(logging::Level::Info, "server.lifecycle", "server initialized!");
+    client->log(logging::Level::Info, "server.lifecycle", "trace level: " + json(client->traceMode).dump());
 
     // Handle configuration responses
     client->configChangedCallback = [&](const lsp::DocumentUri& workspaceUri, const ClientConfiguration& config, const ClientConfiguration* oldConfig)
@@ -844,7 +848,7 @@ void LanguageServer::onInitialized([[maybe_unused]] const lsp::InitializedParams
     if (client->capabilities.workspace && client->capabilities.workspace->didChangeWatchedFiles &&
         client->capabilities.workspace->didChangeWatchedFiles->dynamicRegistration)
     {
-        client->sendLogMessage(lsp::MessageType::Info, "registering didChangedWatchedFiles capability");
+        client->log(logging::Level::Info, "server.lifecycle", "registering didChangedWatchedFiles capability");
 
         std::vector<lsp::FileSystemWatcher> watchers{};
         watchers.push_back(lsp::FileSystemWatcher{"**/.luaurc"});
@@ -856,7 +860,7 @@ void LanguageServer::onInitialized([[maybe_unused]] const lsp::InitializedParams
     }
     else
     {
-        client->sendLogMessage(lsp::MessageType::Warning,
+        client->log(logging::Level::Warning, "server.lifecycle",
             "client does not allow didChangeWatchedFiles registration - automatic updating on sourcemap/config changes will not be provided");
     }
 
@@ -920,10 +924,11 @@ void LanguageServer::onDidChangeConfiguration(const lsp::DidChangeConfigurationP
         try
         {
             client->globalConfig = params.settings;
+            logging::logger().configure(client->globalConfig.logs);
         }
         catch (const std::exception& e)
         {
-            client->sendLogMessage(lsp::MessageType::Error, std::string("failed to refresh global configuration: ") + e.what());
+            client->log(logging::Level::Error, "server.configuration", std::string("failed to refresh global configuration: ") + e.what());
         }
     }
 }
@@ -982,7 +987,7 @@ void LanguageServer::onDidChangeWatchedFiles(const lsp::DidChangeWatchedFilesPar
 
 void LanguageServer::shutdown()
 {
-    client->sendLogMessage(lsp::MessageType::Info, "Client requested shutdown");
+    client->log(logging::Level::Info, "server.lifecycle", "Client requested shutdown");
 
     {
         std::unique_lock lock(messagesMutex);

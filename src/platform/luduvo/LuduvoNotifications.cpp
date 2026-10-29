@@ -10,6 +10,17 @@ static std::string formatMessage(std::string_view id, const std::string& message
     return message + "\n\nNotification ID: " + std::string(id);
 }
 
+static std::string_view logCategory(std::string_view id)
+{
+    if (id.find("definitions.") == 0)
+        return "workspace.definitions";
+    if (id.find("configuration.") == 0)
+        return "server.configuration";
+    if (id.find("context.autodump") == 0)
+        return "helper.autodump";
+    return "context";
+}
+
 NotificationSender::NotificationSender(Client* client, std::map<std::string, bool> overrides)
     : client(client)
     , overrides(std::move(overrides))
@@ -30,7 +41,7 @@ bool NotificationSender::enabled(std::string_view id) const
 
 void NotificationSender::log(std::string_view id, lsp::MessageType type, const std::string& message) const
 {
-    client->sendLogMessage(type, formatMessage(id, message));
+    client->log(type, logCategory(id), formatMessage(id, message));
 }
 
 void NotificationSender::show(std::string_view id, lsp::MessageType type, const std::string& message) const
@@ -42,7 +53,7 @@ void NotificationSender::request(std::string_view id, lsp::MessageType type, con
     const std::vector<lsp::MessageActionItem>& actions, const std::optional<ResponseHandler>& handler, bool force) const
 {
     const std::string formatted = formatMessage(id, message);
-    client->sendLogMessage(type, formatted);
+    client->log(type, logCategory(id), formatted);
     if (!force && !enabled(id))
         return;
     auto availableActions = actions;

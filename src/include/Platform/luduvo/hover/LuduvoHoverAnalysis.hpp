@@ -4,6 +4,7 @@
 #include "LuduvoHoverRenderer.hpp"
 #include "Platform/luduvo/LuduvoSymbols.hpp"
 #include "LSP/DocumentationParser.hpp"
+#include "LSP/HoverSubject.hpp"
 
 #include "Luau/Ast.h"
 #include "Luau/AstQuery.h"
@@ -16,21 +17,8 @@
 
 namespace luduvo::hover
 {
-enum struct DeclarationKind
-{
-    None,
-    Local,
-    Member,
-    Global,
-    Type,
-};
-
-struct DeclarationTarget
-{
-    DeclarationKind kind = DeclarationKind::None;
-    std::string name;
-    bool isConst = false;
-};
+using DeclarationKind = HoverDeclarationKind;
+using DeclarationTarget = HoverDeclarationTarget;
 
 struct TypeProvenance
 {
@@ -59,11 +47,7 @@ struct RichHoverInput
     std::vector<RichHoverOverload> overloads;
 };
 
-DeclarationTarget getDeclarationTarget(
-    const Luau::SourceModule& sourceModule, Luau::ExprOrLocal& exprOrLocal, Luau::AstNode* node, const Luau::Position& position);
 std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target);
-bool isLiteralPosition(const Luau::SourceModule& sourceModule, const Luau::Position& position);
-bool localHasDirectMemberInitializer(const Luau::SourceModule& sourceModule, const Luau::AstLocal* local);
 std::string versionLabel(LuduvoDefinitionSide side);
 void collectTypeProvenance(Luau::TypeId type, TypeProvenance& provenance);
 std::string versionLabel(const TypeProvenance& provenance);

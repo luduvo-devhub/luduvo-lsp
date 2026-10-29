@@ -218,6 +218,8 @@ lsp::RequireGraphResult WorkspaceFolder::requireGraph(const lsp::RequireGraphPar
 
 int startRequireGraph(const argparse::ArgumentParser& program)
 {
+    if (auto level = program.present<std::string>("--log-level"))
+        logging::logger().configure({logging::parseLevel(*level), {}});
     auto sourcemapPath = program.present<std::string>("--sourcemap");
     auto baseLuaurc = program.present<std::string>("--base-luaurc");
     auto outputFormat = program.get<std::string>("--output-format");

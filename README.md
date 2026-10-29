@@ -263,6 +263,8 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 
 | Setting | Type | Default | Description |
 |---|---|---:|---|
+| `logs.default` | log level | `"Info"` | Controls operational log verbosity. See [Logs](#logs). |
+| `logs.categories` | map of dotted categories to log levels | `{}` | Overrides verbosity for individual categories and their children. |
 | `platform.type` | `"standard"`, `"roblox"`, or `"luduvo"` | `"luduvo"` | Selects the platform integration. Luduvo LSP adds the `luduvo` option and makes it the default. |
 | `platform.luduvo.dataDirectory` | string | `""` | Overrides Luduvo's per-user Client data directory. An empty value uses the operating-system default. |
 | `platform.luduvo.directories.roaming` | string | `""` | Overrides the root of Luduvo's roaming per-user data. An empty value uses the operating-system default. This takes precedence over the legacy `dataDirectory` setting. |
@@ -628,7 +630,7 @@ The key is a notification ID that is at the bottom of all suppressable notificat
 
 VSCode users also get a "Do not show again" option to do all of this automatically. Lucky them.
 
-## Building
+## Building & Debugging
 
 Since I'm on Windows and I don't have a lot of disk space, I built this with MinGW GCC, CMake, and Ninja:
 
@@ -647,6 +649,44 @@ If you are on Windows and test new Luduvo LSP builds directly from the build dir
 On final note that pertains to crash reporting: You have to provide your own Sentry DSN now. Alongside `LSP_BUILD_WITH_SENTRY=ON`, you also need `LSP_SENTRY_DSN` and a URL to your own Sentry project. 
 
 Runtime reporting still requires the user to enable `luduvo-lsp.server.crashReporting.enabled` or pass `lsp --enable-crash-reporting`
+
+### Logs
+
+Functionally, Luduvo logs work the same as logs from any other LSP (outside of the helper, which writes its logs to stderr because stdout is already being use to spit out outputs). However, you can configure how verbose the logs are and what the logs talk about in `luau-lsp.logs` in your config:
+
+```json
+"logs": {
+  "default": "Info",
+  "categories": {
+    "helper": "Debug",
+    "helper.autodump": "Verbose",
+    "requests.hover": "Debug"
+  }
+}
+```
+
+Note that notification suppression is separate from logging, so disabling logging for something like `helper.autodump` won't make autodump notifications go away. You'll have to set both to off to achieve that behavior.
+This is probably the only Luduvo-specific setting that isn't inside the `luduvo` platform settings, since EVERY part of luau needed to be hooked into Luduvo's log wrapper or else the log file will look weird and work haphazardly.
+
+In logs, the only value any key takes outside of `categories` is a string representing its log verbosity level. In order of least to most verbose, the possible log levels are `Off`, `Error`, `Warning`, `Info`, `Debug`, and `Verbose`. If you are curious about "debug", it represents the standard LSP `Log` message type (which includes  `log`-type plugin messages). Debug logs and higher can contain local paths and editor output, so if you plan on sharing your logs and you care about things like that, be sure to sanitize them before sharing. Source files, full world dumps, and protocol payloads are not included normal logging. 
+
+Another thing to note about setting log verbosity values is that they're all case-insensitive. What is case sensitive, however, are the keys inside of `categories`. `categories` represent every loggable thing in the LSP sorted by a category ID. Just like in other ID systems like it in Luduvo's config, everything is a hierarchy with its different levels expressed in dot notation. The general rule for log hierarchies is that further something is nested, the more priority their setting has in the event of a clash. For example, if you define all `helper` logs as "off", but also define `helper.autodump` logs as "verbose", `helper.autodump` will still log while anything that's under the `helper` umbrella stays silent. You can consider the `default` setting outside of `categories` as the lowest thing in its hierarchy. For every category or ID path that isn't mentioned, it gets that.
+
+Here is a table of all the categories and what they generally log:
+
+| Categories | Events |
+| --- | --- |
+| `server.lifecycle`, `server.configuration`, `server.communication` | Server lifecycle, settings, communication failures |
+| `workspace.files`, `workspace.definitions` | File watching, definition loading and fallback |
+| `bindings.resources`, `bindings.colors` | Resource and color binding configuration and resolution |
+| `analysis`, `analysis.diagnostics` | Analysis failures, diagnostics, analysis timing |
+| `requests.hover`, `requests.completion`, `requests.signatureHelp`, `requests` | Request timing and failures; operation-specific decisions where instrumented |
+| `context.tracking`, `context.snapshots`, `context.refresh` | LSP context tracking, snapshot updates, freshness and refresh coordination |
+| `helper.lifecycle`, `helper.clients`, `helper.commands`, `helper.storage`, `helper.cleanup` | Shared helper lifecycle, registrations, command watching, storage, cleanup |
+| `helper.autodump`, `helper.autodump.process`, `helper.autodump.autosaves` | Dump lifecycle, editor launch/exit/output, autosave preservation |
+| `other` | Events without a more specific category |
+
+CLI commands accept `--log-level [level]`, which overrides category settings for that invocation. Context commands also respect config `log`settings if you pass in your config with `--settings`. Since all running LSPs share the same helper process, helper events belonging to a specific LSP process are relayed sent back to said LSP, where each LSP process will apply its own logging settings. 
 
 ## Current limitations
 

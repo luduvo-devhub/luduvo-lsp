@@ -290,6 +290,105 @@ TEST_CASE("luduvo_rich_hover_does_not_decorate_literals")
     CHECK_EQ(result->contents.value, codeBlock("luau", "local value: number"));
 }
 
+TEST_CASE("hover_documentation_belongs_to_declarations_not_shared_primitive_types")
+{
+    const std::string definitions = R"(
+        declare extern type Instance with
+            Action: string
+            Anchored: boolean
+            Loose: any
+        end
+        declare instance: Instance
+        declare documentedString: string
+        export type FirstLabel = string
+        export type SecondLabel = string
+    )";
+    for (auto presentation : {LuduvoHoverPresentation::Standard, LuduvoHoverPresentation::Rich})
+    {
+        auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+        config.platform.luduvo.hover.presentation = presentation;
+        LuduvoFixture fixture("hover_documentation_ownership", config, definitions, definitions);
+        for (const std::string side : {"server", "client"})
+        {
+            const std::string prefix = "@luduvo/" + side;
+            fixture.client.documentation[prefix + "/globaltype/Instance.Action"] = Luau::BasicDocumentation{"Action documentation"};
+            fixture.client.documentation[prefix + "/globaltype/Instance.Anchored"] = Luau::BasicDocumentation{"Anchored documentation"};
+            fixture.client.documentation[prefix + "/globaltype/Instance.Loose"] = Luau::BasicDocumentation{"Loose documentation"};
+            fixture.client.documentation[prefix + "/global/documentedString"] = Luau::BasicDocumentation{"Declared string documentation"};
+            fixture.client.documentation[prefix + "/globaltype/FirstLabel"] = Luau::BasicDocumentation{"First label documentation"};
+            fixture.client.documentation[prefix + "/globaltype/SecondLabel"] = Luau::BasicDocumentation{"Second label documentation"};
+            size_t index = 0;
+            const auto hover = [&](const std::string& markedSource)
+            {
+                auto [source, position] = sourceWithMarker(markedSource);
+                const Uri uri = fixture.newDocument("ownership" + std::to_string(index++) + "." + side + ".luau", source);
+                lsp::HoverParams params;
+                params.textDocument = lsp::TextDocumentIdentifier{uri};
+                params.position = position;
+                const auto result = fixture.workspace.hover(params, nullptr);
+                REQUIRE(result);
+                return result->contents.value;
+            };
+            for (const std::string source : {"local value = \"he|llo\"", "local value = tr|ue", "local value = \"hello\"\nprint(val|ue)",
+                     "local value = true\nprint(val|ue)", "assigned = \"hello\"\nprint(ass|igned)", "local value: str|ing = \"hello\""})
+            {
+                CAPTURE(source);
+                CAPTURE(side);
+                CAPTURE(presentation);
+                const std::string result = hover(source);
+                CHECK(result.find("documentation") == std::string::npos);
+                CHECK(result.find("Instance.Action") == std::string::npos);
+                CHECK(result.find("Instance.Anchored") == std::string::npos);
+            }
+            CHECK(hover("instance.Act|ion").find("Action documentation") != std::string::npos);
+            CHECK(hover("instance.Anch|ored").find("Anchored documentation") != std::string::npos);
+            CHECK(hover("documentedStr|ing").find("Declared string documentation") != std::string::npos);
+            const std::string firstAlias = hover("local value: FirstLa|bel");
+            CHECK(firstAlias.find("First label documentation") != std::string::npos);
+            CHECK(firstAlias.find("Second label documentation") == std::string::npos);
+            const std::string secondAlias = hover("local value: SecondLa|bel");
+            CHECK(secondAlias.find("Second label documentation") != std::string::npos);
+            CHECK(secondAlias.find("First label documentation") == std::string::npos);
+            CHECK(hover("type FirstLabel = number\nlocal value: FirstLa|bel").find("First label documentation") == std::string::npos);
+            CHECK(hover("local alias = instance.Loose\nprint(al|ias)").find("Loose documentation") != std::string::npos);
+            CHECK(hover("local alias = instance.Loose\nalias = \"hello\"\nprint(al|ias)").find("Loose documentation") == std::string::npos);
+            CHECK(hover("local alias = instance.Loose\nlocal function replace() alias = \"hello\" end\nprint(al|ias)").find("Loose documentation") ==
+                  std::string::npos);
+        }
+    }
+}
+
+TEST_CASE("hover_documentation_preserves_callback_parameter_owners")
+{
+    const std::string definitions = "declare consume: (callback: (label: string) -> ()) -> ()";
+    for (auto presentation : {LuduvoHoverPresentation::Standard, LuduvoHoverPresentation::Rich})
+    {
+        auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+        config.platform.luduvo.hover.presentation = presentation;
+        LuduvoFixture fixture("hover_callback_owner", config, definitions, definitions);
+        fixture.client.documentation["@luduvo/server/global/consume/param/0/param/0"] = Luau::BasicDocumentation{"The supplied label"};
+        auto [source, position] = sourceWithMarker("consume(function(lab|el) end)");
+        const Uri uri = fixture.newDocument("callback.server.luau", source);
+        lsp::HoverParams params;
+        params.textDocument = lsp::TextDocumentIdentifier{uri};
+        params.position = position;
+        const auto result = fixture.workspace.hover(params, nullptr);
+        REQUIRE(result);
+        CHECK(result->contents.value.find("The supplied label") != std::string::npos);
+        CHECK(result->contents.value.find("/param/") == std::string::npos);
+    }
+}
+
+TEST_CASE("documentation_type_identity_ignores_shared_leaf_metadata")
+{
+    Luau::TypeArena arena;
+    const auto primitive = arena.addType(Luau::PrimitiveType{Luau::PrimitiveType::String});
+    Luau::asMutable(primitive)->documentationSymbol = "@test/globaltype/Instance.Action";
+    CHECK_FALSE(getTypeDocumentationSymbol(primitive));
+    const auto optional = arena.addType(Luau::UnionType{{primitive, arena.addType(Luau::PrimitiveType{Luau::PrimitiveType::NilType})}});
+    CHECK_FALSE(getTypeDocumentationSymbol(optional));
+}
+
 TEST_CASE("luduvo_rich_hover_expands_named_extern_types_in_the_type_block")
 {
     const std::string definitions = R"(

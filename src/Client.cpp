@@ -5,6 +5,35 @@
 #include <iostream>
 #include <optional>
 
+void Client::log(lsp::MessageType type, std::string_view category, std::string message) const
+{
+    log(type == lsp::MessageType::Error     ? logging::Level::Error
+        : type == lsp::MessageType::Warning ? logging::Level::Warning
+        : type == lsp::MessageType::Info    ? logging::Level::Info
+                                            : logging::Level::Debug,
+        category, std::move(message));
+}
+
+void Client::log(logging::Level level, std::string_view category, std::string message) const
+{
+    logging::Logger destination(
+        [this](const logging::Record& record)
+        {
+            sendLogRecord(record);
+        });
+    destination.configure(logging::logger().settings());
+    destination.write(level, category, std::move(message));
+}
+
+void Client::sendLogRecord(const logging::Record& record) const
+{
+    const auto type = record.level == logging::Level::Error     ? lsp::MessageType::Error
+                      : record.level == logging::Level::Warning ? lsp::MessageType::Warning
+                      : record.level == logging::Level::Info    ? lsp::MessageType::Info
+                                                                : lsp::MessageType::Log;
+    sendLogMessage(type, logging::format(record));
+}
+
 LSPClient::LSPClient()
     : transport(std::make_unique<StdioTransport>())
 {
@@ -218,15 +247,42 @@ void LSPClient::requestConfiguration(const std::vector<lsp::DocumentUri>& uris)
                 {
                     auto uri = *workspaceIt;
                     ClientConfiguration config;
-                    if (!configIt->is_null())
-                        config = *configIt;
+                    try
+                    {
+                        if (!configIt->is_null())
+                            config = *configIt;
+                    }
+                    catch (const std::exception& error)
+                    {
+                        log(logging::Level::Warning, "server.configuration", std::string("Rejected configuration: ") + error.what());
+                        // A typo in logging must not prevent the workspace from
+                        // initializing. Retain the previous logging policy while
+                        // still applying otherwise valid workspace settings.
+                        try
+                        {
+                            json fallback = *configIt;
+                            fallback.erase("logs");
+                            config = fallback;
+                            const auto previous = configStore.find(uri);
+                            config.logs = previous == configStore.end() ? globalConfig.logs : previous->second.logs;
+                        }
+                        catch (const std::exception&)
+                        {
+                            ++workspaceIt;
+                            ++configIt;
+                            continue;
+                        }
+                    }
 
                     ClientConfiguration* oldConfig = nullptr;
                     if (auto it = configStore.find(uri); it != configStore.end())
                         oldConfig = &it->second;
 
                     configStore.insert_or_assign(uri, config);
-                    sendLogMessage(lsp::MessageType::Info, "loaded configuration for " + uri.toString());
+                    logging::logger().configure(config.logs);
+                    log(logging::Level::Info, "server.configuration", "loaded configuration for " + uri.toString());
+                    log(logging::Level::Debug, "server.configuration", "Platform " + json(config.platform.type).dump() +
+                        "; configured new solver " + (config.fflags.enableNewSolver ? "enabled" : "disabled") + "; workspace " + uri.toString());
                     if (configChangedCallback)
                         configChangedCallback(uri, config, oldConfig);
                     ++workspaceIt;
@@ -236,7 +292,7 @@ void LSPClient::requestConfiguration(const std::vector<lsp::DocumentUri>& uris)
                 // See if we have some remainders
                 if (workspaceIt != uris.end() || configIt != configs.end())
                 {
-                    sendLogMessage(lsp::MessageType::Warning, "erroneous config provided");
+                    log(logging::Level::Warning, "server.configuration", "erroneous config provided");
                 }
             }
         }
@@ -302,7 +358,7 @@ void LSPClient::handleResponse(const JsonRpcMessage& message)
     }
     catch (const std::exception& e)
     {
-        sendLogMessage(lsp::MessageType::Error, "failed to process response " + json(message.id).dump() + " - " + e.what());
+        log(logging::Level::Error, "server.communication", "failed to process response " + json(message.id).dump() + " - " + e.what());
     }
 }
 

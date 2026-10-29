@@ -1,6 +1,7 @@
 --!strict
 --!nolint luduvo/unused-local
 
+
 -- Tested in Zed. Complete the unfinished `game.` declare on line 13, or try hovering any of the luduvo-speciifc data types!
 local part: Instance? = game.Prefabs.Spawn("Part")
 if part then

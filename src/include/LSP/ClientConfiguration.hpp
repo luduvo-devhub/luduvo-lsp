@@ -1,4 +1,5 @@
 #pragma once
+#include "LSP/Logs.hpp"
 #include <optional>
 #include <utility>
 #include <vector>
@@ -613,6 +614,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientPlatformConfiguration, typ
 // Here we also define the default settings
 struct ClientConfiguration
 {
+    logging::Configuration logs{};
     /// Whether to automatically autocomplete end
     /// DEPRECATED: Use completion.autocompleteEnd instead
     bool autocompleteEnd = false;
@@ -632,5 +634,5 @@ struct ClientConfiguration
     ClientFormatConfiguration format{};
     ClientPluginConfiguration plugins{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientConfiguration, autocompleteEnd, ignoreGlobs, platform, sourcemap, diagnostics, types,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientConfiguration, logs, autocompleteEnd, ignoreGlobs, platform, sourcemap, diagnostics, types,
     inlayHints, hover, completion, signatureHelp, require, index, fflags, bytecode, format, plugins);

@@ -1,4 +1,5 @@
 #include "Platform/luduvo/LuduvoResourceCatalog.hpp"
+#include "LSP/Logs.hpp"
 
 #include "LuduvoResources.hpp"
 #include "Platform/luduvo/LuduvoDefinitionResolver.hpp"
@@ -167,6 +168,7 @@ LuduvoResourceCatalog::LuduvoResourceCatalog(std::string embeddedResources)
 
 void LuduvoResourceCatalog::configure(const ClientLuduvoConfiguration& configuration)
 {
+    logging::Operation operation("bindings.resources", "resource catalog configuration");
     configuredWarnings.clear();
     configuredGroups = embeddedGroups;
 

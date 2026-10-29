@@ -73,7 +73,7 @@ void parseDocumentationContents(
     }
     catch (const std::exception& e)
     {
-        client->sendLogMessage(lsp::MessageType::Error, "Failed to load documentation database for " + sourceName + ": " + e.what());
+        client->log(logging::Level::Error, "other", "Failed to load documentation database for " + sourceName + ": " + e.what());
         client->sendWindowMessage(lsp::MessageType::Error, "Failed to load documentation database: " + std::string(e.what()));
     }
 }
@@ -82,7 +82,7 @@ void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau
 {
     if (documentationFiles.empty())
     {
-        client->sendLogMessage(lsp::MessageType::Warning, "No documentation file given. Documentation will not be provided");
+        client->log(logging::Level::Warning, "other", "No documentation file given. Documentation will not be provided");
         return;
     }
 
@@ -93,8 +93,7 @@ void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau
             parseDocumentationContents(*contents, resolvedFilePath, database, client);
         else
         {
-            client->sendLogMessage(
-                lsp::MessageType::Error, "Failed to read documentation file for " + resolvedFilePath + ". Documentation will not be provided");
+            client->log(logging::Level::Error, "other", "Failed to read documentation file for " + resolvedFilePath + ". Documentation will not be provided");
             client->sendWindowMessage(lsp::MessageType::Error, "Failed to read documentation file. Documentation will not be provided");
         }
     }
@@ -161,6 +160,43 @@ std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDa
     return std::nullopt;
 }
 
+std::optional<Luau::DocumentationSymbol> getTypeDocumentationSymbol(Luau::TypeId type)
+{
+    type = Luau::follow(type);
+    if (Luau::is<Luau::TableType, Luau::ExternType, Luau::FunctionType, Luau::IntersectionType>(type))
+        return type->documentationSymbol;
+    if (const auto unionType = Luau::get<Luau::UnionType>(type))
+    {
+        std::optional<Luau::DocumentationSymbol> symbol;
+        for (Luau::TypeId option : unionType->options)
+        {
+            option = Luau::follow(option);
+            if (const auto primitive = Luau::get<Luau::PrimitiveType>(option); primitive && primitive->type == Luau::PrimitiveType::NilType)
+                continue;
+            const auto candidate = getTypeDocumentationSymbol(option);
+            if (!candidate || (symbol && symbol != candidate))
+                return std::nullopt;
+            symbol = candidate;
+        }
+        return symbol;
+    }
+    return std::nullopt;
+}
+
+std::string renderDocumentation(const PrintedDocumentation& documentation, bool includeReadOnly)
+{
+    std::string result = documentation.markdown;
+    if (includeReadOnly && documentation.readOnly)
+    {
+        if (!result.empty())
+            result += "\n\n";
+        result += "Read only at runtime.";
+    }
+    if (documentation.learnMoreLink)
+        result += "\n\n[Learn More](" + *documentation.learnMoreLink + ")";
+    return result;
+}
+
 /// Returns a markdown string of the provided documentation
 /// If we can't find any documentation for the given symbol, then we return nullopt
 std::optional<std::string> printDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol)
@@ -169,9 +205,7 @@ std::optional<std::string> printDocumentation(const Luau::DocumentationDatabase&
     if (!documentation)
         return std::nullopt;
 
-    if (documentation->learnMoreLink)
-        documentation->markdown += "\n\n[Learn More](" + *documentation->learnMoreLink + ")";
-    return documentation->markdown;
+    return renderDocumentation(*documentation);
 }
 
 std::string printMoonwaveDocumentation(const std::vector<std::string>& comments)
@@ -605,6 +639,24 @@ std::optional<std::string> WorkspaceFolder::getDocumentationForType(const Luau::
     return std::nullopt;
 }
 
+std::optional<Luau::DocumentationSymbol> WorkspaceFolder::getDefinitionTypeDocumentationSymbol(
+    const Luau::ScopePtr& scope, const std::string& name) const
+{
+    for (auto current = scope; current; current = current->parent)
+    {
+        if (current->privateTypeBindings.count(name))
+            return std::nullopt;
+        if (!current->exportedTypeBindings.count(name))
+            continue;
+        if (const auto declarations = definitionTypeDocumentation.find(current.get());
+            declarations != definitionTypeDocumentation.end() && declarations->second.scope.lock() == current)
+            if (const auto symbol = declarations->second.symbols.find(name); symbol != declarations->second.symbols.end())
+                return symbol->second;
+        return std::nullopt;
+    }
+    return std::nullopt;
+}
+
 std::optional<std::string> WorkspaceFolder::getDocumentationForTypeReference(const Luau::ModuleName& moduleName, const Luau::ScopePtr& scope,
     const std::optional<Luau::AstName>& prefix, const Luau::Name& typeName, bool forAutocomplete)
 {
@@ -623,6 +675,9 @@ std::optional<std::string> WorkspaceFolder::getDocumentationForTypeReference(con
     }
     else
     {
+        if (const auto symbol = getDefinitionTypeDocumentationSymbol(scope, typeName))
+            if (auto documentation = printDocumentation(client->documentation, *symbol); documentation && !documentation->empty())
+                return documentation;
         auto typeLocation = lookupTypeLocation(*scope, typeName);
         if (!typeLocation)
             return std::nullopt;

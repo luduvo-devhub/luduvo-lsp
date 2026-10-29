@@ -64,6 +64,10 @@ public:
 
     virtual void sendLogMessage(const lsp::MessageType& type, const std::string& message) const = 0;
 
+    void log(logging::Level level, std::string_view category, std::string message) const;
+    void log(lsp::MessageType type, std::string_view category, std::string message) const;
+    void sendLogRecord(const logging::Record& record) const;
+
     virtual void publishDiagnostics(const lsp::PublishDiagnosticsParams& params) = 0;
 
     virtual void sendTrace(const std::string& message, const std::optional<std::string>& verbose = std::nullopt) const {}

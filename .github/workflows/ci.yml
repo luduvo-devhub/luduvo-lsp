@@ -51,10 +51,16 @@ jobs:
         include:
           - os: windows-latest
             test-path: ./build/Debug/Luau.LanguageServer.Test
+            editor-smoke: true
+            smoke-runner: build/Debug/luduvo-context-editor-smoke.exe
           - os: ubuntu-22.04
             test-path: ./build/Luau.LanguageServer.Test
+            editor-smoke: true
+            smoke-runner: build/luduvo-context-editor-smoke
           - os: macos-latest
             test-path: ./build/Luau.LanguageServer.Test
+            editor-smoke: true
+            smoke-runner: build/luduvo-context-editor-smoke
 
     name: Run Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -86,6 +92,60 @@ jobs:
 
       - name: Run Tests (All FFlags enabled)
         run: ${{ matrix.test-path }} --fflags=true
+
+      - name: Install real-editor smoke test dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth libopengl0 libgl1-mesa-dri mesa-vulkan-drivers \
+            libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xkb1
+
+      - name: Build real-editor smoke test runner
+        if: matrix.editor-smoke
+        run: cmake --build build --target Luau.LanguageServer.ContextSmoke -j 3
+
+      - name: Test real Linux Luduvo editor autodumping
+        if: runner.os == 'Linux'
+        timeout-minutes: 6
+        env:
+          QT_QPA_PLATFORM: xcb
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          ALSOFT_DRIVERS: 'null'
+        run: |
+          xvfb-run -a -s '-screen 0 1280x1024x24' python3 scripts/luduvo/smokeContextEditor.py \
+            --runner "${{ matrix.smoke-runner }}" \
+            --work-directory "$RUNNER_TEMP/luduvo-editor-smoke"
+
+      - name: Test real Windows Luduvo editor autodumping
+        if: runner.os == 'Windows'
+        timeout-minutes: 6
+        run: |
+          python scripts/luduvo/smokeContextEditor.py `
+            --runner "${{ matrix.smoke-runner }}" `
+            --work-directory "$env:RUNNER_TEMP/luduvo-editor-smoke"
+
+      - name: Test real macOS Luduvo editor autodumping
+        if: runner.os == 'macOS'
+        timeout-minutes: 6
+        run: |
+          python3 scripts/luduvo/smokeContextEditor.py \
+            --runner "${{ matrix.smoke-runner }}" \
+            --work-directory "$RUNNER_TEMP/luduvo-editor-smoke"
+
+      - name: Upload real-editor smoke test diagnostics
+        if: always() && matrix.editor-smoke
+        uses: actions/upload-artifact@v4
+        with:
+          name: luduvo-editor-smoke-diagnostics-${{ runner.os }}
+          path: |
+            ${{ runner.temp }}/luduvo-editor-smoke/**/*.log
+            ${{ runner.temp }}/luduvo-editor-smoke/release.json
+            ${{ runner.temp }}/luduvo-editor-smoke/bootstrap.txt
+            ${{ runner.temp }}/luduvo-editor-smoke/world.dump.txt
+            ${{ runner.temp }}/luduvo-editor-smoke/project/project.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   types_smoketest:
     name: Types Smoketest

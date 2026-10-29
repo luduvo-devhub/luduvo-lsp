@@ -65,6 +65,14 @@ private:
     /// to keep checked modules alive for type function lifetime.
     std::unordered_map<std::string, DefinitionsFileState> definitionsFileState{};
 
+    struct DefinitionTypeDocumentation
+    {
+        std::weak_ptr<Luau::Scope> scope;
+        std::unordered_map<std::string, Luau::DocumentationSymbol> symbols;
+    };
+    // Type aliases can share a primitive TypeId. Index their docs by declaration scope/name.
+    std::unordered_map<const Luau::Scope*, DefinitionTypeDocumentation> definitionTypeDocumentation;
+
 public:
     WorkspaceFolder(Client* client, std::string name, const lsp::DocumentUri& uri, std::optional<Luau::Config> defaultConfig)
         : client(client)
@@ -144,6 +152,7 @@ private:
 public:
     std::vector<std::string> getComments(const Luau::ModuleName& moduleName, const Luau::Location& node);
     std::optional<std::string> getDocumentationForType(const Luau::TypeId ty);
+    std::optional<Luau::DocumentationSymbol> getDefinitionTypeDocumentationSymbol(const Luau::ScopePtr& scope, const std::string& name) const;
     std::optional<std::string> getDocumentationForTypeReference(const Luau::ModuleName& moduleName, const Luau::ScopePtr& scope,
         const std::optional<Luau::AstName>& prefix, const Luau::Name& typeName, bool forAutocomplete);
     std::optional<std::string> getDocumentationForAstNode(const Luau::ModuleName& moduleName, const Luau::AstNode* node, const Luau::ScopePtr scope);

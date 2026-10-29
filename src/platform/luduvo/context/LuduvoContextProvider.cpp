@@ -1,6 +1,8 @@
 #include "Platform/luduvo/context/LuduvoContextProvider.hpp"
 
 #include "LuauFileUtils.hpp"
+#include "LSP/AtomicFile.hpp"
+#include "Platform/luduvo/context/LuduvoContextLogs.hpp"
 #include "Platform/luduvo/context/LuduvoAutoDump.hpp"
 #include "Platform/luduvo/context/LuduvoProcessIdentity.hpp"
 
@@ -207,18 +209,43 @@ class ContextHelperSession
 
     void monitorCatalog()
     {
+        ContextLogReader helperLogs(store.directory());
+        bool catalogUnavailable = false;
+        bool helperUnavailable = false;
+        const auto helperGrace = std::chrono::steady_clock::now() + std::chrono::seconds(2);
         std::set<std::string> previousTracked;
         while (!stopping)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
             if (stopping)
                 break;
-            const auto current = store.load();
+            helperLogs.poll();
+            const bool available = store.helperRunning();
+            if (!available && !helperUnavailable && std::chrono::steady_clock::now() > helperGrace)
+            {
+                logging::write(logging::Level::Warning, "context.tracking", "Shared helper is no longer running: " + store.directory());
+                helperUnavailable = true;
+            }
+            else if (available && helperUnavailable)
+            {
+                logging::write(logging::Level::Info, "context.tracking", "Shared helper is running again: " + store.directory());
+                helperUnavailable = false;
+            }
+            std::string readError;
+            const auto current = store.load(&readError);
             if (!current)
+            {
+                if (!catalogUnavailable)
+                    logging::write(logging::Level::Error, "context.snapshots", "Cannot read catalog: " + readError);
+                catalogUnavailable = true;
                 continue;
+            }
+            if (catalogUnavailable)
+                logging::write(logging::Level::Info, "context.snapshots", "Catalog readable again");
+            catalogUnavailable = false;
             ContextUpdates updates = findContextUpdates(lastCatalog, *current);
             std::set<std::string> tracked;
-            if (const auto source = Luau::FileUtils::readFile(leasePath))
+            if (const auto source = readSharedFile(leasePath))
             {
                 try
                 {
@@ -252,6 +279,11 @@ class ContextHelperSession
                                             }),
                 updates.staleProjects.end());
             previousTracked = std::move(tracked);
+            for (const auto& project : updates.staleProjects)
+                logging::write(logging::Level::Info, "context.snapshots",
+                    "Project " + project.id + " became stale: " + current->projects.at(project.id).staleReason);
+            for (const auto& project : updates.updatedWorlds)
+                logging::write(logging::Level::Info, "context.snapshots", "Accepted new snapshot for " + project);
             lastCatalog = *current;
             if (updates.empty())
                 continue;
@@ -297,8 +329,13 @@ public:
         const ContextClientUpdate registration = store.updateClientProjects(identity->processId, identity->startToken, {}, {});
         if (!registration.result.success)
             return;
-        helperStarted =
-            spawnHelper({"context", "run", "--state-directory", store.directory(), "--commands-log", std::move(commandsLog), "--idle-timeout", "30"});
+        const auto helperOwner = readProcessIdentity(store.ownerPath());
+        if (helperOwner && isProcessAlive(*helperOwner))
+            logging::write(logging::Level::Info, "context.tracking", "Reusing shared helper PID " + std::to_string(helperOwner->processId));
+        helperStarted = spawnHelper({"context", "run", "--state-directory", store.directory(), "--commands-log", std::move(commandsLog),
+            "--idle-timeout", "30", "--relay-logs"});
+        logging::write(helperStarted ? logging::Level::Info : logging::Level::Error, "context.tracking",
+            std::string(helperStarted ? "Registered LSP; requested shared helper: " : "Could not start shared helper: ") + store.directory());
         if (helperStarted)
             monitor = std::thread(
                 [this]
@@ -309,6 +346,7 @@ public:
 
     ~ContextHelperSession()
     {
+        logging::write(logging::Level::Info, "context.tracking", "LSP context session shutting down: " + store.directory());
         stopping = true;
         if (monitor.joinable())
             monitor.join();
@@ -317,6 +355,8 @@ public:
                 worker.join();
         std::error_code error;
         std::filesystem::remove(std::filesystem::u8path(leasePath), error);
+        logging::write(error ? logging::Level::Warning : logging::Level::Debug, "context.tracking",
+            error ? "Could not remove client registration: " + error.message() : "Client registration removed: " + leasePath);
     }
 
     bool started() const
@@ -342,14 +382,26 @@ public:
 
     ContextClientUpdate updateProjects(const std::string& workspaceDirectory, const std::vector<ContextClientProject>& projects)
     {
-        return store.updateClientProjects(processIdentity.processId, processIdentity.startToken, workspaceDirectory, projects);
+        const auto result = store.updateClientProjects(processIdentity.processId, processIdentity.startToken, workspaceDirectory, projects);
+        for (const auto& project : result.startedTracking)
+            logging::write(logging::Level::Info, "context.tracking", "Started tracking " + project.id + " at " + project.directory);
+        for (const auto& project : result.stoppedTracking)
+            logging::write(logging::Level::Info, "context.tracking", "Stopped tracking " + project.id);
+        if (!result.result.success)
+            logging::write(
+                logging::Level::Error, "context.tracking", "Could not update registration: " + result.result.error.value_or("unknown error"));
+        return result;
     }
 
     AutomaticWorldDumpRequestStatus requestDump(const WorldDumpRequest& request, std::function<void(const AutomaticWorldDumpResult&)> callback)
     {
         std::lock_guard guard(dumpMutex);
         if (!activeDumps.insert(request.projectId).second)
+        {
+            logging::write(logging::Level::Debug, "context.refresh", "Coalesced refresh for " + request.projectId);
             return AutomaticWorldDumpRequestStatus::AlreadyRunning;
+        }
+        logging::write(logging::Level::Info, "context.refresh", "Refresh requested for " + request.projectId);
         const AutomaticWorldDumpRequestStatus lock = acquireDumpLock(request.projectId);
         if (lock != AutomaticWorldDumpRequestStatus::Started)
         {
@@ -530,11 +582,13 @@ json ContextProvider::inspect(const std::string& scriptPath) const
 
 ContextStoreResult ContextProvider::select(const std::string& scriptPath, const std::string& projectId) const
 {
+    logging::write(logging::Level::Debug, "context.tracking", "Selecting " + projectId + " for " + scriptPath);
     return store.selectProjectForScript(workspaceDirectory, scriptPath, projectId);
 }
 
 ContextStoreResult ContextProvider::reset(const std::string& scriptPath) const
 {
+    logging::write(logging::Level::Debug, "context.tracking", "Resetting context selection for " + scriptPath);
     return store.resetProjectForScript(workspaceDirectory, scriptPath);
 }
 
@@ -597,8 +651,7 @@ std::shared_ptr<ContextHelperSession> acquireContextHelper(const ClientLuduvoCon
     std::lock_guard guard(registryMutex);
     if (auto existing = registry[stateDirectory].lock())
         return existing;
-    const std::filesystem::path localDirectory = std::filesystem::u8path(defaultLuduvoLocalDirectory(configuration.directories.local));
-    const std::string editorPath = (localDirectory / "bundle" / "LuduvoEditor.exe").generic_u8string();
+    const std::string editorPath = defaultLuduvoEditorPath(defaultLuduvoLocalDirectory(configuration.directories.local));
     auto session = std::make_shared<ContextHelperSession>(stateDirectory, defaultCommandsLogPath(configuration.directories.roaming), editorPath);
     if (!session->started())
     {

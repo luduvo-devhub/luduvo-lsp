@@ -52,7 +52,7 @@ PlatformDefinitionLoadResult PlatformDefinitionLoader::load(
         for (const auto& [packageName, file] : files)
         {
             const std::string path = resolvePath(file);
-            workspace.client->sendLogMessage(lsp::MessageType::Info, "Loading definitions file: " + packageName + " - " + path);
+            workspace.client->log(logging::Level::Info, "workspace.definitions", "Loading definitions file: " + packageName + " - " + path);
             auto source = Luau::FileUtils::readFile(path);
             if (!source)
             {
@@ -143,8 +143,7 @@ PlatformDefinitionLoadResult PlatformDefinitionLoader::load(
                 if (!candidate.source)
                 {
                     const std::string reason = candidate.error.value_or("no source was provided");
-                    workspace.client->sendLogMessage(
-                        lsp::MessageType::Warning, "Skipping " + candidate.label + " for " + environment.environmentName + ": " + reason);
+                    workspace.client->log(logging::Level::Warning, "workspace.definitions", "Skipping " + candidate.label + " for " + environment.environmentName + ": " + reason);
                     if (candidate.notifyOnFailure)
                         result.platformWarnings.push_back(environment.environmentName + ": " + reason);
                     continue;
@@ -155,8 +154,7 @@ PlatformDefinitionLoadResult PlatformDefinitionLoader::load(
                 if (!loadResult.success)
                 {
                     std::string reason = !loadResult.parseResult.errors.empty() ? "Luau could not parse it" : "Luau could not register it";
-                    workspace.client->sendLogMessage(
-                        lsp::MessageType::Warning, "Skipping " + candidate.label + " for " + environment.environmentName + ": " + reason);
+                    workspace.client->log(logging::Level::Warning, "workspace.definitions", "Skipping " + candidate.label + " for " + environment.environmentName + ": " + reason);
                     if (candidate.notifyOnFailure)
                     {
                         if (candidate.sourceUri)
@@ -168,7 +166,7 @@ PlatformDefinitionLoadResult PlatformDefinitionLoader::load(
 
                 if (candidate.sourceUri)
                     workspace.setDefinitionFileSource(environment.packageName, *candidate.sourceUri, *candidate.source);
-                workspace.client->sendLogMessage(lsp::MessageType::Info, "Loaded " + candidate.label + " for " + environment.environmentName);
+                workspace.client->log(logging::Level::Info, "workspace.definitions", "Loaded " + candidate.label + " for " + environment.environmentName);
                 loaded = true;
                 break;
             }

@@ -1,4 +1,6 @@
 #include "Platform/luduvo/context/LuduvoContextStore.hpp"
+#include "LSP/AtomicFile.hpp"
+#include "LSP/Logs.hpp"
 
 #include "LSP/Utils.hpp"
 #include "LuauFileUtils.hpp"
@@ -43,15 +45,6 @@ static int64_t unixTimeMilliseconds()
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-static uint64_t processId()
-{
-#ifdef _WIN32
-    return GetCurrentProcessId();
-#else
-    return uint64_t(getpid());
-#endif
-}
-
 static std::string joinPath(std::string_view left, std::string_view right)
 {
     return Luau::FileUtils::joinPaths(std::string(left), std::string(right));
@@ -81,55 +74,6 @@ std::string normalizeContextPath(const std::string& path)
         });
 #endif
     return result;
-}
-
-static bool replaceFile(const std::filesystem::path& source, const std::filesystem::path& destination, std::error_code& error)
-{
-#ifdef _WIN32
-    if (MoveFileExW(source.c_str(), destination.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-        return true;
-    error = std::error_code(int(GetLastError()), std::system_category());
-    return false;
-#else
-    std::filesystem::rename(source, destination, error);
-    return !error;
-#endif
-}
-
-static bool writeAtomically(const std::string& path, const std::string& contents, std::string* errorMessage)
-{
-    const std::filesystem::path destination = std::filesystem::u8path(path);
-    std::error_code error;
-    std::filesystem::create_directories(destination.parent_path(), error);
-    if (error)
-    {
-        if (errorMessage)
-            *errorMessage = "could not create " + destination.parent_path().generic_u8string() + ": " + error.message();
-        return false;
-    }
-
-    static std::atomic<uint64_t> temporarySequence{0};
-    const std::filesystem::path temporary = destination.string() + ".tmp." + std::to_string(processId()) + "." +
-                                            std::to_string(unixTimeMilliseconds()) + "." + std::to_string(temporarySequence++);
-    {
-        std::ofstream output(temporary, std::ios::binary | std::ios::trunc);
-        output.write(contents.data(), std::streamsize(contents.size()));
-        if (!output)
-        {
-            if (errorMessage)
-                *errorMessage = "could not write " + temporary.generic_u8string();
-            return false;
-        }
-    }
-
-    if (!replaceFile(temporary, destination, error))
-    {
-        std::filesystem::remove(temporary);
-        if (errorMessage)
-            *errorMessage = "could not replace " + destination.generic_u8string() + ": " + error.message();
-        return false;
-    }
-    return true;
 }
 
 static std::shared_ptr<std::mutex> localCatalogMutex(const std::string& stateDirectory)
@@ -312,9 +256,18 @@ bool ContextStore::helperRunning() const
 
 std::optional<ContextCatalog> ContextStore::load(std::string* error) const
 {
-    const std::optional<std::string> source = Luau::FileUtils::readFile(catalogPath());
+    std::string readError;
+    const std::optional<std::string> source = readSharedFile(catalogPath(), &readError);
     if (!source)
-        return ContextCatalog{};
+    {
+        std::error_code filesystemError;
+        const bool exists = std::filesystem::exists(std::filesystem::u8path(catalogPath()), filesystemError);
+        if (!exists && !filesystemError)
+            return ContextCatalog{};
+        if (error)
+            *error = "could not read " + catalogPath() + ": " + (filesystemError ? filesystemError.message() : readError);
+        return std::nullopt;
+    }
     try
     {
         ContextCatalog catalog = json::parse(*source).get<ContextCatalog>();
@@ -339,8 +292,9 @@ ContextStoreResult ContextStore::save(ContextCatalog& catalog) const
     rebuildScriptIndex(catalog);
     ++catalog.generation;
     std::string error;
-    if (!writeAtomically(catalogPath(), json(catalog).dump(2) + "\n", &error))
+    if (!writeFileAtomically(catalogPath(), json(catalog).dump(2) + "\n", &error))
         return {false, std::nullopt, std::move(error)};
+    logging::write(logging::Level::Debug, "helper.storage", "Published catalog generation " + std::to_string(catalog.generation));
     return {true, std::nullopt, std::nullopt};
 }
 
@@ -450,7 +404,7 @@ ContextStoreResult ContextStore::updateWorldLocked(ContextCatalog& catalog, Worl
     project.attachedScripts.clear();
     rebuildProjectScripts(project);
 
-    if (!writeAtomically(project.snapshotPath, json(snapshot).dump(2) + "\n", &error))
+    if (!writeFileAtomically(project.snapshotPath, json(snapshot).dump(2) + "\n", &error))
         return {false, id, std::move(error)};
     ContextStoreResult saved = save(catalog);
     saved.projectId = id;
@@ -624,7 +578,7 @@ std::optional<WorldDumpSnapshot> ContextStore::loadWorld(const std::string& proj
             *error = "project '" + projectId + "' has no world snapshot";
         return std::nullopt;
     }
-    const auto source = Luau::FileUtils::readFile(project->second.snapshotPath);
+    const auto source = readSharedFile(project->second.snapshotPath);
     if (!source)
     {
         if (error)
@@ -654,12 +608,12 @@ std::vector<ContextClientRegistration> ContextStore::clientRegistrations(bool in
     {
         if (!iterator->is_regular_file(error) || error)
             continue;
-        std::ifstream input(iterator->path(), std::ios::binary);
-        if (!input)
+        const auto source = readSharedFile(iterator->path().generic_u8string());
+        if (!source)
             continue;
         try
         {
-            ContextClientRegistration registration = json::parse(input).get<ContextClientRegistration>();
+            ContextClientRegistration registration = json::parse(*source).get<ContextClientRegistration>();
             const ProcessIdentity identity{registration.processId, registration.startToken};
             if (includeDead || isProcessAlive(identity))
                 result.push_back(std::move(registration));
@@ -668,7 +622,8 @@ std::vector<ContextClientRegistration> ContextStore::clientRegistrations(bool in
         {
         }
     }
-    std::sort(result.begin(), result.end(), [](const ContextClientRegistration& left, const ContextClientRegistration& right)
+    std::sort(result.begin(), result.end(),
+        [](const ContextClientRegistration& left, const ContextClientRegistration& right)
         {
             return left.processId < right.processId;
         });
@@ -693,8 +648,8 @@ size_t ContextStore::liveClientCount() const
     return clients.size();
 }
 
-ContextClientUpdate ContextStore::updateClientProjects(uint64_t clientProcessId, uint64_t startToken, const std::string& workspaceDirectory,
-    const std::vector<ContextClientProject>& projects) const
+ContextClientUpdate ContextStore::updateClientProjects(
+    uint64_t clientProcessId, uint64_t startToken, const std::string& workspaceDirectory, const std::vector<ContextClientProject>& projects) const
 {
     std::string error;
     CatalogWriteLock lock(stateDirectory, &error);
@@ -705,7 +660,7 @@ ContextClientUpdate ContextStore::updateClientProjects(uint64_t clientProcessId,
     const std::set<std::string> before(beforeValues.begin(), beforeValues.end());
     const std::string path = joinPath(leasesDirectory(), std::to_string(clientProcessId) + ".lease");
     ContextClientRegistration registration{clientProcessId, startToken, {}};
-    if (const auto source = Luau::FileUtils::readFile(path))
+    if (const auto source = readSharedFile(path))
     {
         try
         {
@@ -722,7 +677,7 @@ ContextClientUpdate ContextStore::updateClientProjects(uint64_t clientProcessId,
         registration.workspaces.erase(workspace);
     else
         registration.workspaces[workspace] = projects;
-    if (!writeAtomically(path, json(registration).dump(2) + "\n", &error))
+    if (!writeFileAtomically(path, json(registration).dump(2) + "\n", &error))
         return {{false, std::nullopt, std::move(error)}, {}, {}};
 
     const std::vector<std::string> afterValues = liveProjectIds();
@@ -762,6 +717,9 @@ ContextClientUpdate ContextStore::updateClientProjects(uint64_t clientProcessId,
         result.result = save(*catalog);
         result.result.affected = affected;
     }
+    logging::write(logging::Level::Debug, "helper.clients",
+        "Updated client PID " + std::to_string(clientProcessId) + "; workspaces: " + std::to_string(registration.workspaces.size()) +
+            "; projects: " + std::to_string(projects.size()));
     return result;
 }
 
@@ -888,6 +846,12 @@ ContextStoreResult ContextStore::clean(const std::string& kind, const std::vecto
     if (!kind.empty() && kind != "client" && kind != "project" && kind != "snapshot")
         return {false, std::nullopt, "unsupported clean subject: " + kind};
 
+    std::string error;
+    CatalogWriteLock lock(stateDirectory, &error);
+    if (!lock)
+        return {false, std::nullopt, std::move(error)};
+    // Classify and remove under the same lock used to publish registrations and
+    // snapshots, so an in-flight publication cannot appear to be orphaned.
     const ContextCleanupSummary candidates = cleanupCandidates();
     struct SelectedCandidate
     {
@@ -950,16 +914,13 @@ ContextStoreResult ContextStore::clean(const std::string& kind, const std::vecto
             std::error_code error;
             if (!std::filesystem::remove(std::filesystem::u8path(candidate.path), error) && error)
                 return {false, std::nullopt, "could not remove " + candidate.path + ": " + error.message(), affected};
+            logging::write(logging::Level::Debug, "helper.cleanup", "Removed dead client registration " + candidate.path);
             ++affected;
         }
     }
 
     std::vector<std::string> projectDirectories;
     bool catalogChanged = false;
-    std::string error;
-    CatalogWriteLock lock(stateDirectory, &error);
-    if (!lock)
-        return {false, std::nullopt, std::move(error), affected};
     auto catalog = load(&error);
     if (!catalog)
         return {false, std::nullopt, std::move(error), affected};
@@ -1008,6 +969,7 @@ ContextStoreResult ContextStore::clean(const std::string& kind, const std::vecto
             std::error_code filesystemError;
             if (!std::filesystem::remove(std::filesystem::u8path(candidate.path), filesystemError) && filesystemError)
                 return {false, std::nullopt, "could not remove " + candidate.path + ": " + filesystemError.message(), affected};
+            logging::write(logging::Level::Debug, "helper.cleanup", "Removed orphaned snapshot " + candidate.path);
             ++affected;
         }
     }

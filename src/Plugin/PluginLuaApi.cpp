@@ -264,7 +264,7 @@ static int lspClientSendLogMessage(lua_State* L)
 
     // Format with prefix and send
     std::string prefixedMessage = "[Plugin " + ctx->pluginPath + "] " + message;
-    ctx->workspace->client->sendLogMessage(type, prefixedMessage);
+    ctx->workspace->client->log(type, "other", prefixedMessage);
 
     return 0;
 }
@@ -286,7 +286,7 @@ static int pluginPrint(lua_State* L)
 
     // Format with prefix and send as Info
     std::string prefixedMessage = "[Plugin " + ctx->pluginPath + "] " + message;
-    ctx->workspace->client->sendLogMessage(lsp::MessageType::Info, prefixedMessage);
+    ctx->workspace->client->log(logging::Level::Info, "other", prefixedMessage);
 
     return 0;
 }

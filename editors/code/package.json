@@ -311,6 +311,37 @@
           "default": true,
           "scope": "window"
         },
+        "luduvo-lsp.logs.default": {
+          "markdownDescription": "Default operational log verbosity inherited by categories without an override. Independent of protocol tracing and popup notification settings",
+          "type": "string",
+          "enum": [
+            "Off",
+            "Error",
+            "Warning",
+            "Info",
+            "Debug",
+            "Verbose"
+          ],
+          "default": "Info",
+          "scope": "window"
+        },
+        "luduvo-lsp.logs.categories": {
+          "markdownDescription": "Category verbosity overrides. Dotted children inherit their nearest configured ancestor, e.g. helper.autodump.process inherits helper.autodump or helper",
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "Off",
+              "Error",
+              "Warning",
+              "Info",
+              "Debug",
+              "Verbose"
+            ]
+          },
+          "scope": "window"
+        },
         "luduvo-lsp.platform.type": {
           "markdownDescription": "Platform-specific support features",
           "type": "string",

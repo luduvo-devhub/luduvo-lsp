@@ -138,15 +138,29 @@ int startLanguageServer(const argparse::ArgumentParser& program)
     }
 
     LSPClient client{std::move(transport)};
+    logging::ScopedSink logSink(
+        [&client](const logging::Record& record)
+        {
+            client.sendLogRecord(record);
+        });
     client.definitionsFiles = definitionsFiles;
     client.documentationFiles = documentationFiles;
-    parseDocumentation(documentationFiles, client.documentation, &client);
 
     // Parse LSP Settings
     if (auto settingsPath = program.present<std::string>("--settings"))
     {
         if (std::optional<std::string> contents = Luau::FileUtils::readFile(*settingsPath))
-            client.globalConfig = dottedToClientConfiguration(contents.value());
+        {
+            try
+            {
+                client.globalConfig = dottedToClientConfiguration(contents.value());
+            }
+            catch (const std::exception& error)
+            {
+                client.log(logging::Level::Error, "server.configuration", error.what());
+                return 1;
+            }
+        }
         else
         {
             std::cerr << "Failed to read base LSP settings at '" << *settingsPath << "'\n";
@@ -154,10 +168,22 @@ int startLanguageServer(const argparse::ArgumentParser& program)
         }
     }
 
+    logging::logger().configure(client.globalConfig.logs);
+    if (auto level = program.present<std::string>("--log-level"))
+    {
+        auto configuration = logging::logger().settings();
+        configuration.level = logging::parseLevel(*level);
+        configuration.categories.clear();
+        client.globalConfig.logs = configuration;
+        logging::logger().configure(std::move(configuration));
+    }
+    parseDocumentation(documentationFiles, client.documentation, &client);
+    logging::write(logging::Level::Info, "server.lifecycle", "Starting language server " LSP_VERSION);
     LanguageServer server(&client, defaultConfig);
 
     // Begin input loop
     server.processInputLoop();
+    logging::write(logging::Level::Info, "server.lifecycle", "Language server input loop ended");
 
 #ifdef LSP_BUILD_WITH_SENTRY
     if (isCrashReportingEnabled)
@@ -308,6 +334,8 @@ int main(int argc, char** argv)
     program.add_subparser(analyze_command);
     program.add_subparser(lsp_command);
     program.add_subparser(require_graph_command);
+    for (auto* command : {&lsp_command, &analyze_command, &require_graph_command})
+        command->add_argument("--log-level").help("operational log level: Off, Error, Warning, Info, Debug, Verbose");
     program.add_subparser(contextCli.parser());
 
     try
@@ -348,6 +376,25 @@ int main(int argc, char** argv)
 #endif
         std::cout << json{{"crashReporting", crashReporting}}.dump() << '\n';
         return 0;
+    }
+
+    for (const auto& command : std::vector<std::pair<std::string, const argparse::ArgumentParser*>>{
+             {"lsp", &lsp_command}, {"analyze", &analyze_command}, {"require-graph", &require_graph_command}})
+    {
+        if (!program.is_subcommand_used(command.first))
+            continue;
+        if (auto level = command.second->present<std::string>("--log-level"))
+        {
+            try
+            {
+                logging::parseLevel(*level);
+            }
+            catch (const std::exception& error)
+            {
+                std::cerr << error.what() << '\n';
+                return 1;
+            }
+        }
     }
 
     if (program.is_subcommand_used("lsp"))

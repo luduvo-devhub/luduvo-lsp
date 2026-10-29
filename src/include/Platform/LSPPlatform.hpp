@@ -30,6 +30,7 @@
 #include <vector>
 
 class WorkspaceFolder;
+struct HoverSubject;
 struct Client;
 struct WorkspaceFileResolver;
 
@@ -103,12 +104,6 @@ struct UnknownSymbolFixContext
     Luau::NotNull<const WorkspaceFolder> workspaceFolder;
 };
 
-struct PlatformDocumentationLocation
-{
-    Luau::ModuleName moduleName;
-    Luau::Location location;
-};
-
 struct PlatformColorPresentationContext
 {
     const lsp::ColorPresentationParams& params;
@@ -127,16 +122,7 @@ struct PlatformDocumentColorContext
 struct PlatformHoverContext
 {
     const Luau::ModuleName& moduleName;
-    const Luau::SourceModule& sourceModule;
-    const Luau::ModulePtr& module;
-    const Luau::ScopePtr& scope;
-    Luau::ExprOrLocal& exprOrLocal;
-    Luau::AstNode* node;
-    Luau::Position position;
-    Luau::TypeId type;
-    std::optional<std::string> documentationSymbol;
-    const Luau::Property* hoveredProperty;
-    std::optional<PlatformDocumentationLocation> documentationLocation;
+    const HoverSubject& subject;
     bool showTableKinds;
 };
 

@@ -1,4 +1,5 @@
 #include "Platform/luduvo/LuduvoBindings.hpp"
+#include "LSP/Logs.hpp"
 #include "Platform/luduvo/LuduvoBindingRecords.hpp"
 #include "Platform/luduvo/LuduvoSymbols.hpp"
 #include "Platform/luduvo/LuduvoTargetResolver.hpp"
@@ -61,6 +62,7 @@ LuduvoBindingRegistry::LuduvoBindingRegistry()
 
 void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configuration)
 {
+    logging::Operation operation("bindings", "binding configuration");
     resourceBindings.clear();
     colorBindings.clear();
     configuredWarnings.clear();
@@ -197,6 +199,10 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
             colorBindings.end());
         colorBindings.push_back({configured.symbol, *target, *encoding});
     }
+    logging::write(logging::Level::Debug, "bindings.resources", "Configured " + std::to_string(resourceBindings.size()) + " resource bindings");
+    logging::write(logging::Level::Debug, "bindings.colors", "Configured " + std::to_string(colorBindings.size()) + " color bindings");
+    for (const auto& warning : configuredWarnings)
+        logging::write(logging::Level::Warning, "bindings", warning);
 }
 
 const std::vector<std::string>& LuduvoBindingRegistry::configurationWarnings() const

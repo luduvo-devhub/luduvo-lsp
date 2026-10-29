@@ -87,7 +87,7 @@ std::vector<TextEdit> PluginManager::transform(const std::string& source, const 
 void PluginManager::sendLogMessage(lsp::MessageType type, const std::string& message) const
 {
     if (client)
-        client->sendLogMessage(type, message);
+        client->log(type, "other", message);
 }
 
 } // namespace Luau::LanguageServer::Plugin

@@ -70,7 +70,7 @@ void WorkspaceFolder::updateTextDocument(const lsp::DocumentUri& uri, const lsp:
 
     if (fileResolver.managedFiles.find(uri) == fileResolver.managedFiles.end())
     {
-        client->sendLogMessage(lsp::MessageType::Error, "Text Document not loaded locally: " + uri.toString());
+        client->log(logging::Level::Error, "workspace.definitions", "Text Document not loaded locally: " + uri.toString());
         return;
     }
     auto& textDocument = fileResolver.managedFiles.at(uri);
@@ -233,7 +233,7 @@ void WorkspaceFolder::onDidChangeWatchedFiles(const std::vector<lsp::FileEvent>&
 
         if (change.uri.filename() == ".luaurc" || change.uri.filename() == ".robloxrc" || change.uri.filename() == ".config.luau")
         {
-            client->sendLogMessage(lsp::MessageType::Info, "Acknowledge config changed for workspace " + name + ", clearing configuration cache");
+            client->log(logging::Level::Info, "workspace.definitions", "Acknowledge config changed for workspace " + name + ", clearing configuration cache");
             fileResolver.clearConfigCache();
 
             // Recompute diagnostics
@@ -344,7 +344,7 @@ void WorkspaceFolder::reloadPlugins()
     if (!fileResolver.pluginManager)
         return;
 
-    client->sendLogMessage(lsp::MessageType::Info, "Plugin file changed, reloading plugins");
+    client->log(logging::Level::Info, "workspace.definitions", "Plugin file changed, reloading plugins");
 
     fileResolver.pluginManager->reload();
     fileResolver.clearPluginDocuments();
@@ -360,6 +360,7 @@ void WorkspaceFolder::reloadPlugins()
 // NOTE: use `frontend.parse` if you do not care about typechecking
 Luau::CheckResult WorkspaceFolder::checkSimple(const Luau::ModuleName& moduleName, const LSPCancellationToken& cancellationToken)
 {
+    logging::Operation operation("analysis", "analysis of " + moduleName);
     try
     {
         Luau::FrontendOptions options{/* retainFullTypeGraphs: */ false, /* forAutocomplete: */ false, /* runLintChecks: */ true};
@@ -373,7 +374,7 @@ Luau::CheckResult WorkspaceFolder::checkSimple(const Luau::ModuleName& moduleNam
         // TODO: RecursionLimitException is leaking out of frontend.check
         // https://github.com/Roblox/luau/issues/975
         // Remove this try-catch block once the above issue is fixed
-        client->sendLogMessage(lsp::MessageType::Warning, "Luau InternalCompilerError caught in " + moduleName + ": " + err.what());
+        client->log(logging::Level::Warning, "analysis", "Luau InternalCompilerError caught in " + moduleName + ": " + err.what());
         return Luau::CheckResult{};
     }
 }
@@ -476,7 +477,7 @@ void WorkspaceFolder::indexFiles(const ClientConfiguration& config)
     frontend.clearStats();
     frontend.parseModules(moduleNames);
 
-    client->sendLogMessage(lsp::MessageType::Info,
+    client->log(logging::Level::Info, "workspace.definitions",
         "Indexed " + std::to_string(frontend.stats.files) + " files (" + std::to_string(frontend.stats.lines) +
             " lines)\n Time read: " + std::to_string(frontend.stats.timeRead) + "\n Time parse: " + std::to_string(frontend.stats.timeParse));
 
@@ -501,7 +502,7 @@ static void clearDisabledGlobals(const Client* client, const Luau::GlobalTypes& 
         const auto globalName = globalTypes.globalNames.names->get(library.c_str());
         if (globalName.value == nullptr)
         {
-            client->sendLogMessage(lsp::MessageType::Warning, "disabling globals: skipping unknown global - " + disabledGlobal);
+            client->log(logging::Level::Warning, "workspace.definitions", "disabling globals: skipping unknown global - " + disabledGlobal);
             continue;
         }
 
@@ -514,37 +515,37 @@ static void clearDisabledGlobals(const Client* client, const Luau::GlobalTypes& 
                 {
                     if (contains(ttv->props, *method))
                     {
-                        client->sendLogMessage(lsp::MessageType::Info, "disabling globals: erasing global - " + disabledGlobal);
+                        client->log(logging::Level::Info, "workspace.definitions", "disabling globals: erasing global - " + disabledGlobal);
                         ttv->props.erase(*method);
                     }
                     else
-                        client->sendLogMessage(lsp::MessageType::Warning, "disabling globals: could not find method - " + disabledGlobal);
+                        client->log(logging::Level::Warning, "workspace.definitions", "disabling globals: could not find method - " + disabledGlobal);
                 }
                 else if (const auto ctv = Luau::getMutable<Luau::ExternType>(typeId))
                 {
                     if (contains(ctv->props, *method))
                     {
-                        client->sendLogMessage(lsp::MessageType::Info, "disabling globals: erasing global - " + disabledGlobal);
+                        client->log(logging::Level::Info, "workspace.definitions", "disabling globals: erasing global - " + disabledGlobal);
                         ctv->props.erase(*method);
                     }
                     else
-                        client->sendLogMessage(lsp::MessageType::Warning, "disabling globals: could not find method - " + disabledGlobal);
+                        client->log(logging::Level::Warning, "workspace.definitions", "disabling globals: could not find method - " + disabledGlobal);
                 }
                 else
                 {
-                    client->sendLogMessage(lsp::MessageType::Warning,
+                    client->log(logging::Level::Warning, "workspace.definitions",
                         "disabling globals: cannot clear method from global, only tables or classes are supported - " + disabledGlobal);
                 }
             }
             else
             {
-                client->sendLogMessage(lsp::MessageType::Info, "disabling globals: erasing global - " + disabledGlobal);
+                client->log(logging::Level::Info, "workspace.definitions", "disabling globals: erasing global - " + disabledGlobal);
                 targetScope->bindings.erase(globalName);
             }
         }
         else
         {
-            client->sendLogMessage(lsp::MessageType::Warning, "disabling globals: skipping unknown global - " + disabledGlobal);
+            client->log(logging::Level::Warning, "workspace.definitions", "disabling globals: skipping unknown global - " + disabledGlobal);
         }
     }
 }
@@ -553,6 +554,10 @@ static void assignNestedDocumentationSymbols(
     Luau::TypeId type, const std::string& symbol, Luau::DenseHashSet<Luau::TypeId>& seen, bool authoritativeRoot = false)
 {
     type = Luau::follow(type);
+    // Primitive, singleton and other structural leaf types are shared between unrelated
+    // declarations. Their documentation belongs to the binding/property, never the leaf.
+    if (!Luau::is<Luau::TableType, Luau::ExternType, Luau::FunctionType, Luau::IntersectionType>(type))
+        return;
     if (seen.contains(type))
         return;
     seen.insert(type);
@@ -697,6 +702,22 @@ Luau::LoadDefinitionFileResult WorkspaceFolder::loadDefinitionFile(const std::st
 
     if (result.success)
     {
+        for (auto it = definitionTypeDocumentation.begin(); it != definitionTypeDocumentation.end();)
+            if (it->second.scope.expired())
+                it = definitionTypeDocumentation.erase(it);
+            else
+                ++it;
+        const auto rememberTypeDeclarations = [&](const Luau::ScopePtr& scope)
+        {
+            auto& declarations = definitionTypeDocumentation[scope.get()];
+            declarations.scope = scope;
+            for (const auto& [name, type] : result.module->exportedTypeBindings)
+                declarations.symbols[name] = packageName + "/globaltype/" + name;
+        };
+        rememberTypeDeclarations(targetScope.value_or(frontend.globals.globalScope));
+        if (!targetScope && !FFlag::LuauSolverV2)
+            rememberTypeDeclarations(frontend.globalsForAutocomplete.globalScope);
+
         TextDocument textDocument(Uri(), "luau", 0, source);
         definitionsFileState.emplace(packageName, DefinitionsFileState{std::move(textDocument), result.sourceModule, std::move(result.module)});
     }
@@ -737,7 +758,7 @@ void WorkspaceFolder::registerTypes(const std::vector<std::string>& disabledGlob
             }
             else
             {
-                client->sendLogMessage(lsp::MessageType::Warning, "Failed to register plugin type definitions");
+                client->log(logging::Level::Warning, "workspace.definitions", "Failed to register plugin type definitions");
             }
         });
     frontend.addEnvironment("LSPPlugin");
@@ -749,7 +770,7 @@ void WorkspaceFolder::registerTypes(const std::vector<std::string>& disabledGlob
 
     auto platformDefinitionEnvironments = platform->getDefinitionEnvironments();
     if (client->definitionsFiles.empty() && !platform->getBuiltinDefinitions() && platformDefinitionEnvironments.empty())
-        client->sendLogMessage(lsp::MessageType::Warning, "No definitions file provided by client");
+        client->log(logging::Level::Warning, "workspace.definitions", "No definitions file provided by client");
 
     const PlatformDefinitionConfiguration definitionConfiguration = platform->getDefinitionConfiguration();
     PlatformDefinitionLoadResult loadResult =
@@ -795,6 +816,8 @@ void WorkspaceFolder::lazyInitialize()
 
 void WorkspaceFolder::setupWithConfiguration(const ClientConfiguration& configuration)
 {
+    logging::logger().configure(configuration.logs);
+    logging::write(logging::Level::Debug, "server.configuration", "Applying workspace configuration: " + rootUri.toString());
     LUAU_TIMETRACE_SCOPE("WorkspaceFolder::setupWithConfiguration", "LSP");
     client->sendTrace("workspace: setting up with configuration");
 
@@ -824,7 +847,7 @@ void WorkspaceFolder::setupWithConfiguration(const ClientConfiguration& configur
         fileResolver.pluginManager = std::make_unique<Luau::LanguageServer::Plugin::PluginManager>(client, Luau::NotNull<WorkspaceFolder>{this});
 
         size_t loadedCount = fileResolver.pluginManager->configure(configuration.plugins.paths, configuration.plugins.timeoutMs);
-        client->sendLogMessage(lsp::MessageType::Info,
+        client->log(logging::Level::Info, "workspace.definitions",
             "Loaded " + std::to_string(loadedCount) + " of " + std::to_string(configuration.plugins.paths.size()) + " plugins");
 
         // Clear plugin document cache when plugins change

@@ -1,4 +1,5 @@
 #include "Platform/luduvo/context/LuduvoProcessIdentity.hpp"
+#include "LSP/AtomicFile.hpp"
 
 #include "nlohmann/json.hpp"
 
@@ -108,12 +109,12 @@ bool isProcessAlive(const ProcessIdentity& identity)
 
 std::optional<ProcessIdentity> readProcessIdentity(const std::string& path)
 {
-    std::ifstream input(std::filesystem::u8path(path), std::ios::binary);
-    if (!input)
+    const auto source = readSharedFile(path);
+    if (!source)
         return std::nullopt;
     try
     {
-        const json value = json::parse(input);
+        const json value = json::parse(*source);
         if (!value.contains("processId") || !value["processId"].is_number_unsigned() || !value.contains("startToken") ||
             !value["startToken"].is_number_unsigned())
             return std::nullopt;

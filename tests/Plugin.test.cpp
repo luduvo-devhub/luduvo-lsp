@@ -1517,7 +1517,10 @@ return {
     REQUIRE(!runtime.load().has_value());
 
     PluginContext ctx{"test.luau", "test"};
+    const auto previousLogs = logging::logger().settings();
+    logging::logger().configure({logging::Level::Verbose, {}});
     auto result = runtime.transformSource("local x = 1", ctx);
+    logging::logger().configure(previousLogs);
 
     CHECK(std::holds_alternative<std::vector<TextEdit>>(result));
 

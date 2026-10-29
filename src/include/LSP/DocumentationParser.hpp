@@ -17,8 +17,7 @@ const std::string kDocumentationBreaker = "\n\n___\n\n";
 
 Luau::FunctionParameterDocumentation parseDocumentationParameter(const json& j);
 void parseDocumentationContents(
-    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, Client* client,
-    bool overwriteExisting = true);
+    std::string_view contents, const std::string& sourceName, Luau::DocumentationDatabase& database, Client* client, bool overwriteExisting = true);
 void parseDocumentation(const std::vector<std::string>& documentationFiles, Luau::DocumentationDatabase& database, Client* client);
 
 struct PrintedDocumentation
@@ -27,6 +26,12 @@ struct PrintedDocumentation
     std::optional<std::string> learnMoreLink;
     bool readOnly = false;
 };
+
+/// Only types with their own identity can supply documentation for a value.
+/// Shared primitives and singleton types never identify a declaration.
+std::optional<Luau::DocumentationSymbol> getTypeDocumentationSymbol(Luau::TypeId type);
+
+std::string renderDocumentation(const PrintedDocumentation& documentation, bool includeReadOnly = false);
 
 /// Returns documentation content with its link kept separate for clients that need custom presentation.
 std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDatabase& database, const Luau::DocumentationSymbol& symbol,

@@ -15,7 +15,7 @@ TEST_CASE("notification sender appends IDs to logs popups and action prompts")
     REQUIRE_EQ(client.notificationQueue.size(), 1);
     CHECK_EQ(client.notificationQueue[0].first, "window/logMessage");
     for (const auto& notification : client.notificationQueue)
-        CHECK_EQ(notification.second->at("message"), expected);
+        CHECK(notification.second->at("message").get<std::string>().find(expected) != std::string::npos);
 
     sender.request("context.project-stale", lsp::MessageType::Info, "Plain message", {{"Autodump"}});
     REQUIRE_EQ(client.requestQueue.size(), 2);

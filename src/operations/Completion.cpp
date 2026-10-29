@@ -1044,5 +1044,6 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
         }
     }
 
+    logging::write(logging::Level::Debug, "requests.completion", "Produced " + std::to_string(items.size()) + " completion candidates");
     return items;
 }

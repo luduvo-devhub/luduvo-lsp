@@ -10,52 +10,6 @@
 
 namespace luduvo::hover
 {
-DeclarationTarget getDeclarationTarget(
-    const Luau::SourceModule& sourceModule, Luau::ExprOrLocal& exprOrLocal, Luau::AstNode* node, const Luau::Position& position)
-{
-    const bool hoveringType = node->asType() != nullptr;
-    const auto ancestry = Luau::findAstAncestryOfPosition(sourceModule, position, /* includeTypes: */ true);
-
-    if (hoveringType)
-    {
-        for (Luau::AstNode* ancestor : ancestry)
-        {
-            if (auto local = ancestor->as<Luau::AstStatLocal>())
-            {
-                for (Luau::AstLocal* variable : local->vars)
-                    if (variable->annotation && variable->annotation->location.containsClosed(position))
-                        return {DeclarationKind::Local, variable->name.value, variable->isConst};
-            }
-            else if (auto localFunction = ancestor->as<Luau::AstStatLocalFunction>())
-            {
-                if (localFunction->func->returnAnnotation && localFunction->func->returnAnnotation->location.containsClosed(position))
-                    return {DeclarationKind::Local, localFunction->name->name.value, localFunction->name->isConst};
-            }
-            else if (auto alias = ancestor->as<Luau::AstStatTypeAlias>())
-                return {DeclarationKind::Type, alias->name.value};
-        }
-    }
-
-    for (auto it = ancestry.rbegin(); it != ancestry.rend(); ++it)
-        if (auto member = (*it)->as<Luau::AstExprIndexName>(); member && member->indexLocation.containsClosed(position))
-            return {DeclarationKind::Member, member->index.value};
-
-    const Luau::AstLocal* local = exprOrLocal.getLocal();
-    if (!local)
-        if (auto localExpression = node->as<Luau::AstExprLocal>())
-            local = localExpression->local;
-    if (local)
-        return {DeclarationKind::Local, local->name.value, local->isConst};
-
-    if (auto global = node->as<Luau::AstExprGlobal>())
-        return {DeclarationKind::Global, global->name.value};
-    if (auto alias = node->as<Luau::AstStatTypeAlias>())
-        return {DeclarationKind::Type, alias->name.value};
-    if (auto reference = node->as<Luau::AstTypeReference>())
-        return {DeclarationKind::Type, reference->name.value};
-    return {};
-}
-
 std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target)
 {
     auto declarationFor = [&](const std::string& typeText)
@@ -100,49 +54,6 @@ std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, 
             return standaloneDeclarationFor(renderedType) + expandedType.substr(supplemental);
     }
     return declarationFor(renderedType);
-}
-
-bool isLiteralPosition(const Luau::SourceModule& sourceModule, const Luau::Position& position)
-{
-    for (const Luau::AstNode* ancestor : Luau::findAstAncestryOfPosition(sourceModule, position))
-        if ((ancestor->is<Luau::AstExprConstantNil>() || ancestor->is<Luau::AstExprConstantBool>() || ancestor->is<Luau::AstExprConstantNumber>() ||
-                ancestor->is<Luau::AstExprConstantInteger>() || ancestor->is<Luau::AstExprConstantString>()) &&
-            ancestor->location.containsClosed(position))
-            return true;
-    return false;
-}
-
-struct FindDirectLocalInitializer : Luau::AstVisitor
-{
-    const Luau::AstLocal* target;
-    Luau::AstExpr* result = nullptr;
-
-    explicit FindDirectLocalInitializer(const Luau::AstLocal* target)
-        : target(target)
-    {
-    }
-
-    bool visit(Luau::AstStatLocal* local) override
-    {
-        for (size_t index = 0; index < local->vars.size && index < local->values.size; ++index)
-        {
-            if (local->vars.data[index] == target)
-            {
-                result = local->values.data[index];
-                return false;
-            }
-        }
-        return result == nullptr;
-    }
-};
-
-bool localHasDirectMemberInitializer(const Luau::SourceModule& sourceModule, const Luau::AstLocal* local)
-{
-    if (!local)
-        return false;
-    FindDirectLocalInitializer finder{local};
-    sourceModule.root->visit(&finder);
-    return finder.result && finder.result->is<Luau::AstExprIndexName>();
 }
 
 std::string versionLabel(LuduvoDefinitionSide side)
@@ -746,33 +657,8 @@ std::optional<std::string> resolveDocumentationSymbol(
     if (getLuduvoSymbolIdentity(directDocumentationSymbol))
         return retargetDocumentationSymbol(directDocumentationSymbol, environmentName);
 
-    type = Luau::follow(type);
-    if (Luau::is<Luau::ExternType, Luau::TableType, Luau::FunctionType>(type) && getLuduvoSymbolIdentity(type->documentationSymbol))
-        return retargetDocumentationSymbol(type->documentationSymbol, environmentName);
-
-    auto unionType = Luau::get<Luau::UnionType>(type);
-    if (!unionType)
-        return std::nullopt;
-
-    std::optional<std::string> resolved;
-    for (Luau::TypeId option : unionType->options)
-    {
-        option = Luau::follow(option);
-        if (auto primitive = Luau::get<Luau::PrimitiveType>(option); primitive && primitive->type == Luau::PrimitiveType::NilType)
-            continue;
-
-        // Primitive and singleton nodes are shared by unrelated declarations. A documentation
-        // symbol found on one is not evidence that the union itself represents that API member.
-        if (Luau::is<Luau::PrimitiveType, Luau::SingletonType>(option))
-            return std::nullopt;
-
-        if (!getLuduvoSymbolIdentity(option->documentationSymbol))
-            return std::nullopt;
-        if (resolved && *resolved != *option->documentationSymbol)
-            return std::nullopt;
-        resolved = option->documentationSymbol;
-    }
-    return retargetDocumentationSymbol(resolved, environmentName);
+    const auto symbol = getTypeDocumentationSymbol(type);
+    return getLuduvoSymbolIdentity(symbol) ? retargetDocumentationSymbol(symbol, environmentName) : std::nullopt;
 }
 
 static std::string normalizeDisplayedType(std::string text)

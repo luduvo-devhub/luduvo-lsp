@@ -14,7 +14,7 @@ void RobloxPlatform::onDidChangeWatchedFiles(const lsp::FileEvent& change)
     // Flag sourcemap changes
     if (change.uri == workspaceFolder->rootUri.resolvePath(sourcemapFileName))
     {
-        workspaceFolder->client->sendLogMessage(lsp::MessageType::Info, "Registering sourcemap changed for workspace " + workspaceFolder->name);
+        workspaceFolder->client->log(logging::Level::Info, "other", "Registering sourcemap changed for workspace " + workspaceFolder->name);
         updateSourceMap();
     }
 }
@@ -38,7 +38,7 @@ void RobloxPlatform::setupWithConfiguration(const ClientConfiguration& config)
         if (client->capabilities.workspace && client->capabilities.workspace->didChangeWatchedFiles &&
             client->capabilities.workspace->didChangeWatchedFiles->dynamicRegistration)
         {
-            client->sendLogMessage(lsp::MessageType::Info, "registering didChangedWatchedFiles capability");
+            client->log(logging::Level::Info, "other", "registering didChangedWatchedFiles capability");
 
             // Unregister previous watching if it exists
             client->unregisterCapability(kSourcemapWatchingRegistrationId, "workspace/didChangeWatchedFiles");
@@ -50,13 +50,13 @@ void RobloxPlatform::setupWithConfiguration(const ClientConfiguration& config)
         }
         else
         {
-            client->sendLogMessage(lsp::MessageType::Warning,
+            client->log(logging::Level::Warning, "other",
                 "client does not allow didChangeWatchedFiles registration - automatic updating on sourcemap changes disabled");
         }
     }
     else
     {
         client->unregisterCapability(kSourcemapWatchingRegistrationId, "workspace/didChangeWatchedFiles");
-        client->sendLogMessage(lsp::MessageType::Info, "sourcemap is disabled - automatic updating on sourcemap changes disabled");
+        client->log(logging::Level::Info, "other", "sourcemap is disabled - automatic updating on sourcemap changes disabled");
     }
 }

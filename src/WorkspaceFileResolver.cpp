@@ -120,7 +120,7 @@ std::optional<Luau::LanguageServer::Plugin::TransformResult> WorkspaceFileResolv
     catch (const std::exception& e)
     {
         if (client)
-            client->sendLogMessage(lsp::MessageType::Error, "Failed to apply plugin transformation: " + std::string(e.what()));
+            client->log(logging::Level::Error, "workspace.files", "Failed to apply plugin transformation: " + std::string(e.what()));
         return std::nullopt;
     }
 }
@@ -266,7 +266,7 @@ const Luau::Config& WorkspaceFileResolver::readConfigRec(const Uri& uri, const L
     if (std::optional<std::string> contents = Luau::FileUtils::readFile(luauConfigPath.fsPath()))
     {
         if (client)
-            client->sendLogMessage(lsp::MessageType::Info, "Loading Luau configuration from " + luauConfigPath.fsPath());
+            client->log(logging::Level::Info, "workspace.files", "Loading Luau configuration from " + luauConfigPath.fsPath());
 
         std::optional<std::string> error = parseLuauConfig(configPath, *contents, result, limits);
         if (error)
@@ -293,7 +293,7 @@ const Luau::Config& WorkspaceFileResolver::readConfigRec(const Uri& uri, const L
     if (std::optional<std::string> contents = Luau::FileUtils::readFile(configPath.fsPath()))
     {
         if (client)
-            client->sendLogMessage(lsp::MessageType::Info, "Loading Luau configuration from " + configPath.fsPath());
+            client->log(logging::Level::Info, "workspace.files", "Loading Luau configuration from " + configPath.fsPath());
 
         std::optional<std::string> error = parseConfig(configPath, *contents, result);
         if (error)
@@ -320,7 +320,7 @@ const Luau::Config& WorkspaceFileResolver::readConfigRec(const Uri& uri, const L
     else if (std::optional<std::string> robloxRcContents = Luau::FileUtils::readFile(robloxRcPath.fsPath()))
     {
         if (client)
-            client->sendLogMessage(lsp::MessageType::Info, "Loading Luau configuration from " + robloxRcPath.fsPath());
+            client->log(logging::Level::Info, "workspace.files", "Loading Luau configuration from " + robloxRcPath.fsPath());
 
         // Backwards compatibility for .robloxrc files
         std::optional<std::string> error = parseConfig(robloxRcPath, *robloxRcContents, result, /* compat = */ true);

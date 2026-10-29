@@ -141,8 +141,7 @@ bool RobloxPlatform::hydrateSourcemapWithPluginInfo()
         {
             auto sourcemapPath = workspaceFolder->rootUri.resolvePath(config.sourcemap.sourcemapFile);
 
-            workspaceFolder->client->sendLogMessage(
-                lsp::MessageType::Info, "Updating " + config.sourcemap.sourcemapFile + " with information from plugin");
+            workspaceFolder->client->log(logging::Level::Info, "other", "Updating " + config.sourcemap.sourcemapFile + " with information from plugin");
 
             try
             {
@@ -160,7 +159,7 @@ bool RobloxPlatform::hydrateSourcemapWithPluginInfo()
 
 void RobloxPlatform::onStudioPluginFullChange(const json& dataModel)
 {
-    workspaceFolder->client->sendLogMessage(lsp::MessageType::Info, "received full change from studio plugin");
+    workspaceFolder->client->log(logging::Level::Info, "other", "received full change from studio plugin");
 
     pluginNodeAllocator.clear();
     setPluginInfo(PluginNode::fromJson(dataModel, pluginNodeAllocator));
@@ -176,7 +175,7 @@ void RobloxPlatform::onStudioPluginFullChange(const json& dataModel)
 
 void RobloxPlatform::onStudioPluginClear()
 {
-    workspaceFolder->client->sendLogMessage(lsp::MessageType::Info, "received clear from studio plugin");
+    workspaceFolder->client->log(logging::Level::Info, "other", "received clear from studio plugin");
 
     // TODO: properly handle multi-workspace setup
     pluginNodeAllocator.clear();

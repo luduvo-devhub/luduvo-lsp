@@ -44,6 +44,35 @@ static std::map<std::string, std::string> preservedAutosaves(const std::string& 
     return result;
 }
 
+#ifndef _WIN32
+TEST_CASE("POSIX automatic world dumps launch with the native display backend")
+{
+    TempDir temp("luduvo_linux_autodump");
+    const std::string project = temp.path() + "/project with spaces";
+    temp.write_child("project with spaces/world.ldv", "project fixture");
+    temp.write_child("bundle/usr/bin/source.dump", std::string(worldDump));
+    const std::string editor = temp.write_child("bundle/usr/bin/LuduvoEditor", R"sh(#!/bin/sh
+[ "$#" -eq 3 ] || exit 91
+[ "$2" = "--exec" ] || exit 92
+output="${3#world.dump }"
+[ "$output" != "$3" ] || exit 93
+printf '%s' "$1" > "$0.project-argument"
+cp "$(dirname "$0")/source.dump" "$output" || exit 94
+sleep 10
+)sh");
+    CHECK_EQ(luduvo::defaultLuduvoEditorPath(temp.path()), editor);
+    std::filesystem::permissions(std::filesystem::u8path(editor), std::filesystem::perms::owner_exec, std::filesystem::perm_options::add);
+    const auto result =
+        luduvo::runAutomaticWorldDump({"project", project, temp.path() + "/output dir/world.dump.txt", editor, std::chrono::seconds(3)});
+    INFO(result.error);
+    REQUIRE(result.success);
+    REQUIRE(result.snapshot);
+    CHECK_EQ(result.snapshot->tick, 394735);
+    CHECK_EQ(result.snapshot->instances.size(), 2);
+    CHECK_EQ(Luau::FileUtils::readFile(editor + ".project-argument").value_or(""), project);
+}
+#endif
+
 TEST_CASE("automatic world dumps restore autosaves when the editor cannot start")
 {
     TempDir temp("luduvo_autodump_autosave_restore");
@@ -803,6 +832,72 @@ TEST_CASE("context cleanup is selective and forget is intentionally broader")
     REQUIRE(forgotProject.success);
     CHECK_EQ(forgotProject.affected, 1);
     CHECK_FALSE(store.load()->projects.count(*project.projectId));
+}
+
+TEST_CASE("helper startup and shutdown clean transient state while preserving live clients and projects")
+{
+    TempDir temp("luduvo_context_lifecycle_cleanup");
+    const std::string projectFile = temp.write_child("project/project.json", R"({"name":"Offline Later","assets":{}})");
+    const std::string projectDirectory = std::filesystem::u8path(projectFile).parent_path().generic_u8string();
+    const std::string state = temp.path() + "/state";
+    luduvo::ContextStore store(state);
+    auto parsed = luduvo::parseWorldDump(worldDump, temp.path() + "/world.txt");
+    REQUIRE(parsed.snapshot);
+    const auto updated = store.updateWorld(std::move(*parsed.snapshot), "Offline Later", projectDirectory);
+    REQUIRE(updated.success);
+    REQUIRE(updated.projectId);
+    const auto catalog = store.load();
+    REQUIRE(catalog);
+    const std::string snapshotPath = catalog->projects.at(*updated.projectId).snapshotPath;
+    const auto identity = luduvo::currentProcessIdentity();
+    REQUIRE(identity);
+    REQUIRE(store.updateClientProjects(identity->processId, identity->startToken, temp.path(), {}).result.success);
+    std::error_code error;
+    std::filesystem::remove_all(std::filesystem::u8path(projectDirectory), error);
+    REQUIRE_FALSE(error);
+
+    const auto deadIdentity = luduvo::ProcessIdentity{std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint64_t>::max()};
+    const std::string beforeClient = temp.touch_child("state/clients/before.lease");
+    REQUIRE(luduvo::writeProcessIdentity(beforeClient, deadIdentity));
+    const std::string beforeSnapshot = temp.touch_child("state/projects/before/world.json");
+    const std::string commands = temp.touch_child("commands.log");
+    luduvo::ContextCli cli;
+    cli.parser().parse_args(
+        {"context", "run", "--state-directory", state, "--commands-log", commands, "--idle-timeout", "1", "--poll-interval", "50"});
+    std::atomic<bool> finished{false};
+    int result = -1;
+    std::thread helper(
+        [&]()
+        {
+            result = cli.execute();
+            finished = true;
+        });
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+    bool startupCleaned = false;
+    while (!finished && std::chrono::steady_clock::now() < deadline)
+    {
+        if (!std::filesystem::exists(std::filesystem::u8path(beforeClient)) && !std::filesystem::exists(std::filesystem::u8path(beforeSnapshot)))
+        {
+            startupCleaned = true;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    const std::string afterClient = temp.touch_child("state/clients/after.lease");
+    const bool wroteIdentity = luduvo::writeProcessIdentity(afterClient, deadIdentity);
+    const std::string afterSnapshot = temp.touch_child("state/projects/after/world.json");
+    temp.touch_child("state/control/stop");
+    helper.join();
+
+    CHECK(startupCleaned);
+    CHECK(wroteIdentity);
+    CHECK_EQ(result, 0);
+    CHECK_FALSE(std::filesystem::exists(std::filesystem::u8path(afterClient)));
+    CHECK_FALSE(std::filesystem::exists(std::filesystem::u8path(afterSnapshot)));
+    CHECK_EQ(store.liveClientCount(), 1);
+    REQUIRE(store.load());
+    CHECK(store.load()->projects.count(*updated.projectId));
+    CHECK(std::filesystem::exists(std::filesystem::u8path(snapshotPath)));
 }
 
 TEST_CASE("context mutations reject ambiguous project names before changing state")

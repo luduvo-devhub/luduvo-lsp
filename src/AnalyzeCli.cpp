@@ -165,6 +165,7 @@ std::vector<std::string> getFilesToAnalyze(const std::vector<std::string>& paths
 void applySettings(const std::string& settingsContents, CliClient& client)
 {
     client.globalConfig = dottedToClientConfiguration(settingsContents);
+    logging::logger().configure(client.globalConfig.logs);
 
     // Merge definitions from settings into client.definitionsFiles
     for (const auto& pair : client.globalConfig.types.definitionFiles)
@@ -244,6 +245,12 @@ int startAnalyze(const argparse::ArgumentParser& program)
             fprintf(stderr, "Failed to read settings at '%s'\n", settingsPath->c_str());
             return 1;
         }
+    }
+
+    if (auto level = program.present<std::string>("--log-level"))
+    {
+        client.globalConfig.logs = {logging::parseLevel(*level), {}};
+        logging::logger().configure(client.globalConfig.logs);
     }
 
     // Apply CLI args after settings so they take precedence

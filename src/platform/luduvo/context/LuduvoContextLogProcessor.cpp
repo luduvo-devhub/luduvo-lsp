@@ -1,5 +1,7 @@
 #include "Platform/luduvo/context/LuduvoContextLogProcessor.hpp"
 
+#include "LSP/Logs.hpp"
+
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -14,8 +16,8 @@ namespace
 
 static bool isWorldMutation(std::string_view command)
 {
-    return command.find("edit.") == 0 || command.find("insert.") == 0 || command.find("component.") == 0 ||
-           command.find("tag.") == 0 || command == "file.import" || command == "file.new";
+    return command.find("edit.") == 0 || command.find("insert.") == 0 || command.find("component.") == 0 || command.find("tag.") == 0 ||
+           command == "file.import" || command == "file.new";
 }
 
 static std::pair<std::string, std::string> splitCommand(std::string_view line)
@@ -36,7 +38,8 @@ static std::string unquote(std::string value)
 static bool isScriptFile(const std::filesystem::path& path)
 {
     std::string extension = path.extension().generic_u8string();
-    std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char value)
+    std::transform(extension.begin(), extension.end(), extension.begin(),
+        [](unsigned char value)
         {
             return char(std::tolower(value));
         });
@@ -46,7 +49,8 @@ static bool isScriptFile(const std::filesystem::path& path)
 static void reportStoreFailure(std::string_view operation, const ContextStoreResult& result)
 {
     if (!result.success)
-        std::cerr << "Luduvo context helper could not " << operation << ": " << result.error.value_or("unknown error") << '\n';
+        logging::write(
+            logging::Level::Error, "helper.storage", "Could not " + std::string(operation) + ": " + result.error.value_or("unknown error"));
 }
 
 } // namespace
@@ -89,7 +93,12 @@ void ContextLogProcessor::staleLiveProjects(std::string reason, const std::vecto
 {
     const std::vector<std::string> projects = preferred.empty() ? store.liveProjectIds() : preferred;
     if (!projects.empty())
-        reportStoreFailure("mark live projects stale", store.markProjectsStale(projects, std::move(reason)));
+    {
+        const auto result = store.markProjectsStale(projects, reason);
+        if (result.success && result.affected)
+            logging::write(logging::Level::Info, "helper.commands", "Marked " + std::to_string(result.affected) + " project(s) stale: " + reason);
+        reportStoreFailure("mark live projects stale", result);
+    }
 }
 
 void ContextLogProcessor::ingestCommandLine(const std::string& line)
@@ -108,6 +117,7 @@ void ContextLogProcessor::ingestCommandLine(const std::string& line)
 
     const auto [command, rawArguments] = splitCommand(value);
     const std::string arguments = unquote(rawArguments);
+    logging::write(logging::Level::Verbose, "helper.commands", "Observed command " + command + " sequence " + std::to_string(sequence));
     if (command == "world.dump" && !arguments.empty())
     {
         pendingDumps.push_back({normalizeContextPath(arguments), std::chrono::steady_clock::now()});
@@ -195,15 +205,21 @@ void ContextLogProcessor::pollFilesystem()
             if (matches.size() == 1)
             {
                 const auto project = catalog->projects.find(matches.front());
-                const bool alreadyPublished = project != catalog->projects.end() && project->second.fresh &&
-                                              normalizeContextPath(project->second.dumpPath) == pending->path;
+                const bool alreadyPublished =
+                    project != catalog->projects.end() && project->second.fresh && normalizeContextPath(project->second.dumpPath) == pending->path;
                 if (!alreadyPublished)
                     reportStoreFailure("publish a world dump", store.updateWorldForProject(std::move(*parsed.snapshot), matches.front()));
             }
+            logging::write(logging::Level::Debug, "helper.commands",
+                "Processed world.dump at " + pending->path + "; matching projects: " + std::to_string(matches.size()));
             pending = pendingDumps.erase(pending);
         }
         else if (std::chrono::steady_clock::now() - pending->observedAt > std::chrono::seconds(45))
+        {
+            logging::write(logging::Level::Warning, "helper.commands",
+                "Timed out waiting for dump " + pending->path + ": " + parsed.error.value_or("no valid snapshot"));
             pending = pendingDumps.erase(pending);
+        }
         else
             ++pending;
     }

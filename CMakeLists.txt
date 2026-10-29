@@ -73,6 +73,7 @@ configure_file(src/include/Platform/luduvo/in/LuduvoResources.hpp.in "${LUDUVO_G
 target_include_directories(Luau.LanguageServer PRIVATE "${LUDUVO_GENERATED_INCLUDE_DIR}")
 add_executable(Luau.LanguageServer.CLI)
 add_executable(Luau.LanguageServer.Test)
+add_executable(Luau.LanguageServer.ContextSmoke EXCLUDE_FROM_ALL tests/LuduvoEditor.smoke.cpp)
 
 if (MINGW)
     # Luduvo Luau has gotten big enough to make the compiler choke on the default object limit
@@ -89,6 +90,8 @@ target_sources(Luau.LanguageServer PRIVATE
         src/WorkspaceFileResolver.cpp
         src/Workspace.cpp
         src/TextDocument.cpp
+        src/Logs.cpp
+        src/AtomicFile.cpp
         src/Client.cpp
         src/DocumentationParser.cpp
         src/LuauExt.cpp
@@ -128,6 +131,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/context/LuduvoContextLogProcessor.cpp
         src/platform/luduvo/context/LuduvoProcessIdentity.cpp
         src/platform/luduvo/context/LuduvoContextReport.cpp
+        src/platform/luduvo/context/LuduvoContextLogs.cpp
         src/platform/luduvo/context/LuduvoContextProvider.cpp
         src/platform/StringRequireAutoImporter.cpp
         src/platform/StringRequireSuggester.cpp
@@ -149,6 +153,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/operations/DocumentLink.cpp
         src/operations/ColorProvider.cpp
         src/operations/GotoDefinition.cpp
+        src/operations/HoverSubject.cpp
         src/operations/Hover.cpp
         src/operations/SignatureHelp.cpp
         src/operations/References.cpp
@@ -208,6 +213,7 @@ target_sources(Luau.LanguageServer.Test PRIVATE
         tests/SignatureHelp.test.cpp
         tests/Diagnostics.test.cpp
         tests/LuduvoDiagnostics.test.cpp
+        tests/Logs.test.cpp
         tests/LuduvoContext.test.cpp
         tests/LuduvoNotifications.test.cpp
         tests/GoToDefinition.test.cpp
@@ -271,7 +277,7 @@ if (LSP_BUILD_ASAN)
     endforeach ()
 
     if (NOT MSVC)
-        foreach (TARGET_NAME IN LISTS LUAU_ASAN_TARGETS ITEMS Luau.LanguageServer Luau.LanguageServer.CLI Luau.LanguageServer.Test)
+        foreach (TARGET_NAME IN LISTS LUAU_ASAN_TARGETS ITEMS Luau.LanguageServer Luau.LanguageServer.CLI Luau.LanguageServer.Test Luau.LanguageServer.ContextSmoke)
             target_link_options(${TARGET_NAME} PRIVATE ${ASAN_FLAG})
         endforeach ()
     endif ()
@@ -295,6 +301,10 @@ target_compile_options(Luau.LanguageServer.CLI PRIVATE ${LUAU_LSP_OPTIONS})
 target_include_directories(Luau.LanguageServer.CLI PRIVATE src/include)
 target_include_directories(Luau.LanguageServer.CLI SYSTEM PRIVATE ${EXTERN_INCLUDES})
 target_link_libraries(Luau.LanguageServer.CLI PRIVATE Luau.LanguageServer Luau.Analysis)
+
+target_compile_options(Luau.LanguageServer.ContextSmoke PRIVATE ${LUAU_LSP_OPTIONS})
+target_link_libraries(Luau.LanguageServer.ContextSmoke PRIVATE Luau.LanguageServer)
+set_target_properties(Luau.LanguageServer.ContextSmoke PROPERTIES OUTPUT_NAME luduvo-context-editor-smoke)
 
 if (WIN32 AND LSP_KILL_BEFORE_LINK)
     find_program(LSP_POWERSHELL_EXECUTABLE NAMES powershell pwsh REQUIRED)

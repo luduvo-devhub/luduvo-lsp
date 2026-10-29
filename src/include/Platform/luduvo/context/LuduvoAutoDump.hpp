@@ -28,5 +28,6 @@ struct AutoDumpResult
 
 AutoDumpResult runAutomaticWorldDump(const AutoDumpPlan& plan, const std::atomic<bool>* cancelled = nullptr);
 AutoDumpResult recoverAutomaticWorldDumpAutosave(const std::string& projectDirectory);
+std::string defaultLuduvoEditorPath(const std::string& localDirectory);
 
 } // namespace luduvo

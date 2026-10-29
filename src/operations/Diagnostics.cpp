@@ -158,6 +158,7 @@ std::vector<Uri> WorkspaceFolder::findFilesForWorkspaceDiagnostics(const std::st
 
 lsp::WorkspaceDiagnosticReport WorkspaceFolder::workspaceDiagnostics(const lsp::WorkspaceDiagnosticParams& params)
 {
+    logging::Operation operation("analysis.diagnostics", "workspace diagnostics for " + rootUri.toString());
     LUAU_TIMETRACE_SCOPE("WorkspaceFolder::workspaceDiagnostics", "LSP");
     if (!isReady)
     {

@@ -8,14 +8,18 @@
 #include "Platform/luduvo/context/LuduvoWorldDump.hpp"
 #include "Analyze/CliConfigurationParser.hpp"
 #include "LSP/ClientConfiguration.hpp"
+#include "Platform/luduvo/context/LuduvoContextLogs.hpp"
 #include "LuauFileUtils.hpp"
 
 #include <algorithm>
 #include <cctype>
+#include <cerrno>
+#include <cstring>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <thread>
 
 #ifdef _WIN32
@@ -319,6 +323,7 @@ struct LogReader
     std::string path;
     std::streamoff offset = 0;
     std::string pending;
+    bool unavailable = false;
 
     LogReader(std::string path, bool startAtEnd = false)
         : path(std::move(path))
@@ -338,16 +343,30 @@ struct LogReader
         std::error_code error;
         const auto size = std::filesystem::file_size(std::filesystem::u8path(path), error);
         if (error)
+        {
+            if (!unavailable)
+                logging::write(logging::Level::Warning, "helper.commands", "Cannot read command log " + path + ": " + error.message());
+            unavailable = true;
             return result;
+        }
         if (std::streamoff(size) < offset)
         {
+            logging::write(logging::Level::Debug, "helper.commands", "Command log truncated; resetting reader: " + path);
             offset = 0;
             pending.clear();
         }
 
         std::ifstream input(std::filesystem::u8path(path), std::ios::binary);
         if (!input)
+        {
+            if (!unavailable)
+                logging::write(logging::Level::Warning, "helper.commands", "Cannot open command log " + path + ": " + std::strerror(errno));
+            unavailable = true;
             return result;
+        }
+        if (unavailable)
+            logging::write(logging::Level::Info, "helper.commands", "Command log is readable again: " + path);
+        unavailable = false;
         input.seekg(offset);
         std::string chunk((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
         offset += std::streamoff(chunk.size());
@@ -422,6 +441,21 @@ static bool acquireHelperOwnership(const ContextStore& store, const ProcessIdent
     return false;
 }
 
+static void cleanTransientHelperState(const ContextStore& store, const char* phase)
+{
+    logging::write(logging::Level::Debug, "helper.cleanup", std::string("Attempting ") + phase + " cleanup");
+    for (const char* kind : {"client", "snapshot"})
+    {
+        const auto result = store.clean(kind, {}, true);
+        if (!result.success)
+            logging::write(
+                logging::Level::Warning, "helper.cleanup", std::string(phase) + " cleanup failed: " + result.error.value_or("unknown error"));
+        else if (result.affected)
+            logging::write(logging::Level::Info, "helper.cleanup",
+                std::string(phase) + " cleanup removed " + std::to_string(result.affected) + " " + kind + " record(s)");
+    }
+}
+
 static int runCommand(const argparse::ArgumentParser& program)
 {
     std::string configurationError;
@@ -449,24 +483,55 @@ static int runCommand(const argparse::ArgumentParser& program)
     if (!owner || owner->processId != identity->processId || owner->startToken != identity->startToken)
         return 0;
 
+    ContextLogWriter relay(stateDirectory);
+    const bool relayLogs = program.get<bool>("--relay-logs");
+    const auto previousSettings = logging::logger().settings();
+    std::unique_ptr<logging::ScopedSink> relaySink;
+    if (relayLogs)
+    {
+        logging::logger().configure({logging::Level::Verbose, {}});
+        relaySink = std::make_unique<logging::ScopedSink>(
+            [&relay](const logging::Record& record)
+            {
+                relay.append(record);
+            });
+    }
+    logging::write(logging::Level::Info, "helper.lifecycle", "Ownership acquired; starting helper in " + stateDirectory);
+    logging::write(logging::Level::Debug, "helper.commands", "Watching " + commandsLog);
+    cleanTransientHelperState(store, "startup");
     std::filesystem::remove(std::filesystem::u8path(store.stopPath()), error);
     ContextWatcher watcher(store, commandsLog);
     std::optional<std::chrono::steady_clock::time_point> withoutClientsSince;
+    std::optional<size_t> previousClients;
     while (true)
     {
         watcher.poll();
         if (std::filesystem::exists(std::filesystem::u8path(store.stopPath())))
+        {
+            logging::write(logging::Level::Info, "helper.lifecycle", "Stop requested");
             break;
-        if (store.liveClientCount() > 0)
+        }
+        const auto clients = store.liveClientCount();
+        if (!previousClients || *previousClients != clients)
+            logging::write(logging::Level::Debug, "helper.clients", "Live LSP clients: " + std::to_string(clients));
+        previousClients = clients;
+        if (clients > 0)
             withoutClientsSince.reset();
         else if (!withoutClientsSince)
             withoutClientsSince = std::chrono::steady_clock::now();
         else if (idleTimeoutSeconds >= 0 && std::chrono::steady_clock::now() - *withoutClientsSince > std::chrono::seconds(idleTimeoutSeconds))
+        {
+            logging::write(logging::Level::Info, "helper.lifecycle", "Idle timeout reached with no live LSP clients");
             break;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(std::max(50, pollMilliseconds)));
     }
+    cleanTransientHelperState(store, "shutdown");
+    logging::write(logging::Level::Info, "helper.lifecycle", "Releasing ownership and shutting down");
     std::filesystem::remove(std::filesystem::u8path(store.ownerPath()), error);
     std::filesystem::remove_all(std::filesystem::u8path(store.controlDirectory()) / "lock", error);
+    if (relayLogs)
+        logging::logger().configure(previousSettings);
     return 0;
 }
 
@@ -532,6 +597,7 @@ static int mutateCommand(const argparse::ArgumentParser& program, bool forget)
 
 static void addStateDirectoryArgument(argparse::ArgumentParser& parser)
 {
+    parser.add_argument("--log-level").help("operational log level: Off, Error, Warning, Info, Debug, Verbose");
     parser.add_argument("--settings").help("path to LSP-style settings used for Luduvo directories").metavar("PATH");
     parser.add_argument("--state-directory").help("context database directory").metavar("DIRECTORY");
 }
@@ -540,7 +606,10 @@ static void addOutputArguments(argparse::ArgumentParser& parser)
 {
     parser.add_argument("--format").help("output format; inferred as JSON from a .json output path").choices("text", "json");
     parser.add_argument("--output").help("write output to a file instead of stdout").metavar("PATH");
-    parser.add_argument("--section").help("include a report section; repeat to include more than one").append().default_value<std::vector<std::string>>({});
+    parser.add_argument("--section")
+        .help("include a report section; repeat to include more than one")
+        .append()
+        .default_value<std::vector<std::string>>({});
     parser.add_argument("--list-sections").help("list selectable report section IDs").default_value(false).implicit_value(true);
 }
 
@@ -559,6 +628,7 @@ ContextCli::ContextCli()
 
     runParser.add_description("Run the shared Luduvo context helper");
     addStateDirectoryArgument(runParser);
+    runParser.add_argument("--relay-logs").help("relay helper events to connected LSP clients").default_value(false).implicit_value(true);
     runParser.add_argument("--commands-log").help("Luduvo Studio commands.log path").metavar("PATH");
     runParser.add_argument("--poll-interval").help("log polling interval in milliseconds").scan<'i', int>().default_value(500);
     runParser.add_argument("--idle-timeout")
@@ -573,6 +643,7 @@ ContextCli::ContextCli()
     stopParser.add_description("Stop the shared Luduvo context helper");
     addStateDirectoryArgument(stopParser);
 
+    addStateDirectoryArgument(parseParser);
     parseParser.add_description("Parse a Luduvo world dump without changing context state");
     parseParser.add_argument("input").help("world dump path").metavar("DUMP");
     addOutputArguments(parseParser);
@@ -643,6 +714,51 @@ argparse::ArgumentParser& ContextCli::parser()
 
 int ContextCli::execute() const
 {
+    const argparse::ArgumentParser* selected = nullptr;
+    std::string commandName;
+    for (const auto& entry :
+        std::vector<std::pair<std::string, const argparse::ArgumentParser*>>{{"run", &runParser}, {"status", &statusParser}, {"stop", &stopParser},
+            {"parse", &parseParser}, {"inspect", &inspectParser}, {"update", &updateParser}, {"clean", &cleanParser}, {"forget", &forgetParser}})
+    {
+        if (contextParser.is_subcommand_used(entry.first))
+        {
+            commandName = entry.first;
+            selected = entry.second;
+        }
+    }
+    if (!selected)
+        return printError("context requires a command");
+    const auto previousLogs = logging::logger().settings();
+    struct RestoreLogs
+    {
+        logging::Configuration previous;
+        ~RestoreLogs()
+        {
+            logging::logger().configure(std::move(previous));
+        }
+    } restore{previousLogs};
+    try
+    {
+        logging::Configuration logs;
+        if (auto path = selected->present<std::string>("--settings"))
+        {
+            const auto source = Luau::FileUtils::readFile(*path);
+            if (!source)
+                return printError("could not read LSP settings at " + *path);
+            logs = dottedToClientConfiguration(*source).logs;
+        }
+        if (auto level = selected->present<std::string>("--log-level"))
+        {
+            logs.level = logging::parseLevel(*level);
+            logs.categories.clear();
+        }
+        logging::logger().configure(std::move(logs));
+    }
+    catch (const std::exception& error)
+    {
+        return printError(error.what());
+    }
+    logging::write(logging::Level::Debug, "helper.lifecycle", "Executing context " + commandName);
     if (contextParser.is_subcommand_used("run"))
         return runCommand(runParser);
     if (contextParser.is_subcommand_used("status"))
