@@ -78,6 +78,8 @@ add_executable(Luau.LanguageServer.ContextSmoke EXCLUDE_FROM_ALL tests/LuduvoEdi
 if (MINGW)
     # Luduvo Luau has gotten big enough to make the compiler choke on the default object limit
     target_compile_options(Luau.LanguageServer PRIVATE -Wa,-mbig-obj)
+    # LuduvoContext specifically also breaks MinGW since it exceeds the object limit because of how dang big it is
+    set_source_files_properties(tests/LuduvoContext.test.cpp PROPERTIES COMPILE_OPTIONS -Wa,-mbig-obj)
 
     # Need to keep the Windows binaries usable outside the compiler's PATH
     target_link_options(Luau.LanguageServer.CLI PRIVATE -static)
@@ -113,6 +115,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/diagnostics/LuduvoDiagnosticAdapter.cpp
         src/platform/luduvo/diagnostics/LuduvoDiagnosticRules.cpp
         src/platform/luduvo/diagnostics/LuduvoCustomDiagnostics.cpp
+        src/platform/luduvo/diagnostics/LuduvoEventSchemaDiagnostics.cpp
         src/platform/luduvo/hover/LuduvoHoverAnalysis.cpp
         src/platform/luduvo/hover/LuduvoHoverRenderer.cpp
         src/platform/luduvo/hover/LuduvoHover.cpp
@@ -123,12 +126,18 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/LuduvoSymbols.cpp
         src/platform/luduvo/LuduvoTargetResolver.cpp
         src/platform/luduvo/LuduvoResourceCatalog.cpp
+        src/platform/luduvo/schema/LuduvoSchemaIndex.cpp
+        src/platform/luduvo/schema/LuduvoSchemaTypes.cpp
+        src/platform/luduvo/schema/LuduvoSchemaService.cpp
+        src/platform/luduvo/schema/LuduvoSchemaExports.cpp
+        src/platform/luduvo/schema/LuduvoSchemaEdits.cpp
         src/platform/luduvo/context/LuduvoWorldDump.cpp
         src/platform/luduvo/context/LuduvoAutoDump.cpp
         src/platform/luduvo/context/LuduvoContextStore.cpp
         src/platform/luduvo/context/LuduvoContextHelper.cpp
         src/platform/luduvo/context/LuduvoContextInspection.cpp
         src/platform/luduvo/context/LuduvoContextLogProcessor.cpp
+        src/platform/luduvo/context/LuduvoCommandLog.cpp
         src/platform/luduvo/context/LuduvoProcessIdentity.cpp
         src/platform/luduvo/context/LuduvoContextReport.cpp
         src/platform/luduvo/context/LuduvoContextLogs.cpp
@@ -213,6 +222,7 @@ target_sources(Luau.LanguageServer.Test PRIVATE
         tests/SignatureHelp.test.cpp
         tests/Diagnostics.test.cpp
         tests/LuduvoDiagnostics.test.cpp
+        tests/LuduvoSchemas.test.cpp
         tests/Logs.test.cpp
         tests/LuduvoContext.test.cpp
         tests/LuduvoNotifications.test.cpp

@@ -1,5 +1,6 @@
 #pragma once
 #include "LSP/Logs.hpp"
+#include "LSP/HierarchicalSettings.hpp"
 #include <optional>
 #include <utility>
 #include <vector>
@@ -381,14 +382,8 @@ struct ClientLuduvoHoverConfiguration
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoHoverConfiguration, presentation, maxTitleLength, maxTypeDefinitionLength)
 
-struct ClientLuduvoDiagnosticsConfiguration
-{
-    /// Whether Luduvo-specific diagnostics are reported.
-    bool enabled = true;
-    /// Per-rule severity overrides keyed by stable rule identifier.
-    std::unordered_map<std::string, std::string> rules{};
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoDiagnosticsConfiguration, enabled, rules)
+using ClientLuduvoNotificationConfiguration = settings::CategoryConfiguration<bool>;
+using ClientLuduvoDiagnosticsConfiguration = settings::CategoryConfiguration<std::string>;
 
 struct ClientLuduvoResourceBindingConfiguration
 {
@@ -415,6 +410,9 @@ struct ClientLuduvoBindingConfiguration
         std::vector<std::string> parameters{};
         /// Whether parameter identifies the callable's variadic tail.
         bool variadic = false;
+        std::string kind = "callParameter";
+        /// One-based type argument index; converted to zero-based inside the binding registry.
+        size_t index = 1;
     };
 
     /// Canonical API symbol, such as Color3.fromHex or MyLibrary.Spawn.
@@ -436,7 +434,7 @@ struct ClientLuduvoBindingConfiguration
     /// Structured target selection. Legacy flat parameter fields may be used instead, but not together with target.
     std::optional<Target> target{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoBindingConfiguration::Target, parameter, parameters, variadic)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoBindingConfiguration::Target, kind, index, parameter, parameters, variadic)
 
 inline void to_json(nlohmann::json& json, const ClientLuduvoBindingConfiguration& binding)
 {
@@ -516,8 +514,9 @@ struct ClientLuduvoResourcesConfiguration
             }
         };
 
-        /// Source provider. Only static is currently supported.
+        /// Static values or names obtained from the selected project schema index.
         std::string provider = "static";
+        std::string kind;
         /// Values supplied by the static provider. Strings are shorthand for entries without documentation.
         std::vector<Value> values{};
     };
@@ -559,7 +558,7 @@ inline void from_json(const nlohmann::json& json, ClientLuduvoResourcesConfigura
 }
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Group, dataType, includeBuiltins, sources)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Source, provider, values)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Source, provider, kind, values)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration, groups, sources, bindings, completion)
 
 struct ClientLuduvoDirectoriesConfiguration
@@ -580,7 +579,7 @@ struct ClientLuduvoContextConfiguration
     /// Whether stale project context should be refreshed through a disposable Luduvo Editor process.
     bool autoDump = true;
     /// Refresh on demand when true; refresh tracked projects as soon as they become stale when false.
-    bool lazyRefresh = true;
+    bool lazyRefresh = false;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoContextConfiguration, enabled, autoDump, lazyRefresh)
 
@@ -591,7 +590,7 @@ struct ClientLuduvoConfiguration
     ClientLuduvoDirectoriesConfiguration directories{};
     ClientLuduvoContextConfiguration context{};
     /// Per-notification enablement overrides, keyed by stable Luduvo notification identifier.
-    std::map<std::string, bool> notifications{};
+    ClientLuduvoNotificationConfiguration notifications{};
     ClientLuduvoDefinitionsConfiguration definitions{};
     ClientLuduvoDiagnosticsConfiguration diagnostics{};
     ClientLuduvoHoverConfiguration hover{};
@@ -614,7 +613,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientPlatformConfiguration, typ
 // Here we also define the default settings
 struct ClientConfiguration
 {
-    logging::Configuration logs{};
+    logging::Configuration reporting{};
     /// Whether to automatically autocomplete end
     /// DEPRECATED: Use completion.autocompleteEnd instead
     bool autocompleteEnd = false;
@@ -634,5 +633,5 @@ struct ClientConfiguration
     ClientFormatConfiguration format{};
     ClientPluginConfiguration plugins{};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientConfiguration, logs, autocompleteEnd, ignoreGlobs, platform, sourcemap, diagnostics, types,
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientConfiguration, reporting, autocompleteEnd, ignoreGlobs, platform, sourcemap, diagnostics, types,
     inlayHints, hover, completion, signatureHelp, require, index, fflags, bytecode, format, plugins);

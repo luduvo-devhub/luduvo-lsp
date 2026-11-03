@@ -49,7 +49,17 @@ struct ContextInferredScripts
 
 struct ContextUpdates
 {
+    struct ExportUpdate
+    {
+        std::string projectName;
+        std::string path;
+        std::string notification;
+        std::string error;
+    };
+    std::vector<ExportUpdate> exports;
+    bool schemasChanged = false;
     std::vector<std::string> updatedWorlds;
+    std::vector<ContextClientProject> updatedProjects;
     std::vector<ContextInferredScripts> inferredScripts;
     std::vector<ContextClientProject> staleProjects;
 
@@ -75,8 +85,9 @@ public:
     nlohmann::json inspect(const std::string& scriptPath) const;
     ContextStoreResult select(const std::string& scriptPath, const std::string& projectId) const;
     ContextStoreResult reset(const std::string& scriptPath) const;
-    std::optional<WorldDumpRequest> createDumpRequest(const std::string& scriptPath, std::string* error = nullptr) const;
-    std::optional<WorldDumpRequest> createProjectDumpRequest(const std::string& projectId, std::string* error = nullptr) const;
+    std::optional<WorldDumpRequest> createDumpRequest(const std::string& scriptPath, std::string* error = nullptr, bool allowFresh = false) const;
+    std::optional<WorldDumpRequest> createProjectDumpRequest(
+        const std::string& projectId, std::string* error = nullptr, bool allowFresh = false) const;
     const ContextStore& contextStore() const;
 };
 

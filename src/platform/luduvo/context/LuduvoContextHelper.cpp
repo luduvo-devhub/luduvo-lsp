@@ -1,8 +1,10 @@
 #include "Platform/luduvo/context/LuduvoContextHelper.hpp"
 
 #include "Platform/luduvo/context/LuduvoContextStore.hpp"
+#include "Platform/luduvo/schema/LuduvoSchemaExports.hpp"
 #include "Platform/luduvo/context/LuduvoContextInspection.hpp"
 #include "Platform/luduvo/context/LuduvoContextLogProcessor.hpp"
+#include "Platform/luduvo/context/LuduvoCommandLog.hpp"
 #include "Platform/luduvo/context/LuduvoProcessIdentity.hpp"
 #include "Platform/luduvo/context/LuduvoContextReport.hpp"
 #include "Platform/luduvo/context/LuduvoWorldDump.hpp"
@@ -318,80 +320,10 @@ static int updateCommand(const argparse::ArgumentParser& program)
     return writeOutput(program, *catalog, report);
 }
 
-struct LogReader
-{
-    std::string path;
-    std::streamoff offset = 0;
-    std::string pending;
-    bool unavailable = false;
-
-    LogReader(std::string path, bool startAtEnd = false)
-        : path(std::move(path))
-    {
-        if (startAtEnd)
-        {
-            std::error_code error;
-            const auto size = std::filesystem::file_size(std::filesystem::u8path(this->path), error);
-            if (!error)
-                offset = std::streamoff(size);
-        }
-    }
-
-    std::vector<std::string> readLines()
-    {
-        std::vector<std::string> result;
-        std::error_code error;
-        const auto size = std::filesystem::file_size(std::filesystem::u8path(path), error);
-        if (error)
-        {
-            if (!unavailable)
-                logging::write(logging::Level::Warning, "helper.commands", "Cannot read command log " + path + ": " + error.message());
-            unavailable = true;
-            return result;
-        }
-        if (std::streamoff(size) < offset)
-        {
-            logging::write(logging::Level::Debug, "helper.commands", "Command log truncated; resetting reader: " + path);
-            offset = 0;
-            pending.clear();
-        }
-
-        std::ifstream input(std::filesystem::u8path(path), std::ios::binary);
-        if (!input)
-        {
-            if (!unavailable)
-                logging::write(logging::Level::Warning, "helper.commands", "Cannot open command log " + path + ": " + std::strerror(errno));
-            unavailable = true;
-            return result;
-        }
-        if (unavailable)
-            logging::write(logging::Level::Info, "helper.commands", "Command log is readable again: " + path);
-        unavailable = false;
-        input.seekg(offset);
-        std::string chunk((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-        offset += std::streamoff(chunk.size());
-        pending += chunk;
-        size_t start = 0;
-        while (true)
-        {
-            const size_t newline = pending.find('\n', start);
-            if (newline == std::string::npos)
-                break;
-            std::string line = pending.substr(start, newline - start);
-            if (!line.empty() && line.back() == '\r')
-                line.pop_back();
-            result.push_back(std::move(line));
-            start = newline + 1;
-        }
-        pending.erase(0, start);
-        return result;
-    }
-};
-
 class ContextWatcher
 {
     ContextLogProcessor processor;
-    LogReader commandsLog;
+    CommandLogReader commandsLog;
 
 public:
     ContextWatcher(ContextStore store, std::string commandsLogPath)
@@ -402,8 +334,22 @@ public:
 
     void poll()
     {
-        for (const std::string& line : commandsLog.readLines())
-            processor.ingestCommandLine(line);
+        const auto changes = commandsLog.readLines();
+        bool malformed = false;
+        for (const auto& line : changes.lines)
+        {
+            try
+            {
+                malformed = !processor.ingestCommandLine(line) || malformed;
+            }
+            catch (const std::exception& error)
+            {
+                logging::write(logging::Level::Warning, "helper.commands", "Could not interpret command-log data: " + std::string(error.what()));
+                malformed = true;
+            }
+        }
+        if (malformed)
+            processor.invalidateJournal();
         processor.pollFilesystem();
     }
 };
@@ -506,6 +452,7 @@ static int runCommand(const argparse::ArgumentParser& program)
     while (true)
     {
         watcher.poll();
+        updateSchemaDatabase(store, *configuration);
         if (std::filesystem::exists(std::filesystem::u8path(store.stopPath())))
         {
             logging::write(logging::Level::Info, "helper.lifecycle", "Stop requested");
@@ -745,7 +692,7 @@ int ContextCli::execute() const
             const auto source = Luau::FileUtils::readFile(*path);
             if (!source)
                 return printError("could not read LSP settings at " + *path);
-            logs = dottedToClientConfiguration(*source).logs;
+            logs = dottedToClientConfiguration(*source).reporting;
         }
         if (auto level = selected->present<std::string>("--log-level"))
         {

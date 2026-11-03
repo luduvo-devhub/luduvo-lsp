@@ -11,10 +11,10 @@ namespace luduvo
 class NotificationSender
 {
     Client* client;
-    std::map<std::string, bool> overrides;
+    ClientLuduvoNotificationConfiguration overrides;
 
 public:
-    NotificationSender(Client* client, std::map<std::string, bool> overrides = {});
+    NotificationSender(Client* client, ClientLuduvoNotificationConfiguration overrides = {});
     bool enabled(std::string_view id) const;
     void log(std::string_view id, lsp::MessageType type, const std::string& message) const;
     void show(std::string_view id, lsp::MessageType type, const std::string& message) const;

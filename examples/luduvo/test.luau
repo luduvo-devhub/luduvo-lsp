@@ -1,7 +1,6 @@
 --!strict
 --!nolint luduvo/unused-local
 
-
 -- Tested in Zed. Complete the unfinished `game.` declare on line 13, or try hovering any of the luduvo-speciifc data types!
 local part: Instance? = game.Prefabs.Spawn("Part")
 if part then
@@ -11,8 +10,9 @@ if part then
     part:AddComponent(game.World.Pair("", "Example"))
 end
 
-local finishMe = game.
-
+local checkpoint = tonumber(self.Name:split(" ")[2])
+local finishMe: EventTable
+finishMe.
 local testResourceAutocomplete = game.World:Query("") or self:HasComponent("") or game.Prefabs.Exists("")
 
 math.abs(3-2)

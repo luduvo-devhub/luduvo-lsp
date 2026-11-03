@@ -5,6 +5,7 @@
 #include "Platform/luduvo/context/LuduvoContextLogs.hpp"
 #include "Platform/luduvo/context/LuduvoAutoDump.hpp"
 #include "Platform/luduvo/context/LuduvoProcessIdentity.hpp"
+#include "Platform/luduvo/schema/LuduvoSchemaIndex.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -41,7 +42,7 @@ static std::string executablePath;
 
 bool ContextUpdates::empty() const
 {
-    return updatedWorlds.empty() && inferredScripts.empty() && staleProjects.empty();
+    return updatedWorlds.empty() && updatedProjects.empty() && inferredScripts.empty() && staleProjects.empty() && exports.empty() && !schemasChanged;
 }
 
 ContextUpdates findContextUpdates(const ContextCatalog& previous, const ContextCatalog& current)
@@ -54,7 +55,10 @@ ContextUpdates findContextUpdates(const ContextCatalog& previous, const ContextC
             updates.staleProjects.push_back({projectId, project.name, project.directory});
         const uint64_t previousWorldGeneration = old == previous.projects.end() ? 0 : old->second.worldGeneration;
         if (project.worldGeneration > 0 && project.worldGeneration != previousWorldGeneration)
+        {
             updates.updatedWorlds.push_back(project.name);
+            updates.updatedProjects.push_back({projectId, project.name, project.directory});
+        }
 
         const std::vector<std::string> emptyScripts;
         const std::vector<std::string>& previousScripts = old == previous.projects.end() ? emptyScripts : old->second.attachedScripts;
@@ -214,6 +218,8 @@ class ContextHelperSession
         bool helperUnavailable = false;
         const auto helperGrace = std::chrono::steady_clock::now() + std::chrono::seconds(2);
         std::set<std::string> previousTracked;
+        const auto startedAt = schemaTimeNow();
+        std::map<std::string, ProjectSchemas> previousExports;
         while (!stopping)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -261,6 +267,23 @@ class ContextHelperSession
             }
             for (const auto& id : tracked)
             {
+                if (const auto schema = loadProjectSchemas(store.directory(), id))
+                {
+                    const auto old = previousExports.find(id);
+                    if (old == previousExports.end() || nlohmann::json(old->second) != nlohmann::json(*schema))
+                        updates.schemasChanged = true;
+                    std::string notification;
+                    if (!schema->exportError.empty() && (old == previousExports.end() || old->second.exportError != schema->exportError))
+                        notification = schema->exportError.find("conflict:") == 0 ? "types.export.conflict" : "types.export.failed";
+                    else if (schema->exportedAt &&
+                             (old == previousExports.end() ? schema->exportedAt >= startedAt : schema->exportedAt != old->second.exportedAt))
+                        notification = old == previousExports.end() || !old->second.exportedAt ? "types.export.created" : "types.export.updated";
+                    else if (schema->exportState == "not configured" && old != previousExports.end() && old->second.exportState == "up to date")
+                        notification = "types.export.stopped";
+                    if (!notification.empty())
+                        updates.exports.push_back({schema->projectName, schema->exportPath, notification, schema->exportError});
+                    previousExports[id] = *schema;
+                }
                 const auto project = current->projects.find(id);
                 if (previousTracked.count(id) || project == current->projects.end() || project->second.fresh)
                     continue;
@@ -300,7 +323,7 @@ class ContextHelperSession
     }
 
 public:
-    ContextHelperSession(std::string stateDirectory, std::string commandsLog, std::string editorPath)
+    ContextHelperSession(std::string stateDirectory, std::string commandsLog, std::string editorPath, const ClientLuduvoConfiguration& configuration)
         : store(std::move(stateDirectory))
         , editorPath(std::move(editorPath))
     {
@@ -332,8 +355,24 @@ public:
         const auto helperOwner = readProcessIdentity(store.ownerPath());
         if (helperOwner && isProcessAlive(*helperOwner))
             logging::write(logging::Level::Info, "context.tracking", "Reusing shared helper PID " + std::to_string(helperOwner->processId));
+        const auto settingsPath =
+            (std::filesystem::u8path(store.controlDirectory()) / ("schema-settings-" + std::to_string(identity->processId) + ".json"))
+                .generic_u8string();
+        std::string settingsError;
+        std::error_code directoryError;
+        std::filesystem::create_directories(std::filesystem::u8path(store.controlDirectory()), directoryError);
+        if (directoryError)
+        {
+            logging::write(logging::Level::Error, "context.schemas", "Could not create helper settings directory: " + directoryError.message());
+            return;
+        }
+        if (!writeFileAtomically(settingsPath, nlohmann::json{{"luau-lsp.platform.luduvo", configuration}}.dump(), &settingsError))
+        {
+            logging::write(logging::Level::Error, "context.schemas", "Could not provide helper settings: " + settingsError);
+            return;
+        }
         helperStarted = spawnHelper({"context", "run", "--state-directory", store.directory(), "--commands-log", std::move(commandsLog),
-            "--idle-timeout", "30", "--relay-logs"});
+            "--idle-timeout", "30", "--relay-logs", "--settings", settingsPath});
         logging::write(helperStarted ? logging::Level::Info : logging::Level::Error, "context.tracking",
             std::string(helperStarted ? "Registered LSP; requested shared helper: " : "Could not start shared helper: ") + store.directory());
         if (helperStarted)
@@ -411,6 +450,9 @@ public:
         dumpWorkers.emplace_back(
             [this, request, callback = std::move(callback)]
             {
+                // Coalesce edits arriving in a short burst before launching Studio.
+                for (int step = 0; step < 5 && !stopping; ++step)
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 const AutoDumpResult result = runAutomaticWorldDump(
                     {request.projectId, request.projectDirectory, request.outputPath, editorPath, std::chrono::seconds(45)}, &stopping);
                 AutoDumpResult published = result;
@@ -569,9 +611,12 @@ json ContextProvider::inspect(const std::string& scriptPath) const
                 item["selected"] = selected != workspaceSelections->second.end() && selected->second == candidate.project.id;
             }
         }
+        if (const auto schemas = loadProjectSchemas(store.directory(), candidate.project.id))
+            item["schemas"] = *schemas;
         item["hasSnapshot"] = candidate.snapshot.has_value();
         if (candidate.snapshot)
         {
+            item["snapshot"] = worldDumpMetadata(*candidate.snapshot);
             item["tick"] = candidate.snapshot->tick;
             item["instanceCount"] = candidate.snapshot->instances.size();
         }
@@ -592,7 +637,7 @@ ContextStoreResult ContextProvider::reset(const std::string& scriptPath) const
     return store.resetProjectForScript(workspaceDirectory, scriptPath);
 }
 
-std::optional<WorldDumpRequest> ContextProvider::createDumpRequest(const std::string& scriptPath, std::string* error) const
+std::optional<WorldDumpRequest> ContextProvider::createDumpRequest(const std::string& scriptPath, std::string* error, bool allowFresh) const
 {
     const std::vector<ProjectContextCandidate> candidates = findForScript(scriptPath, error);
     if (candidates.size() != 1)
@@ -601,22 +646,22 @@ std::optional<WorldDumpRequest> ContextProvider::createDumpRequest(const std::st
             *error = candidates.empty() ? "no project context contains this script" : "more than one project context contains this script";
         return std::nullopt;
     }
-    if (candidates[0].project.fresh && candidates[0].snapshot)
+    if (!allowFresh && candidates[0].project.fresh && candidates[0].snapshot)
     {
         if (error)
             *error = "the selected project already has a current world dump";
         return std::nullopt;
     }
-    return createProjectDumpRequest(candidates[0].project.id, error);
+    return createProjectDumpRequest(candidates[0].project.id, error, allowFresh);
 }
 
-std::optional<WorldDumpRequest> ContextProvider::createProjectDumpRequest(const std::string& projectId, std::string* error) const
+std::optional<WorldDumpRequest> ContextProvider::createProjectDumpRequest(const std::string& projectId, std::string* error, bool allowFresh) const
 {
     const auto catalog = store.load(error);
     if (!catalog)
         return std::nullopt;
     const auto project = catalog->projects.find(projectId);
-    if (project == catalog->projects.end() || (project->second.fresh && store.loadWorld(projectId)))
+    if (project == catalog->projects.end() || (!allowFresh && project->second.fresh && store.loadWorld(projectId)))
     {
         if (error)
             *error = "the project is missing or already has a current world dump";
@@ -652,7 +697,8 @@ std::shared_ptr<ContextHelperSession> acquireContextHelper(const ClientLuduvoCon
     if (auto existing = registry[stateDirectory].lock())
         return existing;
     const std::string editorPath = defaultLuduvoEditorPath(defaultLuduvoLocalDirectory(configuration.directories.local));
-    auto session = std::make_shared<ContextHelperSession>(stateDirectory, defaultCommandsLogPath(configuration.directories.roaming), editorPath);
+    auto session =
+        std::make_shared<ContextHelperSession>(stateDirectory, defaultCommandsLogPath(configuration.directories.roaming), editorPath, configuration);
     if (!session->started())
     {
         if (error)

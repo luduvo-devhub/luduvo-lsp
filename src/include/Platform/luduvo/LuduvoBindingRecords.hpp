@@ -1,4 +1,13 @@
 #pragma once
+#include <vector>
+
+struct LuduvoBuiltinFieldBinding
+{
+    const char* symbol;
+    const char* target;
+    const char* group;
+};
+extern const std::vector<LuduvoBuiltinFieldBinding> luduvoBuiltinFieldBindings;
 
 #include "Platform/ColorPresentation.hpp"
 

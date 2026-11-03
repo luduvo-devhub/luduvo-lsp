@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
 
+interface NotificationConfiguration {
+  default?: boolean;
+  categories?: Record<string, boolean>;
+}
+
 const namespace = "luduvo-lsp";
 const setting = "platform.luduvo.notifications";
 const doNotShowAgain = "Do not show again";
@@ -19,12 +24,25 @@ export function notificationEnabled(id: string): boolean {
   }
   const overrides = vscode.workspace
     .getConfiguration(namespace)
-    .get<Record<string, boolean>>(setting, {});
+    .get<NotificationConfiguration>(setting, {});
   const defaults = vscode.extensions.getExtension(
     "LuduvoDeveloperHub.luduvo-lsp",
   )?.packageJSON.contributes.configuration.properties[`${namespace}.${setting}`]
-    ?.properties?.[id];
-  return overrides[id] ?? defaults?.default ?? true;
+    ?.properties?.categories?.properties?.[id];
+  let category = id;
+  while (category) {
+    if (
+      Object.prototype.hasOwnProperty.call(overrides.categories ?? {}, category)
+    ) {
+      return overrides.categories![category];
+    }
+    const dot = category.lastIndexOf(".");
+    if (dot < 0) {
+      break;
+    }
+    category = category.slice(0, dot);
+  }
+  return overrides.default ?? defaults?.default ?? true;
 }
 
 export function suppressNotification(id: string): Promise<void> {
@@ -34,9 +52,9 @@ export function suppressNotification(id: string): Promise<void> {
   suppressedInSession.add(id);
   const update = pendingUpdate.then(async () => {
     const configuration = vscode.workspace.getConfiguration(namespace);
-    const inspected = configuration.inspect<Record<string, boolean>>(setting);
+    const inspected = configuration.inspect<NotificationConfiguration>(setting);
     const useWorkspace = Object.prototype.hasOwnProperty.call(
-      inspected?.workspaceValue ?? {},
+      inspected?.workspaceValue?.categories ?? {},
       id,
     );
     const values = useWorkspace
@@ -44,7 +62,7 @@ export function suppressNotification(id: string): Promise<void> {
       : inspected?.globalValue;
     await configuration.update(
       setting,
-      { ...values, [id]: false },
+      { ...values, categories: { ...values?.categories, [id]: false } },
       useWorkspace
         ? vscode.ConfigurationTarget.Workspace
         : vscode.ConfigurationTarget.Global,

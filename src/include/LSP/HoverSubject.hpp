@@ -5,6 +5,7 @@
 #include "Luau/Scope.h"
 
 class WorkspaceFolder;
+struct ClientHoverConfiguration;
 
 enum struct HoverDeclarationKind
 {
@@ -40,3 +41,6 @@ struct HoverSubject
 
 std::optional<HoverSubject> resolveHoverSubject(WorkspaceFolder& workspace, const Luau::ModuleName& moduleName,
     const Luau::SourceModule& sourceModule, const Luau::Module& module, const Luau::Position& position);
+
+/// Standard Markdown presentation, shared by platform extensions that append metadata.
+std::string renderStandardHover(const HoverSubject& subject, const Luau::ModulePtr& module, const ClientHoverConfiguration& config);

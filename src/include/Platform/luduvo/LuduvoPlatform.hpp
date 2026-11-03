@@ -4,6 +4,7 @@
 #include "diagnostics/LuduvoDiagnostics.hpp"
 #include "LuduvoResourceCatalog.hpp"
 #include "context/LuduvoContextProvider.hpp"
+#include "schema/LuduvoSchemaService.hpp"
 
 namespace lsp
 {
@@ -16,6 +17,7 @@ class LuduvoPlatform : public LSPPlatform
     LuduvoDiagnosticSettings diagnosticSettings;
     LuduvoResourceCatalog resourceCatalog;
     LuduvoBindingRegistry bindings;
+    std::unique_ptr<luduvo::SchemaService> schemas;
     std::unordered_set<std::string> reportedConfigurationWarnings;
     std::shared_ptr<luduvo::ContextProvider> contextProvider;
     std::shared_ptr<luduvo::ContextHelperSession> contextHelperSession;
@@ -41,6 +43,7 @@ public:
 
     const char* getBuiltinDocumentation() const override;
     std::vector<PlatformDefinitionEnvironment> getDefinitionEnvironments() const override;
+    void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata, const Luau::ScopePtr& scope) override;
     PlatformDefinitionConfiguration getDefinitionConfiguration() const override;
     std::vector<PlatformRequirement> getRequirements(bool platformDefinitionsActive) const override;
     void reportDefinitionLoadWarnings(Client* client, const std::vector<std::string>& warnings) const override;
@@ -60,6 +63,12 @@ public:
     lsp::ColorPresentationResult colorPresentation(const PlatformColorPresentationContext& context) override;
     void onDidOpenTextDocument(const lsp::DocumentUri& uri) override;
     void onDidCloseTextDocument(const lsp::DocumentUri& uri) override;
+    void onDidChangeTextDocument(const lsp::DocumentUri& uri) override;
+    std::unique_ptr<PlatformAnalysisOverlay> prepareAnalysis(const Luau::ModuleName& moduleName) override;
+    bool supportsFragmentAutocomplete() const override
+    {
+        return !configuration.context.enabled;
+    }
     void handleCodeAction(const lsp::CodeActionParams& params, std::vector<lsp::CodeAction>& items) override;
     void handleUnknownSymbolFix(const UnknownSymbolFixContext& ctx, const Luau::UnknownSymbol& unknownSymbol,
         const std::optional<lsp::Diagnostic>& diagnostic, std::vector<lsp::CodeAction>& result) override;

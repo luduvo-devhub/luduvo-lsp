@@ -100,6 +100,89 @@ static std::string toStringTypeFun(const std::string typeName, const Luau::TypeF
 }
 
 
+std::string renderStandardHover(const HoverSubject& subject, const Luau::ModulePtr& module, const ClientHoverConfiguration& config)
+{
+    auto exprOrLocal = subject.exprOrLocal;
+    auto node = subject.node;
+    auto scope = subject.scope;
+    auto& typeAliasInformation = subject.typeAliasInformation;
+    const auto type = subject.type;
+
+    Luau::ToStringOptions opts;
+    opts.exhaustive = true;
+    opts.useLineBreaks = true;
+    opts.functionTypeArguments = true;
+    opts.hideNamedFunctionTypeParameters = false;
+    opts.hideTableKind = !config.showTableKinds;
+    opts.scope = scope;
+    std::string typeString = Luau::toString(type, opts);
+
+    // If we have a function and its corresponding name
+    if (typeAliasInformation)
+    {
+        auto [typeName, typeFun] = typeAliasInformation.value();
+        typeString = codeBlock("luau", "type " + toStringTypeFun(typeName, typeFun) + " = " + typeString);
+    }
+    else if (auto ftv = Luau::get<Luau::FunctionType>(type))
+    {
+        types::NameOrExpr name = "";
+        if (auto localName = exprOrLocal.getName())
+            name = localName->value;
+        else if (auto expr = exprOrLocal.getExpr())
+            name = expr;
+
+        types::ToStringNamedFunctionOpts funcOpts;
+        funcOpts.hideTableKind = !config.showTableKinds;
+        funcOpts.multiline = config.multilineFunctionDefinitions;
+        typeString = codeBlock("luau", types::toStringNamedFunction(module, ftv, name, scope, funcOpts));
+    }
+    else if (exprOrLocal.getLocal() || node->as<Luau::AstExprLocal>())
+    {
+        const Luau::AstLocal* local = exprOrLocal.getLocal();
+        if (!local)
+            local = node->as<Luau::AstExprLocal>()->local;
+
+        std::string builder = local->isConst ? "const " : "local ";
+        if (auto name = exprOrLocal.getName())
+            builder += name->value;
+        else
+            builder += Luau::getIdentifier(node->asExpr()).value;
+        builder += ": " + typeString;
+        typeString = codeBlock("luau", builder);
+    }
+    else if (auto global = node->as<Luau::AstExprGlobal>())
+    {
+        // TODO: should we indicate this is a global somehow?
+        std::string builder = "type ";
+        builder += global->name.value;
+        builder += " = " + typeString;
+        typeString = codeBlock("luau", builder);
+    }
+    else if (auto string = node->as<Luau::AstExprConstantString>())
+    {
+        if (config.includeStringLength)
+        {
+            auto byteLen = string->value.size;
+            auto utf8Len = utflen(string->value.data, string->value.size);
+            if (utf8Len && utf8Len != byteLen)
+                typeString = codeBlock("luau", "string (" + std::to_string(byteLen) + " bytes, " + std::to_string(utf8Len.value()) + " characters)");
+            else
+                typeString = codeBlock("luau", "string (" + std::to_string(byteLen) + " bytes)");
+        }
+        else
+            typeString = codeBlock("luau", "string");
+    }
+    else
+    {
+        typeString = codeBlock("luau", typeString);
+    }
+
+    if (subject.documentation)
+        prependDocumentation(typeString, renderDocumentation(*subject.documentation, /* includeReadOnly: */ true));
+
+    return typeString;
+}
+
 std::optional<lsp::Hover> WorkspaceFolder::hover(const lsp::HoverParams& params, const LSPCancellationToken& cancellationToken)
 {
     auto config = client->getConfiguration(rootUri);
@@ -136,89 +219,10 @@ std::optional<lsp::Hover> WorkspaceFolder::hover(const lsp::HoverParams& params,
         logging::write(logging::Level::Debug, "requests.hover", "No hover subject in " + moduleName);
         return std::nullopt;
     }
-    logging::write(logging::Level::Debug, "requests.hover", "Resolved hover in " + moduleName +
-        "; declaration kind " + std::to_string(static_cast<int>(subject->declaration.kind)) +
-        "; literal " + (subject->literal ? "yes" : "no") + "; documentation " + subject->documentationSymbol.value_or("none"));
-    auto& exprOrLocal = subject->exprOrLocal;
-    auto node = subject->node;
-    auto scope = subject->scope;
-    auto& typeAliasInformation = subject->typeAliasInformation;
-    const auto type = subject->type;
-
-    Luau::ToStringOptions opts;
-    opts.exhaustive = true;
-    opts.useLineBreaks = true;
-    opts.functionTypeArguments = true;
-    opts.hideNamedFunctionTypeParameters = false;
-    opts.hideTableKind = !config.hover.showTableKinds;
-    opts.scope = scope;
-    std::string typeString = Luau::toString(type, opts);
-
+    logging::write(logging::Level::Debug, "requests.hover",
+        "Resolved hover in " + moduleName + "; declaration kind " + std::to_string(static_cast<int>(subject->declaration.kind)) + "; literal " +
+            (subject->literal ? "yes" : "no") + "; documentation " + subject->documentationSymbol.value_or("none"));
     if (auto platformHover = platform->handleTypeHover(PlatformHoverContext{moduleName, *subject, config.hover.showTableKinds}))
         return platformHover;
-
-    // If we have a function and its corresponding name
-    if (typeAliasInformation)
-    {
-        auto [typeName, typeFun] = typeAliasInformation.value();
-        typeString = codeBlock("luau", "type " + toStringTypeFun(typeName, typeFun) + " = " + typeString);
-    }
-    else if (auto ftv = Luau::get<Luau::FunctionType>(type))
-    {
-        types::NameOrExpr name = "";
-        if (auto localName = exprOrLocal.getName())
-            name = localName->value;
-        else if (auto expr = exprOrLocal.getExpr())
-            name = expr;
-
-        types::ToStringNamedFunctionOpts funcOpts;
-        funcOpts.hideTableKind = !config.hover.showTableKinds;
-        funcOpts.multiline = config.hover.multilineFunctionDefinitions;
-        typeString = codeBlock("luau", types::toStringNamedFunction(module, ftv, name, scope, funcOpts));
-    }
-    else if (exprOrLocal.getLocal() || node->as<Luau::AstExprLocal>())
-    {
-        const Luau::AstLocal* local = exprOrLocal.getLocal();
-        if (!local)
-            local = node->as<Luau::AstExprLocal>()->local;
-
-        std::string builder = local->isConst ? "const " : "local ";
-        if (auto name = exprOrLocal.getName())
-            builder += name->value;
-        else
-            builder += Luau::getIdentifier(node->asExpr()).value;
-        builder += ": " + typeString;
-        typeString = codeBlock("luau", builder);
-    }
-    else if (auto global = node->as<Luau::AstExprGlobal>())
-    {
-        // TODO: should we indicate this is a global somehow?
-        std::string builder = "type ";
-        builder += global->name.value;
-        builder += " = " + typeString;
-        typeString = codeBlock("luau", builder);
-    }
-    else if (auto string = node->as<Luau::AstExprConstantString>())
-    {
-        if (config.hover.includeStringLength)
-        {
-            auto byteLen = string->value.size;
-            auto utf8Len = utflen(string->value.data, string->value.size);
-            if (utf8Len && utf8Len != byteLen)
-                typeString = codeBlock("luau", "string (" + std::to_string(byteLen) + " bytes, " + std::to_string(utf8Len.value()) + " characters)");
-            else
-                typeString = codeBlock("luau", "string (" + std::to_string(byteLen) + " bytes)");
-        }
-        else
-            typeString = codeBlock("luau", "string");
-    }
-    else
-    {
-        typeString = codeBlock("luau", typeString);
-    }
-
-    if (subject->documentation)
-        prependDocumentation(typeString, renderDocumentation(*subject->documentation, /* includeReadOnly: */ true));
-
-    return lsp::Hover{{lsp::MarkupKind::Markdown, typeString}};
+    return lsp::Hover{{lsp::MarkupKind::Markdown, renderStandardHover(*subject, module, config.hover)}};
 }

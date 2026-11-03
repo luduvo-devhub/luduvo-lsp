@@ -2,6 +2,7 @@
 
 #include "Platform/luduvo/LuduvoSymbols.hpp"
 
+#include "LSP/TextDocument.hpp"
 #include "Luau/AstQuery.h"
 #include "Luau/Type.h"
 #include "Luau/TypePack.h"
@@ -175,4 +176,44 @@ std::vector<CallableTarget> resolveCallableTarget(Luau::TypeId callableType, con
     }
     return result;
 }
+size_t activeArgument(const Luau::AstExprCall& call, const Luau::Position& position)
+{
+    size_t result = 0;
+    for (Luau::AstExpr* argument : call.args)
+    {
+        if (argument->location.containsClosed(position) || argument->location.begin > position)
+            break;
+        ++result;
+    }
+    return result;
+}
+
+std::optional<lsp::Range> resourceCompletionRange(
+    const TextDocument& textDocument, const Luau::AstExprCall& call, size_t argumentIndex, const Luau::Position& position)
+{
+    const lsp::Position cursor = textDocument.convertPosition(position);
+    if (argumentIndex >= call.args.size)
+        return lsp::Range{cursor, cursor};
+
+    Luau::AstExpr* argument = call.args.data[argumentIndex];
+    if (auto string = argument->as<Luau::AstExprConstantString>())
+        return textDocument.convertLocation(string->location);
+
+    if (auto error = argument->as<Luau::AstExprError>())
+    {
+        lsp::Range range = textDocument.convertLocation(error->location);
+        if (range.start > cursor)
+            return std::nullopt;
+        if (range.end > cursor)
+            range.end = cursor;
+
+        const std::string current = textDocument.getText(range);
+        if (!current.empty() && current.front() != '"' && current.front() != '\'' && current.front() != '`')
+            return std::nullopt;
+        return range;
+    }
+
+    return std::nullopt;
+}
+
 } // namespace luduvo

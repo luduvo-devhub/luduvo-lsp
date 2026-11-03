@@ -1,4 +1,5 @@
 #include "Platform/luduvo/context/LuduvoContextReport.hpp"
+#include "Platform/luduvo/schema/LuduvoSchemaIndex.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -12,6 +13,141 @@ namespace luduvo
 {
 
 using json = nlohmann::json;
+
+std::string renderReportMarkdown(const ReportNode& root)
+{
+    std::string output;
+    const auto render = [&](const auto& self, const ReportNode& node, size_t depth) -> void
+    {
+        output += std::string(std::min<size_t>(6, depth + 1), '#') + " " + node.label;
+        for (const auto& tag : node.tags)
+            output += " [" + tag + "]";
+        output += "\n\n";
+        for (const auto& field : node.fields)
+        {
+            if (field.language.empty())
+                output += "- " + field.name + ": " + (field.unknown ? "unknown" : field.value) + "\n";
+            else
+            {
+                size_t longest = 0, count = 0;
+                for (char c : field.value)
+                {
+                    count = c == '`' ? count + 1 : 0;
+                    longest = std::max(longest, count);
+                }
+                const std::string fence(std::max<size_t>(3, longest + 1), '`');
+                output += "\n" + fence + field.language + "\n" + field.value + "\n" + fence + "\n\n";
+            }
+        }
+        output += "\n";
+        for (const auto& child : node.children)
+            self(self, child, depth + 1);
+    };
+    render(render, root, 0);
+    return output;
+}
+
+static void appendSourceFields(ReportNode& result, const WorldDumpSource& source)
+{
+    result.fields.push_back({"Source", source.kind == "save" ? "saved project" : source.kind, source.kind.empty()});
+    result.fields.push_back({"Source path", source.path, source.path.empty()});
+    result.fields.push_back({"Source written", formatContextTimestamp(source.modifiedAtUnixMs), !source.modifiedAtUnixMs});
+}
+static ReportNode snapshotReport(const json& value)
+{
+    ReportNode result{"World snapshot"};
+    const auto captured = value.value("capturedAtUnixMs", json(nullptr));
+    const auto path = value.value("sourcePath", json(nullptr));
+    const auto time = captured.is_number_integer() ? captured.get<int64_t>() : 0;
+    result.fields = {
+        {"Captured", formatContextTimestamp(time), !time}, {"Dump path", path.is_string() ? path.get<std::string>() : "", !path.is_string()}};
+    appendSourceFields(result, value.value("inputSource", json::object()).get<WorldDumpSource>());
+    return result;
+}
+
+ReportNode buildProjectSchemaReport(const json& value)
+{
+    const auto project = value.get<ProjectSchemas>();
+    ReportNode root{"Schemas"};
+    root.section = "schemas";
+    root.tags = {project.projectId};
+    ReportNode summary{"Summary"};
+    summary.fields = {{"Scripts", std::to_string(project.scripts.size())}, {"Event tables", std::to_string(eventSchemaNames(project).size())},
+        {"View", "saved index with any explicitly marked editor overlays"}, {"Type export", project.exportState},
+        {"Export path", project.exportPath}};
+    summary.fields.push_back({"Script index updated", formatContextTimestamp(project.updatedAt), !project.updatedAt});
+    summary.fields.push_back({"World captured", formatContextTimestamp(project.capturedAt), !project.capturedAt});
+    summary.fields.push_back({"Export updated", formatContextTimestamp(project.exportedAt), !project.exportedAt});
+    if (!project.exportError.empty())
+        summary.fields.push_back({"Export error", project.exportError});
+    appendSourceFields(summary, project.inputSource);
+    root.children.push_back(std::move(summary));
+    ReportNode scripts{"Scripts"};
+    for (const auto& file : project.scripts)
+    {
+        ReportNode script{file.first};
+        script.tags = {file.second.unsaved ? "unsaved" : "saved"};
+        script.fields = {{"Fingerprint", file.second.fingerprint}, {"Event registrations", std::to_string(file.second.events.size())},
+            {"Handle assignments", std::to_string(file.second.handles.size())}};
+        for (const auto& warning : file.second.warnings)
+            script.fields.push_back({"Parse warning", warning});
+        scripts.children.push_back(std::move(script));
+    }
+    root.children.push_back(std::move(scripts));
+    ReportNode events{"Event tables"};
+    for (const auto& name : eventSchemaNames(project))
+    {
+        ReportNode event{name};
+        std::set<std::string> directions;
+        std::map<std::string, std::set<std::string>> alternatives;
+        for (const auto& script : project.scripts)
+            for (const auto& registration : script.second.events)
+                if (registration.name == name)
+                {
+                    directions.insert(registration.direction);
+                    event.fields.push_back({"Registration", script.first + ":" + std::to_string(registration.line + 1) + " [" +
+                                                                registration.direction + "]" + (script.second.unsaved ? " [unsaved]" : " [saved]")});
+                    for (const auto& field : registration.fields)
+                        alternatives[field.name].insert(field.type);
+                }
+        if (directions.size() > 1)
+            event.tags.push_back("conflicting directions");
+        for (const auto& observation : eventSchemaFields(project, {name}))
+        {
+            ReportNode field{observation.field.name};
+            field.tags = {observation.field.type, observation.unsaved ? "unsaved" : "saved"};
+            if (alternatives[observation.field.name].size() > 1)
+                field.tags.push_back("union");
+            field.fields.push_back({"Declaration", observation.script + ":" + std::to_string(observation.field.line + 1)});
+            field.fields.push_back({"Source", observation.field.expression, false, "luau"});
+            event.children.push_back(std::move(field));
+        }
+        events.children.push_back(std::move(event));
+    }
+    root.children.push_back(std::move(events));
+    ReportNode handles{"Handles"};
+    for (const auto& attachment : project.attachments)
+    {
+        ReportNode script{attachment.first};
+        for (const auto& instance : attachment.second)
+        {
+            ReportNode node{instance.path};
+            node.tags = {"node " + std::to_string(instance.nodeId), "instance " + std::to_string(instance.instanceId)};
+            script.children.push_back(std::move(node));
+        }
+        for (const auto& field : handleSchemaFields(project, attachment.first))
+        {
+            ReportNode member{field.field.name};
+            member.tags = {field.field.type, field.unsaved ? "unsaved" : "saved"};
+            member.fields = {
+                {"Declaration", field.script + ":" + std::to_string(field.field.line + 1)}, {"Source", field.field.expression, false, "luau"}};
+            script.children.push_back(std::move(member));
+        }
+        handles.children.push_back(std::move(script));
+    }
+    root.children.push_back(std::move(handles));
+    return root;
+}
 
 static std::string displayValue(const json& value)
 {
@@ -238,6 +374,10 @@ static ReportNode buildScriptInspectionReport(const json& inspection)
             projectNode.tags.push_back("active in LSP");
         projectNode.tags.push_back(project.value("fresh", false) ? "fresh" : "stale");
         projectNode.fields.push_back({"Directory", project.value("directory", "")});
+        if (project.contains("schemas"))
+            projectNode.children.push_back(buildProjectSchemaReport(project.at("schemas")));
+        if (project.contains("snapshot"))
+            projectNode.children.push_back(snapshotReport(project.at("snapshot")));
         projectList.children.push_back(std::move(projectNode));
 
         const auto projectAttachments = project.find("attachments");
@@ -269,6 +409,8 @@ static ReportNode buildWorldDumpReport(const json& inspection)
         summaryNode.fields.push_back({"Script attachments", displayValue(summary->value("scriptAttachmentCount", 0))});
         root.children.push_back(std::move(summaryNode));
     }
+    if (inspection.contains("snapshot"))
+        root.children.push_back(snapshotReport(inspection.at("snapshot")));
     if (const auto instances = inspection.find("instances"); instances != inspection.end() && instances->is_array())
     {
         std::map<uint64_t, std::vector<const json*>> children;
@@ -362,6 +504,8 @@ static ReportNode buildProjectReport(const json& inspection, bool promoteContext
         captured.fields.push_back({"Script attachments", std::to_string(context->value("scriptAttachmentCount", size_t(0)))});
         if (!context->value("staleReason", "").empty())
             captured.fields.push_back({"Stale reason", context->value("staleReason", "")});
+        if (context->contains("snapshot"))
+            captured.children.push_back(snapshotReport(context->at("snapshot")));
         root.children.push_back(std::move(captured));
     }
     if (const auto attachments = inspection.find("attachments"); attachments != inspection.end() && attachments->is_array() && !attachments->empty())
@@ -432,7 +576,12 @@ ReportNode buildContextInspectionReport(const json& inspection)
     if (kind == "worldDump")
         return buildWorldDumpReport(inspection);
     if (kind == "project")
-        return buildProjectReport(inspection);
+    {
+        auto report = buildProjectReport(inspection);
+        if (inspection.contains("schemas"))
+            report.children.push_back(buildProjectSchemaReport(inspection.at("schemas")));
+        return report;
+    }
     if (kind == "projects")
         return buildProjectMatchesReport(inspection);
     if (kind == "instance")
@@ -504,6 +653,15 @@ static ReportNode buildContextOverviewReport(const json& inspection)
                 addScripts("autorunScripts", "Autorun scripts");
                 addScripts("worldScripts", "World scripts");
                 addScripts("attachedScripts", "Inferred scripts");
+                const auto details = inspection.find("projectDetails");
+                if (details != inspection.end() && details->is_object() && details->contains(projectId) && details->at(projectId).is_object())
+                {
+                    const auto& detail = details->at(projectId);
+                    if (detail.contains("snapshot"))
+                        item.children.push_back(snapshotReport(detail.at("snapshot")));
+                    if (detail.contains("schemas"))
+                        item.children.push_back(buildProjectSchemaReport(detail.at("schemas")));
+                }
                 projectList.children.push_back(std::move(item));
             }
             root.children.push_back(std::move(projectList));
@@ -538,7 +696,7 @@ ReportNode buildContextStatusReport(const json& status)
         ReportNode settings{"Configuration"};
         settings.fields.push_back({"Enabled", configuration->value("enabled", false) ? "yes" : "no"});
         settings.fields.push_back({"Automatic dumps", configuration->value("autoDump", true) ? "enabled" : "disabled"});
-        settings.fields.push_back({"Lazy refresh", configuration->value("lazyRefresh", true) ? "enabled" : "disabled"});
+        settings.fields.push_back({"Lazy refresh", configuration->value("lazyRefresh", false) ? "enabled" : "disabled"});
         root.children.push_back(std::move(settings));
     }
     if (status.value("running", false))

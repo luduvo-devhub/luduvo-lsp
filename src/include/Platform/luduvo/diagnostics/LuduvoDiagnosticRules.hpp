@@ -55,7 +55,21 @@ struct InvalidNolintDirectiveRule
 {
 };
 
-using RuleImplementation = std::variant<CallRule, CustomRule, InvalidNolintDirectiveRule>;
+enum class EventSchemaConstraint
+{
+    FieldCount,
+    EntryShape,
+    EmptyName,
+    NameLength,
+    ReservedName,
+    DuplicateName,
+};
+struct EventSchemaRule
+{
+    EventSchemaConstraint constraint;
+};
+
+using RuleImplementation = std::variant<CallRule, CustomRule, EventSchemaRule, InvalidNolintDirectiveRule>;
 
 struct Rule
 {

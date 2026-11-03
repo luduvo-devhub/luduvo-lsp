@@ -7,6 +7,57 @@
 
 TEST_SUITE_BEGIN("SourcemapTests");
 
+TEST_CASE("generated_instance_identity_propagation_boundaries")
+{
+    ScopedFastFlag solverFlag(FFlag::LuauSolverV2, true);
+    struct Case
+    {
+        const char* name;
+        const char* source;
+        const char* expectedType;
+        size_t expectedErrors = 0;
+    };
+    // Characterize the existing Roblox implementation, including its limitations.
+    // These expectations are not the desired contract for Luduvo attribute inference.
+    const Case cases[] = {
+        {"alias", "local target = game.A\nlocal observed = target:FindFirstChild('OnlyA')", "Part"},
+        {"annotation", "local target: Instance = game.A\nlocal observed = target:FindFirstChild('OnlyA')", "Instance?"},
+        {"generic",
+            "local function identity<T>(value: T): T return value end\nlocal target = identity(game.A)\nlocal observed = "
+            "target:FindFirstChild('OnlyA')",
+            "Part"},
+        {"inferred_return", "local function identity() return game.A end\nlocal target = identity()\nlocal observed = target:FindFirstChild('OnlyA')",
+            "Part"},
+        {"annotated_return",
+            "local function identity(): Instance return game.A end\nlocal target = identity()\nlocal observed = target:FindFirstChild('OnlyA')",
+            "Instance?"},
+        {"parameter", "local function identity(value: Instance) return value:FindFirstChild('OnlyA') end\nlocal observed = identity(game.A)",
+            "Instance?"},
+        {"branch_union",
+            "local function choose(condition: boolean)\nlocal target\nif condition then target = game.A else target = game.B end\nreturn "
+            "target:FindFirstChild('OnlyA')\nend\nlocal observed = choose(true)",
+            "Instance?", 1},
+        {"captured_reassignment",
+            "local target = game.A\nlocal function change() target = game.B end\nchange()\nlocal observed = target:FindFirstChild('OnlyA')", "Part"},
+        {"local_reassignment", "local target = game.A\ntarget = game.B\nlocal observed = target:FindFirstChild('OnlyA')", "Instance?"},
+    };
+    for (const auto& entry : cases)
+    {
+        CAPTURE(entry.name);
+        Fixture fixture;
+        fixture.client->globalConfig.diagnostics.strictDatamodelTypes = true;
+        fixture.loadSourcemap(R"({"name":"Game","className":"DataModel","children":[
+            {"name":"A","className":"Folder","children":[{"name":"OnlyA","className":"Part"}]},
+            {"name":"B","className":"Folder","children":[{"name":"OnlyB","className":"Part"}]}
+        ]})");
+        const auto result = fixture.check(std::string("--!strict\n") + entry.source);
+        CHECK(Luau::toString(fixture.requireType("observed")) == entry.expectedType);
+        CHECK_MESSAGE(result.errors.size() == entry.expectedErrors, fixture.getErrors(result));
+        if (entry.expectedErrors)
+            CHECK(Luau::get<Luau::CannotCallNonFunction>(result.errors.front()) != nullptr);
+    }
+}
+
 TEST_CASE("getScriptFilePath")
 {
     SourceNode node("test", "ModuleScript", {"test.lua"}, {});

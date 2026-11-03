@@ -514,6 +514,12 @@ struct ClientGeneralCapabilities
 };
 NLOHMANN_DEFINE_OPTIONAL(ClientGeneralCapabilities, positionEncodings)
 
+struct ShowDocumentClientCapabilities
+{
+    bool support = false;
+};
+NLOHMANN_DEFINE_OPTIONAL(ShowDocumentClientCapabilities, support)
+
 struct ClientWindowCapabilities
 {
     /**
@@ -528,8 +534,9 @@ struct ClientWindowCapabilities
      * @since 3.15.0
      */
     bool workDoneProgress = false;
+    std::optional<ShowDocumentClientCapabilities> showDocument;
 };
-NLOHMANN_DEFINE_OPTIONAL(ClientWindowCapabilities, workDoneProgress)
+NLOHMANN_DEFINE_OPTIONAL(ClientWindowCapabilities, workDoneProgress, showDocument)
 
 struct ClientCapabilities
 {

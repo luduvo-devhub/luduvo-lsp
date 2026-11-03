@@ -14,6 +14,7 @@ struct ReportField
     std::string name;
     std::string value;
     bool unknown = false;
+    std::string language;
 };
 
 struct ReportNode
@@ -26,10 +27,12 @@ struct ReportNode
 };
 
 std::string renderReportText(const ReportNode& root);
+std::string renderReportMarkdown(const ReportNode& root);
 nlohmann::json reportToJson(const ReportNode& root);
 std::vector<std::pair<std::string, std::string>> listReportSections(ReportNode root);
 std::optional<ReportNode> selectReportSections(ReportNode root, const std::vector<std::string>& sections, std::string* error = nullptr);
 ReportNode buildContextInspectionReport(const nlohmann::json& inspection);
 ReportNode buildContextStatusReport(const nlohmann::json& status);
+ReportNode buildProjectSchemaReport(const nlohmann::json& schema);
 
 } // namespace luduvo

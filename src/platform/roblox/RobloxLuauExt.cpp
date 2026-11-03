@@ -690,7 +690,7 @@ static void attachTagSafe(Luau::TableType::Props& props, const char* property, c
     }
 }
 
-void RobloxPlatform::mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata)
+void RobloxPlatform::mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata, const Luau::ScopePtr&)
 {
     // HACK: Mark "debug" using `@luau` symbol instead
     if (auto it = globals.globalScope->bindings.find(Luau::AstName("debug")); it != globals.globalScope->bindings.end())

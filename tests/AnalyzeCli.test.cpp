@@ -269,7 +269,7 @@ TEST_CASE("analyze_file_does_not_fail_for_luduvo_warnings")
     initCliClient(client);
     client.globalConfig.platform.type = LSPPlatformConfig::Luduvo;
     client.globalConfig.platform.luduvo.dataDirectory = t.path();
-    client.globalConfig.platform.luduvo.diagnostics.rules = {{"empty-world-query", "warning"}};
+    client.globalConfig.platform.luduvo.diagnostics.categories = {{"world.empty-query", "warning"}};
     WorkspaceFolder workspace(&client, "CLI", Uri::file(t.path()), std::nullopt);
     setupCliWorkspace(client, workspace);
 

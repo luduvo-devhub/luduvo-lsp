@@ -28,6 +28,7 @@ import { getServerCapabilities } from "./serverCapabilities";
 import { registerRequireGraph } from "./requireGraph";
 
 import { registerViewInternalSource } from "./internalSource";
+import { registerProjectSchemaCommands } from "./projectSchemas";
 
 import * as roblox from "./roblox";
 import * as utils from "./utils";
@@ -479,7 +480,7 @@ class ClientErrorHandler implements ErrorHandler {
     ) {
       this.recommendedCrashReporting = true;
       showNotification(
-        "server.crash-reporting-suggestion",
+        "server.crash-reporting.suggestion",
         "The Luduvo Language Server exited unexpectedly. Would you like to enable crash reporting to the endpoint configured by this server's distributor?",
         ["Enable", "Not now"],
       ).then((value) => {
@@ -994,6 +995,7 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
   clientDisposables.push(...registerRequireGraph(context, client));
   clientDisposables.push(...registerViewInternalSource(context, client));
   clientDisposables.push(...registerProjectContextCommands(client));
+  clientDisposables.push(...registerProjectSchemaCommands(client));
   clientDisposables.push(
     vscode.commands.registerCommand(
       `${EDITOR_NAMESPACE}.openWalkthrough`,

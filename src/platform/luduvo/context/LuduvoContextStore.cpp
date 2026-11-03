@@ -1,6 +1,7 @@
 #include "Platform/luduvo/context/LuduvoContextStore.hpp"
 #include "LSP/AtomicFile.hpp"
 #include "LSP/Logs.hpp"
+#include "Platform/luduvo/schema/LuduvoSchemaIndex.hpp"
 
 #include "LSP/Utils.hpp"
 #include "LuauFileUtils.hpp"
@@ -836,7 +837,16 @@ std::optional<ContextOverview> ContextStore::overview(std::string* error) const
     const auto catalog = load(error);
     if (!catalog)
         return std::nullopt;
-    return ContextOverview{directory(), *catalog, cleanupCandidates()};
+    ContextOverview result{directory(), *catalog, cleanupCandidates(), {}};
+    for (const auto& entry : catalog->projects)
+    {
+        auto& detail = result.projectDetails[entry.first];
+        if (const auto world = loadWorld(entry.first))
+            detail["snapshot"] = worldDumpMetadata(*world);
+        if (const auto schemas = loadProjectSchemas(directory(), entry.first))
+            detail["schemas"] = *schemas;
+    }
+    return result;
 }
 
 ContextStoreResult ContextStore::clean(const std::string& kind, const std::vector<std::string>& selectors, bool all) const

@@ -27,6 +27,10 @@ struct Configuration
 {
     Level level = Level::Info;
     std::map<std::string, Level> categories;
+    bool ui = false;
+    std::map<std::string, bool> uiCategories;
+
+    bool uiEnabled(std::string_view category) const;
 };
 void to_json(nlohmann::json& json, const Configuration& configuration);
 void from_json(const nlohmann::json& json, Configuration& configuration);

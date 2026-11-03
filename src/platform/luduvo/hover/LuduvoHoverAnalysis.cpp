@@ -1,4 +1,5 @@
 #include "Platform/luduvo/hover/LuduvoHoverAnalysis.hpp"
+#include "Platform/luduvo/schema/LuduvoSchemaTypes.hpp"
 
 #include "LSP/LuauExt.hpp"
 #include "Luau/AstQuery.h"
@@ -154,7 +155,7 @@ TypeCheckability getCheckability(Luau::TypeId type, bool throughIndexer, std::ve
     {
         if (externType->indexer)
             result = getCheckability(externType->indexer->indexResultType, true, visited);
-        if (externType->parent)
+        else if (externType->parent)
             result = mergeCheckability(result, getCheckability(*externType->parent, throughIndexer, visited));
         if (result == TypeCheckability::Uncheckable)
             result = TypeCheckability::UncheckableFields;
@@ -439,14 +440,37 @@ std::string getRichHoverTypeDefinition(Luau::TypeId type, Luau::ToStringOptions&
     type = Luau::follow(type);
     auto renderExtern = [&](const Luau::ExternType* externType)
     {
+        const bool schema = std::dynamic_pointer_cast<luduvo::SchemaTypeMetadata>(externType->userData) != nullptr;
+        auto properties = externType->props;
+        auto parent = externType->parent;
+        if (schema && parent)
+            if (const auto base = Luau::get<Luau::ExternType>(Luau::follow(*parent)); base && base->name == externType->name)
+            {
+                for (const auto& property : base->props)
+                    properties.emplace(property);
+                parent = base->parent;
+            }
         std::string result = "declare extern type " + externType->name;
-        if (externType->parent)
-            result += " extends " + Luau::toString(Luau::follow(*externType->parent), options);
+        if (parent)
+            result += " extends " + Luau::toString(Luau::follow(*parent), options);
         result += " with";
 
         auto appendProperty = [&](std::string_view prefix, const std::string& name, Luau::TypeId propertyType)
         {
             std::string renderedType = Luau::toString(Luau::follow(propertyType), options);
+            if (schema)
+                if (const auto metadata = luduvo::SchemaTypes::metadata(propertyType); metadata && !metadata->field.empty())
+                {
+                    auto columnType = Luau::follow(propertyType);
+                    if (const auto optional = Luau::get<Luau::UnionType>(columnType))
+                        for (auto part : optional->options)
+                            if (!Luau::isNil(part))
+                                columnType = Luau::follow(part);
+                    if (const auto column = Luau::get<Luau::ExternType>(columnType); column && column->indexer)
+                        renderedType = (Luau::isOptional(propertyType) ? "(" : "") + std::string("EventColumn & { [number]: ") +
+                                       Luau::toString(column->indexer->indexResultType, options) + " }" +
+                                       (Luau::isOptional(propertyType) ? ")?" : "");
+                }
             size_t newline = 0;
             while ((newline = renderedType.find('\n', newline)) != std::string::npos)
             {
@@ -456,7 +480,7 @@ std::string getRichHoverTypeDefinition(Luau::TypeId type, Luau::ToStringOptions&
             result += "\n    " + std::string(prefix) + name + ": " + renderedType;
         };
 
-        for (const auto& [name, property] : externType->props)
+        for (const auto& [name, property] : properties)
         {
             if (property.isReadOnly())
                 appendProperty("read ", name, *property.readTy);

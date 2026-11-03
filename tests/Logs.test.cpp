@@ -30,8 +30,8 @@ TEST_CASE("dotted categories inherit the most specific configured ancestor")
             records.push_back(record);
         });
     const logging::Configuration configuration = nlohmann::json::parse(R"({
-        "default":"iNfO", "categories":{"helper":"Debug", "helper.autodump":"Off",
-        "helper.autodump.process":"Verbose", "requests.hover":"Debug"}})");
+        "default":{"logs":"iNfO"}, "categories":{"helper":{"logs":"Debug"}, "helper.autodump":{"logs":"Off"},
+        "helper.autodump.process":{"logs":"Verbose"}, "requests.hover":{"logs":"Debug"}}})");
     logs.configure(configuration);
     logs.write(logging::Level::Debug, "helper.clients", "registered");
     logs.write(logging::Level::Error, "helper.autodump.autosaves", "hidden");
@@ -46,17 +46,19 @@ TEST_CASE("dotted categories inherit the most specific configured ancestor")
     logs.configure({logging::Level::Off, {}});
     logs.write(logging::Level::Error, "other", "hidden");
     CHECK_EQ(records.size(), 3);
-    CHECK_EQ(nlohmann::json(configuration).at("default"), "Info");
+    CHECK_EQ(nlohmann::json(configuration).at("default").at("logs"), "Info");
 }
 
 TEST_CASE("nested and dotted server configurations preserve dotted category names")
 {
-    const ClientConfiguration nested = nlohmann::json::parse(R"({"logs":{"default":"Warning","categories":{"helper.autodump":"Verbose"}}})");
-    const auto dotted = dottedToClientConfiguration(R"({"luau-lsp.logs.default":"Warning","luau-lsp.logs.categories":{"helper.autodump":"Verbose"}})");
-    CHECK_EQ(nested.logs.level, logging::Level::Warning);
-    CHECK_EQ(dotted.logs.level, nested.logs.level);
-    CHECK(dotted.logs.categories == nested.logs.categories);
-    CHECK_EQ(dotted.logs.categories.at("helper.autodump"), logging::Level::Verbose);
+    const ClientConfiguration nested =
+        nlohmann::json::parse(R"({"reporting":{"default":{"logs":"Warning"},"categories":{"helper.autodump":{"logs":"Verbose"}}}})");
+    const auto dotted = dottedToClientConfiguration(
+        R"({"luau-lsp.reporting.default":{"logs":"Warning"},"luau-lsp.reporting.categories":{"helper.autodump":{"logs":"Verbose"}}})");
+    CHECK_EQ(nested.reporting.level, logging::Level::Warning);
+    CHECK_EQ(dotted.reporting.level, nested.reporting.level);
+    CHECK(dotted.reporting.categories == nested.reporting.categories);
+    CHECK_EQ(dotted.reporting.categories.at("helper.autodump"), logging::Level::Verbose);
 }
 
 TEST_CASE("invalid logging settings are rejected instead of silently ignored")
@@ -96,13 +98,13 @@ TEST_CASE("an invalid log category warns without blocking workspace configuratio
     REQUIRE(client.requestHandlers[0]);
     JsonRpcMessage response;
     response.result = nlohmann::json::array({nlohmann::json::parse(R"({
-        "logs":{"categories":{"helper.typo":"Debug"}}, "diagnostics":{"workspace":true}
+        "reporting":{"categories":{"helper.typo":{"logs":"Debug"}}}, "diagnostics":{"workspace":true}
     })")});
     const auto previous = logging::logger().settings();
     (*client.requestHandlers[0])(response);
     logging::logger().configure(previous);
     CHECK(applied);
-    CHECK_EQ(client.getConfiguration(Uri()).logs.level, logging::Level::Info);
+    CHECK_EQ(client.getConfiguration(Uri()).reporting.level, logging::Level::Info);
     const auto warning = std::find_if(client.notificationQueue.begin(), client.notificationQueue.end(),
         [](const auto& item)
         {
@@ -160,7 +162,7 @@ TEST_CASE("atomic state replacement preserves valid contents")
 TEST_CASE("context CLI honors log settings and invocation overrides")
 {
     TempDir temp("cli_log_settings");
-    const std::string settings = temp.write_child("settings.json", R"({"luau-lsp.logs.default":"Off"})");
+    const std::string settings = temp.write_child("settings.json", R"({"luau-lsp.reporting.default":{"logs":"Off"}})");
     std::vector<logging::Record> records;
     logging::ScopedSink capture(
         [&](const logging::Record& record)
@@ -223,6 +225,7 @@ TEST_CASE("failed editor launches report exit status and captured stderr")
 {
     TempDir temp("editor_exit_logs");
     const auto autosave = temp.write_child("world.ldv.autosave", "preserve this autosave");
+    temp.write_child("world.ldv", "saved world");
     wchar_t systemDirectory[MAX_PATH];
     REQUIRE(GetSystemDirectoryW(systemDirectory, MAX_PATH) > 0);
     const auto editor = (std::filesystem::path(systemDirectory) / "where.exe").generic_u8string();

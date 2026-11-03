@@ -1,6 +1,8 @@
 #include "Platform/luduvo/context/LuduvoContextLogProcessor.hpp"
 
 #include "LSP/Logs.hpp"
+#include "Platform/luduvo/context/LuduvoProcessIdentity.hpp"
+#include "LSP/AtomicFile.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -17,7 +19,7 @@ namespace
 static bool isWorldMutation(std::string_view command)
 {
     return command.find("edit.") == 0 || command.find("insert.") == 0 || command.find("component.") == 0 || command.find("tag.") == 0 ||
-           command == "file.import" || command == "file.new";
+           command == "file.import" || command == "file.new" || command == "file.save";
 }
 
 static std::pair<std::string, std::string> splitCommand(std::string_view line)
@@ -101,27 +103,41 @@ void ContextLogProcessor::staleLiveProjects(std::string reason, const std::vecto
     }
 }
 
-void ContextLogProcessor::ingestCommandLine(const std::string& line)
+bool ContextLogProcessor::ingestCommandLine(const std::string& line)
 {
+    if (line.empty() || line.compare(0, 4, "seq=") == 0)
+        return true;
     const size_t separator = line.find(' ');
     if (separator == std::string::npos)
-        return;
+        return false;
     uint64_t sequence = 0;
     const std::string sequenceText = line.substr(0, separator);
     const auto parsed = std::from_chars(sequenceText.data(), sequenceText.data() + sequenceText.size(), sequence);
     if (parsed.ec != std::errc{} || parsed.ptr != sequenceText.data() + sequenceText.size())
-        return;
+        return false;
     const std::string value = line.substr(separator + 1);
-    if (value == "ok" || value.empty())
-        return;
+    if (value.empty())
+        return false;
+    if (value == "ok")
+        return true;
 
     const auto [command, rawArguments] = splitCommand(value);
+    if (command.empty() || std::any_of(command.begin(), command.end(),
+                               [](unsigned char character)
+                               {
+                                   return !std::isalnum(character) && character != '.' && character != '_' && character != '-';
+                               }))
+        return false;
     const std::string arguments = unquote(rawArguments);
     logging::write(logging::Level::Verbose, "helper.commands", "Observed command " + command + " sequence " + std::to_string(sequence));
+    const bool worldMutation = isWorldMutation(command);
+    if (worldMutation || command == "script.server" || command == "script.client" || (command == "script.attach" && !arguments.empty()))
+        pendingDumps.clear(); // An older queued dump cannot make a later observed mutation fresh.
+
     if (command == "world.dump" && !arguments.empty())
     {
         pendingDumps.push_back({normalizeContextPath(arguments), std::chrono::steady_clock::now()});
-        return;
+        return true;
     }
     if (command == "script.attach" && !arguments.empty())
     {
@@ -146,15 +162,23 @@ void ContextLogProcessor::ingestCommandLine(const std::string& line)
         }
         else
             staleLiveProjects("script.attach may have changed a live project after the last world dump");
-        return;
+        return true;
     }
     if (command == "script.client" || command == "script.server")
     {
         pendingScriptCreation = std::chrono::steady_clock::now();
-        return;
+        return true;
     }
-    if (isWorldMutation(command))
+    if (worldMutation)
         staleLiveProjects(command + " changed or may have changed a live project after the last world dump");
+    return true;
+}
+
+void ContextLogProcessor::invalidateJournal()
+{
+    pendingDumps.clear();
+    pendingScriptCreation.reset();
+    staleLiveProjects("The command log contains unrecognized data; world changes may have been lost");
 }
 
 void ContextLogProcessor::pollFilesystem()
@@ -168,11 +192,20 @@ void ContextLogProcessor::pollFilesystem()
     for (const auto& [path, _] : files)
         knownScriptFiles.insert(path);
 
+    const auto observedAt = std::chrono::steady_clock::now();
+    for (const auto& file : added)
+        recentScriptFiles[file.first] = {file.second, observedAt};
+    for (auto file = recentScriptFiles.begin(); file != recentScriptFiles.end();)
+        if (observedAt - file->second.second > std::chrono::seconds(2))
+            file = recentScriptFiles.erase(file);
+        else
+            ++file;
+
     if (pendingScriptCreation)
     {
         std::set<std::string> projects;
-        for (const auto& [_, projectId] : added)
-            projects.insert(projectId);
+        for (const auto& file : recentScriptFiles)
+            projects.insert(file.second.first);
         if (projects.size() == 1)
         {
             staleLiveProjects("script.client or script.server created and attached a script after the last world dump", {*projects.begin()});
@@ -184,6 +217,34 @@ void ContextLogProcessor::pollFilesystem()
             pendingScriptCreation.reset();
         }
     }
+
+    const auto discovered = store.load();
+    if (discovered)
+        for (const auto& projectId : store.liveProjectIds())
+        {
+            const auto found = discovered->projects.find(projectId);
+            if (found == discovered->projects.end() || found->second.directory.empty())
+                continue;
+            const auto& directory = found->second.directory;
+            const auto source = readSharedFile((std::filesystem::u8path(directory) / "project.json").generic_u8string());
+            if (!source)
+                continue;
+            const auto old = knownProjectFiles.find(projectId);
+            const bool newFile = std::any_of(added.begin(), added.end(),
+                [&](const auto& file)
+                {
+                    return file.second == projectId;
+                });
+            if (old == knownProjectFiles.end() || old->second != *source || newFile)
+            {
+                // Refresh membership without changing the existing catalog identity.
+                const auto updated = store.updateProjectFiles(directory, found->second.name);
+                reportStoreFailure("update discovered project scripts", updated);
+                if (!updated.success)
+                    continue;
+            }
+            knownProjectFiles[projectId] = *source;
+        }
 
     const auto catalog = store.load();
     const std::vector<std::string> live = store.liveProjectIds();
@@ -204,9 +265,21 @@ void ContextLogProcessor::pollFilesystem()
                 matches = live;
             if (matches.size() == 1)
             {
+                // The automatic-dump worker publishes provenance with the snapshot. Do not
+                // race it by importing its command-log entry as an external dump first.
+                const auto lock = std::filesystem::u8path(store.controlDirectory()) / ("autodump-" + matches.front() + ".lock") / "owner.json";
+                const auto owner = readProcessIdentity(lock.generic_u8string());
+                if (owner && isProcessAlive(*owner))
+                {
+                    ++pending;
+                    continue;
+                }
                 const auto project = catalog->projects.find(matches.front());
+                const auto published = store.loadWorld(matches.front());
                 const bool alreadyPublished =
-                    project != catalog->projects.end() && project->second.fresh && normalizeContextPath(project->second.dumpPath) == pending->path;
+                    project != catalog->projects.end() && project->second.fresh && normalizeContextPath(project->second.dumpPath) == pending->path &&
+                    published && published->tick == parsed.snapshot->tick && published->commandSequence == parsed.snapshot->commandSequence &&
+                    nlohmann::json(published->instances) == nlohmann::json(parsed.snapshot->instances);
                 if (!alreadyPublished)
                     reportStoreFailure("publish a world dump", store.updateWorldForProject(std::move(*parsed.snapshot), matches.front()));
             }

@@ -1,4 +1,5 @@
 #include "LSP/Logs.hpp"
+#include "LSP/HierarchicalSettings.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cctype>
@@ -27,7 +28,7 @@ static constexpr std::string_view categories[] = {"server", "server.lifecycle", 
     "workspace.files", "workspace.definitions", "bindings", "bindings.resources", "bindings.colors", "analysis", "analysis.diagnostics", "requests",
     "requests.hover", "requests.completion", "requests.signatureHelp", "context", "context.tracking", "context.snapshots", "context.refresh",
     "helper", "helper.lifecycle", "helper.clients", "helper.commands", "helper.storage", "helper.cleanup", "helper.autodump",
-    "helper.autodump.process", "helper.autodump.autosaves", "other"};
+    "helper.autodump.process", "helper.autodump.autosaves", "context.schemas", "context.exports", "bindings.schemas", "other"};
 
 std::string_view name(Level level)
 {
@@ -64,28 +65,42 @@ bool knownCategory(std::string_view category)
 
 void to_json(nlohmann::json& json, const Configuration& configuration)
 {
-    json = {{"default", name(configuration.level)}, {"categories", nlohmann::json::object()}};
+    json = {{"default", {{"logs", name(configuration.level)}, {"ui", configuration.ui}}}, {"categories", nlohmann::json::object()}};
     for (const auto& entry : configuration.categories)
-        json["categories"][entry.first] = name(entry.second);
+        json["categories"][entry.first]["logs"] = name(entry.second);
+    for (const auto& entry : configuration.uiCategories)
+        json["categories"][entry.first]["ui"] = entry.second;
 }
 
 void from_json(const nlohmann::json& json, Configuration& configuration)
 {
     Configuration parsed;
-    parsed.level = parseLevel(json.value("default", std::string("Info")));
+    const auto defaults = json.value("default", nlohmann::json::object());
+    parsed.level = parseLevel(defaults.value("logs", std::string("Info")));
+    parsed.ui = defaults.value("ui", false);
     if (json.contains("categories"))
     {
         const auto& overrides = json.at("categories");
         if (!overrides.is_object())
-            throw std::invalid_argument("logs.categories must be an object");
+            throw std::invalid_argument("reporting.categories must be an object");
         for (const auto& entry : overrides.items())
         {
             if (!knownCategory(entry.key()))
                 throw std::invalid_argument("unknown log category '" + entry.key() + "'");
-            parsed.categories[entry.key()] = parseLevel(entry.value().get<std::string>());
+            if (!entry.value().is_object())
+                throw std::invalid_argument("reporting category overrides must contain logs and/or ui");
+            if (entry.value().contains("logs"))
+                parsed.categories[entry.key()] = parseLevel(entry.value().at("logs").get<std::string>());
+            if (entry.value().contains("ui"))
+                parsed.uiCategories[entry.key()] = entry.value().at("ui").get<bool>();
         }
     }
     configuration = std::move(parsed);
+}
+
+bool Configuration::uiEnabled(std::string_view category) const
+{
+    return settings::findOverride(uiCategories, category).value_or(ui);
 }
 
 void to_json(nlohmann::json& json, const Record& record)
@@ -116,20 +131,7 @@ std::string format(const Record& record)
 
 static bool accepts(const Configuration& configuration, Level level, std::string_view category)
 {
-    auto threshold = configuration.level;
-    while (!category.empty())
-    {
-        const auto entry = configuration.categories.find(std::string(category));
-        if (entry != configuration.categories.end())
-        {
-            threshold = entry->second;
-            break;
-        }
-        const auto dot = category.rfind('.');
-        if (dot == std::string_view::npos)
-            break;
-        category = category.substr(0, dot);
-    }
+    const auto threshold = settings::findOverride(configuration.categories, category).value_or(configuration.level);
     return level != Level::Off && static_cast<int>(level) <= static_cast<int>(threshold);
 }
 

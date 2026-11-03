@@ -106,6 +106,10 @@ public:
     virtual void refreshInlayHints() {}
 
     virtual void applyEdit(const lsp::ApplyWorkspaceEditParams& params, const std::optional<ResponseHandler>& handler = std::nullopt) {}
+    virtual bool showDocument(const Uri& uri)
+    {
+        return false;
+    }
 
     virtual void sendNotification(const std::string& method, const std::optional<json>& params) const {}
 };
@@ -170,6 +174,7 @@ public:
     // TODO: this function only supports getting requests for workspaces
     void requestConfiguration(const std::vector<lsp::DocumentUri>& uris);
     void applyEdit(const lsp::ApplyWorkspaceEditParams& params, const std::optional<ResponseHandler>& handler = std::nullopt) override;
+    bool showDocument(const Uri& uri) override;
     void publishDiagnostics(const lsp::PublishDiagnosticsParams& params) override;
     void refreshWorkspaceDiagnostics() override;
     void terminateWorkspaceDiagnostics(bool retriggerRequest = true) override;

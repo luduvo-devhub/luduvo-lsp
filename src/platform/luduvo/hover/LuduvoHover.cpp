@@ -13,9 +13,20 @@ using namespace luduvo::hover;
 
 std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverContext& context)
 {
+    if (configuration.context.lazyRefresh && fileResolver)
+        notifyContextState(fileResolver->getUri(context.moduleName), false);
     const auto& subject = context.subject;
-    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich || subject.literal)
+    if (subject.literal)
         return std::nullopt;
+    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich)
+    {
+        const auto debug = schemas ? schemas->debug(context.moduleName, subject.node->asExpr(), subject.type) : "";
+        if (debug.empty() || !workspaceFolder)
+            return std::nullopt;
+        return lsp::Hover{{lsp::MarkupKind::Markdown, renderStandardHover(subject, workspaceFolder->getModule(context.moduleName),
+                                                          workspaceFolder->client->getConfiguration(workspaceFolder->rootUri).hover) +
+                                                          debug}};
+    }
 
     Luau::ToStringOptions options;
     options.exhaustive = true;
@@ -52,13 +63,24 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     RichHoverInput hoverInput{
         subject.type, declaration, documentationSymbol, std::move(property), documentation, fallbackTitle, directMemberInitializer, true};
     hoverInput.overloads = makeRichHoverOverloads(subject.type, declarationTarget, options, constrainedResources);
-    return lsp::Hover{{lsp::MarkupKind::Markdown, renderRichHover(configuration.hover, analyzeRichHover(constrainedResources, hoverInput))}};
+    std::string rendered = renderRichHover(configuration.hover, analyzeRichHover(constrainedResources, hoverInput));
+    if (schemas)
+        rendered += schemas->debug(context.moduleName, subject.node->asExpr(), subject.type);
+    return lsp::Hover{{lsp::MarkupKind::Markdown, std::move(rendered)}};
 }
 
 std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context)
 {
-    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich || !context.entry.type || !workspaceFolder)
+    if (!context.entry.type || !workspaceFolder)
         return std::nullopt;
+
+    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich)
+    {
+        const auto debug = schemas ? schemas->debug(context.moduleName, nullptr, *context.entry.type) : "";
+        if (debug.empty())
+            return std::nullopt;
+        return lsp::MarkupContent{lsp::MarkupKind::Markdown, context.fallbackDocumentation.value_or("") + debug};
+    }
 
     auto documentationSymbol =
         resolveDocumentationSymbol(*context.entry.type, context.entry.documentationSymbol, getEnvironmentForModule(context.moduleName));
@@ -73,10 +95,12 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(
     if (context.entry.prop)
         property = **context.entry.prop;
     const auto constrainedResources = resolveResourceBindings(documentationSymbol, *context.entry.type);
-    return lsp::MarkupContent{lsp::MarkupKind::Markdown,
-        renderRichHover(configuration.hover,
-            analyzeRichHover(constrainedResources, RichHoverInput{*context.entry.type, Luau::toString(Luau::follow(*context.entry.type)),
-                                                       documentationSymbol, std::move(property), documentation, context.name, false, false}))};
+    std::string rendered = renderRichHover(configuration.hover,
+        analyzeRichHover(constrainedResources, RichHoverInput{*context.entry.type, Luau::toString(Luau::follow(*context.entry.type)),
+                                                   documentationSymbol, std::move(property), documentation, context.name, false, false}));
+    if (schemas)
+        rendered += schemas->debug(context.moduleName, nullptr, *context.entry.type);
+    return lsp::MarkupContent{lsp::MarkupKind::Markdown, std::move(rendered)};
 }
 
 std::optional<lsp::MarkupContent> LuduvoPlatform::handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context)

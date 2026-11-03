@@ -5,7 +5,6 @@
 #include "Platform/luduvo/LuduvoResourceCatalog.hpp"
 #include "TempDir.h"
 #include "LuauFileUtils.hpp"
-#include "Luau/Parser.h"
 
 #include <algorithm>
 
@@ -322,7 +321,7 @@ TEST_CASE("luduvo_platform_ignores_unused_lifecycle_functions")
 TEST_CASE("luduvo_platform_configuration_round_trips")
 {
     auto config = json::parse(
-        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","directories":{"roaming":"roaming-data","local":"local-data"},"context":{"enabled":true,"autoDump":true},"notifications":{"context.updated":false},"definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096},"resources":{"groups":{"component":{"dataType":"string","includeBuiltins":false,"sources":["test-components"]},"prefab":{"dataType":"string","includeBuiltins":false,"sources":[]}},"sources":{"test-components":{"provider":"static","values":["Health",{"name":"Position","documentation":"World-space position"}]}},"bindings":[{"symbol":"MyLibrary.Query","parameter":"components","kind":"component","variadic":true,"pluralResourceNoun":true}],"completion":{"enabled":false,"disabledKinds":["component"],"disabledApis":["game.World.Query"]}}}}})")
+        R"({"platform":{"type":"luduvo","luduvo":{"dataDirectory":"data","directories":{"roaming":"roaming-data","local":"local-data"},"context":{"enabled":true,"autoDump":true},"notifications":{"categories":{"context.updated":false}},"definitions":{"serverOverride":"server.luau","clientOverride":"client.luau","defaultScriptSide":"client","globalPolicy":"preferDefinitionFiles","conflictWinner":"definitionFiles","exposePrivateTypes":false},"hover":{"presentation":"standard","maxTitleLength":null,"maxTypeDefinitionLength":4096},"resources":{"groups":{"component":{"dataType":"string","includeBuiltins":false,"sources":["test-components"]},"prefab":{"dataType":"string","includeBuiltins":false,"sources":[]}},"sources":{"test-components":{"provider":"static","values":["Health",{"name":"Position","documentation":"World-space position"}]}},"bindings":[{"symbol":"MyLibrary.Query","parameter":"components","kind":"component","variadic":true,"pluralResourceNoun":true}],"completion":{"enabled":false,"disabledKinds":["component"],"disabledApis":["game.World.Query"]}}}}})")
                       .get<ClientConfiguration>();
     CHECK(config.platform.type == LSPPlatformConfig::Luduvo);
     CHECK_EQ(config.platform.luduvo.dataDirectory, "data");
@@ -330,7 +329,7 @@ TEST_CASE("luduvo_platform_configuration_round_trips")
     CHECK_EQ(config.platform.luduvo.directories.local, "local-data");
     CHECK(config.platform.luduvo.context.enabled);
     CHECK(config.platform.luduvo.context.autoDump);
-    CHECK_EQ(config.platform.luduvo.notifications, std::map<std::string, bool>{{"context.updated", false}});
+    CHECK_EQ(config.platform.luduvo.notifications.categories, std::map<std::string, bool>{{"context.updated", false}});
     CHECK_EQ(config.platform.luduvo.definitions.serverOverride, "server.luau");
     CHECK_EQ(config.platform.luduvo.definitions.clientOverride, "client.luau");
     CHECK(config.platform.luduvo.definitions.defaultScriptSide == LuduvoScriptSide::Client);

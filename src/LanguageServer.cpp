@@ -141,9 +141,10 @@ lsp::ServerCapabilities LanguageServer::getServerCapabilities()
     capabilities.diagnosticProvider = {"luau", /* interFileDependencies: */ true, /* workspaceDiagnostics: */ true};
     // Workspace Symbols Provider
     capabilities.workspaceSymbolProvider = true;
-    capabilities.executeCommandProvider = lsp::ExecuteCommandOptions{
-        {"luduvo.addProjectContext", "luduvo.inspectProjectContext", "luduvo.chooseProjectContext", "luduvo.refreshProjectContext", "luduvo.resetProjectContext",
-            "luduvo.resolveProjectContext", "luduvo.contextHelperStatus", "luduvo.cleanProjectContext", "luduvo.forgetProjectContext"}};
+    capabilities.executeCommandProvider =
+        lsp::ExecuteCommandOptions{{"luduvo.addProjectContext", "luduvo.inspectProjectContext", "luduvo.chooseProjectContext",
+            "luduvo.refreshProjectContext", "luduvo.resetProjectContext", "luduvo.resolveProjectContext", "luduvo.contextHelperStatus",
+            "luduvo.cleanProjectContext", "luduvo.forgetProjectContext", "luduvo.inspectProjectSchemas", "luduvo.removeGeneratedTypes"}};
     // Call Hierarchy Provider
     capabilities.callHierarchyProvider = true;
     // Semantic Tokens Provider
@@ -167,9 +168,10 @@ void LanguageServer::onRequest(const id_type& id, const std::string& method, std
 {
     LUAU_TIMETRACE_SCOPE("LanguageServer::onRequest", "LSP");
     LUAU_TIMETRACE_ARGUMENT("method", method.c_str());
-    const std::string logCategory = method == "textDocument/hover" ? "requests.hover" :
-        method == "textDocument/completion" || method == "completionItem/resolve" ? "requests.completion" :
-        method == "textDocument/signatureHelp" ? "requests.signatureHelp" : "requests";
+    const std::string logCategory = method == "textDocument/hover"                                              ? "requests.hover"
+                                    : method == "textDocument/completion" || method == "completionItem/resolve" ? "requests.completion"
+                                    : method == "textDocument/signatureHelp"                                    ? "requests.signatureHelp"
+                                                                                                                : "requests";
     logging::Operation operation(logCategory, method + " request " + json(id).dump());
 
     // Handle request
@@ -924,7 +926,7 @@ void LanguageServer::onDidChangeConfiguration(const lsp::DidChangeConfigurationP
         try
         {
             client->globalConfig = params.settings;
-            logging::logger().configure(client->globalConfig.logs);
+            logging::logger().configure(client->globalConfig.reporting);
         }
         catch (const std::exception& e)
         {

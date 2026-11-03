@@ -261,10 +261,10 @@ void LSPClient::requestConfiguration(const std::vector<lsp::DocumentUri>& uris)
                         try
                         {
                             json fallback = *configIt;
-                            fallback.erase("logs");
+                            fallback.erase("reporting");
                             config = fallback;
                             const auto previous = configStore.find(uri);
-                            config.logs = previous == configStore.end() ? globalConfig.logs : previous->second.logs;
+                            config.reporting = previous == configStore.end() ? globalConfig.reporting : previous->second.reporting;
                         }
                         catch (const std::exception&)
                         {
@@ -279,10 +279,11 @@ void LSPClient::requestConfiguration(const std::vector<lsp::DocumentUri>& uris)
                         oldConfig = &it->second;
 
                     configStore.insert_or_assign(uri, config);
-                    logging::logger().configure(config.logs);
+                    logging::logger().configure(config.reporting);
                     log(logging::Level::Info, "server.configuration", "loaded configuration for " + uri.toString());
-                    log(logging::Level::Debug, "server.configuration", "Platform " + json(config.platform.type).dump() +
-                        "; configured new solver " + (config.fflags.enableNewSolver ? "enabled" : "disabled") + "; workspace " + uri.toString());
+                    log(logging::Level::Debug, "server.configuration",
+                        "Platform " + json(config.platform.type).dump() + "; configured new solver " +
+                            (config.fflags.enableNewSolver ? "enabled" : "disabled") + "; workspace " + uri.toString());
                     if (configChangedCallback)
                         configChangedCallback(uri, config, oldConfig);
                     ++workspaceIt;
@@ -304,6 +305,14 @@ void LSPClient::requestConfiguration(const std::vector<lsp::DocumentUri>& uris)
 void LSPClient::applyEdit(const lsp::ApplyWorkspaceEditParams& params, const std::optional<ResponseHandler>& handler)
 {
     sendRequest(nextRequestId++, "workspace/applyEdit", params, handler);
+}
+
+bool LSPClient::showDocument(const Uri& uri)
+{
+    if (!capabilities.window || !capabilities.window->showDocument || !capabilities.window->showDocument->support)
+        return false;
+    sendRequest(nextRequestId++, "window/showDocument", json{{"uri", uri}, {"takeFocus", true}});
+    return true;
 }
 
 void LSPClient::publishDiagnostics(const lsp::PublishDiagnosticsParams& params)

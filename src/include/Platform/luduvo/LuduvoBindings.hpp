@@ -30,6 +30,8 @@ struct LuduvoResolvedColorBinding
 enum struct LuduvoBindingTargetKind
 {
     CallParameter,
+    TypeArgument,
+    Member,
 };
 
 struct LuduvoBindingTarget
@@ -37,6 +39,7 @@ struct LuduvoBindingTarget
     LuduvoBindingTargetKind kind = LuduvoBindingTargetKind::CallParameter;
     std::vector<std::string> names;
     bool variadic = false;
+    size_t index = 0;
 };
 
 class LuduvoBindingRegistry
@@ -67,4 +70,5 @@ public:
     std::vector<LuduvoResolvedResourceBinding> resolveResources(
         const std::optional<std::string>& documentationSymbol, Luau::TypeId callableType, std::vector<std::string>* warnings = nullptr) const;
     std::vector<LuduvoResolvedColorBinding> resolveColors(std::string_view symbol, Luau::TypeId callableType) const;
+    std::vector<std::string> resolveResourceTargets(std::string_view symbol, LuduvoBindingTargetKind kind, size_t index = 0) const;
 };

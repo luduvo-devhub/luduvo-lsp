@@ -171,6 +171,8 @@ void LuduvoResourceCatalog::configure(const ClientLuduvoConfiguration& configura
     logging::Operation operation("bindings.resources", "resource catalog configuration");
     configuredWarnings.clear();
     configuredGroups = embeddedGroups;
+    for (const auto kind : {"event-table", "handle", "script"})
+        configuredGroups[kind] = LuduvoResourceGroup{kind, "string", {}, {kind}};
 
     if (auto installed = installedPrefabNames(configuration))
         configuredGroups["prefab"] = LuduvoResourceGroup{"prefab", "string", resourceEntries(std::move(*installed), true)};
@@ -188,7 +190,10 @@ void LuduvoResourceCatalog::configure(const ClientLuduvoConfiguration& configura
             if (builtins == configuredGroups.end())
                 configuredWarnings.push_back("Resource group '" + kind + "' enables built-ins, but no built-in source exists for that group.");
             else
+            {
                 addResourceEntries(group, builtins->second.resources);
+                group.projectSources = builtins->second.projectSources;
+            }
         }
 
         for (const std::string& sourceName : configuredGroup.sources)
@@ -197,6 +202,15 @@ void LuduvoResourceCatalog::configure(const ClientLuduvoConfiguration& configura
             if (source == configuration.resources.sources.end())
             {
                 configuredWarnings.push_back("Resource group '" + kind + "' references unknown source '" + sourceName + "'.");
+                continue;
+            }
+            if (source->second.provider == "project")
+            {
+                const auto& provider = source->second.kind;
+                if (provider != "event-table" && provider != "handle" && provider != "script")
+                    configuredWarnings.push_back("Resource source '" + sourceName + "' has unknown project kind '" + provider + "'.");
+                else
+                    group.projectSources.push_back(provider);
                 continue;
             }
             if (source->second.provider != "static")

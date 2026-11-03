@@ -88,7 +88,7 @@ void WorkspaceFolder::endAutocompletion(const lsp::CompletionParams& params)
     // broken: the remaining quote lands on the cursor's line as an error statement in the AST.
     // Capture this *before* stripping error nodes from the ancestry.
     bool cursorIsInErrorNode = (ancestry.back()->is<Luau::AstStatError>() || ancestry.back()->is<Luau::AstExprError>()) &&
-        ancestry.back()->location.begin.line == position.line;
+                               ancestry.back()->location.begin.line == position.line;
 
     // Remove error nodes from end of ancestry chain
     while (ancestry.size() > 0 && (ancestry.back()->is<Luau::AstStatError>() || ancestry.back()->is<Luau::AstExprError>()))
@@ -461,7 +461,7 @@ static bool canSuggestTypePack(Luau::TypePackId tp)
     return true;
 }
 
-template <typename T>
+template<typename T>
 static std::optional<std::string> tryGetAnnotation(const Luau::ScopePtr& scope, T ty)
 {
     Luau::ToStringOptions opts;
@@ -753,8 +753,8 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
     bool forAutocomplete = !FFlag::LuauSolverV2; // New type solver does not have a different engine for autocomplete
     bool fragmentWasSuccessful = false;
 
-    if (config.completion.enableFragmentAutocomplete && frontend.allModuleDependenciesValid(moduleName, forAutocomplete) &&
-        frontend.isDirty(moduleName, forAutocomplete))
+    if (config.completion.enableFragmentAutocomplete && platform->supportsFragmentAutocomplete() &&
+        frontend.allModuleDependenciesValid(moduleName, forAutocomplete) && frontend.isDirty(moduleName, forAutocomplete))
     {
         Luau::FrontendOptions frontendOptions;
         frontendOptions.retainFullTypeGraphs = true;
@@ -838,8 +838,8 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
         }
 
         auto documentationString = getDocumentationForAutocompleteEntry(name, entry, result.ancestry, localModule, position);
-        if (auto platformDocumentation = platform->handleCompletionDocumentation(
-                PlatformCompletionDocumentationContext{moduleName, name, entry, documentationString}))
+        if (auto platformDocumentation =
+                platform->handleCompletionDocumentation(PlatformCompletionDocumentationContext{moduleName, name, entry, documentationString}))
             item.documentation = std::move(*platformDocumentation);
         else if (documentationString)
             item.documentation = {lsp::MarkupKind::Markdown, *documentationString};
@@ -861,8 +861,7 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
                     Luau::ScopePtr scope;
                     if (localModule)
                         scope = Luau::findScopeAtPosition(*localModule, position);
-                    item.insertText = buildGeneratedFunctionSnippet(ftv, scope,
-                        config.completion.anonymousAutofilledFunction.addTypeAnnotations,
+                    item.insertText = buildGeneratedFunctionSnippet(ftv, scope, config.completion.anonymousAutofilledFunction.addTypeAnnotations,
                         config.completion.anonymousAutofilledFunction.addTabstopForParameters);
                     item.insertTextFormat = lsp::InsertTextFormat::Snippet;
                 }

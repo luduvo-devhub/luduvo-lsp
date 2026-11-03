@@ -1,6 +1,7 @@
 #include "Platform/luduvo/LuduvoBindingRecords.hpp"
 
 const std::vector<LuduvoBuiltinResourceBinding> luduvoBuiltinResourceBindings = {
+    {"game.EventTable", "name", "event-table"},
     {"Instance.AddComponent", "name", "component", true, true},
     {"Instance.FindAncestorWithComponent", "name", "component"},
     {"Instance.HasComponent", "name", "component"},
@@ -19,6 +20,13 @@ const std::vector<LuduvoBuiltinResourceBinding> luduvoBuiltinResourceBindings = 
     {"World.HasComponent", "component", "component"},
     {"World.Query", "components", "component", true, true},
     {"World.Spawn", "components", "component", true, true},
+};
+
+const std::vector<LuduvoBuiltinFieldBinding> luduvoBuiltinFieldBindings = {
+    {"handles", "member", "handle"},
+    {"EventTableFor", "typeArgument", "event-table"},
+    {"EventTableKeys", "typeArgument", "event-table"},
+    {"HandlesFor", "typeArgument", "script"},
 };
 
 const std::vector<LuduvoColorBinding> luduvoBuiltinColorBindings = {

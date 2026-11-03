@@ -23,46 +23,6 @@ Luau::AstExprCall* callFromAncestry(const std::vector<Luau::AstNode*>& ancestry)
     return nullptr;
 }
 
-size_t activeArgument(const Luau::AstExprCall& call, const Luau::Position& position)
-{
-    size_t result = 0;
-    for (Luau::AstExpr* argument : call.args)
-    {
-        if (argument->location.containsClosed(position) || argument->location.begin > position)
-            break;
-        ++result;
-    }
-    return result;
-}
-
-std::optional<lsp::Range> resourceCompletionRange(
-    const TextDocument& textDocument, const Luau::AstExprCall& call, size_t argumentIndex, const Luau::Position& position)
-{
-    const lsp::Position cursor = textDocument.convertPosition(position);
-    if (argumentIndex >= call.args.size)
-        return lsp::Range{cursor, cursor};
-
-    Luau::AstExpr* argument = call.args.data[argumentIndex];
-    if (auto string = argument->as<Luau::AstExprConstantString>())
-        return textDocument.convertLocation(string->location);
-
-    if (auto error = argument->as<Luau::AstExprError>())
-    {
-        lsp::Range range = textDocument.convertLocation(error->location);
-        if (range.start > cursor)
-            return std::nullopt;
-        if (range.end > cursor)
-            range.end = cursor;
-
-        const std::string current = textDocument.getText(range);
-        if (!current.empty() && current.front() != '"' && current.front() != '\'' && current.front() != '`')
-            return std::nullopt;
-        return range;
-    }
-
-    return std::nullopt;
-}
-
 std::string resourceCompletionDocumentation(
     const ClientLuduvoConfiguration& configuration, const LuduvoResourceGroup& group, const LuduvoResourceName& resource)
 {
@@ -169,6 +129,8 @@ bool supportsSnippets(const WorkspaceFolder* workspaceFolder)
 void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Luau::SourceModule& sourceModule, const Luau::ModulePtr& typedModule,
     const std::vector<Luau::AstNode*>& ancestry, Luau::Position position, std::vector<lsp::CompletionItem>& items)
 {
+    if (configuration.context.lazyRefresh)
+        notifyContextState(textDocument.uri(), false);
     if (isLifecycleCompletionPosition(textDocument, sourceModule, ancestry, position))
     {
         const bool snippets = supportsSnippets(workspaceFolder);
@@ -189,6 +151,9 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
         }
     }
 
+    if (schemas)
+        schemas->complete(textDocument, sourceModule, position, ancestry, items);
+
     if (!configuration.resources.completion.enabled || !typedModule)
         return;
 
@@ -207,7 +172,7 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
     if (!canonicalSymbol || contains(configuration.resources.completion.disabledApis, *canonicalSymbol))
         return;
 
-    const size_t argumentIndex = activeArgument(*call, position);
+    const size_t argumentIndex = luduvo::activeArgument(*call, position);
     const bool implicitSelf = call->self || findCallMetamethod(callableType).has_value();
     const size_t typeParameterIndex = argumentIndex + (implicitSelf ? 1 : 0);
 
@@ -224,7 +189,7 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
     if (!activeBinding || contains(configuration.resources.completion.disabledKinds, activeBinding->kind))
         return;
 
-    const auto replacementRange = resourceCompletionRange(textDocument, *call, argumentIndex, position);
+    const auto replacementRange = luduvo::resourceCompletionRange(textDocument, *call, argumentIndex, position);
     if (!replacementRange)
         return;
 

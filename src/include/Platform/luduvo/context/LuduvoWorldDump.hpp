@@ -33,6 +33,15 @@ struct WorldInstance
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(WorldInstance, row, nodeId, instanceId, parentNodeId, name, type, shape, position, scripts)
 
+struct WorldDumpSource
+{
+    std::string kind; // save, autosave, or unknown for externally supplied dumps.
+    std::string path;
+    int64_t modifiedAtUnixMs = 0;
+};
+void to_json(nlohmann::json& json, const WorldDumpSource& source);
+void from_json(const nlohmann::json& json, WorldDumpSource& source);
+
 struct WorldDumpSnapshot
 {
     int formatVersion = 1;
@@ -42,10 +51,11 @@ struct WorldDumpSnapshot
     uint64_t redoCount = 0;
     int64_t capturedAtUnixMs = 0;
     std::string sourcePath;
+    WorldDumpSource inputSource;
     std::vector<WorldInstance> instances;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    WorldDumpSnapshot, formatVersion, tick, commandSequence, undoCount, redoCount, capturedAtUnixMs, sourcePath, instances)
+    WorldDumpSnapshot, formatVersion, tick, commandSequence, undoCount, redoCount, capturedAtUnixMs, sourcePath, inputSource, instances)
 
 struct WorldDumpParseResult
 {
@@ -56,5 +66,8 @@ struct WorldDumpParseResult
 
 WorldDumpParseResult parseWorldDump(std::string_view source, std::string sourcePath = {});
 WorldDumpParseResult parseWorldDumpFile(const std::string& path);
+std::string formatContextTimestamp(int64_t time);
+nlohmann::json worldDumpMetadata(const WorldDumpSnapshot& snapshot);
+std::string describeWorldDumpSource(const WorldDumpSnapshot& snapshot);
 
 } // namespace luduvo

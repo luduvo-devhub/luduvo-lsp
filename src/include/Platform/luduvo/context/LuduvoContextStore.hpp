@@ -40,8 +40,7 @@ struct ContextCatalog
     std::map<std::string, std::vector<std::string>> scriptProjects;
     std::map<std::string, std::map<std::string, std::string>> workspaceScriptSelections;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    ContextCatalog, formatVersion, generation, projects, scriptProjects, workspaceScriptSelections)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ContextCatalog, formatVersion, generation, projects, scriptProjects, workspaceScriptSelections)
 
 struct ContextClientProject
 {
@@ -111,8 +110,9 @@ struct ContextOverview
     std::string stateDirectory;
     ContextCatalog catalog;
     ContextCleanupSummary cleanup;
+    std::map<std::string, nlohmann::json> projectDetails;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContextOverview, stateDirectory, catalog, cleanup)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ContextOverview, stateDirectory, catalog, cleanup, projectDetails)
 
 class ContextStore
 {
@@ -143,8 +143,8 @@ public:
     ContextStoreResult markProjectsStale(const std::vector<std::string>& projectIds, std::string reason) const;
     ContextStoreResult attachScript(const std::string& projectName, const std::string& scriptPath) const;
     ContextStoreResult attachScriptById(const std::string& projectId, const std::string& scriptPath) const;
-    ContextClientUpdate updateClientProjects(uint64_t processId, uint64_t startToken, const std::string& workspaceDirectory,
-        const std::vector<ContextClientProject>& projects) const;
+    ContextClientUpdate updateClientProjects(
+        uint64_t processId, uint64_t startToken, const std::string& workspaceDirectory, const std::vector<ContextClientProject>& projects) const;
     std::vector<ContextClientRegistration> clientRegistrations(bool includeDead = true) const;
     std::vector<std::string> liveProjectIds() const;
     size_t liveClientCount() const;

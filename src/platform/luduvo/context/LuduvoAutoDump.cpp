@@ -2,6 +2,7 @@
 
 #include "LuauFileUtils.hpp"
 #include "LSP/Logs.hpp"
+#include "LSP/AtomicFile.hpp"
 #include <mutex>
 #include <cerrno>
 #include <cstring>
@@ -198,6 +199,142 @@ public:
         std::string error;
         if (!restore(&error))
             logging::write(logging::Level::Error, "helper.autodump.autosaves", "Autosave recovery failed during cleanup: " + error);
+    }
+};
+
+class TemporaryDumpProject
+{
+    std::filesystem::path root;
+
+public:
+    ~TemporaryDumpProject()
+    {
+        if (!root.empty())
+        {
+            std::error_code error;
+            std::filesystem::remove_all(root, error);
+            if (error)
+                logging::write(logging::Level::Warning, "helper.autodump",
+                    "Could not remove disposable project " + root.generic_u8string() + ": " + error.message());
+        }
+    }
+    std::string directory() const
+    {
+        return root.generic_u8string();
+    }
+    bool prepare(const std::string& directory, WorldDumpSource& source, std::string* error, const std::atomic<bool>* cancelled)
+    {
+        std::error_code ec;
+        const auto project = std::filesystem::u8path(directory);
+        const auto input = std::filesystem::u8path(source.path);
+        std::optional<std::string> bytes;
+        for (int attempt = 0; attempt < 3; ++attempt)
+        {
+            const auto before = std::filesystem::last_write_time(input, ec);
+            if (ec)
+                break;
+            bytes = readSharedFile(source.path, error);
+            const auto after = std::filesystem::last_write_time(input, ec);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            const auto stable = std::filesystem::last_write_time(input, ec);
+            if (bytes && !ec && before == after && after == stable && bytes->size() == std::filesystem::file_size(input, ec) && !ec)
+            {
+                source.modifiedAtUnixMs = std::chrono::time_point_cast<std::chrono::milliseconds>(
+                    stable - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now())
+                                              .time_since_epoch()
+                                              .count();
+                break;
+            }
+            bytes.reset();
+        }
+        if (!bytes || ec)
+        {
+            *error = "could not read a stable autosave; try again after Studio finishes writing";
+            return false;
+        }
+        static std::atomic<uint64_t> next{0};
+        const auto temporary = std::filesystem::temp_directory_path(ec);
+        if (ec)
+        {
+            *error = ec.message();
+            return false;
+        }
+        for (size_t attempt = 0; attempt < 100; ++attempt)
+        {
+            auto candidate = temporary / ("luduvo-context-dump-" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "-" +
+                                             std::to_string(next++));
+            if (std::filesystem::create_directory(candidate, ec))
+            {
+                root = std::move(candidate);
+                break;
+            }
+            if (ec)
+            {
+                *error = ec.message();
+                return false;
+            }
+        }
+        if (root.empty())
+        {
+            *error = "could not reserve a disposable project directory";
+            return false;
+        }
+        std::filesystem::permissions(root, std::filesystem::perms::owner_all, std::filesystem::perm_options::replace, ec);
+        if (ec)
+        {
+            *error = "could not restrict disposable project permissions: " + ec.message();
+            return false;
+        }
+        for (std::filesystem::recursive_directory_iterator it(project, ec), end; it != end && !ec; it.increment(ec))
+        {
+            if (cancelled && *cancelled)
+            {
+                *error = "automatic world dump was cancelled";
+                return false;
+            }
+            const auto name = it->path().filename().generic_u8string();
+            // A configured system temp directory may itself be inside the project.
+            if (it->is_directory(ec) && std::filesystem::equivalent(it->path(), root, ec))
+            {
+                it.disable_recursion_pending();
+                continue;
+            }
+            if (ec)
+                break;
+            if (it->is_symlink(ec))
+            {
+                *error = "cannot copy a project containing symbolic links: " + it->path().generic_u8string();
+                return false;
+            }
+            if (ec)
+                break;
+            if (name == ".git" || name == ".zed" || name == ".vscode")
+            {
+                if (it->is_directory(ec))
+                    it.disable_recursion_pending();
+                continue;
+            }
+            if (name == "world.ldv" || name.find("world.ldv.autosave") == 0 || it->path().extension() == ".log")
+                continue;
+            const auto target = root / it->path().lexically_relative(project);
+            if (it->is_directory(ec))
+                std::filesystem::create_directories(target, ec);
+            else if (it->is_regular_file(ec))
+            {
+                std::filesystem::copy_file(it->path(), target, std::filesystem::copy_options::overwrite_existing, ec);
+                if (!ec)
+                    std::filesystem::permissions(
+                        target, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write, std::filesystem::perm_options::add, ec);
+            }
+            if (ec)
+                break;
+        }
+        if (ec)
+        {
+            *error = "could not copy disposable project: " + ec.message();
+            return false;
+        }
+        return writeFileAtomically((root / "world.ldv").generic_u8string(), *bytes, error);
     }
 };
 
@@ -540,17 +677,83 @@ std::string defaultLuduvoEditorPath(const std::string& localDirectory)
 #endif
 }
 
+std::optional<WorldDumpSource> selectWorldDumpSource(const std::string& directory, std::string* error)
+{
+    const auto root = std::filesystem::u8path(directory);
+    std::error_code ec;
+    std::optional<std::filesystem::file_time_type> savedTime;
+    const auto saved = root / "world.ldv";
+    const auto autosave = root / "world.ldv.autosave";
+    if (std::filesystem::is_regular_file(saved, ec))
+    {
+        const auto modified = std::filesystem::last_write_time(saved, ec);
+        if (!ec)
+            savedTime = modified;
+    }
+    if (ec && ec != std::errc::no_such_file_or_directory)
+    {
+        if (error)
+            *error = ec.message();
+        return std::nullopt;
+    }
+    ec.clear();
+    const bool hasAutosave = std::filesystem::is_regular_file(autosave, ec);
+    if (ec && ec != std::errc::no_such_file_or_directory)
+    {
+        if (error)
+            *error = ec.message();
+        return std::nullopt;
+    }
+    ec.clear();
+    const auto autosaveTime = hasAutosave ? std::filesystem::last_write_time(autosave, ec) : std::filesystem::file_time_type{};
+    if (ec)
+    {
+        if (error)
+            *error = ec.message();
+        return std::nullopt;
+    }
+    const bool useAutosave = hasAutosave && (!savedTime || autosaveTime > *savedTime);
+    if (!savedTime && !useAutosave)
+    {
+        if (error)
+            *error = "project has neither a saved world nor an autosave";
+        return std::nullopt;
+    }
+    const auto modified = useAutosave ? autosaveTime : *savedTime;
+    const auto unixTime = std::chrono::time_point_cast<std::chrono::milliseconds>(
+        modified - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
+    return WorldDumpSource{
+        useAutosave ? "autosave" : "save", (useAutosave ? autosave : saved).generic_u8string(), unixTime.time_since_epoch().count()};
+}
+
 static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const std::atomic<bool>* cancelled)
 {
+    if (cancelled && *cancelled)
+        return {false, "automatic world dump was cancelled"};
     if (plan.projectDirectory.empty())
         return {false, "the selected project has no known directory"};
     if (plan.editorPath.empty() || !std::filesystem::exists(std::filesystem::u8path(plan.editorPath)))
         return {false, "LuduvoEditor was not found at " + plan.editorPath};
 
-    AutosaveHold autosave(plan.projectDirectory);
     std::string error;
-    if (!autosave.acquire(&error))
+    const auto recovered = recoverAutomaticWorldDumpAutosave(plan.projectDirectory);
+    if (!recovered.success)
+        return recovered;
+    auto source = selectWorldDumpSource(plan.projectDirectory, &error);
+    if (!source)
         return {false, error};
+    AutosaveHold autosave(plan.projectDirectory);
+    TemporaryDumpProject temporary;
+    std::string directory = plan.projectDirectory;
+    if (source->kind == "autosave")
+    {
+        if (!temporary.prepare(directory, *source, &error, cancelled))
+            return {false, error};
+        directory = temporary.directory();
+    }
+    else if (!autosave.acquire(&error))
+        return {false, error};
+    logging::write(logging::Level::Debug, "helper.autodump", "Input: " + source->path + " (" + source->kind + ")");
 
     std::error_code filesystemError;
     const std::filesystem::path output = std::filesystem::u8path(plan.outputPath);
@@ -562,7 +765,7 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
         return {false, "could not replace the previous world dump: " + filesystemError.message()};
 
     ChildProcess child;
-    std::vector<std::string> arguments = {plan.editorPath, plan.projectDirectory};
+    std::vector<std::string> arguments = {plan.editorPath, directory};
 #ifdef _WIN32
     arguments.insert(arguments.end(), {"-platform", "offscreen"});
 #endif
@@ -587,7 +790,7 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
         }
         if (std::filesystem::exists(output))
         {
-            const WorldDumpParseResult parsed = parseWorldDumpFile(plan.outputPath);
+            WorldDumpParseResult parsed = parseWorldDumpFile(plan.outputPath);
             if (parsed.snapshot)
             {
                 const uintmax_t size = std::filesystem::file_size(output, filesystemError);
@@ -603,6 +806,7 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
                     child.stop();
                     if (!autosave.restore(&error))
                         return {false, error};
+                    parsed.snapshot->inputSource = *source;
                     return {true, {}, std::move(parsed.snapshot)};
                 }
             }

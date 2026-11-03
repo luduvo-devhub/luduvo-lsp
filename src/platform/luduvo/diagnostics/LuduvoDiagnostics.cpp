@@ -1,6 +1,7 @@
 #include "Platform/luduvo/diagnostics/LuduvoDiagnostics.hpp"
 
 #include "Platform/luduvo/diagnostics/LuduvoDiagnosticRules.hpp"
+#include "Platform/luduvo/diagnostics/LuduvoCustomDiagnostics.hpp"
 #include "Platform/luduvo/LuduvoTargetResolver.hpp"
 
 #include "Luau/ParseResult.h"
@@ -64,11 +65,11 @@ bool violates(const CallConstraint& constraint, const LuduvoDiagnosticContext& c
 
 LuduvoDiagnosticSeverity configuredSeverity(const Rule& rule, const LuduvoDiagnosticSettings& settings)
 {
-    const auto configured = settings.rules.find(std::string(rule.metadata.id));
-    if (configured == settings.rules.end() || configured->second == LuduvoDiagnosticRuleLevel::Default)
+    const auto configured = settings.resolve(rule.metadata.id, LuduvoDiagnosticRuleLevel::Default);
+    if (configured == LuduvoDiagnosticRuleLevel::Default)
         return rule.metadata.defaultSeverity;
 
-    switch (configured->second)
+    switch (configured)
     {
     case LuduvoDiagnosticRuleLevel::Error:
         return LuduvoDiagnosticSeverity::Error;
@@ -240,6 +241,23 @@ size_t LuduvoDiagnosticContext::explicitArgumentCount(const Luau::AstExprCall& c
     return call.args.size;
 }
 
+std::optional<Luau::TypeId> LuduvoDiagnosticContext::expressionType(const Luau::AstExpr* expression) const
+{
+    if (input.module)
+        if (const auto type = input.module->astTypes.find(expression))
+            return *type;
+    return std::nullopt;
+}
+
+bool LuduvoDiagnosticContext::hasTypeErrorAt(const Luau::Location& location) const
+{
+    return input.module && std::any_of(input.module->errors.begin(), input.module->errors.end(),
+                               [&](const auto& error)
+                               {
+                                   return location.containsClosed(error.location.begin) || error.location.containsClosed(location.begin);
+                               });
+}
+
 const Luau::SourceModule& LuduvoDiagnosticContext::sourceModule() const
 {
     return input.sourceModule;
@@ -247,17 +265,13 @@ const Luau::SourceModule& LuduvoDiagnosticContext::sourceModule() const
 
 std::vector<LuduvoDiagnostic> collectLuduvoDiagnostics(const LuduvoDiagnosticInput& input)
 {
-    if (!input.settings.enabled)
-        return {};
-
     const FileSuppressions suppressions = parseSuppressions(input.sourceModule);
     std::vector<LuduvoDiagnostic> diagnostics;
     std::vector<ActiveRule> activeRules;
     for (const Rule& rule : rules)
     {
-        const auto configured = input.settings.rules.find(std::string(rule.metadata.id));
-        if (suppressions.all || suppressions.rules.count(std::string(rule.metadata.id)) != 0 ||
-            (configured != input.settings.rules.end() && configured->second == LuduvoDiagnosticRuleLevel::Off))
+        const auto configured = input.settings.resolve(rule.metadata.id, LuduvoDiagnosticRuleLevel::Default);
+        if (suppressions.all || suppressions.rules.count(std::string(rule.metadata.id)) != 0 || configured == LuduvoDiagnosticRuleLevel::Off)
             continue;
         activeRules.push_back({rule, configuredSeverity(rule, input.settings)});
     }
@@ -277,12 +291,16 @@ std::vector<LuduvoDiagnostic> collectLuduvoDiagnostics(const LuduvoDiagnosticInp
     for (const ActiveRule& active : activeRules)
     {
         const CustomRule* rule = std::get_if<CustomRule>(&active.rule.implementation);
-        if (!rule)
+        const auto schema = std::get_if<EventSchemaRule>(&active.rule.implementation);
+        if (!rule && !schema)
             continue;
 
         std::vector<RawFinding> findings;
         DiagnosticReporter reporter(findings);
-        rule->analyze(context, reporter);
+        if (rule)
+            rule->analyze(context, reporter);
+        else
+            analyzeEventSchema(context, reporter, schema->constraint);
         for (RawFinding& finding : findings)
             diagnostics.push_back({std::string(active.rule.metadata.id), finding.location, std::move(finding.message), active.severity});
     }

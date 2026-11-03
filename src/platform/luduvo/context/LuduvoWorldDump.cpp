@@ -3,6 +3,11 @@
 #include "LuauFileUtils.hpp"
 
 #include <charconv>
+#include <filesystem>
+#include <algorithm>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -10,6 +15,65 @@
 
 namespace luduvo
 {
+
+void to_json(nlohmann::json& json, const WorldDumpSource& source)
+{
+    json = {{"kind", source.kind.empty() ? nlohmann::json(nullptr) : nlohmann::json(source.kind)},
+        {"path", source.path.empty() ? nlohmann::json(nullptr) : nlohmann::json(source.path)},
+        {"modifiedAtUnixMs", source.modifiedAtUnixMs ? nlohmann::json(source.modifiedAtUnixMs) : nlohmann::json(nullptr)}};
+}
+void from_json(const nlohmann::json& json, WorldDumpSource& source)
+{
+    source = {};
+    if (json.is_object())
+    {
+        if (json.contains("kind") && json.at("kind").is_string())
+            source.kind = json.at("kind").get<std::string>();
+        if (json.contains("path") && json.at("path").is_string())
+            source.path = json.at("path").get<std::string>();
+        if (json.contains("modifiedAtUnixMs") && json.at("modifiedAtUnixMs").is_number_integer())
+            source.modifiedAtUnixMs = json.at("modifiedAtUnixMs").get<int64_t>();
+    }
+}
+std::string formatContextTimestamp(int64_t value)
+{
+    if (!value)
+        return "unknown";
+    const auto raw = std::time_t(value / 1000);
+    std::tm time{};
+#ifdef _WIN32
+    gmtime_s(&time, &raw);
+#else
+    gmtime_r(&raw, &time);
+#endif
+    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    std::ostringstream output;
+    output << std::put_time(&time, "%Y-%m-%d %H:%M:%S UTC") << " (" << std::max<int64_t>(0, (now - value) / 1000) << " seconds ago)";
+    return output.str();
+}
+nlohmann::json worldDumpMetadata(const WorldDumpSnapshot& snapshot)
+{
+    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    const auto age = [now](int64_t value) -> nlohmann::json
+    {
+        return value ? nlohmann::json(std::max<int64_t>(0, (now - value) / 1000)) : nlohmann::json(nullptr);
+    };
+    return {{"ageSeconds", age(snapshot.capturedAtUnixMs)}, {"sourceAgeSeconds", age(snapshot.inputSource.modifiedAtUnixMs)}, {"tick", snapshot.tick},
+        {"commandSequence", snapshot.commandSequence},
+        {"capturedAtUnixMs", snapshot.capturedAtUnixMs ? nlohmann::json(snapshot.capturedAtUnixMs) : nlohmann::json(nullptr)},
+        {"capturedAt", snapshot.capturedAtUnixMs ? nlohmann::json(formatContextTimestamp(snapshot.capturedAtUnixMs)) : nlohmann::json(nullptr)},
+        {"sourcePath", snapshot.sourcePath.empty() ? nlohmann::json(nullptr) : nlohmann::json(snapshot.sourcePath)},
+        {"inputSource", snapshot.inputSource}};
+}
+std::string describeWorldDumpSource(const WorldDumpSnapshot& snapshot)
+{
+    const auto& source = snapshot.inputSource;
+    if (source.kind.empty())
+        return "Source: manual or external world dump.\nIf you have newer unsaved changes, save in Studio or choose Redump manually.";
+    return "Source: " + std::string(source.kind == "autosave" ? "autosave" : "saved project") + ", written " +
+           formatContextTimestamp(source.modifiedAtUnixMs) +
+           ".\nIf you have made unsaved changes since then, save in Studio or choose Redump manually.";
+}
 
 static std::optional<uint64_t> parseUnsigned(std::string_view value)
 {
@@ -259,7 +323,15 @@ WorldDumpParseResult parseWorldDumpFile(const std::string& path)
     auto source = Luau::FileUtils::readFile(path);
     if (!source)
         return {std::nullopt, {}, "could not read world dump: " + path};
-    return parseWorldDump(*source, path);
+    auto parsed = parseWorldDump(*source, path);
+    std::error_code error;
+    const auto modified = std::filesystem::last_write_time(std::filesystem::u8path(path), error);
+    if (parsed.snapshot && !error)
+        parsed.snapshot->capturedAtUnixMs = std::chrono::time_point_cast<std::chrono::milliseconds>(
+            modified - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now())
+                                                .time_since_epoch()
+                                                .count();
+    return parsed;
 }
 
 } // namespace luduvo

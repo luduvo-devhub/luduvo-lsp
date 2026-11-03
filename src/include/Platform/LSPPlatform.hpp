@@ -185,6 +185,13 @@ struct PlatformDiagnostic
     PlatformDiagnosticSeverity severity = PlatformDiagnosticSeverity::Warning;
 };
 
+// Platforms can temporarily enrich an analysis tree. Destruction restores the
+// source representation before hover, navigation, or formatting observes it.
+struct PlatformAnalysisOverlay
+{
+    virtual ~PlatformAnalysisOverlay() = default;
+};
+
 class LSPPlatform
 {
 protected:
@@ -245,13 +252,24 @@ public:
         return false;
     }
 
-    virtual void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata) {}
+    virtual void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata, const Luau::ScopePtr& scope) {}
 
     virtual void onDidChangeWatchedFiles(const lsp::FileEvent& change) {}
 
     virtual void onDidOpenTextDocument(const lsp::DocumentUri& uri) {}
 
     virtual void onDidCloseTextDocument(const lsp::DocumentUri& uri) {}
+
+    virtual void onDidChangeTextDocument(const lsp::DocumentUri& uri) {}
+
+    virtual std::unique_ptr<PlatformAnalysisOverlay> prepareAnalysis(const Luau::ModuleName& moduleName)
+    {
+        return nullptr;
+    }
+    virtual bool supportsFragmentAutocomplete() const
+    {
+        return true;
+    }
 
     virtual void setupWithConfiguration(const ClientConfiguration& config) {}
 

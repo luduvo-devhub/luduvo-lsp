@@ -154,12 +154,33 @@ struct MarkupContent
 };
 NLOHMANN_DEFINE_OPTIONAL(MarkupContent, kind, value)
 
+struct OptionalVersionedTextDocumentIdentifier : TextDocumentIdentifier
+{
+    std::optional<size_t> version;
+};
+inline void to_json(nlohmann::json& json, const OptionalVersionedTextDocumentIdentifier& value)
+{
+    json = {{"uri", value.uri}, {"version", value.version ? nlohmann::json(*value.version) : nlohmann::json(nullptr)}};
+}
+inline void from_json(const nlohmann::json& json, OptionalVersionedTextDocumentIdentifier& value)
+{
+    value.uri = json.at("uri").get<Uri>();
+    value.version = json.at("version").is_null() ? std::nullopt : std::optional<size_t>(json.at("version").get<size_t>());
+}
+struct TextDocumentEdit
+{
+    OptionalVersionedTextDocumentIdentifier textDocument;
+    std::vector<TextEdit> edits;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TextDocumentEdit, textDocument, edits)
+
 struct WorkspaceEdit
 {
     // TODO: this is optional and there are other options provided
     std::unordered_map<Uri, std::vector<TextEdit>, UriHash> changes{};
+    std::optional<std::vector<TextDocumentEdit>> documentChanges;
 };
-NLOHMANN_DEFINE_OPTIONAL(WorkspaceEdit, changes)
+NLOHMANN_DEFINE_OPTIONAL(WorkspaceEdit, changes, documentChanges)
 
 // Alias a std::optional to PartialResponse
 // If it contains std::nullopt, we shouldn't send a result.

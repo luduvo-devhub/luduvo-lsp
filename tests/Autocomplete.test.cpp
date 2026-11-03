@@ -100,20 +100,20 @@ TEST_CASE_FIXTURE(Fixture, "comment_directive_completion_offers_upstream_nolint_
 TEST_CASE("luduvo_nolint_completion_uses_the_diagnostic_rule_registry")
 {
     LuduvoFixture fixture("luduvo_nolint_completion");
-    auto [source, marker] = sourceWithMarker("--!nolint luduvo/empty-world-q|");
+    auto [source, marker] = sourceWithMarker("--!nolint luduvo/world.empty-q|");
     const auto uri = fixture.newDocument("directive.server.luau", source);
     lsp::CompletionParams params;
     params.textDocument = lsp::TextDocumentIdentifier{uri};
     params.position = marker;
 
-    const auto item = requireItem(fixture.workspace.completion(params, nullptr), "luduvo/empty-world-query");
+    const auto item = requireItem(fixture.workspace.completion(params, nullptr), "luduvo/world.empty-query");
     REQUIRE(item.textEdit);
-    CHECK_EQ(applyEdit(source, {*item.textEdit}), "--!nolint luduvo/empty-world-query");
+    CHECK_EQ(applyEdit(source, {*item.textEdit}), "--!nolint luduvo/world.empty-query");
     CHECK_EQ(item.detail, "Luduvo diagnostic rule · default: error");
     REQUIRE(item.documentation);
     CHECK_EQ(item.documentation->value, "World.Query requires at least one query term.");
 
-    const auto invalidDirective = requireItem(fixture.workspace.completion(params, nullptr), "luduvo/invalid-nolint-directive");
+    const auto invalidDirective = requireItem(fixture.workspace.completion(params, nullptr), "luduvo/directive.invalid-nolint");
     CHECK_EQ(invalidDirective.detail, "Luduvo diagnostic rule · default: warning");
 }
 

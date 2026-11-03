@@ -73,6 +73,10 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
                 std::string(binding.kind), binding.pluralResourceNoun});
 
     colorBindings.reserve(luduvoBuiltinColorBindings.size() + configuration.bindings.size());
+    for (const auto& binding : luduvoBuiltinFieldBindings)
+        resourceBindings.push_back({binding.symbol,
+            {std::string_view(binding.target) == "member" ? LuduvoBindingTargetKind::Member : LuduvoBindingTargetKind::TypeArgument, {}, false},
+            binding.group, false});
     for (const LuduvoColorBinding& binding : luduvoBuiltinColorBindings)
         colorBindings.push_back({binding.symbol, {LuduvoBindingTargetKind::CallParameter, binding.parameters}, binding.encoding});
 
@@ -81,6 +85,24 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
         LuduvoBindingTarget target;
         if (configured.target)
         {
+            if (configured.target->kind == "typeArgument")
+                target.kind = LuduvoBindingTargetKind::TypeArgument;
+            else if (configured.target->kind == "member")
+                target.kind = LuduvoBindingTargetKind::Member;
+            else if (configured.target->kind != "callParameter")
+            {
+                configuredWarnings.push_back(std::string(label) + " has unknown target kind '" + configured.target->kind + "'.");
+                return std::nullopt;
+            }
+            if (target.kind == LuduvoBindingTargetKind::TypeArgument)
+            {
+                if (configured.target->index == 0)
+                {
+                    configuredWarnings.push_back(std::string(label) + " type argument index must be at least 1.");
+                    return std::nullopt;
+                }
+                target.index = configured.target->index - 1;
+            }
             if (!configured.parameter.empty() || !configured.parameters.empty() || configured.variadic)
             {
                 configuredWarnings.push_back(std::string(label) + " cannot combine target with legacy parameter fields.");
@@ -104,6 +126,15 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
             target.variadic = configured.variadic;
         }
 
+        if (target.kind != LuduvoBindingTargetKind::CallParameter)
+        {
+            if (!target.names.empty() || target.variadic)
+            {
+                configuredWarnings.push_back(std::string(label) + " non-call targets cannot specify parameters or variadic.");
+                return std::nullopt;
+            }
+            return target;
+        }
         if (target.names.empty())
         {
             configuredWarnings.push_back(std::string(label) + " must target parameter or parameters.");
@@ -125,7 +156,7 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
     auto addResource =
         [&](const std::string& symbol, LuduvoBindingTarget target, const std::string& group, bool pluralResourceNoun, std::string_view label)
     {
-        if (symbol.empty() || target.names.size() != 1 || group.empty())
+        if (symbol.empty() || (target.kind == LuduvoBindingTargetKind::CallParameter && target.names.size() != 1) || group.empty())
         {
             configuredWarnings.push_back(std::string(label) + " must define a symbol, one target parameter, and a group.");
             return;
@@ -133,7 +164,8 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
         resourceBindings.erase(std::remove_if(resourceBindings.begin(), resourceBindings.end(),
                                    [&](const ResourceBinding& existing)
                                    {
-                                       return existing.symbol == symbol && existing.target.names == target.names;
+                                       return existing.symbol == symbol && existing.target.kind == target.kind &&
+                                              existing.target.index == target.index && existing.target.names == target.names;
                                    }),
             resourceBindings.end());
         resourceBindings.push_back({symbol, std::move(target), group, pluralResourceNoun});
@@ -169,7 +201,7 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
             addResource(configured.symbol, *target, configured.group, configured.pluralResourceNoun, label);
             continue;
         }
-        if (target->variadic)
+        if (target->kind != LuduvoBindingTargetKind::CallParameter || target->variadic)
         {
             configuredWarnings.push_back(label + " color target cannot be variadic.");
             continue;
@@ -208,6 +240,18 @@ void LuduvoBindingRegistry::configure(const ClientLuduvoConfiguration& configura
 const std::vector<std::string>& LuduvoBindingRegistry::configurationWarnings() const
 {
     return configuredWarnings;
+}
+
+std::vector<std::string> LuduvoBindingRegistry::resolveResourceTargets(std::string_view symbol, LuduvoBindingTargetKind kind, size_t index) const
+{
+    std::vector<std::string> result;
+    const auto canonical = canonicalLuduvoSymbol(std::string(symbol));
+    if (!canonical)
+        return result;
+    for (const auto& binding : resourceBindings)
+        if (binding.symbol == *canonical && binding.target.kind == kind && binding.target.index == index)
+            result.push_back(binding.kind);
+    return result;
 }
 
 std::vector<LuduvoResolvedResourceBinding> LuduvoBindingRegistry::resolveResources(

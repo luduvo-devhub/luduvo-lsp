@@ -144,7 +144,7 @@ public:
 
     bool hydrateSourcemapWithPluginInfo();
 
-    void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata) override;
+    void mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json> metadata, const Luau::ScopePtr& scope) override;
 
     void onDidChangeWatchedFiles(const lsp::FileEvent& change) override;
 

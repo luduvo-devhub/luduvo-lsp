@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Luau/Ast.h"
+#include "LSP/HierarchicalSettings.hpp"
 #include "Luau/Module.h"
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -26,11 +28,7 @@ enum struct LuduvoDiagnosticRuleLevel
     Hint,
 };
 
-struct LuduvoDiagnosticSettings
-{
-    bool enabled = true;
-    std::unordered_map<std::string, LuduvoDiagnosticRuleLevel> rules;
-};
+using LuduvoDiagnosticSettings = settings::CategoryConfiguration<LuduvoDiagnosticRuleLevel>;
 
 struct LuduvoDiagnosticInput
 {
@@ -58,6 +56,8 @@ public:
     bool isAutorunScript() const;
     std::vector<std::string> resolvedCallSymbols(const Luau::AstExprCall& call) const;
     size_t explicitArgumentCount(const Luau::AstExprCall& call) const;
+    std::optional<Luau::TypeId> expressionType(const Luau::AstExpr* expression) const;
+    bool hasTypeErrorAt(const Luau::Location& location) const;
     const Luau::SourceModule& sourceModule() const;
 };
 

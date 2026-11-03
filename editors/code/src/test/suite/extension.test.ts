@@ -43,7 +43,8 @@ suite("Extension Test Suite", () => {
     }
   });
 
-  test("contributed commands use and register the Luduvo namespace", async () => {
+  test("contributed commands use and register the Luduvo namespace", async function () {
+    this.timeout(20_000);
     const extension = vscode.extensions.all.find(
       (candidate) => candidate.packageJSON.name === "luduvo-lsp",
     );

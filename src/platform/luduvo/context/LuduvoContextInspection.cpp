@@ -1,4 +1,5 @@
 #include "Platform/luduvo/context/LuduvoContextInspection.hpp"
+#include "Platform/luduvo/schema/LuduvoSchemaIndex.hpp"
 
 #include "LSP/Utils.hpp"
 #include "LuauFileUtils.hpp"
@@ -141,9 +142,9 @@ static ContextInspectionResult inspectWorldDump(const std::string& path)
         {"uniqueScriptCount", uniqueScripts.size()},
         {"instanceTypes", instanceTypes},
     };
-    return {
-        json{{"kind", "worldDump"}, {"inputPath", normalizeContextPath(path)}, {"sourcePath", parsed.snapshot->sourcePath},
-            {"summary", std::move(summary)}, {"warnings", parsed.warnings}, {"scripts", uniqueScripts}, {"instances", parsed.snapshot->instances}},
+    return {json{{"kind", "worldDump"}, {"inputPath", normalizeContextPath(path)}, {"sourcePath", parsed.snapshot->sourcePath},
+                {"snapshot", worldDumpMetadata(*parsed.snapshot)}, {"summary", std::move(summary)}, {"warnings", parsed.warnings},
+                {"scripts", uniqueScripts}, {"instances", parsed.snapshot->instances}},
         std::nullopt};
 }
 
@@ -235,9 +236,10 @@ static ContextInspectionResult inspectScript(const std::string& path, const std:
             }
         }
         candidate["selected"] = selected;
+        if (const auto schemas = loadProjectSchemas(store.directory(), projectId))
+            candidate["schemas"] = *schemas;
         if (world)
-            candidate["snapshot"] = {{"tick", world->tick}, {"commandSequence", world->commandSequence},
-                {"capturedAtUnixMs", world->capturedAtUnixMs}, {"sourcePath", world->sourcePath}};
+            candidate["snapshot"] = worldDumpMetadata(*world);
         candidates.push_back(std::move(candidate));
     }
 
@@ -367,10 +369,11 @@ static json storedProjectReport(const std::string& projectId, const ContextProje
                         {"missingScriptCount", nullptr}, {"assetTypes", nullptr}}},
         {"declaredScripts", project.declaredScripts}, {"autorunScripts", project.autorunScripts}, {"scripts", project.scripts},
         {"missingScripts", nullptr}, {"attachments", json::array()}, {"capturedContext", project}};
+    if (const auto schemas = loadProjectSchemas(store.directory(), projectId))
+        report["schemas"] = *schemas;
     if (const auto world = store.loadWorld(projectId))
     {
-        report["capturedContext"]["snapshot"] = {{"tick", world->tick}, {"commandSequence", world->commandSequence},
-            {"capturedAtUnixMs", world->capturedAtUnixMs}, {"sourcePath", world->sourcePath}};
+        report["capturedContext"]["snapshot"] = worldDumpMetadata(*world);
         for (const WorldInstance& instance : world->instances)
         {
             if (instance.scripts.empty())
@@ -478,11 +481,12 @@ ContextInspectionResult inspectContextInput(const std::string& path, const std::
                 if (normalizeContextPath(captured.directory) != normalizeContextPath(project.directory))
                     continue;
                 report["capturedContext"] = captured;
+                if (const auto schemas = loadProjectSchemas(store.directory(), projectId))
+                    report["schemas"] = *schemas;
                 const auto world = store.loadWorld(projectId);
                 if (world)
                 {
-                    report["capturedContext"]["snapshot"] = {{"tick", world->tick}, {"commandSequence", world->commandSequence},
-                        {"capturedAtUnixMs", world->capturedAtUnixMs}, {"sourcePath", world->sourcePath}};
+                    report["capturedContext"]["snapshot"] = worldDumpMetadata(*world);
                     for (const WorldInstance& instance : world->instances)
                     {
                         if (instance.scripts.empty())

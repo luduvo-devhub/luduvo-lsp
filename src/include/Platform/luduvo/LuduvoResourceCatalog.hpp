@@ -19,6 +19,7 @@ struct LuduvoResourceGroup
     std::string kind;
     std::string dataType = "string";
     std::vector<LuduvoResourceName> resources;
+    std::vector<std::string> projectSources;
 };
 
 class LuduvoResourceCatalog

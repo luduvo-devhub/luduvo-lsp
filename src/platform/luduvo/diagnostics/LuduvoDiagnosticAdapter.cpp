@@ -10,20 +10,14 @@ namespace
 {
 using namespace luduvo::diagnostics;
 
-std::string canonicalRuleId(std::string_view id)
-{
-    constexpr std::string_view prefix = "luduvo/";
-    if (id.substr(0, prefix.size()) == prefix)
-        id.remove_prefix(prefix.size());
-    return std::string(id);
-}
-
-bool isKnownRule(std::string_view id)
+bool isKnownCategory(std::string_view category)
 {
     return std::any_of(rules.begin(), rules.end(),
-        [id](const Rule& rule)
+        [category](const Rule& rule)
         {
-            return rule.metadata.id == id;
+            return rule.metadata.id == category ||
+                   (rule.metadata.id.size() > category.size() && rule.metadata.id.substr(0, category.size()) == category &&
+                       rule.metadata.id[category.size()] == '.');
         });
 }
 
@@ -80,29 +74,30 @@ std::string_view severityName(LuduvoDiagnosticSeverity severity)
 LuduvoDiagnosticConfigurationResult resolveLuduvoDiagnosticConfiguration(const ClientLuduvoDiagnosticsConfiguration& configuration)
 {
     LuduvoDiagnosticConfigurationResult result;
-    result.settings.enabled = configuration.enabled;
     result.warnings = validateLuduvoDiagnosticRegistry();
 
-    for (const auto& [configuredId, configuredLevel] : configuration.rules)
+    if (configuration.defaultValue)
     {
-        const std::string id = canonicalRuleId(configuredId);
-        if (!isKnownRule(id))
+        const auto level = parseRuleLevel(*configuration.defaultValue);
+        if (level)
+            result.settings.defaultValue = *level;
+        else
+            result.warnings.push_back("diagnostics.default has unsupported severity '" + *configuration.defaultValue + "'.");
+    }
+    for (const auto& entry : configuration.categories)
+    {
+        if (!isKnownCategory(entry.first))
         {
-            result.warnings.push_back("diagnostics.rules references unknown rule '" + configuredId + "'.");
+            result.warnings.push_back("diagnostics.categories references unknown category or rule '" + entry.first + "'.");
             continue;
         }
-
-        const std::optional<LuduvoDiagnosticRuleLevel> level = parseRuleLevel(configuredLevel);
+        const auto level = parseRuleLevel(entry.second);
         if (!level)
         {
-            result.warnings.push_back("diagnostics.rules['" + configuredId + "'] has unsupported severity '" + configuredLevel + "'.");
+            result.warnings.push_back("diagnostics.categories['" + entry.first + "'] has unsupported severity '" + entry.second + "'.");
             continue;
         }
-
-        if (*level == LuduvoDiagnosticRuleLevel::Default)
-            result.settings.rules.erase(id);
-        else
-            result.settings.rules[id] = *level;
+        result.settings.categories[entry.first] = *level;
     }
     return result;
 }
@@ -116,7 +111,7 @@ std::vector<PlatformDiagnostic> collectLuduvoPlatformDiagnostics(const LuduvoDia
     result.reserve(luduvoDiagnostics.size());
     for (const LuduvoDiagnostic& diagnostic : luduvoDiagnostics)
     {
-        result.push_back({diagnostic.ruleId, "Luduvo", diagnostic.location, diagnostic.message, platformSeverity(diagnostic.severity)});
+        result.push_back({"luduvo/" + diagnostic.ruleId, "Luduvo", diagnostic.location, diagnostic.message, platformSeverity(diagnostic.severity)});
     }
     return result;
 }

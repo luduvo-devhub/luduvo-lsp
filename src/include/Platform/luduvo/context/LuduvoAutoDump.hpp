@@ -26,6 +26,7 @@ struct AutoDumpResult
     std::optional<WorldDumpSnapshot> snapshot;
 };
 
+std::optional<WorldDumpSource> selectWorldDumpSource(const std::string& projectDirectory, std::string* error = nullptr);
 AutoDumpResult runAutomaticWorldDump(const AutoDumpPlan& plan, const std::atomic<bool>* cancelled = nullptr);
 AutoDumpResult recoverAutomaticWorldDumpAutosave(const std::string& projectDirectory);
 std::string defaultLuduvoEditorPath(const std::string& localDirectory);

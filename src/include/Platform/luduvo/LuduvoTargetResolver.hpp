@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Luau/Ast.h"
+#include "Protocol/Structures.hpp"
+class TextDocument;
 #include "Luau/Module.h"
 #include "Luau/TypeFwd.h"
 
@@ -36,4 +38,8 @@ std::optional<std::string> resolveCallableDocumentationSymbol(
 std::vector<std::string> resolveCallSymbols(const Luau::SourceModule& sourceModule, const Luau::Module* module, const Luau::AstExprCall& call);
 
 std::vector<CallableTarget> resolveCallableTarget(Luau::TypeId callableType, const std::vector<std::string>& parameters, bool variadic = false);
+/// Shared argument selection and replacement ranges for static and project sources.
+size_t activeArgument(const Luau::AstExprCall& call, const Luau::Position& position);
+std::optional<lsp::Range> resourceCompletionRange(
+    const TextDocument& document, const Luau::AstExprCall& call, size_t argumentIndex, const Luau::Position& position);
 } // namespace luduvo

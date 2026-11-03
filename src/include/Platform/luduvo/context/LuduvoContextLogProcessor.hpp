@@ -24,6 +24,8 @@ class ContextLogProcessor
     std::set<std::string> knownScriptFiles;
     std::optional<std::chrono::steady_clock::time_point> pendingScriptCreation;
     std::vector<PendingDump> pendingDumps;
+    std::map<std::string, std::string> knownProjectFiles;
+    std::map<std::string, std::pair<std::string, std::chrono::steady_clock::time_point>> recentScriptFiles;
 
     std::map<std::string, std::string> scanScriptFiles() const;
     void staleLiveProjects(std::string reason, const std::vector<std::string>& preferred = {});
@@ -31,7 +33,8 @@ class ContextLogProcessor
 public:
     explicit ContextLogProcessor(ContextStore store);
 
-    void ingestCommandLine(const std::string& line);
+    bool ingestCommandLine(const std::string& line);
+    void invalidateJournal();
     void pollFilesystem();
     size_t pendingCommandCount() const;
 };

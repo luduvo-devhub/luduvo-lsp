@@ -84,6 +84,7 @@ void WorkspaceFolder::updateTextDocument(const lsp::DocumentUri& uri, const lsp:
 
     // Mark the module dirty for the typechecker
     frontend.markDirty(fileResolver.getModuleName(uri), &markedDirty);
+    platform->onDidChangeTextDocument(uri);
 
     // In pull based diagnostics module, documentDiagnostics will update the necessary files
     // But if we are still using push-based diagnostics, we need to send updates
@@ -233,7 +234,8 @@ void WorkspaceFolder::onDidChangeWatchedFiles(const std::vector<lsp::FileEvent>&
 
         if (change.uri.filename() == ".luaurc" || change.uri.filename() == ".robloxrc" || change.uri.filename() == ".config.luau")
         {
-            client->log(logging::Level::Info, "workspace.definitions", "Acknowledge config changed for workspace " + name + ", clearing configuration cache");
+            client->log(
+                logging::Level::Info, "workspace.definitions", "Acknowledge config changed for workspace " + name + ", clearing configuration cache");
             fileResolver.clearConfigCache();
 
             // Recompute diagnostics
@@ -365,6 +367,7 @@ Luau::CheckResult WorkspaceFolder::checkSimple(const Luau::ModuleName& moduleNam
     {
         Luau::FrontendOptions options{/* retainFullTypeGraphs: */ false, /* forAutocomplete: */ false, /* runLintChecks: */ true};
         options.cancellationToken = cancellationToken;
+        auto overlay = platform->prepareAnalysis(moduleName);
         auto result = frontend.check(moduleName, options);
         filterIgnoredLints(result, *platform);
         return result;
@@ -399,6 +402,7 @@ Luau::CheckResult WorkspaceFolder::checkStrict(
 
     Luau::FrontendOptions options{/* retainFullTypeGraphs: */ true, forAutocomplete, /* runLintChecks: */ true};
     options.cancellationToken = cancellationToken;
+    auto overlay = platform->prepareAnalysis(moduleName);
     auto result = frontend.check(moduleName, options);
     filterIgnoredLints(result, *platform);
     return result;
@@ -697,8 +701,9 @@ Luau::LoadDefinitionFileResult WorkspaceFolder::loadDefinitionFile(const std::st
     if (result.success && targetScope)
         assignNestedDocumentationSymbols(*targetScope);
 
-    platform->mutateRegisteredDefinitions(frontend.globals, metadata);
-    platform->mutateRegisteredDefinitions(frontend.globalsForAutocomplete, metadata);
+    platform->mutateRegisteredDefinitions(frontend.globals, metadata, targetScope.value_or(frontend.globals.globalScope));
+    platform->mutateRegisteredDefinitions(
+        frontend.globalsForAutocomplete, metadata, targetScope.value_or(frontend.globalsForAutocomplete.globalScope));
 
     if (result.success)
     {
@@ -816,7 +821,7 @@ void WorkspaceFolder::lazyInitialize()
 
 void WorkspaceFolder::setupWithConfiguration(const ClientConfiguration& configuration)
 {
-    logging::logger().configure(configuration.logs);
+    logging::logger().configure(configuration.reporting);
     logging::write(logging::Level::Debug, "server.configuration", "Applying workspace configuration: " + rootUri.toString());
     LUAU_TIMETRACE_SCOPE("WorkspaceFolder::setupWithConfiguration", "LSP");
     client->sendTrace("workspace: setting up with configuration");

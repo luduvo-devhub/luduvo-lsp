@@ -168,13 +168,13 @@ int startLanguageServer(const argparse::ArgumentParser& program)
         }
     }
 
-    logging::logger().configure(client.globalConfig.logs);
+    logging::logger().configure(client.globalConfig.reporting);
     if (auto level = program.present<std::string>("--log-level"))
     {
         auto configuration = logging::logger().settings();
         configuration.level = logging::parseLevel(*level);
         configuration.categories.clear();
-        client.globalConfig.logs = configuration;
+        client.globalConfig.reporting = configuration;
         logging::logger().configure(std::move(configuration));
     }
     parseDocumentation(documentationFiles, client.documentation, &client);

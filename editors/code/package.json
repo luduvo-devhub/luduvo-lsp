@@ -192,6 +192,18 @@
         "command": "luduvo-lsp.forgetProjectContext",
         "title": "Luduvo: Forget Project Context",
         "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled"
+      },
+      {
+        "command": "luduvo-lsp.inspectProjectSchemas",
+        "title": "Inspect Project Schemas",
+        "category": "Luduvo",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled && resourceLangId == luau"
+      },
+      {
+        "command": "luduvo-lsp.removeGeneratedTypes",
+        "title": "Remove Generated Type Dependencies",
+        "category": "Luduvo",
+        "enablement": "config.luduvo-lsp.platform.luduvo.context.enabled && resourceLangId == luau"
       }
     ],
     "menus": {
@@ -311,37 +323,6 @@
           "default": true,
           "scope": "window"
         },
-        "luduvo-lsp.logs.default": {
-          "markdownDescription": "Default operational log verbosity inherited by categories without an override. Independent of protocol tracing and popup notification settings",
-          "type": "string",
-          "enum": [
-            "Off",
-            "Error",
-            "Warning",
-            "Info",
-            "Debug",
-            "Verbose"
-          ],
-          "default": "Info",
-          "scope": "window"
-        },
-        "luduvo-lsp.logs.categories": {
-          "markdownDescription": "Category verbosity overrides. Dotted children inherit their nearest configured ancestor, e.g. helper.autodump.process inherits helper.autodump or helper",
-          "type": "object",
-          "default": {},
-          "additionalProperties": {
-            "type": "string",
-            "enum": [
-              "Off",
-              "Error",
-              "Warning",
-              "Info",
-              "Debug",
-              "Verbose"
-            ]
-          },
-          "scope": "window"
-        },
         "luduvo-lsp.platform.type": {
           "markdownDescription": "Platform-specific support features",
           "type": "string",
@@ -384,95 +365,184 @@
           "scope": "window"
         },
         "luduvo-lsp.platform.luduvo.context.autoDump": {
-          "markdownDescription": "Automatically refreshes stale project context through a disposable, offscreen Luduvo Editor process. When disabled or when automatic dumping fails, Luduvo LSP provides the `world.dump` command to run manually",
+          "markdownDescription": "Automatically refreshes project context from the latest save or newer autosave through a disposable Luduvo Editor process. Changes still only in Studio memory are not included. When disabled or when automatic dumping fails, Luduvo LSP provides the project-specific `world.dump` command to run in your open Studio session",
           "type": "boolean",
           "default": true,
           "scope": "window"
         },
         "luduvo-lsp.platform.luduvo.context.lazyRefresh": {
-          "markdownDescription": "Waits until context is needed before refreshing stale projects. Disable to refresh tracked projects as soon as they become stale. Automatic refresh requires `context.autoDump`",
+          "markdownDescription": "Waits until analysis needs context before scheduling a background refresh. Requests return immediately using available typing. Disable to refresh tracked projects as soon as they become stale. Automatic refresh requires `context.autoDump`",
           "type": "boolean",
-          "default": true,
+          "default": false,
           "scope": "window"
         },
         "luduvo-lsp.platform.luduvo.notifications": {
-          "markdownDescription": "Per-notification enablement overrides keyed by the notification ID shown in Luduvo LSP messages. Omitted IDs use their built-in defaults.",
+          "markdownDescription": "Notification enablement by ID or dot-separated category. The most specific override wins. Set default to false to suppress all except explicitly enabled categories or IDs. Omitted settings preserve built-in defaults.",
           "type": "object",
           "properties": {
-            "server.crash-reporting-suggestion": {
+            "default": {
               "type": "boolean",
-              "default": true,
-              "description": "Suggest enabling crash reporting after an unexpected exit, only when the selected binary supports reporting"
+              "description": "Global override for suppressible notifications. Omit to preserve each notification's built-in default."
             },
-            "configuration.invalid": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when invalid Luduvo diagnostics, bindings, or resource configuration entries are ignored"
-            },
-            "definitions.fallback": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when installed or overridden Luduvo definitions cannot be loaded and a fallback is used"
-            },
-            "context.project-tracking-started": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when the first live LSP starts tracking a project"
-            },
-            "context.project-tracking-stopped": {
-              "type": "boolean",
-              "default": false,
-              "description": "Notify when the last live LSP stops tracking a project"
-            },
-            "context.files-added": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when inferred attached scripts are added to project context"
-            },
-            "context.project-stale": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when tracked project context becomes stale, with actions to autodump or obtain a manual dump command"
-            },
-            "context.autodump-started": {
-              "type": "boolean",
-              "default": false,
-              "description": "Notify when an automatic world dump starts"
-            },
-            "context.updated": {
-              "type": "boolean",
-              "default": false,
-              "description": "Notify when a world dump updates project context"
-            },
-            "context.autodump-failed": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when an automatic world dump fails"
-            },
-            "context.refresh-required": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when stale context requires a manual world dump"
-            },
-            "context.selection-required": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when a script belongs to multiple projects and needs a context selection"
-            },
-            "context.state": {
-              "type": "boolean",
-              "default": false,
-              "description": "Show informational project-context state messages"
-            },
-            "context.error": {
-              "type": "boolean",
-              "default": true,
-              "description": "Notify when project context cannot be loaded or updated"
+            "categories": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "boolean",
+                  "description": "All project-context notifications."
+                },
+                "types": {
+                  "type": "boolean",
+                  "description": "All generated-type notifications."
+                },
+                "server": {
+                  "type": "boolean",
+                  "description": "All server notifications."
+                },
+                "configuration": {
+                  "type": "boolean",
+                  "description": "All configuration notifications."
+                },
+                "definitions": {
+                  "type": "boolean",
+                  "description": "All API-definition notifications."
+                },
+                "server.crash-reporting.suggestion": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Suggest enabling crash reporting after an unexpected exit, only when the selected binary supports reporting"
+                },
+                "configuration.invalid": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when invalid Luduvo diagnostics, bindings, or resource configuration entries are ignored"
+                },
+                "definitions.fallback": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when installed or overridden Luduvo definitions cannot be loaded and a fallback is used"
+                },
+                "context.tracking.started": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when the first live LSP starts tracking a project"
+                },
+                "context.tracking.stopped": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Notify when the last live LSP stops tracking a project"
+                },
+                "context.files.added": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when inferred attached scripts are added to project context"
+                },
+                "context.project.stale": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when tracked project context becomes stale, with actions to autodump or obtain a manual dump command"
+                },
+                "context.autodump.started": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Notify when an automatic world dump starts"
+                },
+                "context.updated": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Notify when a world dump updates project context"
+                },
+                "context.autodump.failed": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when an automatic world dump fails"
+                },
+                "context.refresh.required": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when stale context requires a manual world dump"
+                },
+                "context.selection.required": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when a script belongs to multiple projects and needs a context selection"
+                },
+                "context.state": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Show informational project-context state messages"
+                },
+                "context.error": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Notify when project context cannot be loaded or updated"
+                },
+                "types.export.created": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "A generated project type module is created"
+                },
+                "types.export.updated": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Saved schemas change the generated module"
+                },
+                "types.export.failed": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "The generated module cannot be written"
+                },
+                "types.export.conflict": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "A user-owned file occupies the generated module path"
+                },
+                "types.export.stopped": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "The last generated module reference is removed"
+                },
+                "server.crash-reporting": {
+                  "type": "boolean",
+                  "description": "All notifications under server.crash-reporting."
+                },
+                "context.tracking": {
+                  "type": "boolean",
+                  "description": "All notifications under context.tracking."
+                },
+                "context.files": {
+                  "type": "boolean",
+                  "description": "All notifications under context.files."
+                },
+                "context.project": {
+                  "type": "boolean",
+                  "description": "All notifications under context.project."
+                },
+                "context.autodump": {
+                  "type": "boolean",
+                  "description": "All notifications under context.autodump."
+                },
+                "context.refresh": {
+                  "type": "boolean",
+                  "description": "All notifications under context.refresh."
+                },
+                "context.selection": {
+                  "type": "boolean",
+                  "description": "All notifications under context.selection."
+                },
+                "types.export": {
+                  "type": "boolean",
+                  "description": "All notifications under types.export."
+                }
+              },
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "default": {},
+              "description": "Overrides by notification ID or dotted category; the nearest ancestor wins."
             }
           },
-          "additionalProperties": {
-            "type": "boolean"
-          },
+          "additionalProperties": false,
           "default": {},
           "scope": "window"
         },
@@ -527,18 +597,12 @@
           "default": false,
           "scope": "window"
         },
-        "luduvo-lsp.platform.luduvo.diagnostics.enabled": {
-          "markdownDescription": "Whether diagnostics for Luduvo runtime rules are enabled",
-          "type": "boolean",
-          "default": true,
-          "scope": "resource"
-        },
-        "luduvo-lsp.platform.luduvo.diagnostics.rules": {
-          "markdownDescription": "Overrides Luduvo diagnostic severities by their ID. `default` uses the rule's built-in severity and `off` disables it",
+        "luduvo-lsp.platform.luduvo.diagnostics.categories": {
+          "markdownDescription": "Overrides diagnostic severities by local dotted rule ID or category. The most specific entry wins; `default` restores the registered rule severity.",
           "type": "object",
           "default": {},
           "properties": {
-            "autorun-self-access": {
+            "script.autorun-self-access": {
               "type": "string",
               "enum": [
                 "default",
@@ -549,7 +613,7 @@
                 "off"
               ]
             },
-            "empty-world-query": {
+            "world.empty-query": {
               "type": "string",
               "enum": [
                 "default",
@@ -560,7 +624,158 @@
                 "off"
               ]
             },
-            "invalid-nolint-directive": {
+            "directive.invalid-nolint": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.write": {
+              "type": "string",
+              "description": "Writing EventTable members or EventColumn rows.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.fields.count": {
+              "type": "string",
+              "description": "More than 24 fields in a literal event-table schema.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.fields.shape": {
+              "type": "string",
+              "description": "Malformed entries in a literal event-table schema.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.fields.empty-name": {
+              "type": "string",
+              "description": "An empty literal event-table field name.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.fields.name-length": {
+              "type": "string",
+              "description": "A literal event-table field name exceeds 31 bytes.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.fields.reserved-name": {
+              "type": "string",
+              "description": "An event-table field uses a reserved engine name.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.fields.duplicate": {
+              "type": "string",
+              "description": "A literal event-table schema repeats a field name.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.unknown-column": {
+              "type": "string",
+              "description": "Access to an undeclared column in a completely indexed event-table schema.",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "world": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "script": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "directive": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "warning",
+                "information",
+                "hint",
+                "off"
+              ]
+            },
+            "event-table.fields": {
               "type": "string",
               "enum": [
                 "default",
@@ -584,6 +799,20 @@
             ]
           },
           "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.diagnostics.default": {
+          "type": "string",
+          "enum": [
+            "default",
+            "error",
+            "warning",
+            "information",
+            "hint",
+            "off"
+          ],
+          "default": "default",
+          "scope": "resource",
+          "markdownDescription": "Default severity for Luduvo diagnostics. `default` preserves each registered severity."
         },
         "luduvo-lsp.platform.luduvo.hover.presentation": {
           "markdownDescription": "Controls Luduvo-specific hover presentation. `rich` adds canonical API/type headings, definition-side provenance, and tags; `standard` preserves upstream hover presentation",
@@ -656,10 +885,11 @@
               "provider": {
                 "type": "string",
                 "enum": [
-                  "static"
+                  "static",
+                  "project"
                 ],
                 "default": "static",
-                "description": "How values are obtained. Only static sources are supported in this release"
+                "description": "Static configured values or indexed project context"
               },
               "values": {
                 "type": "array",
@@ -690,6 +920,15 @@
                 },
                 "uniqueItems": true,
                 "description": "Values supplied by a static source. A string is shorthand for an entry without documentation"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "event-table",
+                  "handle",
+                  "script"
+                ],
+                "description": "Project provider data to expose. Used when provider is project."
               }
             },
             "additionalProperties": false
@@ -736,7 +975,7 @@
           "scope": "resource"
         },
         "luduvo-lsp.platform.luduvo.bindings": {
-          "markdownDescription": "Semantic bindings used by Luduvo providers. This release supports `resource` and `color` bindings on callable parameters. Multiple bindings may target the same symbol and parameter",
+          "markdownDescription": "Semantic bindings for callable parameters, type arguments, and table members. Color bindings support callable parameters only.",
           "type": "array",
           "default": [],
           "items": {
@@ -796,7 +1035,7 @@
               },
               "target": {
                 "type": "object",
-                "markdownDescription": "Callable parameter target shared by resource and color providers",
+                "markdownDescription": "Select a callable parameter, a type argument, or a table member access",
                 "properties": {
                   "parameter": {
                     "type": "string",
@@ -815,6 +1054,21 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Whether parameter identifies the callable's variadic tail"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "callParameter",
+                      "typeArgument",
+                      "member"
+                    ],
+                    "default": "callParameter"
+                  },
+                  "index": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "One-based type argument index; only used by typeArgument targets"
                   }
                 },
                 "oneOf": [
@@ -827,6 +1081,12 @@
                     "required": [
                       "parameters"
                     ]
+                  },
+                  {
+                    "required": ["kind"],
+                    "properties": {
+                      "kind": { "enum": ["typeArgument", "member"] }
+                    }
                   }
                 ],
                 "additionalProperties": false
@@ -1442,6 +1702,58 @@
           "default": false,
           "scope": "resource",
           "markdownDescription": "Allow plugins to read files within the workspace. Only files within the workspace can be accessed for security."
+        },
+        "luduvo-lsp.reporting.default": {
+          "type": "object",
+          "properties": {
+            "logs": {
+              "type": "string",
+              "enum": [
+                "Off",
+                "Error",
+                "Warning",
+                "Info",
+                "Debug",
+                "Verbose"
+              ]
+            },
+            "ui": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false,
+          "default": {
+            "logs": "Info",
+            "ui": false
+          },
+          "scope": "window",
+          "markdownDescription": "Default operational log verbosity and context debugging UI. Independent of protocol tracing and popup notifications."
+        },
+        "luduvo-lsp.reporting.categories": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "logs": {
+                "type": "string",
+                "enum": [
+                  "Off",
+                  "Error",
+                  "Warning",
+                  "Info",
+                  "Debug",
+                  "Verbose"
+                ]
+              },
+              "ui": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "scope": "window",
+          "markdownDescription": "Dotted category overrides for logs and debugging UI. Each property inherits independently from its nearest configured ancestor. For example, context.schemas can enable UI while inheriting context log verbosity."
         }
       }
     },
