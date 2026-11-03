@@ -13,6 +13,8 @@
 #include "LuauFileUtils.hpp"
 #include <filesystem>
 
+LUAU_FASTFLAG(LuauUdtfPopulateEnv)
+
 using namespace luduvo;
 static std::string getErrors(const Luau::CheckResult& result)
 {
@@ -384,6 +386,7 @@ TEST_CASE("reporting_log_and_ui_inheritance_are_independent")
 
 TEST_CASE("portable_module_is_valid_and_documents_broad_indexer_limit")
 {
+    ScopedFastFlag populateTypeFunctionEnvironment{FFlag::LuauUdtfPopulateEnv, true};
     LuduvoFixture fixture("generated_schema_module");
     ProjectSchemas project;
     project.projectId = "test";
@@ -527,6 +530,45 @@ TEST_CASE("handle_member_completion_shares_read_hints_only_with_scripts_on_the_s
                 return item.label == "Unrelated";
             }));
     }
+}
+
+TEST_CASE("schema_export_references_are_released_after_workspace_destruction")
+{
+    TempDir state("schema_service_teardown");
+    LuduvoBindingRegistry bindings;
+    LuduvoResourceCatalog resources;
+    std::unique_ptr<SchemaService> service;
+    const auto references = std::filesystem::u8path(state.path()) / "schema-clients";
+    {
+        LuduvoFixture fixture("schema_service_workspace_teardown");
+        fixture.tempDir.write_child("project.json", R"({"name":"Test","assets":{
+            "consumer":{"type":"script","path":"scripts/consumer.server.luau"}}})");
+        const auto script = fixture.tempDir.write_child("scripts/consumer.server.luau", "print(handles.Testing)");
+        auto config = fixture.config.platform.luduvo;
+        config.context.enabled = true;
+        config.context.autoDump = false;
+        config.directories.context = state.path();
+        ContextStore store(state.path());
+        const auto added = store.updateProjectFiles(fixture.tempDir.path());
+        REQUIRE(added.success);
+        REQUIRE(added.projectId);
+        WorldDumpSnapshot snapshot;
+        WorldInstance instance;
+        instance.nodeId = 1;
+        instance.scripts = {"scripts/consumer.server.luau"};
+        snapshot.instances.push_back(instance);
+        REQUIRE(store.updateWorldForProject(snapshot, *added.projectId).success);
+        bindings.configure(config);
+        resources.configure(config);
+        service = std::make_unique<SchemaService>(fixture.workspace, config, bindings, resources);
+        REQUIRE_FALSE(service->inspect(script).is_null());
+        writeSchemaExportReference(state.path(), fixture.workspace.rootUri.fsPath(), *added.projectId, true);
+        REQUIRE(std::distance(std::filesystem::directory_iterator(references), std::filesystem::directory_iterator{}) == 1);
+    }
+    // A workspace's platform is destroyed after its URI and frontend members.
+    // Export-reference cleanup must therefore own its workspace identity.
+    service.reset();
+    CHECK(std::filesystem::is_empty(references));
 }
 
 TEST_CASE("project_service_specializes_cross_script_calls_and_restores_literal_ast")

@@ -10,6 +10,8 @@ namespace luduvo
 class SchemaService
 {
     WorkspaceFolder& workspace;
+    // Workspace members may already be destroyed when export references are released.
+    const std::string workspacePath;
     ClientLuduvoConfiguration configuration;
     std::map<std::string, std::shared_ptr<ProjectSchemas>> projects;
     std::map<std::string, std::string> scriptProjects;

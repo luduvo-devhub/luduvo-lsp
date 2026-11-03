@@ -102,6 +102,7 @@ std::string stateDirectory(const ClientLuduvoConfiguration& config)
 SchemaService::SchemaService(WorkspaceFolder& workspace, ClientLuduvoConfiguration configuration, const LuduvoBindingRegistry& bindings,
     const LuduvoResourceCatalog& resources)
     : workspace(workspace)
+    , workspacePath(workspace.rootUri.fsPath())
     , configuration(std::move(configuration))
     , bindings(bindings)
     , resources(resources)
@@ -110,12 +111,12 @@ SchemaService::SchemaService(WorkspaceFolder& workspace, ClientLuduvoConfigurati
 SchemaService::~SchemaService()
 {
     for (const auto& project : projects)
-        writeSchemaExportReference(stateDirectory(configuration), workspace.rootUri.fsPath(), project.first, false);
+        writeSchemaExportReference(stateDirectory(configuration), workspacePath, project.first, false);
 }
 void SchemaService::configure(const ClientLuduvoConfiguration& value)
 {
     for (const auto& project : projects)
-        writeSchemaExportReference(stateDirectory(configuration), workspace.rootUri.fsPath(), project.first, false);
+        writeSchemaExportReference(stateDirectory(configuration), workspacePath, project.first, false);
     configuration = value;
     projects.clear();
     scriptProjects.clear();
@@ -139,7 +140,7 @@ std::shared_ptr<const ProjectSchemas> SchemaService::synchronize(const Luau::Mod
         }
     } guard(synchronizing);
     const auto script = normalizeContextPath(workspace.fileResolver.getUri(moduleName).fsPath());
-    ContextProvider provider(stateDirectory(configuration), workspace.rootUri.fsPath());
+    ContextProvider provider(stateDirectory(configuration), workspacePath);
     auto candidates = provider.findForScript(script);
     if (candidates.size() != 1)
     {
@@ -205,7 +206,7 @@ std::shared_ptr<const ProjectSchemas> SchemaService::synchronize(const Luau::Mod
     for (const auto& file : project->scripts)
         if (file.second.unsaved && importsProjectTypes(file.second, project->exportPath))
             exportsReferenced = true;
-    writeSchemaExportReference(stateDirectory(configuration), workspace.rootUri.fsPath(), project->projectId, exportsReferenced);
+    writeSchemaExportReference(stateDirectory(configuration), workspacePath, project->projectId, exportsReferenced);
     return project;
 }
 std::unique_ptr<PlatformAnalysisOverlay> SchemaService::prepare(const Luau::ModuleName& moduleName)
@@ -420,7 +421,7 @@ void SchemaService::forgetOverlay(const std::string& closedScript)
                 continue;
             active = active || importsProjectTypes(extractScriptSchema(path, entry.second.getText()), project.second->exportPath);
         }
-        writeSchemaExportReference(stateDirectory(configuration), workspace.rootUri.fsPath(), project.first, active);
+        writeSchemaExportReference(stateDirectory(configuration), workspacePath, project.first, active);
     }
 }
 

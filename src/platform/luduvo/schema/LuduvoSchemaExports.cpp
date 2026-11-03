@@ -115,7 +115,7 @@ std::string generateProjectTypes(const ProjectSchemas& project)
     }
     output += R"(}
 
-type function eventFor(Name, Base, Column, Registry)
+type function eventFor(Name: type, Base: type, Column: type, Registry: type): type
     local schemas: {type} = {}
     local function select(name: type): boolean
         if name:is("singleton") then
@@ -159,14 +159,14 @@ type function eventFor(Name, Base, Column, Registry)
     return types.intersectionof(Base, types.newtable(properties))
 end
 
-type function handlesFor(Script, Base, Registry)
+type function handlesFor(Script: type, Base: type, Registry: type): type
     if not Script:is("singleton") then return Base end
     local record = Registry:readproperty(Script)
     if not record then return Base end
     return types.intersectionof(Base, record)
 end
 
-type function eventKeys(Name, Registry)
+type function eventKeys(Name: type, Registry: type): type
     if Name:is("singleton") then return Registry:readproperty(Name) or types.string end
     if Name:is("union") then
         local keys: {type} = {}
