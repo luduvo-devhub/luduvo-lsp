@@ -45,14 +45,16 @@ jobs:
           cmake --build . --target Luau.LanguageServer.CLI -j 3
 
   run_tests:
+    env:
+      SCCACHE_GHA_ENABLED: 'true'
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-latest
-            test-path: ./build/Debug/Luau.LanguageServer.Test
+            test-path: ./build/Luau.LanguageServer.Test.exe
             editor-smoke: true
-            smoke-runner: build/Debug/luduvo-context-editor-smoke.exe
+            smoke-runner: build/luduvo-context-editor-smoke.exe
           - os: ubuntu-22.04
             test-path: ./build/Luau.LanguageServer.Test
             editor-smoke: true
@@ -70,19 +72,47 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - name: Build Tests (ASAN)
-        if: matrix.os != 'windows-latest'
+      - name: Set up MSVC for Ninja
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Set up compiler cache
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: v0.19.0
+
+      - name: Configure optimized tests with assertions
+        shell: bash
+        env:
+          # Keep Git Bash from rewriting MSVC flags such as /O2 as file paths.
+          MSYS2_ARG_CONV_EXCL: '*'
         run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DLSP_BUILD_ASAN:BOOL=ON
-          cmake --build . --target Luau.LanguageServer.Test -j 3
+          options=(-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache)
+          python=python3
+          if [ "$RUNNER_OS" = Windows ]; then
+            python=python
+            # Embedded debug information makes individual MSVC objects cacheable.
+            options+=(-DCMAKE_POLICY_DEFAULT_CMP0141=NEW -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded)
+            flags='/O2 /Ob1 /UNDEBUG'
+          else
+            options+=(-DLSP_BUILD_ASAN=ON)
+            flags='-O1 -g1 -fno-omit-frame-pointer -UNDEBUG'
+          fi
+          options+=("-DCMAKE_C_FLAGS_RELWITHDEBINFO=$flags" "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$flags")
+          if [ "$RUNNER_OS" = macOS ]; then
+            # Only tests use the native architecture; release builds remain universal.
+            options+=("-DCMAKE_OSX_ARCHITECTURES=$(uname -m)")
+          fi
+          "$python" - <<'PY'
+          import os
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as environment:
+              environment.write(f'CMAKE_BUILD_PARALLEL_LEVEL={os.cpu_count() or 1}\n')
+          PY
+          cmake -S . -B build "${options[@]}"
 
       - name: Build Tests
-        if: matrix.os == 'windows-latest'
-        run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
-          cmake --build . --target Luau.LanguageServer.Test -j 3
+        run: cmake --build build --target Luau.LanguageServer.Test
 
       - name: Run Tests (Old Solver)
         run: ${{ matrix.test-path }}
@@ -97,13 +127,33 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth libopengl0 libgl1-mesa-dri mesa-vulkan-drivers \
+          sudo apt-get install -y xvfb xauth libegl1 libopengl0 libgl1-mesa-dri mesa-vulkan-drivers \
             libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
             libxcb-render-util0 libxcb-shape0 libxcb-xkb1
 
+      - name: Check real macOS editor GPU support
+        if: runner.os == 'macOS'
+        id: editor-gpu
+        run: |
+          supported=$(swift - <<'SWIFT'
+          import Metal
+          if #available(macOS 13.0, *) {
+              print(MTLCopyAllDevices().contains { $0.supportsFamily(.metal3) } ? "true" : "false")
+          } else {
+              print("false")
+          }
+          SWIFT
+          )
+          echo "supported=$supported" >> "$GITHUB_OUTPUT"
+          if [ "$supported" = false ]; then
+            echo "::warning::Skipping the real macOS editor smoke test: this runner has no Metal 3 GPU, which LuduvoEditor requires."
+            echo "### Real macOS editor smoke test skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "This runner has no Metal 3 GPU, which LuduvoEditor requires. The C++ test suites ran normally." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Build real-editor smoke test runner
-        if: matrix.editor-smoke
-        run: cmake --build build --target Luau.LanguageServer.ContextSmoke -j 3
+        if: matrix.editor-smoke && (runner.os != 'macOS' || steps.editor-gpu.outputs.supported == 'true')
+        run: cmake --build build --target Luau.LanguageServer.ContextSmoke
 
       - name: Test real Linux Luduvo editor autodumping
         if: runner.os == 'Linux'
@@ -126,7 +176,7 @@ jobs:
             --work-directory "$env:RUNNER_TEMP/luduvo-editor-smoke"
 
       - name: Test real macOS Luduvo editor autodumping
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && steps.editor-gpu.outputs.supported == 'true'
         timeout-minutes: 6
         run: |
           python3 scripts/luduvo/smokeContextEditor.py \
