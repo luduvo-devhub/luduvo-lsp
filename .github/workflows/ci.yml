@@ -55,7 +55,7 @@ jobs:
             test-path: ./build/Luau.LanguageServer.Test.exe
             editor-smoke: true
             smoke-runner: build/luduvo-context-editor-smoke.exe
-          - os: ubuntu-22.04
+          - os: ubuntu-24.04
             test-path: ./build/Luau.LanguageServer.Test
             editor-smoke: true
             smoke-runner: build/luduvo-context-editor-smoke
