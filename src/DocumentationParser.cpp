@@ -2,7 +2,6 @@
 #include "LSP/Workspace.hpp"
 #include "LSP/LuauExt.hpp"
 #include "LuauFileUtils.hpp"
-#include <regex>
 #include <algorithm>
 
 static void parseOptionalString(const json& source, const char* key, std::string& destination)
@@ -577,15 +576,12 @@ std::vector<std::string> WorkspaceFolder::getComments(const Luau::ModuleName& mo
         }
         else if (comment.type == Luau::Lexeme::Type::BlockComment)
         {
-            std::regex comment_regex("^--\\[(=*)\\[");
-            std::smatch comment_match;
-
-            if (std::regex_search(commentText, comment_match, comment_regex))
+            const size_t openingBracket = commentText.find_first_not_of('=', 3);
+            if (Luau::startsWith(commentText, "--[") && openingBracket != std::string::npos && commentText[openingBracket] == '[')
             {
-                LUAU_ASSERT(comment_match.size() == 2);
-                // Construct "--[=[" and "--]=]" which will be ignored
-                std::string start_string = "--[" + std::string(comment_match[1].length(), '=') + "[";
-                std::string end_string = "]" + std::string(comment_match[1].length(), '=') + "]";
+                // Ignore delimiter-only lines, including delimiters with any number of equals signs.
+                std::string start_string = commentText.substr(0, openingBracket + 1);
+                std::string end_string = "]" + std::string(openingBracket - 3, '=') + "]";
 
                 // Parse each line separately
                 for (auto& line : Luau::split(commentText, '\n'))

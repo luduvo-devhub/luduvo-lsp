@@ -123,7 +123,7 @@ jobs:
       - name: Run Tests (All FFlags enabled)
         run: ${{ matrix.test-path }} --fflags=true
 
-      - name: Install real-editor smoke test dependencies
+      - name: Install editor smoke test dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
@@ -131,7 +131,7 @@ jobs:
             libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
             libxcb-render-util0 libxcb-shape0 libxcb-xkb1
 
-      - name: Check real macOS editor GPU support
+      - name: Check macOS editor GPU support
         if: runner.os == 'macOS'
         id: editor-gpu
         run: |
@@ -146,16 +146,16 @@ jobs:
           )
           echo "supported=$supported" >> "$GITHUB_OUTPUT"
           if [ "$supported" = false ]; then
-            echo "::warning::Skipping the real macOS editor smoke test: this runner has no Metal 3 GPU, which LuduvoEditor requires."
-            echo "### Real macOS editor smoke test skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Skipping the macOS editor smoke test: this runner has no Metal 3 GPU, which LuduvoEditor requires."
+            echo "### macOS editor smoke test skipped" >> "$GITHUB_STEP_SUMMARY"
             echo "This runner has no Metal 3 GPU, which LuduvoEditor requires. The C++ test suites ran normally." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Build real-editor smoke test runner
+      - name: Build editor smoke test runner
         if: matrix.editor-smoke && (runner.os != 'macOS' || steps.editor-gpu.outputs.supported == 'true')
         run: cmake --build build --target Luau.LanguageServer.ContextSmoke
 
-      - name: Test real Linux Luduvo editor autodumping
+      - name: Test Linux autodumping
         if: runner.os == 'Linux'
         timeout-minutes: 6
         env:
@@ -167,7 +167,7 @@ jobs:
             --runner "${{ matrix.smoke-runner }}" \
             --work-directory "$RUNNER_TEMP/luduvo-editor-smoke"
 
-      - name: Test real Windows Luduvo editor autodumping
+      - name: Test Windows autodumping
         if: runner.os == 'Windows'
         timeout-minutes: 6
         run: |
@@ -175,7 +175,7 @@ jobs:
             --runner "${{ matrix.smoke-runner }}" `
             --work-directory "$env:RUNNER_TEMP/luduvo-editor-smoke"
 
-      - name: Test real macOS Luduvo editor autodumping
+      - name: Test macOS autodumping
         if: runner.os == 'macOS' && steps.editor-gpu.outputs.supported == 'true'
         timeout-minutes: 6
         run: |
@@ -183,7 +183,7 @@ jobs:
             --runner "${{ matrix.smoke-runner }}" \
             --work-directory "$RUNNER_TEMP/luduvo-editor-smoke"
 
-      - name: Upload real-editor smoke test diagnostics
+      - name: Upload smoke test diagnostics
         if: always() && matrix.editor-smoke
         uses: actions/upload-artifact@v4
         with:

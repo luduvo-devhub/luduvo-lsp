@@ -25,7 +25,7 @@
 #include <filesystem>
 #include <limits>
 #include <map>
-#include <regex>
+#include <string_view>
 #include <thread>
 
 TEST_SUITE_BEGIN("LuduvoContext");
@@ -41,11 +41,22 @@ watch nid 299 tid 25 bytes 06000000
 
 static std::map<std::string, std::string> preservedAutosaves(const std::string& directory)
 {
-    const std::regex timestampedName(R"(world\.ldv\.autosave\.luduvo-lsp-hostage-\d{8}-\d{6}-\d{3}Z)");
+    constexpr std::string_view prefix = "world.ldv.autosave.luduvo-lsp-hostage-";
+    constexpr std::string_view digits = "0123456789";
     std::map<std::string, std::string> result;
     for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::u8path(directory)))
-        if (std::regex_match(entry.path().filename().generic_u8string(), timestampedName))
+    {
+        const auto name = entry.path().filename().generic_u8string();
+        if (name.compare(0, prefix.size(), prefix) != 0)
+            continue;
+
+        const auto timestamp = std::string_view(name).substr(prefix.size());
+        if (timestamp.size() == 20 && timestamp[8] == '-' && timestamp[15] == '-' && timestamp[19] == 'Z' &&
+            timestamp.substr(0, 8).find_first_not_of(digits) == std::string_view::npos &&
+            timestamp.substr(9, 6).find_first_not_of(digits) == std::string_view::npos &&
+            timestamp.substr(16, 3).find_first_not_of(digits) == std::string_view::npos)
             result[entry.path().generic_u8string()] = Luau::FileUtils::readFile(entry.path().generic_u8string()).value_or("");
+    }
     return result;
 }
 
