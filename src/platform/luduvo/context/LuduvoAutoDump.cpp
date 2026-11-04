@@ -604,7 +604,8 @@ public:
             execv(arguments.front().c_str(), values.data());
             const int code = errno;
             const char* description = std::strerror(code);
-            write(STDERR_FILENO, description, std::strlen(description));
+            // Intentionally unused since exec failure is best effort before the child exits
+            [[maybe_unused]] const auto _ = write(STDERR_FILENO, description, std::strlen(description));
             _exit(127);
         }
         processGroup = process;
