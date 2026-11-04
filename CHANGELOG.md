@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.71.2L-alpha] - 2026-11-04
+
 ### Added
 
 - Auto dumps now dump context from autosaves if the autosave is newer than the normal save. Save your projects man!
@@ -22,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Notification and diagnostic config settings now are consolidated into a reporting's category lookup, with nested `default` and `categories` settings and dotted IDs. 
+- Notification and diagnostic config settings now are consolidated into a reporting's category lookup, with nested `default` and `categories` settings and dotted IDs.
 - `diagnostics.enabled` has been removed for all those who might have used it for the brief window of that that it has existed. Use `diagnostics.default: "off"` instead
 - Diagnostic IDs match the dot syntax pattern that other IDs use (for example, world queries use `world.empty-query` and `luduvo/world.empty-query` in `--!nolint`)
 - Lazy refresh is now defaulted to false. It turns out that currently it's a little too lazy and refreshes a lot less than I thought it would in practice...
