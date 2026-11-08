@@ -320,6 +320,49 @@ void SchemaService::retainCheckedModules()
                             }),
         retainedTypes.end());
 }
+std::string SchemaService::staleHint(const Luau::ModuleName& moduleName, const Luau::AstExpr* expression, Luau::TypeId type) const
+{
+    constexpr auto tag = "\n\n[stale]";
+    for (auto generation = retainedTypes.rbegin(); generation != retainedTypes.rend(); ++generation)
+        if (const auto owner = generation->lock())
+            if (const auto metadata = owner->findMetadata(type); metadata && metadata->names.empty() && !metadata->script.empty() &&
+                                                                 !metadata->project->fresh &&
+                                                                 !handleSchemaFields(*metadata->project, metadata->script).empty())
+                return tag;
+    if (!expression)
+        return {};
+    const auto source = workspace.frontend.getSourceModule(moduleName);
+    const auto script = normalizeContextPath(workspace.fileResolver.getUri(moduleName).fsPath());
+    const auto selection = scriptProjects.find(script);
+    if (!source || selection == scriptProjects.end())
+        return {};
+    const auto project = projects.at(selection->second);
+    if (project->fresh)
+        return {};
+
+    SchemaSyntax syntax(source->root);
+    const auto resolved = syntax.value(expression);
+    std::string name;
+    const Luau::AstExpr* receiver = nullptr;
+    if (const auto dot = resolved->as<Luau::AstExprIndexName>())
+    {
+        receiver = dot->expr;
+        name = dot->index.value;
+    }
+    else if (const auto bracket = resolved->as<Luau::AstExprIndexExpr>())
+    {
+        receiver = bracket->expr;
+        if (const auto literal = bracket->index->as<Luau::AstExprConstantString>())
+            name.assign(literal->value.data, literal->value.size);
+    }
+    if (!receiver || syntax.symbol(receiver) != "handles")
+        return {};
+    for (const auto& observation : handleSchemaFields(*project, script))
+        if (observation.field.name == name)
+            return tag;
+    return {};
+}
+
 std::string SchemaService::debug(const Luau::ModuleName& moduleName, const Luau::AstExpr* expression, Luau::TypeId type, std::string_view field)
 {
     if (!workspace.client->getConfiguration(workspace.rootUri).reporting.uiEnabled("context.schemas"))
@@ -364,7 +407,7 @@ std::string SchemaService::debug(const Luau::ModuleName& moduleName, const Luau:
         metadata.project = projects.at(selected->second);
         metadata.script = path;
         metadata.field = field.empty() && symbol.size() > 8 ? symbol.substr(8) : std::string(field);
-        metadata.resolution = metadata.project->fresh ? symbol : "attachment context is stale; ordinary handle types";
+        metadata.resolution = metadata.project->fresh ? symbol : "attachment context is stale; handle names may have changed";
         return renderSchemaDebug(metadata);
     }
     const Luau::AstExpr* annotated = expression;
@@ -499,6 +542,15 @@ void SchemaService::complete(const TextDocument& document, const Luau::SourceMod
         }
         return renderSchemaDebug(metadata);
     };
+    const auto markStale = [&](lsp::CompletionItem& item, const std::string& name)
+    {
+        if (!project->fresh && resourceOrigins[name] == "handle")
+        {
+            const auto detail = item.detail.value_or("Handle");
+            if (detail.find("[stale]") == std::string::npos)
+                item.detail = detail + " [stale]";
+        }
+    };
     const auto addNames = [&](const std::vector<std::string>& names, const Luau::Location& location, const std::string& detail)
     {
         for (const auto& name : names)
@@ -528,6 +580,7 @@ void SchemaService::complete(const TextDocument& document, const Luau::SourceMod
                 });
             if (existing != items.end())
             {
+                markStale(*existing, name);
                 if (markBuiltin(*existing) && configuration.hover.presentation == LuduvoHoverPresentation::Rich)
                 {
                     if (!existing->documentation)
@@ -548,6 +601,7 @@ void SchemaService::complete(const TextDocument& document, const Luau::SourceMod
             item.label = name;
             item.kind = lsp::CompletionItemKind::Value;
             item.detail = detail;
+            markStale(item, name);
             const bool builtin = markBuiltin(item);
             item.textEdit = lsp::TextEdit{document.convertLocation(location), quoteSchemaString(name)};
             std::string docs = name;
@@ -632,7 +686,7 @@ void SchemaService::complete(const TextDocument& document, const Luau::SourceMod
                 for (const auto& name : names)
                     resourceOrigins[name] = provider;
             }
-            else if (provider == "handle" && project->fresh)
+            else if (provider == "handle")
                 for (const auto& field : handleSchemaFields(*project, script))
                 {
                     result.insert(field.field.name);
@@ -771,6 +825,7 @@ void SchemaService::complete(const TextDocument& document, const Luau::SourceMod
                         });
                     if (existing != items.end())
                     {
+                        markStale(*existing, name);
                         if (const auto debug = resourceDebug(name, *symbol + "." + name); !debug.empty())
                         {
                             if (!existing->documentation)
@@ -783,6 +838,7 @@ void SchemaService::complete(const TextDocument& document, const Luau::SourceMod
                     item.label = name;
                     item.kind = lsp::CompletionItemKind::Field;
                     item.detail = kind;
+                    markStale(item, name);
                     item.documentation =
                         lsp::MarkupContent{lsp::MarkupKind::Markdown, resourceDocumentation[name] + resourceDebug(name, *symbol + "." + name)};
                     item.textEdit = lsp::TextEdit{document.convertLocation(location), name};

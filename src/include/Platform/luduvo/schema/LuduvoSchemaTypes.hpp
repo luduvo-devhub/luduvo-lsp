@@ -26,7 +26,7 @@ class SchemaTypes
     Luau::TypeFunction handleLookup;
     Luau::TypeFunction keyLookup;
     std::map<std::string, Luau::TypeId> tables;
-    std::map<Luau::TypeId, std::shared_ptr<SchemaTypeMetadata>> handleMetadata;
+    std::map<Luau::TypeId, std::shared_ptr<SchemaTypeMetadata>> structuralMetadata;
     std::map<std::string, Luau::TypeId> handles;
     Luau::TypeId valueType(const std::string& name);
     Luau::TypeId combinedTable(const std::set<std::string>& names);

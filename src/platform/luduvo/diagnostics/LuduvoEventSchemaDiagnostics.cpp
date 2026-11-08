@@ -1,5 +1,7 @@
 #include "Platform/luduvo/diagnostics/LuduvoCustomDiagnostics.hpp"
 #include "Luau/Ast.h"
+#include "Luau/ToString.h"
+#include "Platform/luduvo/schema/LuduvoSchemaIndex.hpp"
 #include <algorithm>
 #include <set>
 
@@ -13,23 +15,94 @@ const Luau::AstExpr* ungroup(const Luau::AstExpr* expression)
         expression = group->expr;
     return expression;
 }
+bool incompatibleFieldType(Luau::TypeId type, std::set<Luau::TypeId>& active)
+{
+    type = Luau::follow(type);
+    if (!active.insert(type).second)
+        return false;
+    const auto incompatiblePart = [&](Luau::TypeId part)
+    {
+        return incompatibleFieldType(part, active);
+    };
+    bool incompatible = false;
+    if (const auto external = Luau::get<Luau::ExternType>(type))
+        incompatible = external->name != "EventFieldType";
+    else if (const auto options = Luau::get<Luau::UnionType>(type))
+        incompatible = std::any_of(options->options.begin(), options->options.end(), incompatiblePart);
+    else if (const auto parts = Luau::get<Luau::IntersectionType>(type))
+        incompatible = std::any_of(parts->parts.begin(), parts->parts.end(), incompatiblePart);
+    else
+        incompatible = Luau::is<Luau::PrimitiveType, Luau::SingletonType, Luau::TableType, Luau::FunctionType, Luau::MetatableType>(type);
+    active.erase(type);
+    return incompatible;
+}
+
 struct SchemaVisitor : Luau::AstVisitor
 {
     const LuduvoDiagnosticContext& context;
     DiagnosticReporter& reporter;
     EventSchemaConstraint constraint;
+    std::optional<SchemaSyntax> syntax;
     SchemaVisitor(const LuduvoDiagnosticContext& context, DiagnosticReporter& reporter, EventSchemaConstraint constraint)
         : context(context)
         , reporter(reporter)
         , constraint(constraint)
     {
+        if (constraint == EventSchemaConstraint::FieldType)
+            syntax.emplace(context.sourceModule().root);
     }
+
+    std::optional<std::string> invalidFieldValue(const Luau::AstExpr* expression) const
+    {
+        constexpr std::string_view prefix = "game.EventTable.";
+        if (const auto symbol = syntax->symbol(expression); symbol && symbol->compare(0, prefix.size(), prefix) == 0)
+        {
+            const std::string_view member = std::string_view(*symbol).substr(prefix.size());
+            if (eventFieldValueType(member).empty())
+                return "'" + *symbol + "'";
+            return std::nullopt;
+        }
+
+        const auto value = syntax->value(expression);
+        if (const auto conditional = value->as<Luau::AstExprIfElse>())
+        {
+            if (const auto invalid = invalidFieldValue(conditional->trueExpr))
+                return invalid;
+            return invalidFieldValue(conditional->falseExpr);
+        }
+        for (const auto candidate : {expression, value})
+            if (const auto type = context.expressionType(candidate))
+            {
+                std::set<Luau::TypeId> active;
+                if (incompatibleFieldType(*type, active))
+                {
+                    Luau::ToStringOptions options;
+                    options.maxTypeLength = 100;
+                    return "a value of type '" + Luau::toString(*type, options) + "'";
+                }
+            }
+        if (value->is<Luau::AstExprConstantString>() || value->is<Luau::AstExprInterpString>())
+            return "a string";
+        if (value->is<Luau::AstExprConstantNumber>())
+            return "a number";
+        if (value->is<Luau::AstExprConstantBool>())
+            return "a boolean";
+        if (value->is<Luau::AstExprConstantNil>())
+            return "nil";
+        if (value->is<Luau::AstExprTable>())
+            return "a table";
+        if (value->is<Luau::AstExprFunction>())
+            return "a function";
+        return std::nullopt;
+    }
+
     bool visit(Luau::AstExprCall* call) override
     {
         if (call->self || call->args.size < 3)
             return true;
         const auto symbols = context.resolvedCallSymbols(*call);
-        if (std::find(symbols.begin(), symbols.end(), "game.EventTable") == symbols.end())
+        if (std::find(symbols.begin(), symbols.end(), "game.EventTable") == symbols.end() &&
+            (!syntax || syntax->symbol(call->func) != "game.EventTable"))
             return true;
         const auto schema = ungroup(call->args.data[2])->as<Luau::AstExprTable>();
         if (!schema)
@@ -57,6 +130,23 @@ struct SchemaVisitor : Luau::AstVisitor
                 reporter.report(value->location, "EventTable fields must be {name, type} pairs.");
             if (!pair || pair->items.size == 0 || pair->items.data[0].kind != Luau::AstExprTable::Item::Kind::List)
                 continue;
+            if (constraint == EventSchemaConstraint::FieldType)
+            {
+                if (pair->items.size >= 2 && pair->items.data[1].kind == Luau::AstExprTable::Item::Kind::List)
+                {
+                    const auto type = ungroup(pair->items.data[1].value);
+                    if (const auto invalid = invalidFieldValue(type))
+                    {
+                        const auto name = syntax->value(pair->items.data[0].value)->as<Luau::AstExprConstantString>();
+                        const std::string field = name ? "'" + std::string(name->value.data, name->value.size) + "'"
+                                                       : "#" + std::to_string(&item - schema->items.begin() + 1);
+                        reporter.report(type->location,
+                            "EventTable field " + field + " expects a constant from game.EventTable (" + std::string(eventFieldTypeNames()) +
+                                "), but got " + *invalid + ".");
+                    }
+                }
+                continue;
+            }
             const auto literal = ungroup(pair->items.data[0].value)->as<Luau::AstExprConstantString>();
             if (!literal)
                 continue;

@@ -279,7 +279,7 @@ void ContextLogProcessor::pollFilesystem()
                 const bool alreadyPublished =
                     project != catalog->projects.end() && project->second.fresh && normalizeContextPath(project->second.dumpPath) == pending->path &&
                     published && published->tick == parsed.snapshot->tick && published->commandSequence == parsed.snapshot->commandSequence &&
-                    nlohmann::json(published->instances) == nlohmann::json(parsed.snapshot->instances);
+                    worldDumpScene(*published) == worldDumpScene(*parsed.snapshot);
                 if (!alreadyPublished)
                     reportStoreFailure("publish a world dump", store.updateWorldForProject(std::move(*parsed.snapshot), matches.front()));
             }

@@ -370,6 +370,23 @@
           "default": true,
           "scope": "window"
         },
+        "luduvo-lsp.platform.luduvo.context.dumpMethod": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "savedScene",
+            "studio",
+            "ask"
+          ],
+          "enumDescriptions": [
+            "Try the saved scene reader first, then Studio.",
+            "Read the latest save or autosave.",
+            "Capture through Studio.",
+            "Choose the method each time project context needs a refresh."
+          ],
+          "default": "auto",
+          "markdownDescription": "Selects the method for automatic and manual project context refreshes."
+        },
         "luduvo-lsp.platform.luduvo.context.lazyRefresh": {
           "markdownDescription": "Waits until analysis needs context before scheduling a background refresh. Requests return immediately using available typing. Disable to refresh tracked projects as soon as they become stale. Automatic refresh requires `context.autoDump`",
           "type": "boolean",

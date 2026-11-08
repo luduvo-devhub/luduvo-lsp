@@ -580,8 +580,9 @@ struct ClientLuduvoContextConfiguration
     bool autoDump = true;
     /// Refresh on demand when true; refresh tracked projects as soon as they become stale when false.
     bool lazyRefresh = false;
+    std::string dumpMethod = "auto";
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoContextConfiguration, enabled, autoDump, lazyRefresh)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoContextConfiguration, enabled, autoDump, lazyRefresh, dumpMethod)
 
 struct ClientLuduvoConfiguration
 {

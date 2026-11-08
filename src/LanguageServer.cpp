@@ -738,6 +738,7 @@ lsp::InitializeResult LanguageServer::onInitialize(const lsp::InitializeParams& 
         try
         {
             InitializationOptions options = params.initializationOptions.value();
+            client->nativeDumpMethodPicker = options.nativeDumpMethodPicker;
             if (options.configurationSection && !options.configurationSection->empty())
                 client->configurationSection = *options.configurationSection;
             if (!options.fflags.empty())

@@ -885,6 +885,7 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
     initializationOptions: {
       fflags,
       configurationSection: EDITOR_NAMESPACE,
+      nativeDumpMethodPicker: true,
     },
     markdown: {
       supportHtml: true,
@@ -905,6 +906,13 @@ const startLanguageServer = async (context: vscode.ExtensionContext) => {
   platformContext.client = client;
 
   // Register commands
+  client.onRequest(
+    "$/luduvo/pickDumpMethod",
+    async (params: { title: string; choices: string[] }) =>
+      (await vscode.window.showQuickPick(params.choices, {
+        title: params.title,
+      })) ?? null,
+  );
   client.onNotification("$/command", (params) => {
     if (params.command === "luduvo-lsp.suppressNotification") {
       if (typeof params.data === "string") {

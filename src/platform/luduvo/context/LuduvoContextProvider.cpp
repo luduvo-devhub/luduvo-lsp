@@ -170,6 +170,7 @@ class ContextHelperSession
     std::mutex subscriberMutex;
     std::mutex dumpMutex;
     std::unordered_set<std::string> activeDumps;
+    std::map<std::string, uint64_t> promptedDumps;
     std::string editorPath;
     ProcessIdentity processIdentity;
     ContextCatalog lastCatalog;
@@ -432,6 +433,18 @@ public:
         return result;
     }
 
+    bool claimDumpChoice(const WorldDumpRequest& request)
+    {
+        std::lock_guard guard(dumpMutex);
+        if (activeDumps.count(request.projectId))
+            return false;
+        auto [entry, inserted] = promptedDumps.emplace(request.projectId, request.worldGeneration);
+        if (!inserted && entry->second == request.worldGeneration)
+            return false;
+        entry->second = request.worldGeneration;
+        return true;
+    }
+
     AutomaticWorldDumpRequestStatus requestDump(const WorldDumpRequest& request, std::function<void(const AutomaticWorldDumpResult&)> callback)
     {
         std::lock_guard guard(dumpMutex);
@@ -454,7 +467,8 @@ public:
                 for (int step = 0; step < 5 && !stopping; ++step)
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 const AutoDumpResult result = runAutomaticWorldDump(
-                    {request.projectId, request.projectDirectory, request.outputPath, editorPath, std::chrono::seconds(45)}, &stopping);
+                    {request.projectId, request.projectDirectory, request.outputPath, editorPath, std::chrono::seconds(45), request.method},
+                    &stopping);
                 AutoDumpResult published = result;
                 if (published.success && published.snapshot)
                 {
@@ -617,7 +631,7 @@ json ContextProvider::inspect(const std::string& scriptPath) const
         if (candidate.snapshot)
         {
             item["snapshot"] = worldDumpMetadata(*candidate.snapshot);
-            item["tick"] = candidate.snapshot->tick;
+            item["tick"] = item.at("snapshot").at("tick");
             item["instanceCount"] = candidate.snapshot->instances.size();
         }
         result["candidates"].push_back(std::move(item));
@@ -669,7 +683,8 @@ std::optional<WorldDumpRequest> ContextProvider::createProjectDumpRequest(const 
     }
     const std::filesystem::path output = std::filesystem::u8path(store.directory()) / "projects" / projectId / "world.dump.txt";
     const std::string outputPath = output.generic_u8string();
-    return WorldDumpRequest{"world.dump " + outputPath, outputPath, projectId, project->second.name, project->second.directory};
+    return WorldDumpRequest{
+        "world.dump " + outputPath, outputPath, projectId, project->second.name, project->second.directory, project->second.worldGeneration};
 }
 
 const ContextStore& ContextProvider::contextStore() const
@@ -724,6 +739,11 @@ std::shared_ptr<ContextNotificationSubscription> subscribeContextUpdates(
         return {};
     session->subscribe(subscriber, std::move(callback));
     return std::make_shared<ContextNotificationSubscription>(session, subscriber);
+}
+
+bool claimAutomaticDumpChoice(const std::shared_ptr<ContextHelperSession>& session, const WorldDumpRequest& request)
+{
+    return session && session->claimDumpChoice(request);
 }
 
 AutomaticWorldDumpRequestStatus requestAutomaticWorldDump(const std::shared_ptr<ContextHelperSession>& session, const WorldDumpRequest& request,

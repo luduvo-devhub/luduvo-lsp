@@ -396,6 +396,7 @@ TEST_CASE("event_schema_literal_rules_report_independently")
             {"same", ET.String},
             {"same", ET.String},
             {"missingType"},
+            {"badType", ("number")},
             42,
             {"Prefab", ET.String},
         })
@@ -405,6 +406,44 @@ TEST_CASE("event_schema_literal_rules_report_independently")
              "event-table.fields.duplicate", "event-table.fields.shape"})
         CHECK_MESSAGE(findDiagnostic(diagnostics, id), id);
     CHECK_FALSE(findDiagnostic(diagnostics, "event-table.fields.count"));
+    const auto invalidType = findDiagnostic(diagnostics, "event-table.fields.type");
+    REQUIRE(invalidType);
+    CHECK_EQ(invalidType->range.start.line, 9);
+}
+
+TEST_CASE("event schema field type reports the affected field and rejects invalid expressions")
+{
+    LuduvoFixture fixture("schema_field_types");
+    const auto uri = fixture.newDocument("schema.server.luau", R"(
+        --!strict
+        local ET = game.EventTable
+        local invalid = ET["Vector3"]
+        local valid = ET.Vec3
+        local function label(): string return "Vec3" end
+        local function vectorType(): typeof(ET.Vec3) return ET.Vec3 end
+        ET("Test", ET.ToClients, {
+            {"position", invalid},
+            {"label", label()},
+            {"direction", ET.ToServer},
+            {"direct", ET.Vector3},
+            {"validAlias", valid},
+            {"validCall", vectorType()},
+        })
+    )");
+    const auto diagnostics = diagnosticsFor(fixture, uri);
+    std::vector<std::string> messages;
+    for (const auto& diagnostic : diagnostics)
+        if (diagnostic.code == std::optional<std::variant<std::string, int>>("luduvo/event-table.fields.type"))
+            messages.push_back(diagnostic.message);
+
+    REQUIRE_EQ(messages.size(), 4);
+    CHECK(messages[0].find("'position'") != std::string::npos);
+    CHECK(messages[0].find("Vector3") != std::string::npos);
+    CHECK(messages[0].find("(String, F32, I32, U8, Bool, Vec3, Color, Entity, or Instance)") != std::string::npos);
+    CHECK(messages[1].find("'label'") != std::string::npos);
+    CHECK(messages[1].find("string") != std::string::npos);
+    CHECK(messages[2].find("'direction'") != std::string::npos);
+    CHECK(messages[3].find("'direct'") != std::string::npos);
 }
 
 TEST_CASE("event_schema_rules_skip_indirect_schemas_and_shadowed_apis")

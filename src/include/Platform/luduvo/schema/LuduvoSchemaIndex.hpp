@@ -92,6 +92,8 @@ public:
     std::optional<std::string> symbol(const Luau::AstExpr* expression) const;
 };
 
+std::string_view eventFieldValueType(std::string_view name);
+std::string_view eventFieldTypeNames();
 std::string schemaFingerprint(std::string_view source);
 ScriptSchema extractScriptSchema(const std::string& path, std::string_view source, bool unsaved = false);
 std::set<std::string> eventSchemaNames(const ProjectSchemas& project);

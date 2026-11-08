@@ -30,8 +30,9 @@ struct WorldInstance
     uint64_t shape = 0;
     WorldPosition position;
     std::vector<std::string> scripts;
+    nlohmann::json scene;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(WorldInstance, row, nodeId, instanceId, parentNodeId, name, type, shape, position, scripts)
+void from_json(const nlohmann::json& json, WorldInstance& instance);
 
 struct WorldDumpSource
 {
@@ -53,9 +54,12 @@ struct WorldDumpSnapshot
     std::string sourcePath;
     WorldDumpSource inputSource;
     std::vector<WorldInstance> instances;
+    int sceneFormat = 0;
+    nlohmann::json prefabs;
+    nlohmann::json singletons;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
-    WorldDumpSnapshot, formatVersion, tick, commandSequence, undoCount, redoCount, capturedAtUnixMs, sourcePath, inputSource, instances)
+void to_json(nlohmann::json& json, const WorldDumpSnapshot& snapshot);
+void from_json(const nlohmann::json& json, WorldDumpSnapshot& snapshot);
 
 struct WorldDumpParseResult
 {
@@ -67,6 +71,7 @@ struct WorldDumpParseResult
 WorldDumpParseResult parseWorldDump(std::string_view source, std::string sourcePath = {});
 WorldDumpParseResult parseWorldDumpFile(const std::string& path);
 std::string formatContextTimestamp(int64_t time);
+nlohmann::json worldDumpScene(const WorldDumpSnapshot& snapshot);
 nlohmann::json worldDumpMetadata(const WorldDumpSnapshot& snapshot);
 std::string describeWorldDumpSource(const WorldDumpSnapshot& snapshot);
 

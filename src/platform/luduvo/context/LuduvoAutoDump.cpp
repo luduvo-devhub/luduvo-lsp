@@ -8,6 +8,8 @@
 #include <cstring>
 #include "Platform/luduvo/context/LuduvoWorldDump.hpp"
 
+#include <algorithm>
+#include <charconv>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
@@ -143,65 +145,6 @@ static bool restoreHeldAutosave(const std::filesystem::path& original, const std
     return true;
 }
 
-class AutosaveHold
-{
-    std::filesystem::path original;
-    std::filesystem::path held;
-    bool holding = false;
-
-public:
-    explicit AutosaveHold(const std::string& projectDirectory)
-        : original(std::filesystem::u8path(projectDirectory) / "world.ldv.autosave")
-        , held(std::filesystem::u8path(projectDirectory) / "world.ldv.autosave.luduvo-lsp-hostage")
-    {
-    }
-
-    bool acquire(std::string* error)
-    {
-        if (!restoreHeldAutosave(original, held, error))
-            return false;
-        std::error_code filesystemError;
-        const bool originalExists = std::filesystem::exists(original, filesystemError);
-        if (filesystemError)
-        {
-            if (error)
-                *error = "could not inspect the Luduvo autosave: " + filesystemError.message();
-            return false;
-        }
-        if (!originalExists)
-            return true;
-
-        std::string renameError;
-        if (!renameAutosaveWithRetry(original, held, &renameError))
-        {
-            if (error)
-                *error = "could not temporarily hold the Luduvo autosave: " + renameError;
-            return false;
-        }
-        logging::write(logging::Level::Debug, "helper.autodump.autosaves", "Held autosave " + original.generic_u8string());
-        holding = true;
-        return true;
-    }
-
-    bool restore(std::string* error)
-    {
-        if (!holding)
-            return true;
-        if (!restoreHeldAutosave(original, held, error))
-            return false;
-        logging::write(logging::Level::Debug, "helper.autodump.autosaves", "Restored or preserved autosave " + original.generic_u8string());
-        holding = false;
-        return true;
-    }
-
-    ~AutosaveHold()
-    {
-        std::string error;
-        if (!restore(&error))
-            logging::write(logging::Level::Error, "helper.autodump.autosaves", "Autosave recovery failed during cleanup: " + error);
-    }
-};
-
 class TemporaryDumpProject
 {
     std::filesystem::path root;
@@ -222,10 +165,9 @@ public:
     {
         return root.generic_u8string();
     }
-    bool prepare(const std::string& directory, WorldDumpSource& source, std::string* error, const std::atomic<bool>* cancelled)
+    bool prepare(WorldDumpSource& source, std::string* error)
     {
         std::error_code ec;
-        const auto project = std::filesystem::u8path(directory);
         const auto input = std::filesystem::u8path(source.path);
         std::optional<std::string> bytes;
         for (int attempt = 0; attempt < 3; ++attempt)
@@ -249,7 +191,7 @@ public:
         }
         if (!bytes || ec)
         {
-            *error = "could not read a stable autosave; try again after Studio finishes writing";
+            *error = "could not read a stable world file. Try again after Studio finishes writing";
             return false;
         }
         static std::atomic<uint64_t> next{0};
@@ -285,6 +227,16 @@ public:
             *error = "could not restrict disposable project permissions: " + ec.message();
             return false;
         }
+        return writeFileAtomically((root / "world.ldv").generic_u8string(), *bytes, error);
+    }
+    std::string worldPath() const
+    {
+        return (root / "world.ldv").generic_u8string();
+    }
+    bool copyProjectFiles(const std::string& directory, std::string* error, const std::atomic<bool>* cancelled)
+    {
+        const auto project = std::filesystem::u8path(directory);
+        std::error_code ec;
         for (std::filesystem::recursive_directory_iterator it(project, ec), end; it != end && !ec; it.increment(ec))
         {
             if (cancelled && *cancelled)
@@ -308,7 +260,9 @@ public:
             }
             if (ec)
                 break;
-            if (name == ".git" || name == ".zed" || name == ".vscode")
+            // The copy should open exactly the selected world, without Studio's lock or journal replay.
+            const bool studioState = it.depth() == 0 && (name == ".studio.lock" || name == ".journal" || name == ".backups" || name == ".forks");
+            if (studioState || name == ".git" || name == ".zed" || name == ".vscode")
             {
                 if (it->is_directory(ec))
                     it.disable_recursion_pending();
@@ -334,17 +288,19 @@ public:
             *error = "could not copy disposable project: " + ec.message();
             return false;
         }
-        return writeFileAtomically((root / "world.ldv").generic_u8string(), *bytes, error);
+        return true;
     }
 };
 
-// Drain continuously so noisy editor output cannot block the dump. Keep only
-// the final 64 KiB, including on failure; never write editor output to stdout.
+// Drain child pipes continuously. Keep a short diagnostic tail or a bounded JSON document.
 class ProcessOutput
 {
     std::thread reader;
     std::mutex mutex;
-    std::string tail;
+    std::string contents;
+    bool overflow = false;
+    static constexpr size_t tailLimit = 64 * 1024;
+    static constexpr size_t documentLimit = 64 * 1024 * 1024;
 
 public:
 #ifdef _WIN32
@@ -365,7 +321,7 @@ public:
 #endif
         {
             if (error)
-                *error = "could not create editor output pipe";
+                *error = "could not create dump process output pipe";
             return false;
         }
 #ifndef _WIN32
@@ -388,11 +344,11 @@ public:
         output = -1;
 #endif
     }
-    void startReader()
+    void startReader(bool document = false)
     {
         closeWriter();
         reader = std::thread(
-            [this]
+            [this, document]
             {
                 char buffer[4096];
                 for (;;)
@@ -409,9 +365,14 @@ public:
                         break;
 #endif
                     std::lock_guard guard(mutex);
-                    tail.append(buffer, size_t(count));
-                    if (tail.size() > 65536)
-                        tail.erase(0, tail.size() - 65536);
+                    if (document && (overflow || contents.size() + size_t(count) > documentLimit))
+                    {
+                        overflow = true;
+                        continue;
+                    }
+                    contents.append(buffer, size_t(count));
+                    if (!document && contents.size() > tailLimit)
+                        contents.erase(0, contents.size() - tailLimit);
                 }
             });
     }
@@ -424,7 +385,12 @@ public:
     std::string text()
     {
         std::lock_guard guard(mutex);
-        return nlohmann::json::parse(nlohmann::json(tail).dump(-1, ' ', false, nlohmann::json::error_handler_t::replace)).get<std::string>();
+        return nlohmann::json::parse(nlohmann::json(contents).dump(-1, ' ', false, nlohmann::json::error_handler_t::replace)).get<std::string>();
+    }
+    std::string takeDocument()
+    {
+        std::lock_guard guard(mutex);
+        return overflow ? std::string{} : std::move(contents);
     }
     ~ProcessOutput()
     {
@@ -473,11 +439,12 @@ class ChildProcess
     HANDLE process = nullptr;
     HANDLE job = nullptr;
     ProcessOutput output;
+    ProcessOutput document;
 
 public:
-    bool start(const std::vector<std::string>& arguments, std::string* error)
+    bool start(const std::vector<std::string>& arguments, std::string* error, bool captureDocument = false)
     {
-        if (!output.open(error))
+        if (!output.open(error) || (captureDocument && !document.open(error)))
             return false;
         std::string commandLine;
         for (const std::string& argument : arguments)
@@ -494,7 +461,7 @@ public:
             CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &security, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
         startup.dwFlags = STARTF_USESTDHANDLES;
         startup.hStdInput = nullInput;
-        startup.hStdOutput = output.output;
+        startup.hStdOutput = captureDocument ? document.output : output.output;
         startup.hStdError = output.output;
         PROCESS_INFORMATION information{};
         job = CreateJobObjectW(nullptr, nullptr);
@@ -522,13 +489,19 @@ public:
         if (nullInput != INVALID_HANDLE_VALUE)
             CloseHandle(nullInput);
         output.startReader();
+        if (captureDocument)
+            document.startReader(true);
         process = information.hProcess;
-        logging::write(logging::Level::Debug, "helper.autodump.process", "Started editor PID " + std::to_string(information.dwProcessId));
+        logging::write(logging::Level::Debug, "helper.autodump.process", "Started dump process PID " + std::to_string(information.dwProcessId));
         ResumeThread(information.hThread);
         CloseHandle(information.hThread);
         return true;
     }
 
+    std::string takeDocument()
+    {
+        return document.takeDocument();
+    }
     std::string capturedOutput()
     {
         return output.text();
@@ -550,6 +523,7 @@ public:
         if (process)
             WaitForSingleObject(process, 5000);
         output.finish();
+        document.finish();
     }
 
     ~ChildProcess()
@@ -567,12 +541,13 @@ class ChildProcess
     pid_t process = -1;
     pid_t processGroup = -1;
     ProcessOutput output;
+    ProcessOutput document;
     std::string exitStatus = "unknown exit status";
 
 public:
-    bool start(const std::vector<std::string>& arguments, std::string* error)
+    bool start(const std::vector<std::string>& arguments, std::string* error, bool captureDocument = false)
     {
-        if (!output.open(error))
+        if (!output.open(error) || (captureDocument && !document.open(error)))
             return false;
         process = fork();
         if (process < 0)
@@ -593,7 +568,7 @@ public:
                 if (nullDescriptor > STDERR_FILENO)
                     close(nullDescriptor);
             }
-            dup2(output.output, STDOUT_FILENO);
+            dup2(captureDocument ? document.output : output.output, STDOUT_FILENO);
             dup2(output.output, STDERR_FILENO);
             close(output.input);
             close(output.output);
@@ -609,11 +584,17 @@ public:
             _exit(127);
         }
         processGroup = process;
-        logging::write(logging::Level::Debug, "helper.autodump.process", "Started editor PID " + std::to_string(process));
+        logging::write(logging::Level::Debug, "helper.autodump.process", "Started dump process PID " + std::to_string(process));
         output.startReader();
+        if (captureDocument)
+            document.startReader(true);
         return true;
     }
 
+    std::string takeDocument()
+    {
+        return document.takeDocument();
+    }
     std::string capturedOutput()
     {
         return output.text();
@@ -657,6 +638,7 @@ public:
         process = -1;
         processGroup = -1;
         output.finish();
+        document.finish();
     }
 
     ~ChildProcess()
@@ -667,6 +649,18 @@ public:
 #endif
 
 } // namespace
+
+std::string sceneDumperPath(const std::string& editorPath)
+{
+    if (editorPath.empty())
+        return {};
+#ifdef _WIN32
+    constexpr auto name = "ldv-dump.exe";
+#else
+    constexpr auto name = "ldv-dump";
+#endif
+    return (std::filesystem::u8path(editorPath).parent_path() / name).generic_u8string();
+}
 
 std::string defaultLuduvoEditorPath(const std::string& localDirectory)
 {
@@ -682,49 +676,111 @@ std::optional<WorldDumpSource> selectWorldDumpSource(const std::string& director
 {
     const auto root = std::filesystem::u8path(directory);
     std::error_code ec;
-    std::optional<std::filesystem::file_time_type> savedTime;
     const auto saved = root / "world.ldv";
-    const auto autosave = root / "world.ldv.autosave";
-    if (std::filesystem::is_regular_file(saved, ec))
+    std::filesystem::path selected;
+    std::filesystem::file_time_type selectedTime;
+    uint64_t selectedSequence = 0;
+    const auto consider = [&](const std::filesystem::path& path, uint64_t sequence)
     {
-        const auto modified = std::filesystem::last_write_time(saved, ec);
-        if (!ec)
-            savedTime = modified;
+        const auto status = sequence ? std::filesystem::symlink_status(path, ec) : std::filesystem::status(path, ec);
+        if (std::filesystem::is_regular_file(status))
+        {
+            const auto modified = std::filesystem::last_write_time(path, ec);
+            if (!ec && (selected.empty() || modified > selectedTime ||
+                           (modified == selectedTime && selected != saved && sequence > selectedSequence)))
+            {
+                selected = path;
+                selectedTime = modified;
+                selectedSequence = sequence;
+            }
+        }
+        if (ec == std::errc::no_such_file_or_directory)
+            ec.clear();
+        if (ec && error)
+            *error = "could not inspect " + path.generic_u8string() + ": " + ec.message();
+        return !ec;
+    };
+    if (!consider(saved, 0) || !consider(root / "world.ldv.autosave", 0))
+        return std::nullopt;
+
+    const auto backups = root / ".backups";
+    for (std::filesystem::directory_iterator it(backups, ec), end; it != end && !ec; it.increment(ec))
+    {
+        const auto name = it->path().filename().generic_u8string();
+        if (name.size() <= 10 || name.compare(0, 6, "world.") != 0 || name.compare(name.size() - 4, 4, ".ldv") != 0)
+            continue;
+        const auto first = name.data() + 6;
+        const auto last = name.data() + name.size() - 4;
+        uint64_t sequence = 0;
+        const auto parsed = std::from_chars(first, last, sequence);
+        if (parsed.ec == std::errc{} && parsed.ptr == last && sequence && !consider(it->path(), sequence))
+            return std::nullopt;
     }
     if (ec && ec != std::errc::no_such_file_or_directory)
     {
         if (error)
-            *error = ec.message();
+            *error = "could not scan Studio backups: " + ec.message();
         return std::nullopt;
     }
-    ec.clear();
-    const bool hasAutosave = std::filesystem::is_regular_file(autosave, ec);
-    if (ec && ec != std::errc::no_such_file_or_directory)
+    if (selected.empty())
     {
         if (error)
-            *error = ec.message();
+            *error = "project has no saved world, autosave, or numbered Studio backup";
         return std::nullopt;
     }
-    ec.clear();
-    const auto autosaveTime = hasAutosave ? std::filesystem::last_write_time(autosave, ec) : std::filesystem::file_time_type{};
-    if (ec)
-    {
-        if (error)
-            *error = ec.message();
-        return std::nullopt;
-    }
-    const bool useAutosave = hasAutosave && (!savedTime || autosaveTime > *savedTime);
-    if (!savedTime && !useAutosave)
-    {
-        if (error)
-            *error = "project has neither a saved world nor an autosave";
-        return std::nullopt;
-    }
-    const auto modified = useAutosave ? autosaveTime : *savedTime;
+
     const auto unixTime = std::chrono::time_point_cast<std::chrono::milliseconds>(
-        modified - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
-    return WorldDumpSource{
-        useAutosave ? "autosave" : "save", (useAutosave ? autosave : saved).generic_u8string(), unixTime.time_since_epoch().count()};
+        selectedTime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
+    return WorldDumpSource{selected == saved ? "save" : "autosave", selected.generic_u8string(), unixTime.time_since_epoch().count()};
+}
+
+static std::optional<WorldDumpSnapshot> trySceneDump(
+    const AutoDumpPlan& plan, const WorldDumpSource& source, const std::string& input, const std::atomic<bool>* cancelled)
+{
+    const auto tool = sceneDumperPath(plan.editorPath);
+    std::error_code ec;
+    if (tool.empty() || !std::filesystem::is_regular_file(std::filesystem::u8path(tool), ec))
+        return std::nullopt;
+
+    ChildProcess child;
+    std::string error;
+    if (!child.start({tool, "--json", input}, &error, true))
+    {
+        logging::write(logging::Level::Debug, "helper.autodump.process", "ldv-dump: " + error);
+        return std::nullopt;
+    }
+    const auto deadline = std::chrono::steady_clock::now() + std::min(plan.timeout, std::chrono::seconds(10));
+    while (child.running())
+    {
+        if ((cancelled && *cancelled) || std::chrono::steady_clock::now() >= deadline)
+            return std::nullopt;
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    const auto status = child.exitDescription();
+    child.stop();
+    if (status != "exit code 0")
+    {
+        logging::write(logging::Level::Debug, "helper.autodump.process", "ldv-dump " + status + ": " + child.capturedOutput());
+        return std::nullopt;
+    }
+    const std::string contents = child.takeDocument();
+    const std::string path = plan.outputPath + ".scene.json";
+    auto parsed = parseWorldDump(contents, path);
+    if (!parsed.snapshot || !parsed.snapshot->sceneFormat)
+    {
+        logging::write(logging::Level::Debug, "helper.autodump.process",
+            "ldv-dump returned no usable scene JSON: " + parsed.error.value_or("unexpected dump format"));
+        return std::nullopt;
+    }
+    if (!writeFileAtomically(path, contents, &error))
+    {
+        logging::write(logging::Level::Debug, "helper.autodump.process", "Could not write ldv-dump output: " + error);
+        return std::nullopt;
+    }
+    parsed.snapshot->inputSource = source;
+    parsed.snapshot->capturedAtUnixMs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    return std::move(parsed.snapshot);
 }
 
 static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const std::atomic<bool>* cancelled)
@@ -733,26 +789,12 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
         return {false, "automatic world dump was cancelled"};
     if (plan.projectDirectory.empty())
         return {false, "the selected project has no known directory"};
-    if (plan.editorPath.empty() || !std::filesystem::exists(std::filesystem::u8path(plan.editorPath)))
-        return {false, "LuduvoEditor was not found at " + plan.editorPath};
-
     std::string error;
     const auto recovered = recoverAutomaticWorldDumpAutosave(plan.projectDirectory);
     if (!recovered.success)
         return recovered;
     auto source = selectWorldDumpSource(plan.projectDirectory, &error);
     if (!source)
-        return {false, error};
-    AutosaveHold autosave(plan.projectDirectory);
-    TemporaryDumpProject temporary;
-    std::string directory = plan.projectDirectory;
-    if (source->kind == "autosave")
-    {
-        if (!temporary.prepare(directory, *source, &error, cancelled))
-            return {false, error};
-        directory = temporary.directory();
-    }
-    else if (!autosave.acquire(&error))
         return {false, error};
     logging::write(logging::Level::Debug, "helper.autodump", "Input: " + source->path + " (" + source->kind + ")");
 
@@ -761,12 +803,31 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
     std::filesystem::create_directories(output.parent_path(), filesystemError);
     if (filesystemError)
         return {false, "could not create the world-dump directory: " + filesystemError.message()};
+    TemporaryDumpProject temporary;
+    if (!temporary.prepare(*source, &error))
+        return {false, error};
+    if (cancelled && *cancelled)
+        return {false, "automatic world dump was cancelled"};
+    if (plan.method != DumpMethod::Studio)
+    {
+        if (auto snapshot = trySceneDump(plan, *source, temporary.worldPath(), cancelled))
+            return {true, {}, std::move(snapshot)};
+        if (plan.method == DumpMethod::SavedScene && !(cancelled && *cancelled))
+            return {false, "ldv-dump could not read the selected scene or is unavailable"};
+    }
+    if (cancelled && *cancelled)
+        return {false, "automatic world dump was cancelled"};
+    if (plan.editorPath.empty() || !std::filesystem::exists(std::filesystem::u8path(plan.editorPath)))
+        return {false, "LuduvoEditor was not found at " + plan.editorPath};
+    if (!temporary.copyProjectFiles(plan.projectDirectory, &error, cancelled))
+        return {false, error};
+
     std::filesystem::remove(output, filesystemError);
     if (filesystemError)
         return {false, "could not replace the previous world dump: " + filesystemError.message()};
 
     ChildProcess child;
-    std::vector<std::string> arguments = {plan.editorPath, directory};
+    std::vector<std::string> arguments = {plan.editorPath, temporary.directory()};
 #ifdef _WIN32
     arguments.insert(arguments.end(), {"-platform", "offscreen"});
 #endif
@@ -785,8 +846,6 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
         if (cancelled && *cancelled)
         {
             child.stop();
-            if (!autosave.restore(&error))
-                return {false, error};
             return {false, "automatic world dump was cancelled"};
         }
         if (std::filesystem::exists(output))
@@ -805,8 +864,6 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
                     // Give Studio time to flush the matching command-log acknowledgement before ending the disposable process.
                     std::this_thread::sleep_for(std::chrono::milliseconds(250));
                     child.stop();
-                    if (!autosave.restore(&error))
-                        return {false, error};
                     parsed.snapshot->inputSource = *source;
                     return {true, {}, std::move(parsed.snapshot)};
                 }
@@ -828,8 +885,6 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
     logging::write(logging::Level::Warning, "helper.autodump.process", "Editor " + termination + " for " + plan.projectId);
     child.stop();
     logging::write(logging::Level::Debug, "helper.autodump.process", "Editor output tail for " + plan.projectId + ":\n" + child.capturedOutput());
-    if (!autosave.restore(&error))
-        return {false, error};
     if (!lastParseError.empty())
         return {false, "LuduvoEditor did not produce a complete world dump: " + lastParseError};
     return {false, "LuduvoEditor " + termination + " before producing a world dump"};

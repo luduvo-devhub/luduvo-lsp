@@ -33,6 +33,7 @@ public:
     void bind(const Luau::ModuleName& moduleName, const Luau::ScopePtr& scope);
     void complete(const TextDocument& document, const Luau::SourceModule& source, Luau::Position position,
         const std::vector<Luau::AstNode*>& ancestry, std::vector<lsp::CompletionItem>& items);
+    std::string staleHint(const Luau::ModuleName& moduleName, const Luau::AstExpr* expression, Luau::TypeId type) const;
     std::string debug(const Luau::ModuleName& moduleName, const Luau::AstExpr* expression, Luau::TypeId type, std::string_view field = {});
     nlohmann::json inspect(const std::string& script);
     void forgetOverlay(const std::string& script);

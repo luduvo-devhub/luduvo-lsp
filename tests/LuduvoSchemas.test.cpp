@@ -10,6 +10,7 @@
 #include "Platform/luduvo/hover/LuduvoHoverAnalysis.hpp"
 #include "Platform/luduvo/diagnostics/LuduvoDiagnostics.hpp"
 #include "Luau/Parser.h"
+#include "Luau/ToString.h"
 #include "LuauFileUtils.hpp"
 #include <filesystem>
 
@@ -24,6 +25,70 @@ static std::string getErrors(const Luau::CheckResult& result)
     return message;
 }
 TEST_SUITE_BEGIN("LuduvoSchemas");
+
+TEST_CASE("event_signals_use_ordered_payloads_when_registrations_agree")
+{
+    LuduvoFixture fixture("event_signal_payloads");
+    auto project = std::make_shared<ProjectSchemas>();
+    project->scripts["a"] = extractScriptSchema("a", R"(
+        local E = game.EventTable
+        E("Score", E.ToServer, {{"score", E.I32}, {"message", E.String}})
+        E("Conflict", E.ToClients, {{"score", E.I32}, {"message", E.String}})
+        E("Conflict", E.ToClients, {{"message", E.String}, {"score", E.I32}})
+        E("Unknown", E.ToClients, {{"score", unknownType}})
+    )");
+    std::shared_ptr<SchemaTypes> types;
+    fixture.workspace.frontend.prepareModuleScope = [&](const Luau::ModuleName&, const Luau::ScopePtr& scope, bool)
+    {
+        if (!types)
+            types = std::make_shared<SchemaTypes>(project, scope->parent, fixture.workspace.frontend.builtinTypes);
+        types->bind(scope, "a");
+    };
+
+    const auto good = fixture.newDocument("good.server.luau", R"(--!strict
+        local event = game.EventTable("Score" :: "Score")
+        local base: EventTable = event
+        event.OnServerEvent:Connect(function(player, score, message)
+            local p: Instance = player
+            local s: number = score
+            local m: string = message
+        end)
+        event.OnClientEvent:Once(function(score, message)
+            local s: number = score
+            local m: string = message
+        end)
+        game.EventTable("Conflict" :: "Conflict").OnClientEvent:Connect(function(value)
+            local fallback: boolean = value
+        end)
+        game.EventTable("Unknown" :: "Unknown").OnClientEvent:Once(function(value)
+            local fallback: boolean = value
+        end)
+    )");
+    const auto goodName = fixture.workspace.fileResolver.getModuleName(good);
+    LUAU_LSP_REQUIRE_NO_ERRORS(fixture.workspace.checkStrict(goodName, nullptr));
+    const auto module = fixture.workspace.getModule(goodName);
+    REQUIRE(module);
+    Luau::ToStringOptions options;
+    options.functionTypeArguments = true;
+    std::set<std::string> signatures;
+    for (const auto& [expression, type] : module->astTypes)
+        if (const auto member = expression->as<Luau::AstExprIndexName>())
+            if (std::string_view(member->index.value) == "OnServerEvent" || std::string_view(member->index.value) == "OnClientEvent")
+                signatures.insert(Luau::toString(type, options));
+    CHECK(signatures.count("Signal<(player: Instance, score: number, message: string) -> ()>"));
+    CHECK(signatures.count("Signal<(score: number, message: string) -> ()>"));
+
+    const auto bad = fixture.newDocument("bad.server.luau", R"(--!strict
+        local event = game.EventTable("Score" :: "Score")
+        event.OnServerEvent:Connect(function(player, score, message)
+            local invalid: string = score
+        end)
+        event.OnClientEvent:Once(function(score, message)
+            local invalid: number = message
+        end)
+    )");
+    LUAU_LSP_REQUIRE_ERROR_COUNT(2, fixture.workspace.checkStrict(fixture.workspace.fileResolver.getModuleName(bad), nullptr));
+}
 
 TEST_CASE("extracts_registrations_without_treating_readonly_handle_writes_as_declarations")
 {

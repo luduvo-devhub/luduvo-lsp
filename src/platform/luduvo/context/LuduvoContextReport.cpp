@@ -56,11 +56,16 @@ static void appendSourceFields(ReportNode& result, const WorldDumpSource& source
 static ReportNode snapshotReport(const json& value)
 {
     ReportNode result{"World snapshot"};
+    if (const auto fresh = value.find("fresh"); fresh != value.end() && fresh->is_boolean() && !fresh->get<bool>())
+        result.tags.push_back("stale");
     const auto captured = value.value("capturedAtUnixMs", json(nullptr));
     const auto path = value.value("sourcePath", json(nullptr));
     const auto time = captured.is_number_integer() ? captured.get<int64_t>() : 0;
     result.fields = {
         {"Captured", formatContextTimestamp(time), !time}, {"Dump path", path.is_string() ? path.get<std::string>() : "", !path.is_string()}};
+    result.fields.push_back({"Producer", value.value("producer", "unknown")});
+    if (const auto format = value.find("sceneFormat"); format != value.end() && !format->is_null())
+        result.fields.push_back({"Scene format", format->dump()});
     appendSourceFields(result, value.value("inputSource", json::object()).get<WorldDumpSource>());
     return result;
 }
@@ -132,7 +137,9 @@ ReportNode buildProjectSchemaReport(const json& value)
         for (const auto& instance : attachment.second)
         {
             ReportNode node{instance.path};
-            node.tags = {"node " + std::to_string(instance.nodeId), "instance " + std::to_string(instance.instanceId)};
+            node.tags = {"node " + std::to_string(instance.nodeId)};
+            if (instance.instanceId)
+                node.tags.push_back("instance " + std::to_string(instance.instanceId));
             script.children.push_back(std::move(node));
         }
         for (const auto& field : handleSchemaFields(project, attachment.first))
@@ -304,15 +311,49 @@ std::optional<ReportNode> selectReportSections(ReportNode root, const std::vecto
     return filterReportNode(root, std::set<std::string>(sections.begin(), sections.end()));
 }
 
+static ReportNode sceneDetailNode(std::string label, const json& value)
+{
+    ReportNode result{std::move(label)};
+    for (const auto& [key, field] : value.items())
+    {
+        const std::string childLabel =
+            value.is_array() && field.is_object() && field.contains("name") && field["name"].is_string() ? field["name"].get<std::string>() : key;
+        if (field.is_structured())
+            result.children.push_back(sceneDetailNode(childLabel, field));
+        else
+            result.fields.push_back({childLabel, displayValue(field)});
+    }
+    return result;
+}
+
+static void appendSceneSections(ReportNode& report, const json& value)
+{
+    for (const auto& [key, label] : {std::pair{"prefabs", "Held prefabs"}, {"singletons", "World settings"}})
+        if (const auto field = value.find(key); field != value.end())
+        {
+            auto section = sceneDetailNode(label, *field);
+            section.section = key;
+            if (field->is_null())
+                section.fields.push_back({"Availability", "Unavailable in this capture"});
+            else if (field->empty())
+                section.fields.push_back({"Entries", "None"});
+            report.children.push_back(std::move(section));
+        }
+}
+
 static ReportNode scriptAttachmentNode(const json& attachment)
 {
     ReportNode result{attachment.value("name", "<unnamed>")};
     if (const auto type = attachment.find("type"); type != attachment.end() && type->is_string() && !type->get_ref<const std::string&>().empty())
         result.tags.push_back(type->get<std::string>());
-    if (const auto nodeId = attachment.find("nodeId"); nodeId != attachment.end())
+    if (const auto nodeId = attachment.find("nodeId"); nodeId != attachment.end() && !nodeId->is_null())
         result.tags.push_back("node " + displayValue(*nodeId));
-    if (const auto instanceId = attachment.find("instanceId"); instanceId != attachment.end())
+    if (const auto instanceId = attachment.find("instanceId"); instanceId != attachment.end() && !instanceId->is_null())
         result.fields.push_back({"Instance ID", displayValue(*instanceId)});
+    if (const auto index = attachment.find("sceneIndex"); index != attachment.end())
+        result.tags.push_back("scene index " + displayValue(*index));
+    if (const auto scene = attachment.find("scene"); scene != attachment.end() && scene->is_object())
+        result.children.push_back(sceneDetailNode("Scene data", *scene));
     if (const auto position = attachment.find("position"); position != attachment.end() && position->is_object())
         result.fields.push_back({"Position", displayValue(position->value("x", 0.0)) + ", " + displayValue(position->value("y", 0.0)) + ", " +
                                                  displayValue(position->value("z", 0.0))});
@@ -320,7 +361,8 @@ static ReportNode scriptAttachmentNode(const json& attachment)
     {
         ReportNode parentNode{"Parent: " + parent->value("name", "<unnamed>")};
         parentNode.tags.push_back(parent->value("type", "<unknown>"));
-        parentNode.tags.push_back("node " + std::to_string(parent->value("nodeId", uint64_t(0))));
+        if (const auto id = parent->find("nodeId"); id != parent->end() && !id->is_null())
+            parentNode.tags.push_back("node " + displayValue(*id));
         result.children.push_back(std::move(parentNode));
     }
     if (const auto children = attachment.find("children"); children != attachment.end() && children->is_array())
@@ -402,8 +444,8 @@ static ReportNode buildWorldDumpReport(const json& inspection)
     {
         ReportNode summaryNode{"Summary"};
         summaryNode.section = "summary";
-        summaryNode.fields.push_back({"Tick", displayValue(summary->value("tick", 0))});
-        summaryNode.fields.push_back({"Command sequence", displayValue(summary->value("commandSequence", 0))});
+        summaryNode.fields.push_back({"Tick", displayValue(summary->value("tick", json(nullptr)))});
+        summaryNode.fields.push_back({"Command sequence", displayValue(summary->value("commandSequence", json(nullptr)))});
         summaryNode.fields.push_back({"Instances", displayValue(summary->value("instanceCount", 0))});
         summaryNode.fields.push_back({"Root instances", displayValue(summary->value("rootInstanceCount", 0))});
         summaryNode.fields.push_back({"Script attachments", displayValue(summary->value("scriptAttachmentCount", 0))});
@@ -411,21 +453,41 @@ static ReportNode buildWorldDumpReport(const json& inspection)
     }
     if (inspection.contains("snapshot"))
         root.children.push_back(snapshotReport(inspection.at("snapshot")));
-    if (const auto instances = inspection.find("instances"); instances != inspection.end() && instances->is_array())
+    if (const auto scene = inspection.find("scene"); scene != inspection.end() && scene->is_object())
     {
-        std::map<uint64_t, std::vector<const json*>> children;
-        for (const json& instance : *instances)
-            children[instance.value("parentNodeId", uint64_t(0))].push_back(&instance);
+        appendSceneSections(root, *scene);
+        const auto& entities = scene->at("entities");
+        std::map<std::optional<size_t>, std::vector<const json*>> children;
+        for (const json& instance : entities)
+        {
+            const auto& parent = instance.at("parent");
+            children[parent.is_null() ? std::nullopt : std::optional<size_t>(parent.get<size_t>())].push_back(&instance);
+        }
         std::function<ReportNode(const json&)> buildInstance = [&](const json& instance)
         {
-            ReportNode node = scriptAttachmentNode(instance);
-            for (const json* child : children[instance.value("nodeId", uint64_t(0))])
+            const size_t index = instance.at("index").get<size_t>();
+            ReportNode node{instance.value("name", "<unnamed>")};
+            if (const auto studio = instance.find("studio"); studio != instance.end())
+            {
+                const auto type = studio->value("type", "");
+                if (!type.empty())
+                    node.tags.push_back(type);
+                node.tags.push_back("node " + displayValue(studio->at("nodeId")));
+                node.fields.push_back({"Shape", displayValue(studio->at("shape"))});
+                node.fields.push_back({"Instance ID", displayValue(studio->at("instanceId"))});
+            }
+            else
+                node.tags.push_back("scene index " + std::to_string(index));
+            for (const auto& [key, value] : instance.items())
+                if (key != "index" && key != "parent" && key != "name" && key != "studio")
+                    node.children.push_back(sceneDetailNode(key, value));
+            for (const json* child : children[index])
                 node.children.push_back(buildInstance(*child));
             return node;
         };
-        ReportNode hierarchy{"Instances (" + std::to_string(instances->size()) + ")"};
+        ReportNode hierarchy{"Instances (" + std::to_string(entities.size()) + ")"};
         hierarchy.section = "instances";
-        for (const json* instance : children[0])
+        for (const json* instance : children[std::nullopt])
             hierarchy.children.push_back(buildInstance(*instance));
         root.children.push_back(std::move(hierarchy));
     }
@@ -506,6 +568,14 @@ static ReportNode buildProjectReport(const json& inspection, bool promoteContext
             captured.fields.push_back({"Stale reason", context->value("staleReason", "")});
         if (context->contains("snapshot"))
             captured.children.push_back(snapshotReport(context->at("snapshot")));
+        appendSceneSections(captured, *context);
+        if (const auto alternate = context->find("alternateSnapshot"); alternate != context->end())
+        {
+            auto previous = snapshotReport(*alternate);
+            previous.label = "Previous capture";
+            appendSceneSections(previous, *alternate);
+            captured.children.push_back(std::move(previous));
+        }
         root.children.push_back(std::move(captured));
     }
     if (const auto attachments = inspection.find("attachments"); attachments != inspection.end() && attachments->is_array() && !attachments->empty())
@@ -696,6 +766,7 @@ ReportNode buildContextStatusReport(const json& status)
         ReportNode settings{"Configuration"};
         settings.fields.push_back({"Enabled", configuration->value("enabled", false) ? "yes" : "no"});
         settings.fields.push_back({"Automatic dumps", configuration->value("autoDump", true) ? "enabled" : "disabled"});
+        settings.fields.push_back({"Dump method", configuration->value("dumpMethod", "auto")});
         settings.fields.push_back({"Lazy refresh", configuration->value("lazyRefresh", false) ? "enabled" : "disabled"});
         root.children.push_back(std::move(settings));
     }

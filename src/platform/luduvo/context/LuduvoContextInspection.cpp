@@ -132,10 +132,10 @@ static ContextInspectionResult inspectWorldDump(const std::string& path)
     }
 
     json summary = {
-        {"tick", parsed.snapshot->tick},
-        {"commandSequence", parsed.snapshot->commandSequence},
-        {"undoCount", parsed.snapshot->undoCount},
-        {"redoCount", parsed.snapshot->redoCount},
+        {"tick", parsed.snapshot->sceneFormat ? json(nullptr) : json(parsed.snapshot->tick)},
+        {"commandSequence", parsed.snapshot->sceneFormat ? json(nullptr) : json(parsed.snapshot->commandSequence)},
+        {"undoCount", parsed.snapshot->sceneFormat ? json(nullptr) : json(parsed.snapshot->undoCount)},
+        {"redoCount", parsed.snapshot->sceneFormat ? json(nullptr) : json(parsed.snapshot->redoCount)},
         {"instanceCount", parsed.snapshot->instances.size()},
         {"rootInstanceCount", roots},
         {"scriptAttachmentCount", scriptAttachments},
@@ -144,7 +144,7 @@ static ContextInspectionResult inspectWorldDump(const std::string& path)
     };
     return {json{{"kind", "worldDump"}, {"inputPath", normalizeContextPath(path)}, {"sourcePath", parsed.snapshot->sourcePath},
                 {"snapshot", worldDumpMetadata(*parsed.snapshot)}, {"summary", std::move(summary)}, {"warnings", parsed.warnings},
-                {"scripts", uniqueScripts}, {"instances", parsed.snapshot->instances}},
+                {"scripts", uniqueScripts}, {"scene", worldDumpScene(*parsed.snapshot)}},
         std::nullopt};
 }
 
@@ -216,7 +216,8 @@ static ContextInspectionResult inspectScript(const std::string& path, const std:
                     if (attachedPath != normalizedPath)
                         continue;
                     sources.insert("worldDump");
-                    attachments.push_back({{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"parentNodeId", instance.parentNodeId},
+                    attachments.push_back({{"nodeId", instance.scene.is_null() ? json(instance.nodeId) : json(nullptr)},
+                        {"instanceId", instance.instanceId ? json(instance.instanceId) : json(nullptr)}, {"parentNodeId", instance.parentNodeId},
                         {"name", instance.name}, {"type", instance.type}});
                 }
             }
@@ -286,7 +287,7 @@ ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& 
 {
     if (!request.nodeId && !request.instanceId && !request.name)
         return {std::nullopt, "instance inspection requires --node-id, --instance-id, or --name"};
-    static const std::set<std::string> validSections{"hierarchy", "position", "scripts"};
+    static const std::set<std::string> validSections{"hierarchy", "position", "scene", "scripts"};
     for (const std::string& section : request.sections)
         if (!validSections.count(section))
             return {std::nullopt, "unknown instance inspection section: " + section};
@@ -318,29 +319,37 @@ ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& 
         json matches = json::array();
         for (const WorldInstance& instance : world->instances)
         {
-            if (request.nodeId && instance.nodeId != *request.nodeId)
+            if (request.nodeId && (world->sceneFormat || instance.nodeId != *request.nodeId))
                 continue;
-            if (request.instanceId && instance.instanceId != *request.instanceId)
+            if (request.instanceId && (!instance.instanceId || instance.instanceId != *request.instanceId))
                 continue;
             if (request.name && instance.name != *request.name)
                 continue;
 
-            json value = {{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"name", instance.name}, {"type", instance.type},
+            json value = {{"nodeId", instance.scene.is_null() ? json(instance.nodeId) : json(nullptr)},
+                {"instanceId", instance.instanceId ? json(instance.instanceId) : json(nullptr)}, {"name", instance.name}, {"type", instance.type},
                 {"shape", instance.shape}};
+            if (!instance.scene.is_null())
+            {
+                value["sceneIndex"] = instance.row;
+                if (includesSection(request, "scene"))
+                    value["scene"] = instance.scene;
+            }
             if (includesSection(request, "position"))
-                value["position"] = instance.position;
+                value["position"] = instance.scene.is_null() || instance.scene.contains("world") ? json(instance.position) : json(nullptr);
             if (includesSection(request, "scripts"))
                 value["scripts"] = instance.scripts;
             if (includesSection(request, "hierarchy"))
             {
                 if (const auto parent = instancesByNode.find(instance.parentNodeId); parent != instancesByNode.end())
-                    value["parent"] = {{"nodeId", parent->second->nodeId}, {"name", parent->second->name}, {"type", parent->second->type}};
+                    value["parent"] = {{"nodeId", parent->second->scene.is_null() ? json(parent->second->nodeId) : json(nullptr)},
+                        {"name", parent->second->name}, {"type", parent->second->type}};
                 else
                     value["parent"] = nullptr;
                 value["children"] = json::array();
                 for (const WorldInstance* child : childrenByParent[instance.nodeId])
-                    value["children"].push_back(
-                        {{"nodeId", child->nodeId}, {"instanceId", child->instanceId}, {"name", child->name}, {"type", child->type}});
+                    value["children"].push_back({{"nodeId", child->scene.is_null() ? json(child->nodeId) : json(nullptr)},
+                        {"instanceId", child->instanceId ? json(child->instanceId) : json(nullptr)}, {"name", child->name}, {"type", child->type}});
             }
             matches.push_back(std::move(value));
             ++matchCount;
@@ -361,6 +370,21 @@ ContextInspectionResult inspectContextInstance(const InstanceInspectionRequest& 
     return {json{{"kind", "instance"}, {"matchCount", matchCount}, {"projects", std::move(projects)}}, std::nullopt};
 }
 
+static void addCaptureDetails(json& context, const ContextProject& project, const WorldDumpSnapshot& world, const ContextStore& store)
+{
+    context["snapshot"] = worldDumpMetadata(world);
+    context["snapshot"]["fresh"] = project.fresh;
+    context["prefabs"] = world.prefabs;
+    context["singletons"] = world.singletons;
+    if (const auto alternate = store.loadAlternateWorld(project); alternate && bool(alternate->sceneFormat) != bool(world.sceneFormat))
+    {
+        context["alternateSnapshot"] = worldDumpMetadata(*alternate);
+        context["alternateSnapshot"]["fresh"] = false;
+        context["alternateSnapshot"]["prefabs"] = alternate->prefabs;
+        context["alternateSnapshot"]["singletons"] = alternate->singletons;
+    }
+}
+
 static json storedProjectReport(const std::string& projectId, const ContextProject& project, const ContextStore& store)
 {
     const json directory = project.directory.empty() ? json(nullptr) : json(project.directory);
@@ -373,13 +397,14 @@ static json storedProjectReport(const std::string& projectId, const ContextProje
         report["schemas"] = *schemas;
     if (const auto world = store.loadWorld(projectId))
     {
-        report["capturedContext"]["snapshot"] = worldDumpMetadata(*world);
+        addCaptureDetails(report["capturedContext"], project, *world, store);
         for (const WorldInstance& instance : world->instances)
         {
             if (instance.scripts.empty())
                 continue;
-            report["attachments"].push_back({{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"name", instance.name},
-                {"type", instance.type}, {"scripts", instance.scripts}});
+            report["attachments"].push_back({{"nodeId", instance.scene.is_null() ? json(instance.nodeId) : json(nullptr)},
+                {"instanceId", instance.instanceId ? json(instance.instanceId) : json(nullptr)}, {"name", instance.name}, {"type", instance.type},
+                {"scripts", instance.scripts}});
         }
     }
     return report;
@@ -486,12 +511,13 @@ ContextInspectionResult inspectContextInput(const std::string& path, const std::
                 const auto world = store.loadWorld(projectId);
                 if (world)
                 {
-                    report["capturedContext"]["snapshot"] = worldDumpMetadata(*world);
+                    addCaptureDetails(report["capturedContext"], captured, *world, store);
                     for (const WorldInstance& instance : world->instances)
                     {
                         if (instance.scripts.empty())
                             continue;
-                        report["attachments"].push_back({{"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"name", instance.name},
+                        report["attachments"].push_back({{"nodeId", instance.scene.is_null() ? json(instance.nodeId) : json(nullptr)},
+                            {"instanceId", instance.instanceId ? json(instance.instanceId) : json(nullptr)}, {"name", instance.name},
                             {"type", instance.type}, {"scripts", instance.scripts}});
                     }
                 }

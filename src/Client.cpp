@@ -56,7 +56,10 @@ void LSPClient::sendRequest(
 
     // Register a response handler
     if (handler)
+    {
+        std::lock_guard guard(*transportMutex);
         responseHandler.emplace(id, *handler);
+    }
 
     sendRawMessage(msg);
 }
@@ -185,6 +188,11 @@ void LSPClient::sendWindowMessage(const lsp::MessageType& type, const std::strin
 {
     lsp::ShowMessageParams params{type, message};
     sendNotification("window/showMessage", params);
+}
+
+void LSPClient::pickDumpMethod(const json& params, const ResponseHandler& handler)
+{
+    sendRequest(nextRequestId++, "$/luduvo/pickDumpMethod", std::optional<json>{std::in_place, params}, handler);
 }
 
 void LSPClient::sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message, const std::vector<lsp::MessageActionItem>& actions,
@@ -353,16 +361,16 @@ void LSPClient::handleResponse(const JsonRpcMessage& message)
     {
         if (message.id)
         {
-            // Check if a response handler was registered for this response
-            if (responseHandler.find(*message.id) == responseHandler.end())
-                return;
-
-            // Call the handler on the message
-            auto handler = responseHandler.at(*message.id);
+            ResponseHandler handler;
+            {
+                std::lock_guard guard(*transportMutex);
+                const auto found = responseHandler.find(*message.id);
+                if (found == responseHandler.end())
+                    return;
+                handler = std::move(found->second);
+                responseHandler.erase(found);
+            }
             handler(message);
-
-            // Deregister the handler
-            responseHandler.erase(*message.id);
         }
     }
     catch (const std::exception& e)

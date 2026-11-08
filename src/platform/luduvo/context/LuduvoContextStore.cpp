@@ -376,11 +376,38 @@ ContextStoreResult ContextStore::updateWorldForProject(WorldDumpSnapshot snapsho
     return updateWorldLocked(*catalog, std::move(snapshot), projectId);
 }
 
+static std::optional<WorldDumpSnapshot> readWorldSnapshot(const std::string& path, std::string* error = nullptr)
+{
+    const auto source = readSharedFile(path);
+    if (!source)
+    {
+        if (error)
+            *error = "could not read " + path;
+        return std::nullopt;
+    }
+    try
+    {
+        return json::parse(*source).get<WorldDumpSnapshot>();
+    }
+    catch (const std::exception& exception)
+    {
+        if (error)
+            *error = "could not parse " + path + ": " + exception.what();
+        return std::nullopt;
+    }
+}
+
 ContextStoreResult ContextStore::updateWorldLocked(ContextCatalog& catalog, WorldDumpSnapshot snapshot, const std::string& projectId) const
 {
     std::string error;
     ContextProject& project = catalog.projects.at(projectId);
     const std::string& id = projectId;
+    if (!project.snapshotPath.empty())
+    {
+        if (const auto previous = readWorldSnapshot(project.snapshotPath); previous && bool(previous->sceneFormat) != bool(snapshot.sceneFormat))
+            if (!writeFileAtomically(project.snapshotPath + ".alternate", json(*previous).dump(2) + "\n", &error))
+                return {false, id, std::move(error)};
+    }
     project.snapshotPath = joinPath(joinPath(stateDirectory, "projects"), id + "/world.json");
     project.dumpPath = snapshot.sourcePath;
     project.updatedAtUnixMs = unixTimeMilliseconds();
@@ -579,23 +606,12 @@ std::optional<WorldDumpSnapshot> ContextStore::loadWorld(const std::string& proj
             *error = "project '" + projectId + "' has no world snapshot";
         return std::nullopt;
     }
-    const auto source = readSharedFile(project->second.snapshotPath);
-    if (!source)
-    {
-        if (error)
-            *error = "could not read " + project->second.snapshotPath;
-        return std::nullopt;
-    }
-    try
-    {
-        return json::parse(*source).get<WorldDumpSnapshot>();
-    }
-    catch (const json::exception& exception)
-    {
-        if (error)
-            *error = "could not parse " + project->second.snapshotPath + ": " + exception.what();
-        return std::nullopt;
-    }
+    return readWorldSnapshot(project->second.snapshotPath, error);
+}
+
+std::optional<WorldDumpSnapshot> ContextStore::loadAlternateWorld(const ContextProject& project) const
+{
+    return project.snapshotPath.empty() ? std::nullopt : readWorldSnapshot(project.snapshotPath + ".alternate");
 }
 
 std::vector<ContextClientRegistration> ContextStore::clientRegistrations(bool includeDead) const
@@ -756,7 +772,10 @@ ContextCleanupSummary ContextStore::cleanupCandidates() const
     for (const auto& [id, project] : catalog->projects)
     {
         if (!project.snapshotPath.empty())
+        {
             referencedSnapshots.insert(normalizeContextPath(project.snapshotPath));
+            referencedSnapshots.insert(normalizeContextPath(project.snapshotPath + ".alternate"));
+        }
         if (project.directory.empty())
             continue;
         error.clear();
@@ -770,7 +789,10 @@ ContextCleanupSummary ContextStore::cleanupCandidates() const
     {
         for (std::filesystem::recursive_directory_iterator iterator(projects, error), end; iterator != end && !error; iterator.increment(error))
         {
-            if (!iterator->is_regular_file(error) || error || iterator->path().filename() != "world.json")
+            if (!iterator->is_regular_file(error) || error)
+                continue;
+            const auto filename = iterator->path().filename();
+            if (filename != "world.json" && filename != "world.json.alternate")
                 continue;
             const std::string path = normalizeContextPath(iterator->path().generic_u8string());
             if (!referencedSnapshots.count(path))

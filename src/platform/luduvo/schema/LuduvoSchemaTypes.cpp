@@ -1,5 +1,8 @@
 #include "Platform/luduvo/schema/LuduvoSchemaTypes.hpp"
+#include "Luau/ApplyTypeFunction.h"
 #include "Luau/BuiltinTypeFunctions.h"
+#include "Luau/Lexer.h"
+#include "Luau/StringUtils.h"
 #include "Luau/TypePack.h"
 #include "LSP/Uri.hpp"
 #include "Platform/luduvo/schema/LuduvoSchemaEdits.hpp"
@@ -13,6 +16,36 @@ namespace luduvo
 {
 namespace
 {
+using EventPayload = std::vector<std::pair<std::string, std::string>>;
+
+std::optional<EventPayload> orderedEventPayload(const ProjectSchemas& project, const std::set<std::string>& names)
+{
+    std::optional<EventPayload> payload;
+    std::set<std::string> found;
+    for (const auto& script : project.scripts)
+        for (const auto& event : script.second.events)
+        {
+            if (!names.count(event.name))
+                continue;
+            if (!event.columnsComplete)
+                return std::nullopt;
+
+            EventPayload fields;
+            std::set<std::string> fieldNames;
+            for (const auto& field : event.fields)
+            {
+                if (field.type == "any" || !fieldNames.insert(field.name).second)
+                    return std::nullopt;
+                fields.emplace_back(field.name, field.type);
+            }
+            if (payload && *payload != fields)
+                return std::nullopt;
+            payload = std::move(fields);
+            found.insert(event.name);
+        }
+    return found == names ? payload : std::nullopt;
+}
+
 bool literalNames(Luau::TypeId type, std::set<std::string>& names)
 {
     type = Luau::follow(type);
@@ -231,6 +264,50 @@ Luau::TypeId SchemaTypes::combinedTable(const std::set<std::string>& names)
     }
     else
         metadata->resolution += "; column list is not proven complete; open fallback retained";
+
+    const auto signal = environment->lookupType("Signal");
+    if (signal && signal->typeParams.size() == 1 && signal->typePackParams.empty())
+        if (const auto payload = orderedEventPayload(*project, names))
+        {
+            const auto specializeSignal = [&](const char* member, bool includePlayer)
+            {
+                if (!Luau::lookupExternTypeProp(eventClass, member))
+                    return;
+                std::vector<Luau::TypeId> parameters;
+                Luau::FunctionType callback{builtins->emptyTypePack, builtins->emptyTypePack};
+                if (includePlayer)
+                {
+                    parameters.push_back(valueType("Instance"));
+                    callback.argNames.emplace_back(Luau::FunctionArgument{"player", {}});
+                }
+                for (const auto& field : *payload)
+                {
+                    parameters.push_back(valueType(field.second));
+                    if (Luau::isIdentifier(field.first) && !Luau::Lexer::isReserved(field.first))
+                        callback.argNames.emplace_back(Luau::FunctionArgument{field.first, {}});
+                    else
+                        callback.argNames.emplace_back(std::nullopt);
+                }
+                callback.argTypes = arena.addTypePack(std::move(parameters));
+                const auto callbackType = arena.addType(std::move(callback));
+                Luau::ApplyTypeFunction instantiate{&arena};
+                instantiate.typeArguments[signal->typeParams.front().ty] = callbackType;
+                if (const auto specialized = instantiate.substitute(signal->type))
+                {
+                    const auto type = Luau::follow(*specialized);
+                    if (type->owningArena == &arena)
+                        if (auto alias = Luau::getMutable<Luau::TableType>(type))
+                            alias->instantiatedTypeParams = {callbackType};
+                    auto signalMetadata = std::make_shared<SchemaTypeMetadata>(*metadata);
+                    signalMetadata->resolution = std::string(member) + " payload from ordered event-table fields";
+                    structuralMetadata[type] = std::move(signalMetadata);
+                    table.props[member] = Luau::Property::readonly(*specialized);
+                }
+            };
+            specializeSignal("OnServerEvent", true);
+            specializeSignal("OnClientEvent", false);
+        }
+
     auto result = arena.addType(std::move(table));
     Luau::asMutable(result)->documentationSymbol = Luau::follow(eventBase->type)->documentationSymbol;
     tables[key] = result;
@@ -303,13 +380,15 @@ Luau::TypeId SchemaTypes::handleTable(const std::string& script)
         return found->second;
     const auto handlesBinding = environment->lookup(Luau::AstName("handles"));
     const auto instance = environment->lookupType("Instance");
-    if (handlesBinding && instance && project->fresh)
+    if (handlesBinding && instance)
     {
         const auto originalHandles = Luau::getTableType(Luau::follow(*handlesBinding));
         if (originalHandles)
         {
             auto handles = *originalHandles;
             const auto fields = handleSchemaFields(*project, script);
+            if (!project->fresh && fields.empty())
+                return *handlesBinding;
             for (const auto& observation : fields)
                 handles.props[observation.field.name] = Luau::Property::readonly(instance->type);
             const auto type = arena.addType(std::move(handles));
@@ -318,7 +397,7 @@ Luau::TypeId SchemaTypes::handleTable(const std::string& script)
             metadata->script = script;
             metadata->resolution = fields.empty() ? "no observed handle names in the current context; generic read-only handles"
                                                   : "handle reads in scripts attached to the same instance";
-            handleMetadata[type] = std::move(metadata);
+            structuralMetadata[type] = std::move(metadata);
             this->handles[script] = type;
             return type;
         }
@@ -340,8 +419,8 @@ std::shared_ptr<const SchemaTypeMetadata> SchemaTypes::findMetadata(Luau::TypeId
 {
     if (auto result = metadata(type))
         return result;
-    const auto found = handleMetadata.find(Luau::follow(type));
-    return found == handleMetadata.end() ? nullptr : found->second;
+    const auto found = structuralMetadata.find(Luau::follow(type));
+    return found == structuralMetadata.end() ? nullptr : found->second;
 }
 std::string renderSchemaDebug(const SchemaTypeMetadata& metadata)
 {

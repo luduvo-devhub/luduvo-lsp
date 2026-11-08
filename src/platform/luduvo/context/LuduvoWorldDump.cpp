@@ -12,9 +12,117 @@
 #include <cmath>
 #include <cstdlib>
 #include <set>
+#include <map>
 
 namespace luduvo
 {
+
+void from_json(const nlohmann::json& json, WorldInstance& instance)
+{
+    instance = {};
+    instance.row = json.value("row", instance.row);
+    instance.nodeId = json.value("nodeId", instance.nodeId);
+    if (const auto field = json.find("instanceId"); field != json.end() && !field->is_null())
+        field->get_to(instance.instanceId);
+    instance.parentNodeId = json.value("parentNodeId", instance.parentNodeId);
+    instance.name = json.value("name", instance.name);
+    instance.type = json.value("type", instance.type);
+    instance.shape = json.value("shape", instance.shape);
+    if (const auto field = json.find("position"); field != json.end() && !field->is_null())
+        field->get_to(instance.position);
+    instance.scripts = json.value("scripts", instance.scripts);
+    instance.scene = json.value("scene", instance.scene);
+}
+
+static WorldDumpSnapshot readScene(const nlohmann::json& scene, int format);
+
+nlohmann::json worldDumpScene(const WorldDumpSnapshot& snapshot)
+{
+    using nlohmann::json;
+    std::map<uint64_t, size_t> indexes;
+    for (size_t i = 0; i < snapshot.instances.size(); ++i)
+        indexes.emplace(snapshot.instances[i].nodeId, i);
+
+    json entities = json::array();
+    size_t roots = 0;
+    for (const WorldInstance& instance : snapshot.instances)
+    {
+        json entity = instance.scene.is_object() ? instance.scene : json::object();
+        entity["index"] = entities.size();
+        const auto parent = indexes.find(instance.parentNodeId);
+        entity["parent"] = instance.parentNodeId && parent != indexes.end() ? json(parent->second) : json(nullptr);
+        roots += entity["parent"].is_null();
+        if (instance.scene.is_null())
+        {
+            entity["world"] = {{"pos", {instance.position.x, instance.position.y, instance.position.z}}};
+            entity["scripts"] = json::array();
+            for (const std::string& path : instance.scripts)
+                entity["scripts"].push_back({{"path", path}, {"scope", nullptr}});
+            entity["studio"] = {{"row", instance.row}, {"nodeId", instance.nodeId}, {"instanceId", instance.instanceId}, {"type", instance.type},
+                {"shape", instance.shape}};
+        }
+        entity["name"] = instance.name;
+        entities.push_back(std::move(entity));
+    }
+    return {{"format", snapshot.sceneFormat ? json(snapshot.sceneFormat) : json(nullptr)}, {"roots", roots}, {"prefabs", snapshot.prefabs},
+        {"singletons", snapshot.singletons}, {"entities", std::move(entities)}};
+}
+
+void to_json(nlohmann::json& output, const WorldDumpSnapshot& snapshot)
+{
+    using nlohmann::json;
+    json studio = nullptr;
+    if (!snapshot.sceneFormat)
+        studio = {{"tick", snapshot.tick}, {"commandSequence", snapshot.commandSequence}, {"undoCount", snapshot.undoCount},
+            {"redoCount", snapshot.redoCount}};
+    output = {{"formatVersion", 2},
+        {"capture", {{"producer", snapshot.sceneFormat ? "ldv-dump" : "world.dump"}, {"capturedAtUnixMs", snapshot.capturedAtUnixMs},
+                        {"sourcePath", snapshot.sourcePath}, {"inputSource", snapshot.inputSource}}},
+        {"scene", worldDumpScene(snapshot)}, {"studio", std::move(studio)}};
+}
+void from_json(const nlohmann::json& json, WorldDumpSnapshot& snapshot)
+{
+    const int version = json.value("formatVersion", 1);
+    if (version == 2)
+    {
+        const auto& scene = json.at("scene");
+        const auto& format = scene.at("format");
+        snapshot = readScene(scene, format.is_null() ? 0 : format.get<int>());
+        snapshot.formatVersion = version;
+        const auto& capture = json.at("capture");
+        snapshot.capturedAtUnixMs = capture.at("capturedAtUnixMs").get<int64_t>();
+        snapshot.sourcePath = capture.at("sourcePath").get<std::string>();
+        snapshot.inputSource = capture.at("inputSource").get<WorldDumpSource>();
+        const auto& studio = json.at("studio");
+        if (!studio.is_null())
+        {
+            snapshot.tick = studio.at("tick").get<uint64_t>();
+            snapshot.commandSequence = studio.at("commandSequence").get<uint64_t>();
+            snapshot.undoCount = studio.at("undoCount").get<uint64_t>();
+            snapshot.redoCount = studio.at("redoCount").get<uint64_t>();
+        }
+        return;
+    }
+    if (version != 1)
+        throw std::runtime_error("unsupported context snapshot format");
+    snapshot = {};
+    snapshot.formatVersion = json.value("formatVersion", snapshot.formatVersion);
+    if (const auto field = json.find("tick"); field != json.end() && !field->is_null())
+        field->get_to(snapshot.tick);
+    if (const auto field = json.find("commandSequence"); field != json.end() && !field->is_null())
+        field->get_to(snapshot.commandSequence);
+    if (const auto field = json.find("undoCount"); field != json.end() && !field->is_null())
+        field->get_to(snapshot.undoCount);
+    if (const auto field = json.find("redoCount"); field != json.end() && !field->is_null())
+        field->get_to(snapshot.redoCount);
+    snapshot.capturedAtUnixMs = json.value("capturedAtUnixMs", snapshot.capturedAtUnixMs);
+    snapshot.sourcePath = json.value("sourcePath", snapshot.sourcePath);
+    snapshot.inputSource = json.value("inputSource", snapshot.inputSource);
+    snapshot.instances = json.value("instances", snapshot.instances);
+    snapshot.sceneFormat = json.value("sceneFormat", snapshot.sceneFormat);
+    snapshot.prefabs = json.value("prefabs", snapshot.prefabs);
+    snapshot.singletons = json.value("singletons", snapshot.singletons);
+}
 
 void to_json(nlohmann::json& json, const WorldDumpSource& source)
 {
@@ -58,8 +166,11 @@ nlohmann::json worldDumpMetadata(const WorldDumpSnapshot& snapshot)
     {
         return value ? nlohmann::json(std::max<int64_t>(0, (now - value) / 1000)) : nlohmann::json(nullptr);
     };
-    return {{"ageSeconds", age(snapshot.capturedAtUnixMs)}, {"sourceAgeSeconds", age(snapshot.inputSource.modifiedAtUnixMs)}, {"tick", snapshot.tick},
-        {"commandSequence", snapshot.commandSequence},
+    return {{"ageSeconds", age(snapshot.capturedAtUnixMs)}, {"sourceAgeSeconds", age(snapshot.inputSource.modifiedAtUnixMs)},
+        {"tick", snapshot.sceneFormat ? nlohmann::json(nullptr) : nlohmann::json(snapshot.tick)},
+        {"commandSequence", snapshot.sceneFormat ? nlohmann::json(nullptr) : nlohmann::json(snapshot.commandSequence)},
+        {"sceneFormat", snapshot.sceneFormat ? nlohmann::json(snapshot.sceneFormat) : nlohmann::json(nullptr)},
+        {"producer", snapshot.sceneFormat ? "ldv-dump" : "world.dump"},
         {"capturedAtUnixMs", snapshot.capturedAtUnixMs ? nlohmann::json(snapshot.capturedAtUnixMs) : nlohmann::json(nullptr)},
         {"capturedAt", snapshot.capturedAtUnixMs ? nlohmann::json(formatContextTimestamp(snapshot.capturedAtUnixMs)) : nlohmann::json(nullptr)},
         {"sourcePath", snapshot.sourcePath.empty() ? nlohmann::json(nullptr) : nlohmann::json(snapshot.sourcePath)},
@@ -206,8 +317,102 @@ static std::optional<WorldInstance> parseInstance(std::string_view line)
     return result;
 }
 
+static WorldDumpSnapshot readScene(const nlohmann::json& scene, int format)
+{
+    const auto& entities = scene.at("entities");
+    if (!entities.is_array())
+        throw std::runtime_error("scene instances must be an array");
+
+    WorldDumpSnapshot snapshot;
+    snapshot.sceneFormat = format;
+    snapshot.prefabs = scene.at("prefabs");
+    snapshot.singletons = scene.at("singletons");
+    snapshot.instances.reserve(entities.size());
+    std::vector<std::optional<size_t>> parents;
+    parents.reserve(entities.size());
+    for (const auto& entity : entities)
+    {
+        WorldInstance instance;
+        instance.row = entity.at("index").get<uint64_t>();
+        if (instance.row != snapshot.instances.size())
+            throw std::runtime_error("scene instances are out of order");
+        instance.nodeId = instance.row + 1;
+        const auto& parent = entity.at("parent");
+        parents.push_back(parent.is_null() ? std::nullopt : std::optional<size_t>(parent.get<size_t>()));
+        if (parents.back() && (*parents.back() >= entities.size() || (format && *parents.back() >= instance.row)))
+            throw std::runtime_error("scene instance has an invalid parent index");
+
+        instance.name = entity.at("name").get<std::string>();
+        if (const auto world = entity.find("world"); world != entity.end())
+        {
+            const auto& position = world->at("pos");
+            instance.position = {position.at(0).get<double>(), position.at(1).get<double>(), position.at(2).get<double>()};
+        }
+        if (const auto components = entity.find("components"); components != entity.end())
+            if (const auto shape = components->find("Shape"); shape != components->end())
+                instance.shape = shape->value("type", uint64_t(0));
+
+        const auto& scripts = entity.at("scripts");
+        if (!scripts.is_array())
+            throw std::runtime_error("scene instance has invalid scripts");
+        for (const auto& script : scripts)
+            instance.scripts.push_back(script.at("path").get<std::string>());
+
+        if (format)
+        {
+            instance.scene = entity;
+            for (const auto key : {"index", "parent", "name", "studio"})
+                instance.scene.erase(key);
+        }
+        else
+        {
+            const auto& studio = entity.at("studio");
+            instance.row = studio.at("row").get<uint64_t>();
+            instance.nodeId = studio.at("nodeId").get<uint64_t>();
+            instance.instanceId = studio.at("instanceId").get<uint64_t>();
+            instance.type = studio.at("type").get<std::string>();
+            instance.shape = studio.at("shape").get<uint64_t>();
+        }
+        snapshot.instances.push_back(std::move(instance));
+    }
+    for (size_t i = 0; i < parents.size(); ++i)
+        if (parents[i])
+            snapshot.instances[i].parentNodeId = snapshot.instances[*parents[i]].nodeId;
+    return snapshot;
+}
+
+static WorldDumpParseResult parseSceneDump(std::string_view source, std::string sourcePath)
+{
+    try
+    {
+        const auto dump = nlohmann::json::parse(source);
+        if (dump.value("formatVersion", 0) == 2)
+        {
+            auto snapshot = dump.get<WorldDumpSnapshot>();
+            if (snapshot.sourcePath.empty())
+                snapshot.sourcePath = std::move(sourcePath);
+            return {std::move(snapshot), {}, std::nullopt};
+        }
+        const int format = dump.at("format").get<int>();
+        if (dump.at("dump") != 1 || format <= 0)
+            return {std::nullopt, {}, "unsupported ldv-dump JSON format"};
+        auto snapshot = readScene(dump, format);
+        snapshot.sourcePath = std::move(sourcePath);
+        return {std::move(snapshot), {}, std::nullopt};
+    }
+    catch (const std::exception& error)
+    {
+        return {std::nullopt, {}, std::string("invalid ldv-dump JSON: ") + error.what()};
+    }
+}
+
 WorldDumpParseResult parseWorldDump(std::string_view source, std::string sourcePath)
 {
+    if (source.substr(0, 3) == "\xef\xbb\xbf")
+        source.remove_prefix(3);
+    const auto first = source.find_first_not_of(" \t\r\n");
+    if (first != std::string_view::npos && source[first] == '{')
+        return parseSceneDump(source, std::move(sourcePath));
     WorldDumpParseResult result;
     WorldDumpSnapshot snapshot;
     snapshot.sourcePath = std::move(sourcePath);
@@ -326,7 +531,7 @@ WorldDumpParseResult parseWorldDumpFile(const std::string& path)
     auto parsed = parseWorldDump(*source, path);
     std::error_code error;
     const auto modified = std::filesystem::last_write_time(std::filesystem::u8path(path), error);
-    if (parsed.snapshot && !error)
+    if (parsed.snapshot && !parsed.snapshot->capturedAtUnixMs && !error)
         parsed.snapshot->capturedAtUnixMs = std::chrono::time_point_cast<std::chrono::milliseconds>(
             modified - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now())
                                                 .time_since_epoch()

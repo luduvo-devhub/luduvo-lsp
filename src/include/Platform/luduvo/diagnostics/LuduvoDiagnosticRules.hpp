@@ -59,6 +59,7 @@ enum class EventSchemaConstraint
 {
     FieldCount,
     EntryShape,
+    FieldType,
     EmptyName,
     NameLength,
     ReservedName,

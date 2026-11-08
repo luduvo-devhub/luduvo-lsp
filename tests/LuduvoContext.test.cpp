@@ -66,12 +66,15 @@ TEST_CASE("POSIX automatic world dumps launch with the native display backend")
     TempDir temp("luduvo_linux_autodump");
     const std::string project = temp.path() + "/project with spaces";
     temp.write_child("project with spaces/world.ldv", "project fixture");
+    const auto lock = temp.write_child("project with spaces/.studio.lock", "live editor");
+    temp.write_child("project with spaces/.journal/world.ldj", "live journal");
     temp.write_child("bundle/usr/bin/source.dump", std::string(worldDump));
     const std::string editor = temp.write_child("bundle/usr/bin/LuduvoEditor", R"sh(#!/bin/sh
 [ "$#" -eq 3 ] || exit 91
 [ "$2" = "--exec" ] || exit 92
 output="${3#world.dump }"
 [ "$output" != "$3" ] || exit 93
+[ ! -e "$1/.studio.lock" ] && [ ! -e "$1/.journal" ] && [ ! -e "$1/world.ldv.autosave" ] || exit 96
 printf '%s' "$1" > "$0.project-argument"
 cat "$1/world.ldv" > "$0.world-input"
 if [ -f "$1/config.fixture" ]; then printf copy-edit > "$1/config.fixture" || exit 95; fi
@@ -87,7 +90,13 @@ sleep 10
     REQUIRE(result.snapshot);
     CHECK_EQ(result.snapshot->tick, 394735);
     CHECK_EQ(result.snapshot->instances.size(), 2);
-    CHECK_EQ(Luau::FileUtils::readFile(editor + ".project-argument").value_or(""), project);
+    CHECK_EQ(result.snapshot->inputSource.kind, "save");
+    const auto savedCopy = Luau::FileUtils::readFile(editor + ".project-argument").value_or("");
+    REQUIRE_FALSE(savedCopy.empty());
+    CHECK_NE(savedCopy, project);
+    CHECK_FALSE(std::filesystem::exists(std::filesystem::u8path(savedCopy)));
+    CHECK_EQ(readSharedFile(editor + ".world-input"), std::optional<std::string>("project fixture"));
+    CHECK_EQ(readSharedFile(lock), std::optional<std::string>("live editor"));
     const auto original = temp.write_child("project with spaces/config.fixture", "original");
     std::filesystem::permissions(std::filesystem::u8path(original), std::filesystem::perms::owner_read, std::filesystem::perm_options::replace);
     const auto autosave = temp.write_child("project with spaces/world.ldv.autosave", "autosaved fixture");
@@ -103,9 +112,29 @@ sleep 10
     CHECK_EQ(readSharedFile(autosave), std::optional<std::string>("autosaved fixture"));
     CHECK_EQ(readSharedFile(original), std::optional<std::string>("original"));
 }
+TEST_CASE("explicit dump methods select only their requested producer")
+{
+    TempDir temp("luduvo_dump_method");
+    temp.write_child("project/world.ldv", "save");
+    const auto tool = temp.write_child("bundle/usr/bin/ldv-dump", R"sh(#!/bin/sh
+printf '%s' '{"dump":1,"format":46,"entities":[],"prefabs":[],"singletons":{}}'
+)sh");
+    std::filesystem::permissions(std::filesystem::u8path(tool), std::filesystem::perms::owner_exec, std::filesystem::perm_options::add);
+    luduvo::AutoDumpPlan plan{"test", temp.path() + "/project", temp.path() + "/world.txt",
+        luduvo::defaultLuduvoEditorPath(temp.path()), std::chrono::seconds(3), luduvo::DumpMethod::SavedScene};
+    const auto saved = luduvo::runAutomaticWorldDump(plan);
+    REQUIRE_MESSAGE(saved.success, saved.error);
+    REQUIRE(saved.snapshot);
+    CHECK_EQ(saved.snapshot->sceneFormat, 46);
+
+    plan.method = luduvo::DumpMethod::Studio;
+    const auto studio = luduvo::runAutomaticWorldDump(plan);
+    CHECK_FALSE(studio.success);
+    CHECK(studio.error.find("LuduvoEditor was not found") != std::string::npos);
+}
 #endif
 
-TEST_CASE("automatic world dumps restore autosaves when the editor cannot start")
+TEST_CASE("automatic world dumps preserve autosaves when the editor cannot start")
 {
     TempDir temp("luduvo_autodump_autosave_restore");
     const std::string project = temp.path() + "/project";
@@ -210,6 +239,64 @@ TEST_CASE("world dump parser reads headers instances and scripts")
     CHECK_EQ(result.snapshot->instances[1].position.z, doctest::Approx(-11.2453));
     CHECK_EQ(result.snapshot->instances[1].scripts, std::vector<std::string>({"scripts/Part.server.lua", "scripts/Part.client.lua"}));
     CHECK(result.warnings.empty());
+}
+
+TEST_CASE("scene dump normalizes attachments and preserves scene data without inventing runtime IDs")
+{
+    const auto parsed = luduvo::parseWorldDump(R"({
+        "dump": 1, "format": 46, "roots": 1,
+        "prefabs": [{"name":"CoolThing","id":42,"bytes":512}], "singletons": {},
+        "entities": [
+            {"index":0,"parent":null,"name":"Root","components":{},"scripts":[]},
+            {"index":1,"parent":0,"name":"Child","world":{"pos":[1,2,3]},
+             "components":{"Shape":{"type":3}},"attributes":{"Ready":{"type":"Bool","value":true}},
+             "scripts":[{"path":"scripts/Child.server.lua","scope":1}]}
+        ]
+    })");
+    REQUIRE_MESSAGE(parsed.snapshot, parsed.error.value_or(""));
+    const nlohmann::json stored = *parsed.snapshot;
+    CHECK(stored.at("studio").is_null());
+    CHECK_EQ(stored.at("capture").at("producer"), "ldv-dump");
+    CHECK_FALSE(stored.at("scene").at("entities").at(1).contains("studio"));
+    CHECK_FALSE(stored.at("scene").at("entities").at(0).contains("world"));
+    CHECK_EQ(stored.at("scene").at("entities").at(1).at("scripts").at(0).at("scope"), 1);
+    const auto snapshot = stored.get<luduvo::WorldDumpSnapshot>();
+    CHECK_EQ(snapshot.sceneFormat, 46);
+    CHECK_EQ(snapshot.prefabs.at(0).at("name"), "CoolThing");
+    const auto& child = snapshot.instances.at(1);
+    CHECK_EQ(child.parentNodeId, snapshot.instances.at(0).nodeId);
+    CHECK_EQ(child.scripts, std::vector<std::string>{"scripts/Child.server.lua"});
+    CHECK_EQ(child.scene.at("attributes").at("Ready").at("value"), true);
+    TempDir temp("scene_inspect");
+    const auto dumpPath = temp.write_child("world.json", stored.dump());
+    const auto inspection = luduvo::inspectContextInput(dumpPath, temp.path());
+    REQUIRE_MESSAGE(inspection.report, inspection.error.value_or(""));
+    CHECK_EQ(inspection.report->at("snapshot").at("producer"), "ldv-dump");
+    const auto rendered = luduvo::renderReportText(luduvo::buildContextInspectionReport(*inspection.report));
+    CHECK(rendered.find("Producer: ldv-dump") != std::string::npos);
+    CHECK(rendered.find("CoolThing") != std::string::npos);
+    CHECK(rendered.find("Ready") != std::string::npos);
+}
+
+TEST_CASE("project retains the most recent capture from each dump producer")
+{
+    TempDir temp("luduvo_dump_history");
+    luduvo::ContextStore store(temp.path());
+    auto scene = luduvo::parseWorldDump(R"({"dump":1,"format":46,"entities":[],"prefabs":[{"name":"Crate"}],"singletons":{}})");
+    auto studio = luduvo::parseWorldDump(worldDump);
+    REQUIRE(scene.snapshot);
+    REQUIRE(studio.snapshot);
+    const auto updated = store.updateWorld(*scene.snapshot, "Test");
+    REQUIRE(updated.success);
+    REQUIRE(updated.projectId);
+    REQUIRE(store.updateWorldForProject(*studio.snapshot, *updated.projectId).success);
+    const auto catalog = store.load();
+    REQUIRE(catalog);
+    const auto alternate = store.loadAlternateWorld(catalog->projects.at(*updated.projectId));
+    REQUIRE(alternate);
+    CHECK_EQ(alternate->sceneFormat, 46);
+    CHECK_EQ(alternate->prefabs.at(0).at("name"), "Crate");
+    CHECK_EQ(store.loadWorld(*updated.projectId)->tick, studio.snapshot->tick);
 }
 
 TEST_CASE("world dump parser rejects incomplete input")
@@ -1305,6 +1392,42 @@ TEST_CASE("automatic dumps choose newer autosaves and prefer saved worlds on equ
     std::filesystem::remove(std::filesystem::u8path(saved));
     CHECK(luduvo::selectWorldDumpSource(temp.path())->kind == "autosave");
     CHECK_EQ(readSharedFile(autosave), std::optional<std::string>("autosave"));
+}
+
+TEST_CASE("automatic dumps consider numbered Studio backups alongside the save and legacy autosave")
+{
+    TempDir temp("dump_backup_selection");
+    const auto saved = temp.write_child("world.ldv", "saved");
+    const auto legacy = temp.write_child("world.ldv.autosave", "legacy");
+    const auto older = temp.write_child(".backups/world.000001.ldv", "older backup");
+    const auto newer = temp.write_child(".backups/world.000002.ldv", "newer backup");
+    const auto unrelated = temp.write_child(".backups/world.manual.ldv", "unrelated file");
+    const auto time = std::filesystem::file_time_type::clock::now();
+    const auto setTime = [&](const std::string& path, int offset)
+    {
+        std::filesystem::last_write_time(std::filesystem::u8path(path), time + std::chrono::seconds(offset));
+    };
+    setTime(saved, 0);
+    setTime(legacy, 1);
+    setTime(older, 2);
+    setTime(newer, 2);
+    setTime(unrelated, 3);
+
+    auto selected = luduvo::selectWorldDumpSource(temp.path());
+    REQUIRE(selected);
+    CHECK_EQ(selected->kind, "autosave");
+    CHECK_EQ(selected->path, newer);
+
+    setTime(saved, 2);
+    selected = luduvo::selectWorldDumpSource(temp.path());
+    REQUIRE(selected);
+    CHECK_EQ(selected->path, saved);
+
+    std::filesystem::remove(std::filesystem::u8path(saved));
+    std::filesystem::remove(std::filesystem::u8path(legacy));
+    selected = luduvo::selectWorldDumpSource(temp.path());
+    REQUIRE(selected);
+    CHECK_EQ(selected->path, newer);
 }
 
 TEST_CASE("inspection preserves dump provenance and renders capture index and export ages")

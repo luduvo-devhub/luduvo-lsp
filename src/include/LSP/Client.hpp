@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <optional>
 #include <mutex>
 #include <memory>
@@ -44,6 +45,7 @@ public:
     void setNotificationSuppressed(std::string id, bool suppressed);
 
     lsp::ClientCapabilities capabilities;
+    bool nativeDumpMethodPicker = false;
     /// A registered definitions file passed by the client
     std::unordered_map<std::string, std::string> definitionsFiles{};
     /// A registered documentation file passed by the client
@@ -73,6 +75,8 @@ public:
     virtual void sendTrace(const std::string& message, const std::optional<std::string>& verbose = std::nullopt) const {}
 
     virtual void sendWindowMessage(const lsp::MessageType& type, const std::string& message) const {}
+
+    virtual void pickDumpMethod(const json& params, const ResponseHandler& handler) {}
 
     virtual void sendWindowMessageRequest(const lsp::MessageType& type, const std::string& message,
         const std::vector<lsp::MessageActionItem>& actions, const std::optional<ResponseHandler>& handler = std::nullopt)
@@ -136,7 +140,7 @@ private:
     std::unique_ptr<Transport> transport;
     std::shared_ptr<std::mutex> transportMutex = std::make_shared<std::mutex>();
     /// The request id for the next request
-    int nextRequestId = 0;
+    std::atomic<int> nextRequestId{0};
     std::unordered_map<id_type, ResponseHandler> responseHandler{};
 
 public:
@@ -145,6 +149,7 @@ public:
 
     virtual void sendRequest(const id_type& id, const std::string& method, const std::optional<json>& params,
         const std::optional<ResponseHandler>& handler = std::nullopt);
+    void pickDumpMethod(const json& params, const ResponseHandler& handler) override;
     void sendResponse(const id_type& id, const json& result);
     virtual void sendError(const std::optional<id_type>& id, const JsonRpcException& e);
     void sendNotification(const std::string& method, const std::optional<json>& params) const override;

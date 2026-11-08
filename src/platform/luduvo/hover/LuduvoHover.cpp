@@ -18,9 +18,10 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     const auto& subject = context.subject;
     if (subject.literal)
         return std::nullopt;
+    const auto stale = schemas ? schemas->staleHint(context.moduleName, subject.node->asExpr(), subject.type) : "";
     if (configuration.hover.presentation != LuduvoHoverPresentation::Rich)
     {
-        const auto debug = schemas ? schemas->debug(context.moduleName, subject.node->asExpr(), subject.type) : "";
+        const auto debug = stale + (schemas ? schemas->debug(context.moduleName, subject.node->asExpr(), subject.type) : "");
         if (debug.empty() || !workspaceFolder)
             return std::nullopt;
         return lsp::Hover{{lsp::MarkupKind::Markdown, renderStandardHover(subject, workspaceFolder->getModule(context.moduleName),
@@ -65,7 +66,7 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     hoverInput.overloads = makeRichHoverOverloads(subject.type, declarationTarget, options, constrainedResources);
     std::string rendered = renderRichHover(configuration.hover, analyzeRichHover(constrainedResources, hoverInput));
     if (schemas)
-        rendered += schemas->debug(context.moduleName, subject.node->asExpr(), subject.type);
+        rendered += stale + schemas->debug(context.moduleName, subject.node->asExpr(), subject.type);
     return lsp::Hover{{lsp::MarkupKind::Markdown, std::move(rendered)}};
 }
 

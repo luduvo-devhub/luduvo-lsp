@@ -169,7 +169,9 @@ void LuduvoPlatform::handleCompletion(const TextDocument& textDocument, const Lu
     const std::optional<std::string> documentationSymbol =
         luduvo::resolveCallableDocumentationSymbol(sourceModule, *typedModule, *call, callableType);
     const std::optional<std::string> canonicalSymbol = canonicalLuduvoSymbol(documentationSymbol);
-    if (!canonicalSymbol || contains(configuration.resources.completion.disabledApis, *canonicalSymbol))
+    const auto directPath = luduvo::expressionPath(call->func);
+    const auto& disabledApis = configuration.resources.completion.disabledApis;
+    if (!canonicalSymbol || contains(disabledApis, *canonicalSymbol) || (directPath && contains(disabledApis, *directPath)))
         return;
 
     const size_t argumentIndex = luduvo::activeArgument(*call, position);

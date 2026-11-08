@@ -36,7 +36,7 @@ bool NotificationSender::enabled(std::string_view id) const
         return false;
     const bool registeredDefault = id == "context.tracking.started" || id == "context.files.added" || id == "context.autodump.failed" ||
                                    id == "context.refresh.required" || id == "context.selection.required" || id == "context.error" ||
-                                   id == "context.project.stale" || id == "configuration.invalid" || id == "definitions.fallback" ||
+                                   id == "context.project.stale" || id == "context.dump.choose-method" || id == "configuration.invalid" || id == "definitions.fallback" ||
                                    id == "types.export.created" || id == "types.export.failed" || id == "types.export.conflict";
     return overrides.resolve(id, registeredDefault);
 }

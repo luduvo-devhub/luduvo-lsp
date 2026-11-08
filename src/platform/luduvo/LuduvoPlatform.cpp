@@ -31,19 +31,30 @@ static constexpr std::string_view kContextSelectionRequiredNotification = "conte
 static constexpr std::string_view kContextErrorNotification = "context.error";
 static constexpr std::string_view kContextTrackingStartedNotification = "context.tracking.started";
 static constexpr std::string_view kContextTrackingStoppedNotification = "context.tracking.stopped";
+static constexpr std::string_view kDumpMethodNotification = "context.dump.choose-method";
 static constexpr std::string_view kContextStaleNotification = "context.project.stale";
 
-static void sendManualDumpRequest(
-    Client* client, const luduvo::WorldDumpRequest& request, std::string message, std::string_view notificationId, bool showPopup)
+static void sendManualDumpRequest(Client* client, const luduvo::WorldDumpRequest& request, std::string message, std::string_view notificationId,
+    bool showPopup, const std::function<void()>& run = {})
 {
     message += "\n" + request.command;
     const luduvo::NotificationSender sender(client, {std::nullopt, {{std::string(notificationId), showPopup}}});
-    sender.request(notificationId, lsp::MessageType::Warning, message, {{"Copy command"}, {"Copy output path"}},
-        [client, command = request.command, outputPath = request.outputPath](const JsonRpcMessage& response)
+    std::vector<lsp::MessageActionItem> actions{{"Copy command"}, {"Copy output path"}};
+    if (run)
+        actions.insert(actions.begin(), {"Run now"});
+    sender.request(notificationId, lsp::MessageType::Warning, message, actions,
+        [client, command = request.command, outputPath = request.outputPath, run](const JsonRpcMessage& response)
         {
             if (!response.result || response.result->is_null())
                 return;
             const std::string title = response.result->get<lsp::MessageActionItem>().title;
+            if (title == "Run now" && run)
+            {
+                run();
+                return;
+            }
+            if (title != "Copy command" && title != "Copy output path")
+                return;
             client->sendNotification("$/command", json{{"command", "luduvo-lsp.copyText"}, {"data", title == "Copy command" ? command : outputPath}});
         });
 }
@@ -69,6 +80,83 @@ LUAU_FASTFLAG(LuauSolverV2)
 static bool startAutomaticDump(Client* client, const std::shared_ptr<luduvo::ContextHelperSession>& session, const std::weak_ptr<int>& lifetime,
     const luduvo::WorldDumpRequest& request, const ClientLuduvoNotificationConfiguration& notifications);
 
+static luduvo::DumpMethod configuredDumpMethod(std::string_view value)
+{
+    if (value == "savedScene")
+        return luduvo::DumpMethod::SavedScene;
+    if (value == "studio")
+        return luduvo::DumpMethod::Studio;
+    return luduvo::DumpMethod::Auto;
+}
+
+static bool chooseDumpMethod(Client* client, const std::shared_ptr<luduvo::ContextHelperSession>& session, const std::weak_ptr<int>& lifetime,
+    const luduvo::WorldDumpRequest& request, const ClientLuduvoNotificationConfiguration& notifications, std::string_view setting, bool manual,
+    const std::function<bool(luduvo::DumpMethod)>& use)
+{
+    if (setting != "ask")
+        return use(configuredDumpMethod(setting));
+
+    const luduvo::NotificationSender sender(client, notifications);
+    if (!manual &&
+        ((!client->nativeDumpMethodPicker && !sender.enabled(kDumpMethodNotification)) || !luduvo::claimAutomaticDumpChoice(session, request)))
+        return true;
+    const std::string title = "Choose how to refresh project context for '" + request.projectName + "'";
+    const std::string saved = "Read saved scene";
+    const std::string studio = manual ? "Capture open scene in Studio" : "Open a saved copy in Studio";
+    const auto handler = [lifetime, saved, studio, use](const JsonRpcMessage& response)
+    {
+        if (lifetime.expired() || !response.result || response.result->is_null())
+            return;
+        const std::string choice = response.result->is_string() ? response.result->get<std::string>() : response.result->value("title", "");
+        if (choice == saved)
+            use(luduvo::DumpMethod::SavedScene);
+        else if (choice == studio)
+            use(luduvo::DumpMethod::Studio);
+    };
+    if (client->nativeDumpMethodPicker)
+        client->pickDumpMethod(json{{"title", title}, {"choices", {saved, studio}}}, handler);
+    else
+        sender.request(kDumpMethodNotification, lsp::MessageType::Info, title, {{saved}, {studio}}, handler, manual);
+    return true;
+}
+
+static bool requestBackgroundDump(Client* client, const std::shared_ptr<luduvo::ContextHelperSession>& session, const std::weak_ptr<int>& lifetime,
+    const luduvo::WorldDumpRequest& request, const ClientLuduvoNotificationConfiguration& notifications, std::string_view setting)
+{
+    const std::weak_ptr<luduvo::ContextHelperSession> helper = session;
+    return chooseDumpMethod(client, session, lifetime, request, notifications, setting, false,
+        [client, helper, lifetime, request, notifications](luduvo::DumpMethod method)
+        {
+            auto session = helper.lock();
+            auto selected = request;
+            selected.method = method;
+            if (session && startAutomaticDump(client, session, lifetime, selected, notifications))
+                return true;
+            const luduvo::NotificationSender sender(client, notifications);
+            sendManualDumpRequest(client, request,
+                "Automatic refresh could not start. Run this command in Luduvo Studio:", kAutoDumpFailedNotification,
+                sender.enabled(kAutoDumpFailedNotification));
+            return true;
+        });
+}
+
+static std::string quoteDumpCommandArgument(std::string_view value)
+{
+    std::string quoted = "'";
+    for (const char c : value)
+    {
+        if (c == '\'')
+#ifdef _WIN32
+            quoted += "''";
+#else
+            quoted += "'\\''";
+#endif
+        else
+            quoted += c;
+    }
+    return quoted + "'";
+}
+
 static void handleStaleProject(Client* client, const std::weak_ptr<int>& lifetime, const std::weak_ptr<luduvo::ContextHelperSession>& session,
     const std::shared_ptr<luduvo::ContextProvider>& provider, const ClientLuduvoContextConfiguration& context,
     const ClientLuduvoNotificationConfiguration& notifications, const luduvo::ContextClientProject& project)
@@ -76,15 +164,17 @@ static void handleStaleProject(Client* client, const std::weak_ptr<int>& lifetim
     const auto request = provider->createProjectDumpRequest(project.id);
     if (!request)
         return;
-    bool refreshing = false;
-    if (!context.lazyRefresh && context.autoDump)
-        if (auto helper = session.lock())
-            refreshing = startAutomaticDump(client, helper, lifetime, *request, notifications);
+    if (context.autoDump)
+    {
+        if (context.lazyRefresh)
+            return;
+        if (auto helper = session.lock(); helper && requestBackgroundDump(client, helper, lifetime, *request, notifications, context.dumpMethod))
+            return;
+    }
     const luduvo::NotificationSender sender(client, notifications);
-    sender.request(kContextStaleNotification, lsp::MessageType::Info,
-        "Project context for '" + project.name + "' is stale." + (refreshing ? " Refreshing in the background." : ""),
+    sender.request(kContextStaleNotification, lsp::MessageType::Info, "Project context for '" + project.name + "' is stale.",
         {{"Autodump"}, {"Redump manually"}},
-        [client, lifetime, session, provider, notifications, projectId = project.id](const JsonRpcMessage& response)
+        [client, lifetime, session, provider, notifications, context, projectId = project.id](const JsonRpcMessage& response)
         {
             if (lifetime.expired() || !response.result || response.result->is_null())
                 return;
@@ -93,7 +183,8 @@ static void handleStaleProject(Client* client, const std::weak_ptr<int>& lifetim
             if (!request)
                 return;
             if (response.result->get<lsp::MessageActionItem>().title == "Autodump")
-                if (auto helper = session.lock(); helper && startAutomaticDump(client, helper, lifetime, *request, notifications))
+                if (auto helper = session.lock();
+                    helper && requestBackgroundDump(client, helper, lifetime, *request, notifications, context.dumpMethod))
                     return;
             sendManualDumpRequest(client, *request, "Run this command in Luduvo Studio:", kContextRefreshRequiredNotification, true);
         });
@@ -253,7 +344,8 @@ bool LuduvoPlatform::startAutomaticDump(const luduvo::WorldDumpRequest& request)
 {
     if (!workspaceFolder || !contextHelperSession)
         return false;
-    return ::startAutomaticDump(workspaceFolder->client, contextHelperSession, contextCallbackLifetime, request, configuration.notifications);
+    return requestBackgroundDump(workspaceFolder->client, contextHelperSession, contextCallbackLifetime, request, configuration.notifications,
+        configuration.context.dumpMethod);
 }
 
 static bool startAutomaticDump(Client* client, const std::shared_ptr<luduvo::ContextHelperSession>& session, const std::weak_ptr<int>& lifetime,
@@ -267,7 +359,7 @@ static bool startAutomaticDump(Client* client, const std::shared_ptr<luduvo::Con
             if (result.success || lifetime.expired())
                 return;
             sendManualDumpRequest(client, request,
-                "Automatic project-context refresh for '" + request.projectName + "' failed: " + result.error +
+                "Project context for '" + request.projectName + "' is stale. Automatic refresh failed: " + result.error +
                     "\nOpen that project in Luduvo Studio and run this command instead:",
                 kAutoDumpFailedNotification, showFailure);
         });
@@ -771,7 +863,7 @@ std::optional<json> LuduvoPlatform::handleWorkspaceCommand(std::string_view comm
         json result = *status;
         result["enabled"] = true;
         result["configuration"] = {{"enabled", configuration.context.enabled}, {"autoDump", configuration.context.autoDump},
-            {"lazyRefresh", configuration.context.lazyRefresh}};
+            {"lazyRefresh", configuration.context.lazyRefresh}, {"dumpMethod", configuration.context.dumpMethod}};
         return result;
     }
 
@@ -841,9 +933,67 @@ std::optional<json> LuduvoPlatform::handleWorkspaceCommand(std::string_view comm
         const auto request = contextProvider->createDumpRequest(*scriptPath, &error, true);
         if (!request)
             return json{{"success", false}, {"error", error}};
-        if (configuration.context.autoDump && startAutomaticDump(*request))
-            return json{{"success", true}, {"automatic", true}, {"projectId", request->projectId}};
-        return json{{"success", true}, {"command", request->command}, {"outputPath", request->outputPath}, {"projectId", request->projectId}};
+        const auto setting = configuration.context.dumpMethod;
+        if (setting == "auto" && !configuration.context.autoDump)
+            return json{{"success", true}, {"command", request->command}, {"outputPath", request->outputPath}, {"projectId", request->projectId}};
+        const auto lifetime = std::weak_ptr<int>(contextCallbackLifetime);
+        const auto helper = std::weak_ptr<luduvo::ContextHelperSession>(contextHelperSession);
+        auto* client = workspaceFolder->client;
+        const auto notifications = configuration.notifications;
+        const auto local = luduvo::defaultLuduvoLocalDirectory(configuration.directories.local);
+        const auto state = contextProvider->contextStore().directory();
+        chooseDumpMethod(client, contextHelperSession, lifetime, *request, notifications, setting, true,
+            [client, lifetime, helper, notifications, request = *request, local, state](luduvo::DumpMethod method)
+            {
+                const luduvo::NotificationSender sender(client, notifications);
+                auto selected = request;
+                selected.method = method;
+                if (method == luduvo::DumpMethod::SavedScene)
+                {
+                    if (const auto source = luduvo::selectWorldDumpSource(request.projectDirectory))
+                    {
+                        selected.outputPath += ".scene.json";
+                        const auto tool = luduvo::sceneDumperPath(luduvo::defaultLuduvoEditorPath(local));
+                        const auto directory =
+                            quoteDumpCommandArgument(std::filesystem::u8path(selected.outputPath).parent_path().generic_u8string());
+                        selected.command =
+#ifdef _WIN32
+                            "[void][IO.Directory]::CreateDirectory(" + directory + "); & " + quoteDumpCommandArgument(tool) + " --json " +
+                            quoteDumpCommandArgument(source->path) + " | Set-Content -Encoding utf8 " + quoteDumpCommandArgument(selected.outputPath);
+#else
+                            "mkdir -p " + directory + " && " + quoteDumpCommandArgument(tool) + " --json " +
+                            quoteDumpCommandArgument(source->path) + " > " +
+                            quoteDumpCommandArgument(selected.outputPath);
+#endif
+                        sendManualDumpRequest(client, selected,
+                            "Run now, or run the command below in a terminal. Import an external capture with luduvo-lsp context update dump " +
+                                quoteDumpCommandArgument(selected.outputPath) + " --project-directory " +
+                                quoteDumpCommandArgument(request.projectDirectory) + " --state-directory " + quoteDumpCommandArgument(state) + ".",
+                            kContextRefreshRequiredNotification, sender.enabled(kContextRefreshRequiredNotification),
+                            [client, lifetime, helper, notifications, request, method]
+                            {
+                                if (lifetime.expired())
+                                    return;
+                                if (auto session = helper.lock())
+                                {
+                                    auto run = request;
+                                    run.method = method;
+                                    if (::startAutomaticDump(client, session, lifetime, run, notifications))
+                                        return;
+                                }
+                                client->sendWindowMessage(lsp::MessageType::Warning, "The context helper could not start the dump.");
+                            });
+                        return true;
+                    }
+                }
+                else if (method == luduvo::DumpMethod::Auto)
+                    if (auto session = helper.lock(); session && ::startAutomaticDump(client, session, lifetime, selected, notifications))
+                        return true;
+                sendManualDumpRequest(client, request, "Run this command in Luduvo Studio:", kContextRefreshRequiredNotification,
+                    sender.enabled(kContextRefreshRequiredNotification));
+                return true;
+            });
+        return json{{"success", true}, {"automatic", true}, {"projectId", request->projectId}};
     }
     return std::nullopt;
 }

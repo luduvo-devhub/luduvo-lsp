@@ -88,9 +88,9 @@ python scripts/luduvo/dumpLuduvoTypes.py
 
 Luduvo LSP has a helper process that captures project context from world dumps and watches Luduvo Studio's command log. If you want to try it out, set `platform.luduvo.context.enabled` to `true` and restart the LSP.
 
-When Context is enabled, the LSP starts a helper process that imports project-associated `world.dump` outputs into a shared local database. Captures include script attachments, instances, and the world hierarchy. Commands that may change the world mark tracked context stale. Studio's log is not watched, and the helper does not attempt to identify which projects are open in Studio.
+When Context is enabled, the LSP starts a helper that dumps your project's metadata into a shared local database that (by default) gets injected into Luduvo's install directory. These dumps mostly contain things that the editor could use for better linting and autocomplete like an instance's script attachments, all the scripts being used in your project, and the project's world hierarchy. 
 
-Automatic refresh uses `world.ldv.autosave` when its modification time is newer than `world.ldv`; otherwise it uses the saved world. Autosave captures run from a disposable project copy and do not replace or save your original world. The helper waits for a stable autosave read before copying it. Source files that cannot be copied safely, including symbolic links, produce a failure with the existing manual-dump fallback.
+To get this data, the LSP finds either the normal `world.ldv` save or the backups/autosaves of a project at `.backups/world.000001.ldv` or `world.ldv.autosave` (whichever is newer), then dumps them either by running `ldv-dump --json` on the selected world or by copying the project to a temporary directory and running `world.dump` via LuduvoEditor's `--exec` (if autodump is enabled). Depending on your config, the LSP will do this automatically, or ask you to do it manually by running some commands in your command prompt or Luduvo command line respectively. This does mean that Luduvo LSP currently can't see the latest changes in your Studio until its saved to disk, so save often!
 
 A capture reflects the selected save/autosave, not necessarily the latest changes in Studio memory. The tracking and update notifications explain this limitation; update notifications identify the source and its age. If you have made unsaved changes since then, save in Studio or choose **Redump manually** and run the provided project-specific command in your existing Studio session.
 
@@ -104,7 +104,7 @@ Project context also connects scripts to the shared event-table and handle schem
 - `Luduvo: Add Project to Context`, which adds or reindexes a Luduvo project selected from a folder picker
 - `Luduvo: Inspect Project Context`, which inspects the currently opened script when one is available and otherwise shows the complete stored project catalog
 - `Luduvo: Choose Project Context`, which lets you select a different project context if the LSP gets it wrong
-- `Luduvo: Refresh Project Context`, which starts an automatic, offscreen dump when `context.autoDump` is enabled and otherwise generates the manual `world.dump` command
+- `Luduvo: Refresh Project Context`, which starts an automatic dump when `context.autoDump` is enabled and otherwise generates the manual `world.dump` command
 - `Luduvo: Reset Project Context Choice`, which resets the current project context choice
 - `Luduvo: Show Project Context Status`, which shows helper health, refresh settings, registered LSP clients, and cleanup counts
 - `Luduvo: Remove Generated Type Dependencies`, which removes Luduvo LSP's generated type file from the project as well as cleans up other any references to it in the project's code (depending on which option(s) you choose)
@@ -187,7 +187,7 @@ local value: number = events[keys][1]
 
 #### Cross-Script Handle Completion
 
-While `world.dump` dumps a lot of things, handle names are not one of them. However, Luduvo LSP does the next best thing and exposes handle names that you've read/referenced in your script (`handles.Testing`, `handles["Testing"]`, and indirect handle reads through variable assignements like `local h = handles ; local h2 = h.Testing`) and adds them to the completion hints for all scripts that are reported to be attached to the same instance via project context.
+While `world.dump` dumps a lot of things, handle names are not one of them. To make things worse, the bundled Luduvo world dumper is broken and also omits handle information. However, Luduvo LSP does the next best thing and exposes handle names that you've read/referenced in your script (`handles.Testing`, `handles["Testing"]`, and indirect handle reads through variable assignements like `local h = handles ; local h2 = h.Testing`) and suggests them in scripts attached to the same instance.
 
 To get around Luau's type inference limitations, handles come with a new `ScriptHandle` type (AKA `HandlesFor<scriptPath, typeof(handles)>`) that exports the shared handle type for a given script path. As with all Luduvo LSP types, the LSP will automatically update the types file with the context it gains from after you add it to your script. To use it, all you need to do is select the `ScriptHandle` type from inside autocomplete and Luduvo LSP will automatically set everything up for you.
 
@@ -328,7 +328,8 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `platform.luduvo.directories.local` | string | `""` | Overrides the root of Luduvo's local per-user data. An empty value uses the operating-system default. |
 | `platform.luduvo.directories.context` | string | `""` | Overrides the directory containing Luduvo LSP's project-context database. An empty value derives it from the local data directory. |
 | `platform.luduvo.context.enabled` | boolean | `false` | Enables the experimental Luduvo context integration. The Release 1 preview remains opt-in. |
-| `platform.luduvo.context.autoDump` | boolean | `true` | Refreshes stale context through a disposable, offscreen Luduvo Editor process when context integration is enabled. If it is disabled or fails, the LSP provides the manual `world.dump` command instead. |
+| `platform.luduvo.context.autoDump` | boolean | `true` | Refreshes stale context with the bundled scene dumper or a disposable Luduvo Editor process. If it is disabled or fails, the LSP provides the manual `world.dump` command instead. |
+| `platform.luduvo.context.dumpMethod` | string | `auto` | `savedScene` uses Luduvo's world dumper. `studio` uses Studio. `ask` shows a method picker. `auto` tries the scene reader first and falls back to Studio. |
 | `platform.luduvo.context.lazyRefresh` | boolean | `false` | Waits until context is needed before refreshing. Set to `false` with `context.autoDump: true` to refresh tracked projects as soon as they become stale. Reported by `context status`. |
 | `platform.luduvo.notifications` | `{ default?, categories }` | `{}` | Overrides notification defaults. Set `categories["context.project.stale"]` to `false` to suppress its popup without disabling tracking or refresh. See [notification suppression](#notification-suppression). |
 | `platform.luduvo.definitions.serverOverride` | string | `""` | Uses the specified Luau declaration file for server scripts before trying the installed or bundled server declarations. |
@@ -648,10 +649,11 @@ Luduvo LSP comes packed with its own custom error diagnostics that lint a select
 | `world.empty-query` | error | Calling `game.World.Query` or `World.Query` without any expected arguments (a string component name or `Pair`) |
 | `event-table.write` | error | Writing EventTable members or EventColumn rows. |
 | `event-table.fields.count` | error | Using more than 24 fields in an event-table |
-| `event-table.fields.shape` | error | Not formatting the fields for an event-table in the correct `{{"field", game.EventTable.Type}}` shape |
+| `event-table.fields.shape` | error | Not formatting the fields for an event table in the correct `{{"field", game.EventTable.Type}}` shape |
+| `event-table.fields.type` | error | Using an unknown or invalid `EventFieldType` value while declaring an event table field |
 | `event-table.fields.empty-name` | error | Having empty string(s) as an event-table field name |
 | `event-table.fields.name-length` | error | Writing a table field name that exceeds 31 bytes (usually that's 31 total characters but some characters can take up more than 1 byte) |
-| `event-table.fields.reserved-name` | error | Using count, sender, tick, Push, PushTo, Rows, ToServer, ToClients, F32, I32, U8, Bool, Vec3, Color, Instance, Entity, String, FireServer, FireClient, FireAllClients, OnServerEvent, or OnClientEvent as an event-table field name |
+| `event-table.fields.reserved-name` | error | Using count, sender, tick, Push, PushTo, Rows, ToServer, ToClients, F32, I32, U8, Bool, Vec3, Color, Instance, Entity, String, FireServer, FireClient, FireAllClients, OnServerEvent, or OnClientEvent as an event table field name |
 | `event-table.fields.duplicate` | error | Using the same field name twice in an event table field |
 | `event-table.unknown-column` | error | Accessing an undeclared literal column on an event table whose inline column lists are fully indexed. Inherited API members remain available; incomplete or aliased schema lists retain an open fallback |
 | `directive.invalid-nolint` | warning | Referring to an unknown Luduvo diagnostic rule in a `--!nolint luduvo/...` directive, or slightly mispelling it to the point that the LSP can guess what your intent was. Any lint that doesn't start with `luduvo/` won't get this lint and instead gets the default upstream Luau hint |
@@ -720,10 +722,11 @@ Below is the full list of notification IDs and their supression defaults:
 | `server.crash-reporting.suggestion` | On | The VS Code extension crashes after an unexpected exit, though only if the binary its using has reporting support. For Luduvo LSP specifically, you will likely never naturally see it |
 | `context.tracking.started` | On | The first live LSP begins tracking a project |
 | `context.tracking.stopped` | Off | The last live LSP stops tracking a project during a registration update. A forcibly terminated LSP cannot send this message |
-| `context.project.stale` | On | A tracked project becomes stale. Indicates when a background refresh is starting and offers Autodump and Redump manually |
+| `context.project.stale` | On | A tracked project becomes stale and automatic refresh is disabled or cannot start. Offers Autodump and Redump manually |
 | `context.files.added` | On | Newly inferred script attachments are added to context. Multiple additions may be grouped into one message |
 | `context.autodump.started` | Off | An offscreen automatic dump starts |
 | `context.updated` | Off | A new world dump replaces captured project context. Includes save/autosave provenance and source age, with a Redump manually action |
+| `context.dump.choose-method` | On | Offers two dump methods in editors without a native picker when `context.dumpMethod` is `ask`. Suppressing it leaves automatic refresh pending. |
 | `context.autodump.failed` | On | An automatic dump fails. Includes the manual `world.dump` command as a fallback |
 | `context.refresh.required` | On | Fresh context is needed for whatever action you are about to preform but said project's content is stale. Also will appear if automatic dumps are enabled and it can't refresh on its own for whatever reason |
 | `context.selection.required` | On | Luduvo LSP doesn't know which project context to use for an opened script that belongs to multiple projects |

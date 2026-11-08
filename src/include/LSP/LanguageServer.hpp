@@ -30,8 +30,9 @@ struct InitializationOptions
 {
     std::unordered_map<std::string, std::string> fflags{};
     std::optional<std::string> configurationSection;
+    bool nativeDumpMethodPicker = false;
 };
-NLOHMANN_DEFINE_OPTIONAL(InitializationOptions, fflags, configurationSection)
+NLOHMANN_DEFINE_OPTIONAL(InitializationOptions, fflags, configurationSection, nativeDumpMethodPicker)
 
 class LanguageServer
 {

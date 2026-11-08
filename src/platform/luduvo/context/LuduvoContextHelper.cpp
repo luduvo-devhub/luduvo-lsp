@@ -497,7 +497,7 @@ static int statusCommand(const argparse::ArgumentParser& program)
         return printError(error);
     json result = *status;
     result["configuration"] = {{"enabled", configuration->context.enabled}, {"autoDump", configuration->context.autoDump},
-        {"lazyRefresh", configuration->context.lazyRefresh}};
+        {"lazyRefresh", configuration->context.lazyRefresh}, {"dumpMethod", configuration->context.dumpMethod}};
     return writeOutput(program, result, buildContextStatusReport(result));
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LSP/ClientConfiguration.hpp"
+#include "Platform/luduvo/context/LuduvoAutoDump.hpp"
 #include "Platform/luduvo/context/LuduvoContextStore.hpp"
 
 #include <memory>
@@ -25,6 +26,8 @@ struct WorldDumpRequest
     std::string projectId;
     std::string projectName;
     std::string projectDirectory;
+    uint64_t worldGeneration = 0;
+    DumpMethod method = DumpMethod::Auto;
 };
 
 struct AutomaticWorldDumpResult
@@ -100,6 +103,7 @@ std::shared_ptr<ContextNotificationSubscription> subscribeContextUpdates(
     const std::shared_ptr<ContextHelperSession>& session, const void* subscriber, std::function<void(const ContextUpdates&)> callback);
 ContextClientUpdate updateContextClientProjects(
     const std::shared_ptr<ContextHelperSession>& session, const std::string& workspaceDirectory, const std::vector<ContextClientProject>& projects);
+bool claimAutomaticDumpChoice(const std::shared_ptr<ContextHelperSession>& session, const WorldDumpRequest& request);
 AutomaticWorldDumpRequestStatus requestAutomaticWorldDump(const std::shared_ptr<ContextHelperSession>& session, const WorldDumpRequest& request,
     std::function<void(const AutomaticWorldDumpResult&)> callback);
 

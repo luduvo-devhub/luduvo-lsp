@@ -10,6 +10,13 @@
 namespace luduvo
 {
 
+enum class DumpMethod
+{
+    Auto,
+    SavedScene,
+    Studio
+};
+
 struct AutoDumpPlan
 {
     std::string projectId;
@@ -17,6 +24,7 @@ struct AutoDumpPlan
     std::string outputPath;
     std::string editorPath;
     std::chrono::seconds timeout{45};
+    DumpMethod method = DumpMethod::Auto;
 };
 
 struct AutoDumpResult
@@ -29,6 +37,7 @@ struct AutoDumpResult
 std::optional<WorldDumpSource> selectWorldDumpSource(const std::string& projectDirectory, std::string* error = nullptr);
 AutoDumpResult runAutomaticWorldDump(const AutoDumpPlan& plan, const std::atomic<bool>* cancelled = nullptr);
 AutoDumpResult recoverAutomaticWorldDumpAutosave(const std::string& projectDirectory);
+std::string sceneDumperPath(const std::string& editorPath);
 std::string defaultLuduvoEditorPath(const std::string& localDirectory);
 
 } // namespace luduvo

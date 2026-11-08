@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Luduvo LSP can now use Luduvo's dedicated world dumper to dump project context! Expect it to not only be much faster than the old method, but also to give more/better context since it gives a lot more information about the project state than world.dump does
+- You can now configure which context dump method manual and autodump preforms for refreshes in notifications and the config
+- The dump method that was used for any particular refresh is shown in the LSP CLI inspect and debug UI
+- Since Project Context can come from multiple sources, the LSP now caches the last capture from every dump method and combines them to help fill in blanks where necessary
+- Outdated context-sensitive hints now give a stale tag if the LSP knows that the information its giving you is potentially outdated
+- Project context now infers signal function parameters for `Connect` and `Once` in onClientEvent and onServerEvent
+- A new `event-table.fields.type` diagnostic that flags invalid field types in event table declarations
+
+### Changed
+
+- Automatic context refresh's default has been changed to use the bundled `ldv-dump` tool instead of the old `world.dump` method
+- Stale context prompts only appear when automatic refresh is off or fails instead of every time the LSP helper detects a command that could stale the context 
+
+### Fixed
+
+- Luduvo helper's autodumper no longer crashes when the project is already open in Luduvo Studio
+- Autodump now checks for autosaves in the project's `.backups` directory instead of just the legacy `world.ldv.autosave`
+
 ## [1.71.2L-alpha] - 2026-11-04
 
 ### Added

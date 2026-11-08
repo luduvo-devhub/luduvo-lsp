@@ -17,6 +17,10 @@ const std::vector<Rule> rules = {
         EventSchemaRule{EventSchemaConstraint::EntryShape},
     },
     {
+        {"event-table.fields.type", LuduvoDiagnosticSeverity::Error, "An event schema field requires an EventFieldType."},
+        EventSchemaRule{EventSchemaConstraint::FieldType},
+    },
+    {
         {"event-table.fields.empty-name", LuduvoDiagnosticSeverity::Error, "An event schema field name cannot be empty."},
         EventSchemaRule{EventSchemaConstraint::EmptyName},
     },

@@ -172,8 +172,6 @@ struct Extractor : Luau::AstVisitor
             result.events.push_back(std::move(event));
             return true;
         }
-        static const std::map<std::string, std::string> types = {{"String", "string"}, {"F32", "number"}, {"I32", "number"}, {"U8", "number"},
-            {"Bool", "boolean"}, {"Vec3", "vector"}, {"Color", "Color3"}, {"Instance", "Instance"}, {"Entity", "Instance"}};
         for (const auto& item : fields->items)
         {
             if (item.kind != Luau::AstExprTable::Item::Kind::List)
@@ -197,11 +195,12 @@ struct Extractor : Luau::AstVisitor
                 continue;
             }
             const auto endpoint = syntax.symbol(field->items.data[1].value).value_or("");
-            const auto suffix = endpoint.substr(endpoint.rfind('.') == std::string::npos ? 0 : endpoint.rfind('.') + 1);
             SchemaField value;
             value.name = *key;
-            if (endpoint.find("game.EventTable.") == 0 && types.count(suffix))
-                value.type = types.at(suffix);
+            constexpr std::string_view prefix = "game.EventTable.";
+            if (endpoint.compare(0, prefix.size(), prefix) == 0)
+                if (const auto type = eventFieldValueType(std::string_view(endpoint).substr(prefix.size())); !type.empty())
+                    value.type = type;
             value.expression = snippet(source, field->location);
             value.line = field->location.begin.line;
             value.column = field->location.begin.column;
@@ -253,6 +252,36 @@ std::optional<std::string> SchemaSyntax::symbol(const Luau::AstExpr* expression)
                 return *parent + "." + *key;
     return std::nullopt;
 }
+namespace
+{
+constexpr std::pair<std::string_view, std::string_view> eventFieldTypes[] = {{"String", "string"}, {"F32", "number"}, {"I32", "number"},
+    {"U8", "number"}, {"Bool", "boolean"}, {"Vec3", "vector"}, {"Color", "Color3"}, {"Entity", "Instance"}, {"Instance", "Instance"}};
+}
+
+std::string_view eventFieldValueType(std::string_view name)
+{
+    for (const auto& [fieldType, valueType] : eventFieldTypes)
+        if (fieldType == name)
+            return valueType;
+    return {};
+}
+
+std::string_view eventFieldTypeNames()
+{
+    static const std::string names = []
+    {
+        std::string result;
+        for (auto type = std::begin(eventFieldTypes); type != std::end(eventFieldTypes); ++type)
+        {
+            if (type != std::begin(eventFieldTypes))
+                result += type + 1 == std::end(eventFieldTypes) ? ", or " : ", ";
+            result += type->first;
+        }
+        return result;
+    }();
+    return names;
+}
+
 std::string schemaFingerprint(std::string_view source)
 {
     uint64_t value = 14695981039346656037ull;
