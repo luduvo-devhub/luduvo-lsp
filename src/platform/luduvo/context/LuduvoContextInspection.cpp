@@ -237,6 +237,7 @@ static ContextInspectionResult inspectScript(const std::string& path, const std:
             }
         }
         candidate["selected"] = selected;
+        store.resolveWorld(project, &candidate["captures"]);
         if (const auto schemas = loadProjectSchemas(store.directory(), projectId))
             candidate["schemas"] = *schemas;
         if (world)
@@ -395,6 +396,7 @@ static json storedProjectReport(const std::string& projectId, const ContextProje
         {"missingScripts", nullptr}, {"attachments", json::array()}, {"capturedContext", project}};
     if (const auto schemas = loadProjectSchemas(store.directory(), projectId))
         report["schemas"] = *schemas;
+    store.resolveWorld(project, &report["capturedContext"]["captures"]);
     if (const auto world = store.loadWorld(projectId))
     {
         addCaptureDetails(report["capturedContext"], project, *world, store);
@@ -506,6 +508,7 @@ ContextInspectionResult inspectContextInput(const std::string& path, const std::
                 if (normalizeContextPath(captured.directory) != normalizeContextPath(project.directory))
                     continue;
                 report["capturedContext"] = captured;
+                store.resolveWorld(captured, &report["capturedContext"]["captures"]);
                 if (const auto schemas = loadProjectSchemas(store.directory(), projectId))
                     report["schemas"] = *schemas;
                 const auto world = store.loadWorld(projectId);

@@ -14,6 +14,8 @@ struct ProcessIdentity
 };
 
 std::optional<ProcessIdentity> currentProcessIdentity();
+std::optional<ProcessIdentity> processIdentityForPid(uint64_t processId);
+std::optional<uint64_t> processStartUnixMs(const ProcessIdentity& identity);
 bool isProcessAlive(const ProcessIdentity& identity);
 std::optional<ProcessIdentity> readProcessIdentity(const std::string& path);
 bool writeProcessIdentity(const std::string& path, const ProcessIdentity& identity, std::string* error = nullptr);

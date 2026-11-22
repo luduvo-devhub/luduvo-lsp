@@ -62,15 +62,17 @@ struct ProjectSchemas
     int64_t capturedAt = 0;
     WorldDumpSource inputSource;
     bool fresh = false;
+    nlohmann::json captureDetails; // Runtime view from the context store.
     std::map<std::string, ScriptSchema> scripts;
     std::map<std::string, std::vector<SchemaAttachment>> attachments;
+    std::map<std::string, std::vector<std::string>> capturedHandles;
     std::string exportPath;
     std::string exportState = "not configured";
     int64_t exportedAt = 0;
     std::string exportError;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ProjectSchemas, formatVersion, projectId, projectName, directory, updatedAt, capturedAt, inputSource,
-    fresh, scripts, attachments, exportPath, exportState, exportedAt, exportError)
+    fresh, scripts, attachments, capturedHandles, exportPath, exportState, exportedAt, exportError)
 
 struct FieldObservation
 {

@@ -372,6 +372,11 @@ public:
         return std::nullopt;
     }
 
+    virtual bool isCompletionDeprecated(const Luau::ModuleName&, const Luau::AutocompleteEntry&) const
+    {
+        return false;
+    }
+
     /// Optionally replace the standard documentation presentation for one callable signature.
     virtual std::optional<lsp::MarkupContent> handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context)
     {

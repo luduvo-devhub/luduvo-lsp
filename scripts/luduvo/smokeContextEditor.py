@@ -49,10 +49,8 @@ def bootstrap_project(editor: Path, project: Path, directory: Path, env: dict) -
         json.dumps({"name": "Luduvo LSP Smoke", "assets": {}}), encoding="utf-8"
     )
     dump = directory / "bootstrap.txt"
-    arguments = [str(editor), str(project)]
-    if platform.system() == "Windows":
-        arguments += ["-platform", "offscreen"]
-    for command in ("insert.part", "file.save", f"world.dump {dump.as_posix()}"):
+    arguments = [str(editor), "--headless", str(project)]
+    for command in ("insert.part", "edit.rename LspSmokeFixture", "file.save", f"world.dump {dump.as_posix()}", "file.quit"):
         arguments += ["--exec", command]
     with (directory / "editor-bootstrap.log").open("wb") as log:
         process = subprocess.Popen(
@@ -67,13 +65,14 @@ def bootstrap_project(editor: Path, project: Path, directory: Path, env: dict) -
             deadline = time.monotonic() + 120
             previous = None
             while time.monotonic() < deadline:
+                status = process.poll()
                 if dump.exists() and (project / "world.ldv").exists():
                     contents = dump.read_bytes()
-                    if contents == previous and b" name Part " in contents:
+                    if (status == 0 or (status is None and contents == previous)) and b" name LspSmokeFixture " in contents:
                         return
                     previous = contents
-                if process.poll() is not None:
-                    raise RuntimeError(f"Editor bootstrap exited with code {process.returncode}")
+                if status is not None:
+                    raise RuntimeError(f"Editor bootstrap exited with code {status} before producing the fixture dump")
                 time.sleep(0.2)
             raise RuntimeError("Editor bootstrap did not save and dump the fixture project within 120 seconds")
         finally:

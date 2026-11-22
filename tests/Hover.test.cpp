@@ -3,11 +3,51 @@
 #include "LSP/DocumentationParser.hpp"
 #include "LuauFileUtils.hpp"
 #include "Luau/Parser.h"
+#include "Luau/TypeArena.h"
+#include "Platform/luduvo/hover/LuduvoHoverAnalysis.hpp"
 #include "Platform/luduvo/hover/LuduvoHoverRenderer.hpp"
 
 static std::string hoverWithDocumentation(std::string documentation, std::string type)
 {
     return documentation + kDocumentationBreaker + type;
+}
+
+TEST_CASE("luduvo_named_method_hover_formats_recursive_signatures")
+{
+    Luau::TypeArena arena;
+    const auto frame = arena.addType(Luau::TableType{});
+    auto* table = Luau::getMutable<Luau::TableType>(frame);
+    table->name = "Frame";
+    const auto parameters = arena.addTypePack({frame});
+    const auto returns = arena.addTypePack({frame});
+    const auto inverse = arena.addType(Luau::FunctionType{parameters, returns});
+    Luau::getMutable<Luau::FunctionType>(inverse)->argNames.emplace_back(Luau::FunctionArgument{"self", {}});
+    table->props["Inverse"] = Luau::Property::readonly(inverse);
+
+    Luau::ToStringOptions options;
+    options.exhaustive = true;
+    options.functionTypeArguments = true;
+    const auto renderedType = luduvo::hover::normalizeRichHoverType(inverse, options);
+    const auto declaration = luduvo::hover::makeDeclaration(inverse, renderedType, renderedType, {HoverDeclarationKind::Member, "Inverse"}, options);
+    CHECK_EQ(declaration, "function Inverse(self: Frame): Frame");
+
+    table->name.reset();
+    const auto receiver = arena.addType(Luau::MetatableType{frame, arena.addType(Luau::TableType{})});
+    const auto receiverPack = arena.addTypePack({receiver});
+    const auto recursiveMethod = arena.addType(Luau::FunctionType{receiverPack, receiverPack});
+    table->props["Inverse"] = Luau::Property::readonly(recursiveMethod);
+    const auto recursiveDeclaration =
+        luduvo::hover::makeDeclaration(recursiveMethod, "", "", {HoverDeclarationKind::Member, "Inverse"}, options);
+    CHECK(recursiveDeclaration.find("Inverse: ") == 0);
+    CHECK(recursiveDeclaration.find(" where ") != std::string::npos);
+    CHECK(recursiveDeclaration.find("*CYCLE") == std::string::npos);
+
+    ClientLuduvoHoverConfiguration config;
+    config.sections = {"type"};
+    config.maxTypeDefinitionLength = 20;
+    luduvo::hover::RichHoverRenderModel model;
+    model.typeDefinition = recursiveDeclaration;
+    CHECK_EQ(luduvo::hover::renderRichHover(config, model), codeBlock("luau", recursiveDeclaration));
 }
 
 static std::string extractLuauCodeBlock(const std::string& markdown)
@@ -42,17 +82,61 @@ TEST_CASE("luduvo_rich_hover_renderer_formats_analyzed_input_without_a_workspace
     ClientLuduvoHoverConfiguration config;
     luduvo::hover::RichHoverRenderModel model;
     model.title = "game.World";
-    model.provenance = " (Server Version)";
+    model.hasDocumentationIdentity = true;
     model.tags = {"read-only"};
     model.documentation = "The entity world";
     model.typeDefinition = "declare game: { World: {} }";
 
-    CHECK_EQ(luduvo::hover::renderRichHover(config, model), "# game.World (Server Version)\n"
-                                                            "`read-only`\n\n"
+    CHECK_EQ(luduvo::hover::renderRichHover(config, model), "# game.World\n\n"
+                                                            "`read-only`\n\n___\n\n"
                                                             "The entity world\n\n___\n\n"
                                                             "```luau\n"
                                                             "declare game: { World: {} }\n"
                                                             "```");
+}
+
+TEST_CASE("luduvo_rich_hover_sections_are_optional_and_ordered")
+{
+    ClientLuduvoHoverConfiguration config;
+    luduvo::hover::RichHoverRenderModel model;
+    model.title = "NightSky";
+    model.tags = {"deprecated"};
+    model.deprecated = true;
+    model.deprecation = "Use Panorama.";
+    model.documentation = "The old sky.";
+    model.documentedDefault = "`0`";
+    model.notes = {"Writes have no effect."};
+    model.example = "print(sky.NightSky)";
+    config.sections = {"divider", "example", "title", "tags", "divider", "deprecation", "notes", "default", "divider", "default", "divider"};
+    const std::string expected = codeBlock("luau", model.example) +
+                                 "\n\n# NightSky\n\n`deprecated`\n\n___\n\n**Deprecated** Use Panorama."
+                                 "\n\n**Notes**\n- Writes have no effect.\n\n> Default: `0`\n\n___\n\n> Default: `0`";
+    CHECK_EQ(luduvo::hover::renderRichHover(config, model), expected);
+    config.sections.clear();
+    CHECK(luduvo::hover::renderRichHover(config, model).empty());
+}
+
+TEST_CASE("luduvo_hover_preserves_documentation_with_only_notes_and_a_default")
+{
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.hover.sections = {"title", "notes", "default"};
+    const std::string definitions = R"(
+        declare extern type Example with
+            Value: number
+        end
+        declare example: Example
+    )";
+    LuduvoFixture fixture("hover_metadata_only", config, definitions, definitions);
+    parseDocumentationContents(R"({"@luduvo/server/globaltype/Example.Value":{"notes":["Changes once per tick."],"default":"0"}})",
+        "test documentation", fixture.client.documentation, &fixture.client, true);
+    const auto uri = fixture.newDocument("notes.server.luau", "local value = example.Value");
+    lsp::HoverParams params;
+    params.textDocument = {uri};
+    params.position = {0, 23};
+    const auto hover = fixture.workspace.hover(params, nullptr);
+    REQUIRE(hover);
+    CHECK(hover->contents.value.find("**Notes**\n- Changes once per tick.") != std::string::npos);
+    CHECK(hover->contents.value.find("> Default: 0") != std::string::npos);
 }
 
 TEST_CASE("luduvo_rich_hover_truncates_between_complete_overloads")
@@ -165,8 +249,8 @@ TEST_CASE("luduvo_rich_hover_does_not_inherit_uncheckable_named_members")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# [game.World ](https://docs.luduvo.com/reference/World)↗ (Server Version)\n"
-                                     "`read-only`\n\n"
+    CHECK_EQ(result->contents.value, "# [game.World ](https://docs.luduvo.com/reference/World)↗\n\n"
+                                     "`read-only`\n\n___\n\n"
                                      "The entity world\n\n___\n\n" +
                                          codeBlock("luau", "World: {\n    Camera: any\n}"));
 }
@@ -193,8 +277,8 @@ TEST_CASE("luduvo_rich_hover_preserves_direct_member_identity_for_uncheckable_lo
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# [Camera ](https://docs.luduvo.com/reference/Camera)↗ (Client Version)\n"
-                                     "`uncheckable`\n\n"
+    CHECK_EQ(result->contents.value, "# [Camera ](https://docs.luduvo.com/reference/Camera)↗\n\n"
+                                     "`uncheckable`\n\n___\n\n"
                                      "The active camera\n\n___\n\n" +
                                          codeBlock("luau", "local camera: any"));
 }
@@ -219,7 +303,7 @@ TEST_CASE("luduvo_rich_hover_uses_the_named_type_for_optional_locals")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK(result->contents.value.find("# [RaycastResult ](https://docs.luduvo.com/reference/RaycastResult)↗ (Client Version)") == 0);
+    CHECK(result->contents.value.find("# [RaycastResult ](https://docs.luduvo.com/reference/RaycastResult)↗") == 0);
     CHECK(result->contents.value.find("RaycastResult?\n\ndeclare extern type RaycastResult") != std::string::npos);
     CHECK(result->contents.value.find("Position: vector") != std::string::npos);
 }
@@ -412,7 +496,7 @@ TEST_CASE("luduvo_rich_hover_expands_named_extern_types_in_the_type_block")
     REQUIRE(result);
     CHECK(result->contents.value.find("Pending: boolean") != std::string::npos);
     CHECK(result->contents.value.find("Cancel: (self: ContentRequest) -> ()") != std::string::npos);
-    CHECK(result->contents.value.find("# ContentRequest (Server Version)") == 0);
+    CHECK(result->contents.value.find("# ContentRequest") == 0);
 }
 
 TEST_CASE("luduvo_rich_hover_uses_only_the_type_block_for_unadorned_local_values")
@@ -482,12 +566,12 @@ TEST_CASE("luduvo_rich_hover_uses_declaration_comments_when_website_docs_are_mis
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# fallbackValue (Server Version)\n\n"
+    CHECK_EQ(result->contents.value, "# fallbackValue\n\n___\n\n"
                                      "A value documented by the declaration file.\n\n___\n\n" +
                                          codeBlock("luau", "declare fallbackValue: {  }"));
 }
 
-TEST_CASE("luduvo_rich_hover_truncates_titles_without_hiding_the_version")
+TEST_CASE("luduvo_rich_hover_truncates_titles")
 {
     const std::string definitions = "declare extremelyLongGlobalName: number";
 
@@ -502,7 +586,7 @@ TEST_CASE("luduvo_rich_hover_truncates_titles_without_hiding_the_version")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# extr... (Server Version)\n\n___\n\n" + codeBlock("luau", "declare extremelyLongGlobalName: number"));
+    CHECK_EQ(result->contents.value, "# extremelyLongGlobalNa...\n\n___\n\n" + codeBlock("luau", "declare extremelyLongGlobalName: number"));
 }
 
 TEST_CASE("luduvo_rich_hover_truncates_type_definitions_independently")
@@ -525,7 +609,7 @@ TEST_CASE("luduvo_rich_hover_truncates_type_definitions_independently")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# shape (Server Version)\n\n___\n\n" + codeBlock("luau", "declare shape: {\n    -- ...\n}"));
+    CHECK_EQ(result->contents.value, "# shape\n\n___\n\n" + codeBlock("luau", "declare shape: {\n    -- ...\n}"));
 }
 
 TEST_CASE("luduvo_rich_hover_keeps_short_union_titles_and_aggregates_their_side")
@@ -546,7 +630,7 @@ TEST_CASE("luduvo_rich_hover_keeps_short_union_titles_and_aggregates_their_side"
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
     CHECK_EQ(
-        result->contents.value, "# Camera | RaycastResult (Client Version)\n\n___\n\n" + codeBlock("luau", "local result: Camera | RaycastResult"));
+        result->contents.value, "# Camera | RaycastResult\n\n___\n\n" + codeBlock("luau", "local result: Camera | RaycastResult"));
 }
 
 TEST_CASE("luduvo_rich_hover_summarizes_long_union_titles")
@@ -568,7 +652,7 @@ TEST_CASE("luduvo_rich_hover_summarizes_long_union_titles")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# Camera +2 union members (Client Version)\n\n___\n\n" +
+    CHECK_EQ(result->contents.value, "# Camera +2 union members\n\n___\n\n" +
                                          codeBlock("luau", "local result: Camera | ExtremelyVerbosePhysicsQueryResponse | RaycastResult"));
 }
 
@@ -593,7 +677,7 @@ TEST_CASE("luduvo_rich_hover_tags_deprecated_members")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK(result->contents.value.find("# Api.Secret (Server Version)\n`deprecated`") == 0);
+    CHECK(result->contents.value.find("# Api.Secret\n\n`deprecated`") == 0);
 }
 
 TEST_CASE("luduvo_rich_hover_tags_write_only_members")
@@ -610,7 +694,7 @@ TEST_CASE("luduvo_rich_hover_tags_write_only_members")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# api.Secret (Server Version)\n"
+    CHECK_EQ(result->contents.value, "# api.Secret\n\n"
                                      "`write-only` · `uncheckable`\n\n___\n\n" +
                                          codeBlock("luau", "Secret: any"));
 }
@@ -762,6 +846,35 @@ TEST_CASE("luduvo_rich_hover_renders_overloaded_resource_members_without_expandi
     REQUIRE(firstResourceText != std::string::npos);
     CHECK(hover.find(resourceText, firstResourceText + resourceText.size()) == std::string::npos);
     requireValidLuauCodeBlock(hover);
+}
+
+TEST_CASE("luduvo_hover_uses_member_documentation_when_the_selected_overload_has_no_entry")
+{
+    const std::string definitions = R"(
+        type World = {
+            Pair: ((relation: "Tag", name: string) -> string) & ((self: World, relation: "Tag", name: string) -> string),
+        }
+        declare game: { World: World }
+    )";
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.definitions.exposePrivateTypes = true;
+    LuduvoFixture fixture("luduvo_hover_nested_overload_docs", config, definitions, definitions);
+    constexpr auto summary = "Builds a relationship pair.";
+    constexpr auto link = "https://docs.luduvo.com/reference/World/#Pair";
+    fixture.client.documentation["@luduvo/server/globaltype/World.Pair"] = Luau::BasicDocumentation{summary, link};
+
+    const auto document = fixture.newDocument("pair.server.luau",
+        "local member = game.World.Pair\nlocal dot = game.World.Pair('Tag', 'Example')\nlocal method = game.World:Pair('Tag', 'Example')");
+    lsp::HoverParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{document};
+    for (const auto position : {lsp::Position{0, 27}, lsp::Position{1, 24}, lsp::Position{2, 27}})
+    {
+        params.position = position;
+        const auto result = fixture.workspace.hover(params, nullptr);
+        REQUIRE(result);
+        CHECK(result->contents.value.find(summary) != std::string::npos);
+        CHECK(result->contents.value.find(link) != std::string::npos);
+    }
 }
 
 TEST_CASE("luduvo_rich_hover_keeps_resource_constraints_with_their_overloads")
@@ -1090,7 +1203,7 @@ local anchored = root.Anchored
     CHECK(annotation.find("Anchored") == std::string::npos);
 
     const std::string function = hover({2, 16});
-    CHECK(function.find("function SanitizeInput(input: string) -> string") != std::string::npos);
+    CHECK(function.find("function SanitizeInput(input: string): string") != std::string::npos);
 
     const std::string member = hover({5, 28});
     CHECK(member.find("Anchored: boolean") != std::string::npos);

@@ -11,15 +11,27 @@
 
 namespace luduvo::hover
 {
-std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target)
+std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target,
+    const Luau::ToStringOptions& options)
 {
+    type = Luau::follow(type);
+    if (const auto function = Luau::get<Luau::FunctionType>(type);
+        function && target.kind != DeclarationKind::None && target.kind != DeclarationKind::Type && !target.name.empty())
+    {
+        auto signatureOptions = options;
+        signatureOptions.exhaustive = false;
+        signatureOptions.hideTableAliasExpansions = true;
+        const std::string signature = Luau::toStringNamedFunction(target.name, *function, signatureOptions);
+        // Anonymous recursive types need Luau's recursive type notation to retain their bindings.
+        if (signature.find("*CYCLE*") != std::string::npos || signature.find("*CYCLETP*") != std::string::npos)
+            return target.name + ": " + Luau::toString(type, signatureOptions);
+        return "function " + signature;
+    }
+
     auto declarationFor = [&](const std::string& typeText)
     {
         if (target.kind == DeclarationKind::None || target.name.empty())
             return typeText;
-        if (Luau::get<Luau::FunctionType>(Luau::follow(type)))
-            return "function " + target.name + typeText;
-
         switch (target.kind)
         {
         case DeclarationKind::Local:
@@ -36,7 +48,6 @@ std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, 
         return typeText;
     };
 
-    type = Luau::follow(type);
     auto standaloneDeclarationFor = [&](const std::string& typeText)
     {
         const std::string prefix = target.kind == DeclarationKind::Member ? "declare " : "";
@@ -57,61 +68,21 @@ std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, 
     return declarationFor(renderedType);
 }
 
-std::string versionLabel(LuduvoDefinitionSide side)
-{
-    switch (side)
-    {
-    case LuduvoDefinitionSide::Server:
-        return " (Server Version)";
-    case LuduvoDefinitionSide::Client:
-        return " (Client Version)";
-    case LuduvoDefinitionSide::None:
-        return "";
-    }
-    return "";
-}
-
-void collectTypeProvenance(Luau::TypeId type, TypeProvenance& provenance)
+bool hasLuduvoTypeIdentity(Luau::TypeId type)
 {
     type = Luau::follow(type);
     if (Luau::is<Luau::ExternType, Luau::TableType, Luau::FunctionType>(type))
     {
-        if (auto identity = getLuduvoSymbolIdentity(type->documentationSymbol))
-        {
-            provenance.server |= identity->side == LuduvoDefinitionSide::Server;
-            provenance.client |= identity->side == LuduvoDefinitionSide::Client;
-            return;
-        }
-        if (auto definitionModuleName = Luau::getDefinitionModuleName(type))
-        {
-            provenance.server |= *definitionModuleName == "@luduvo/server";
-            provenance.client |= *definitionModuleName == "@luduvo/client";
-            if (provenance.server || provenance.client)
-                return;
-        }
+        if (getLuduvoSymbolIdentity(type->documentationSymbol))
+            return true;
+        if (const auto module = Luau::getDefinitionModuleName(type))
+            return *module == "@luduvo/server" || *module == "@luduvo/client";
     }
-
-    if (auto unionType = Luau::get<Luau::UnionType>(type))
-    {
-        for (Luau::TypeId option : unionType->options)
-            collectTypeProvenance(option, provenance);
-    }
-    else if (auto intersectionType = Luau::get<Luau::IntersectionType>(type))
-    {
-        for (Luau::TypeId part : intersectionType->parts)
-            collectTypeProvenance(part, provenance);
-    }
-}
-
-std::string versionLabel(const TypeProvenance& provenance)
-{
-    if (provenance.server && provenance.client)
-        return " (Client/Server Versions)";
-    if (provenance.server)
-        return " (Server Version)";
-    if (provenance.client)
-        return " (Client Version)";
-    return "";
+    if (const auto unionType = Luau::get<Luau::UnionType>(type))
+        return std::any_of(unionType->options.begin(), unionType->options.end(), hasLuduvoTypeIdentity);
+    if (const auto intersectionType = Luau::get<Luau::IntersectionType>(type))
+        return std::any_of(intersectionType->parts.begin(), intersectionType->parts.end(), hasLuduvoTypeIdentity);
+    return false;
 }
 
 TypeCheckability mergeCheckability(TypeCheckability left, TypeCheckability right)
@@ -733,9 +704,7 @@ RichHoverRenderModel analyzeRichHover(const std::vector<LuduvoResolvedResourceBi
         if (const size_t separator = result.title.rfind('.'); separator != std::string::npos)
             result.title.erase(0, separator + 1);
 
-    TypeProvenance provenance;
-    collectTypeProvenance(input.type, provenance);
-    result.provenance = identity ? versionLabel(identity->side) : versionLabel(provenance);
+    result.hasDocumentationIdentity = identity.has_value() || hasLuduvoTypeIdentity(input.type);
     if (identity && input.documentation)
         result.learnMoreLink = input.documentation->learnMoreLink;
 
@@ -750,7 +719,8 @@ RichHoverRenderModel analyzeRichHover(const std::vector<LuduvoResolvedResourceBi
     }
     if (input.documentation && input.documentation->readOnly && std::find(result.tags.begin(), result.tags.end(), "read-only") == result.tags.end())
         result.tags.emplace_back("read-only");
-    if (deprecated || isDeprecated(input.type))
+    result.deprecated = deprecated || isDeprecated(input.type) || (input.documentation && input.documentation->deprecated);
+    if (result.deprecated)
         result.tags.emplace_back("deprecated");
     if (!constrainedResources.empty())
         result.tags.emplace_back("resource-constrained");
@@ -774,6 +744,10 @@ RichHoverRenderModel analyzeRichHover(const std::vector<LuduvoResolvedResourceBi
     if (input.documentation)
     {
         result.documentation = input.documentation->markdown;
+        result.deprecation = input.documentation->deprecation;
+        result.documentedDefault = input.documentation->documentedDefault;
+        result.notes = input.documentation->notes;
+        result.example = input.documentation->codeSample;
         while (!result.documentation.empty() && (result.documentation.back() == '\n' || result.documentation.back() == '\r'))
             result.documentation.pop_back();
     }

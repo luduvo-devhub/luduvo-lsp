@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iterator>
 #include <sstream>
+#include <limits>
 
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
@@ -37,7 +38,7 @@ using json = nlohmann::json;
 #ifdef _WIN32
 static std::optional<uint64_t> processStartToken(uint64_t processId)
 {
-    const HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, DWORD(processId));
+    const HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, DWORD(processId));
     if (!process)
         return std::nullopt;
     FILETIME creation{};
@@ -45,8 +46,10 @@ static std::optional<uint64_t> processStartToken(uint64_t processId)
     FILETIME kernel{};
     FILETIME user{};
     const bool read = GetProcessTimes(process, &creation, &exit, &kernel, &user);
+    // Another process can keep a handle open after this process has exited.
+    const bool running = WaitForSingleObject(process, 0) == WAIT_TIMEOUT;
     CloseHandle(process);
-    if (!read)
+    if (!read || !running)
         return std::nullopt;
     return (uint64_t(creation.dwHighDateTime) << 32) | creation.dwLowDateTime;
 }
@@ -95,10 +98,46 @@ std::optional<ProcessIdentity> currentProcessIdentity()
 #else
     const uint64_t processId = uint64_t(getpid());
 #endif
+    return processIdentityForPid(processId);
+}
+
+std::optional<ProcessIdentity> processIdentityForPid(uint64_t processId)
+{
+    if (!processId || processId > uint64_t(std::numeric_limits<int>::max()))
+        return std::nullopt;
     const auto token = processStartToken(processId);
     if (!token)
         return std::nullopt;
     return ProcessIdentity{processId, *token};
+}
+
+std::optional<uint64_t> processStartUnixMs(const ProcessIdentity& identity)
+{
+#ifdef _WIN32
+    constexpr uint64_t unixEpoch = 116444736000000000ULL;
+    if (identity.startToken >= unixEpoch)
+        return (identity.startToken - unixEpoch) / 10000;
+#elif defined(__APPLE__)
+    return identity.startToken / 1000;
+#elif defined(__linux__)
+    const auto ticksPerSecond = sysconf(_SC_CLK_TCK);
+    if (ticksPerSecond <= 0)
+        return std::nullopt;
+    std::ifstream input("/proc/stat");
+    for (std::string line; std::getline(input, line);)
+    {
+        if (line.compare(0, 6, "btime ") != 0)
+            continue;
+        uint64_t bootTime = 0;
+        std::istringstream value(line.substr(6));
+        if (value >> bootTime)
+            return bootTime * 1000 + identity.startToken * 1000 / uint64_t(ticksPerSecond);
+        break;
+    }
+#else
+    (void)identity;
+#endif
+    return std::nullopt;
 }
 
 bool isProcessAlive(const ProcessIdentity& identity)

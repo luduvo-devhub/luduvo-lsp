@@ -391,10 +391,19 @@ std::optional<HoverSubject> resolveHoverSubject(WorkspaceFolder& workspace, cons
     std::optional<PrintedDocumentation> documentation;
     if (!literal)
     {
+        const auto lookup = [&](const Luau::DocumentationSymbol& symbol) -> std::optional<PrintedDocumentation>
+        {
+            auto entry = getDocumentation(workspace.client->documentation, symbol, &workspace.client->documentationMetadata);
+            if (entry && (!entry->markdown.empty() || entry->learnMoreLink || entry->readOnly || entry->deprecated ||
+                             !entry->deprecation.empty() || !entry->documentedDefault.empty() || !entry->notes.empty() ||
+                             !entry->codeSample.empty()))
+                return entry;
+            return std::nullopt;
+        };
         if (documentationSymbol)
-            documentation = getDocumentation(workspace.client->documentation, *documentationSymbol, &workspace.client->documentationMetadata);
-        if (documentation && documentation->markdown.empty() && !documentation->learnMoreLink && !documentation->readOnly)
-            documentation.reset();
+            documentation = lookup(*documentationSymbol);
+        if (!documentation && subjectSymbol && subjectSymbol != documentationSymbol)
+            documentation = lookup(*subjectSymbol);
         const auto useComments = [&](const std::optional<std::string>& comments)
         {
             if (!documentation && comments && !comments->empty())

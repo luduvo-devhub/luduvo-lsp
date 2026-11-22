@@ -569,8 +569,16 @@ std::vector<ProjectContextCandidate> ContextProvider::findAllForScript(const std
         const auto project = catalog->projects.find(projectId);
         if (project == catalog->projects.end())
             continue;
-        std::string snapshotError;
-        result.push_back({project->second, project->second.fresh ? store.loadWorld(projectId, &snapshotError) : std::nullopt});
+        nlohmann::json captureDetails;
+        auto snapshot = store.resolveWorld(project->second, &captureDetails);
+        if (snapshot && !project->second.fresh)
+        {
+            if (snapshot->scriptHandles.empty())
+                snapshot.reset();
+            else
+                snapshot->instances.clear();
+        }
+        result.push_back({project->second, std::move(snapshot), std::move(captureDetails)});
     }
     return result;
 }
@@ -615,6 +623,7 @@ json ContextProvider::inspect(const std::string& scriptPath) const
     for (const ProjectContextCandidate& candidate : candidates)
     {
         json item = candidate.project;
+        item["captures"] = candidate.captureDetails;
         item["selected"] = false;
         if (catalog)
         {
@@ -627,6 +636,10 @@ json ContextProvider::inspect(const std::string& scriptPath) const
         }
         if (const auto schemas = loadProjectSchemas(store.directory(), candidate.project.id))
             item["schemas"] = *schemas;
+        if (candidate.snapshot)
+            if (const auto handles = candidate.snapshot->scriptHandles.find(normalizeContextPath(scriptPath));
+                handles != candidate.snapshot->scriptHandles.end())
+                item["handles"] = handles->second;
         item["hasSnapshot"] = candidate.snapshot.has_value();
         if (candidate.snapshot)
         {

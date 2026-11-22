@@ -4,14 +4,13 @@ local part: Instance? = game.Prefabs.Spawn("Part")
 if part then
     part.Position = Vector3.new(0, 10, 0)
     part.Anchored = true
-    part.Color = Color3.new(0.2, 0.6, 1)
+    part.Color = Color3.fromHSV(0.2, 0.6, 1)
     game.Tags.Add(part, "Example")
 end
-
-local finishMe = game.
-
+Instance.new("Character")
+local finishMe = game
+part.CollisionGroup = "Default"
 local testResourceAutocomplete = game.World.Query("") or self:HasComponent("") or game.Prefabs.Exists("")
-game.C
 
 math.abs(3-2)
 

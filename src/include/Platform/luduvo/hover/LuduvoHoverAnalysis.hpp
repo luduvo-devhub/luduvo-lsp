@@ -20,12 +20,6 @@ namespace luduvo::hover
 using DeclarationKind = HoverDeclarationKind;
 using DeclarationTarget = HoverDeclarationTarget;
 
-struct TypeProvenance
-{
-    bool server = false;
-    bool client = false;
-};
-
 enum struct TypeCheckability
 {
     Checkable,
@@ -47,10 +41,8 @@ struct RichHoverInput
     std::vector<RichHoverOverload> overloads;
 };
 
-std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target);
-std::string versionLabel(LuduvoDefinitionSide side);
-void collectTypeProvenance(Luau::TypeId type, TypeProvenance& provenance);
-std::string versionLabel(const TypeProvenance& provenance);
+std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target,
+    const Luau::ToStringOptions& options);
 TypeCheckability getCheckability(Luau::TypeId type);
 bool hasUncheckableArguments(Luau::TypeId type);
 bool isDeprecated(Luau::TypeId type);

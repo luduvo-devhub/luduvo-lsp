@@ -25,6 +25,11 @@ struct PrintedDocumentation
     std::string markdown;
     std::optional<std::string> learnMoreLink;
     bool readOnly = false;
+    bool deprecated = false;
+    std::string deprecation;
+    std::string documentedDefault;
+    std::vector<std::string> notes;
+    std::string codeSample;
 };
 
 /// Only types with their own identity can supply documentation for a value.

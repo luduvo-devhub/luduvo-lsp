@@ -79,6 +79,8 @@ void to_json(nlohmann::json& output, const WorldDumpSnapshot& snapshot)
         {"capture", {{"producer", snapshot.sceneFormat ? "ldv-dump" : "world.dump"}, {"capturedAtUnixMs", snapshot.capturedAtUnixMs},
                         {"sourcePath", snapshot.sourcePath}, {"inputSource", snapshot.inputSource}}},
         {"scene", worldDumpScene(snapshot)}, {"studio", std::move(studio)}};
+    if (!snapshot.scriptHandles.empty())
+        output["scriptHandles"] = snapshot.scriptHandles;
 }
 void from_json(const nlohmann::json& json, WorldDumpSnapshot& snapshot)
 {
@@ -93,6 +95,8 @@ void from_json(const nlohmann::json& json, WorldDumpSnapshot& snapshot)
         snapshot.capturedAtUnixMs = capture.at("capturedAtUnixMs").get<int64_t>();
         snapshot.sourcePath = capture.at("sourcePath").get<std::string>();
         snapshot.inputSource = capture.at("inputSource").get<WorldDumpSource>();
+        if (const auto handles = json.find("scriptHandles"); handles != json.end())
+            handles->get_to(snapshot.scriptHandles);
         const auto& studio = json.at("studio");
         if (!studio.is_null())
         {

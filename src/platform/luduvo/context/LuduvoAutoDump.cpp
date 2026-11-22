@@ -827,11 +827,8 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
         return {false, "could not replace the previous world dump: " + filesystemError.message()};
 
     ChildProcess child;
-    std::vector<std::string> arguments = {plan.editorPath, temporary.directory()};
-#ifdef _WIN32
-    arguments.insert(arguments.end(), {"-platform", "offscreen"});
-#endif
-    arguments.insert(arguments.end(), {"--exec", "world.dump " + plan.outputPath});
+    std::vector<std::string> arguments = {plan.editorPath, "--headless", temporary.directory(),
+        "--exec", "world.dump " + plan.outputPath, "--exec", "file.quit"};
     logging::write(logging::Level::Debug, "helper.autodump.process", "Launching editor: " + nlohmann::json(arguments).dump());
     if (!child.start(arguments, &error))
         return {false, error};
@@ -848,7 +845,9 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
             child.stop();
             return {false, "automatic world dump was cancelled"};
         }
-        if (std::filesystem::exists(output))
+        const bool running = child.running();
+        const bool exitedSuccessfully = !running && child.exitDescription() == "exit code 0";
+        if ((running || exitedSuccessfully) && std::filesystem::exists(output))
         {
             WorldDumpParseResult parsed = parseWorldDumpFile(plan.outputPath);
             if (parsed.snapshot)
@@ -859,7 +858,7 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
                 else
                     stableValidReads = 0;
                 lastSize = size;
-                if (stableValidReads >= 2)
+                if (exitedSuccessfully || stableValidReads >= 2)
                 {
                     // Give Studio time to flush the matching command-log acknowledgement before ending the disposable process.
                     std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -874,7 +873,7 @@ static AutoDumpResult executeAutomaticWorldDump(const AutoDumpPlan& plan, const 
                 lastParseError = parsed.error.value_or("the dump was incomplete");
             }
         }
-        if (!child.running())
+        if (!running)
         {
             termination = child.exitDescription();
             break;

@@ -3,6 +3,7 @@
 #include "nlohmann/json.hpp"
 
 #include <string>
+#include <string_view>
 #include <optional>
 #include <vector>
 
@@ -33,6 +34,7 @@ std::vector<std::pair<std::string, std::string>> listReportSections(ReportNode r
 std::optional<ReportNode> selectReportSections(ReportNode root, const std::vector<std::string>& sections, std::string* error = nullptr);
 ReportNode buildContextInspectionReport(const nlohmann::json& inspection);
 ReportNode buildContextStatusReport(const nlohmann::json& status);
+ReportNode buildContextCaptureReport(const nlohmann::json& captures, std::optional<std::string_view> script = std::nullopt);
 ReportNode buildProjectSchemaReport(const nlohmann::json& schema);
 
 } // namespace luduvo

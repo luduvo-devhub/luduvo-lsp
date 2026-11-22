@@ -36,8 +36,8 @@ TEST_CASE("luduvo_rich_signature_help_documentation_matches_hover_presentation")
     REQUIRE(result);
     REQUIRE_EQ(result->signatures.size(), 1);
     REQUIRE(result->signatures[0].documentation);
-    CHECK_EQ(result->signatures[0].documentation->value, "# [game.World.Query ](https://docs.luduvo.com/reference/World#Query)↗ (Server Version)\n"
-                                                         "`resource-constrained`\n\n"
+    CHECK_EQ(result->signatures[0].documentation->value, "# [game.World.Query ](https://docs.luduvo.com/reference/World#Query)↗\n\n"
+                                                         "`resource-constrained`\n\n___\n\n"
                                                          "Find entities with a component\n\n"
                                                          "`components: string` expects Luduvo component names.\n\n"
                                                          "**Active parameter**\n\n"

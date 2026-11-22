@@ -380,11 +380,11 @@ static std::optional<lsp::CompletionItemKind> entryKind(const std::string& label
 static const char* sortText(const Luau::Frontend& frontend, const std::string& name, const lsp::CompletionItem& item,
     const Luau::AutocompleteEntry& entry, const std::unordered_set<std::string>& tags, LSPPlatform& platform)
 {
-    if (auto text = platform.handleSortText(frontend, name, entry, tags))
-        return text;
-
     if (item.deprecated)
         return SortText::Deprioritized;
+
+    if (auto text = platform.handleSortText(frontend, name, entry, tags))
+        return text;
 
     // If it's a file or directory alias, de-prioritise it compared to normal paths
     if (std::find(entry.tags.begin(), entry.tags.end(), "Alias") != entry.tags.end())
@@ -840,14 +840,19 @@ std::vector<lsp::CompletionItem> WorkspaceFolder::completion(const lsp::Completi
         auto documentationString = getDocumentationForAutocompleteEntry(name, entry, result.ancestry, localModule, position);
         if (auto platformDocumentation =
                 platform->handleCompletionDocumentation(PlatformCompletionDocumentationContext{moduleName, name, entry, documentationString}))
-            item.documentation = std::move(*platformDocumentation);
+        {
+            if (!platformDocumentation->value.empty())
+                item.documentation = std::move(*platformDocumentation);
+        }
         else if (documentationString)
             item.documentation = {lsp::MarkupKind::Markdown, *documentationString};
 
-        item.deprecated = deprecated(entry, item.documentation);
+        item.deprecated = deprecated(entry, item.documentation) || platform->isCompletionDeprecated(moduleName, entry);
 
         if (!config.completion.showDeprecatedItems && item.deprecated)
             continue;
+        if (item.deprecated)
+            item.tags = std::vector{lsp::CompletionItemTag::Deprecated};
 
         item.kind = entryKind(item.label, entry, platform.get());
         item.sortText = sortText(frontend, item.label, item, entry, tags, *platform);

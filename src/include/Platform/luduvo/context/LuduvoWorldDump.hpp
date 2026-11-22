@@ -3,6 +3,7 @@
 #include "nlohmann/json.hpp"
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -57,6 +58,8 @@ struct WorldDumpSnapshot
     int sceneFormat = 0;
     nlohmann::json prefabs;
     nlohmann::json singletons;
+    // Populated by context reconciliation. A missing script entry means no provider supplied handle names.
+    std::map<std::string, std::vector<std::string>> scriptHandles;
 };
 void to_json(nlohmann::json& json, const WorldDumpSnapshot& snapshot);
 void from_json(const nlohmann::json& json, WorldDumpSnapshot& snapshot);

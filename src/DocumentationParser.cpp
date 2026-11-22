@@ -37,8 +37,18 @@ void parseDocumentationContents(
             parseOptionalString(info, "learn_more_link", learnMoreLink);
             parseOptionalString(info, "code_sample", codeSample);
             client->documentationMetadata.erase(symbol);
+            DocumentationMetadata metadata;
             if (auto readOnly = info.find("read_only"); readOnly != info.end() && readOnly->is_boolean())
-                client->documentationMetadata[symbol].readOnly = readOnly->get<bool>();
+                metadata.readOnly = readOnly->get<bool>();
+            if (auto deprecated = info.find("deprecated"); deprecated != info.end() && deprecated->is_boolean())
+                metadata.deprecated = deprecated->get<bool>();
+            parseOptionalString(info, "deprecation", metadata.deprecation);
+            parseOptionalString(info, "default", metadata.documentedDefault);
+            if (auto notes = info.find("notes"); notes != info.end() && notes->is_array())
+                notes->get_to(metadata.notes);
+            if (metadata.readOnly || metadata.deprecated || !metadata.deprecation.empty() || !metadata.documentedDefault.empty() ||
+                !metadata.notes.empty())
+                client->documentationMetadata.emplace(symbol, std::move(metadata));
             if (info.contains("keys"))
             {
                 Luau::DenseHashMap<std::string, Luau::DocumentationSymbol> keys{};
@@ -104,24 +114,19 @@ std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDa
     if (auto documentation = database.find(symbol))
     {
         PrintedDocumentation result;
-        if (metadata)
-            if (auto entry = metadata->find(symbol); entry != metadata->end())
-                result.readOnly = entry->second.readOnly;
         if (auto* basic = documentation->get_if<Luau::BasicDocumentation>())
         {
             result.markdown = basic->documentation;
             if (!basic->learnMoreLink.empty())
                 result.learnMoreLink = basic->learnMoreLink;
-            if (!basic->codeSample.empty())
-                result.markdown += "\n\n" + codeBlock("luau", basic->codeSample);
+            result.codeSample = basic->codeSample;
         }
         else if (auto* func = documentation->get_if<Luau::FunctionDocumentation>())
         {
             result.markdown = func->documentation;
             if (!func->learnMoreLink.empty())
                 result.learnMoreLink = func->learnMoreLink;
-            if (!func->codeSample.empty())
-                result.markdown += "\n\n" + codeBlock("luau", func->codeSample);
+            result.codeSample = func->codeSample;
         }
         else if (auto* overloaded = documentation->get_if<Luau::OverloadedFunctionDocumentation>())
         {
@@ -140,9 +145,17 @@ std::optional<PrintedDocumentation> getDocumentation(const Luau::DocumentationDa
             result.markdown = tbl->documentation;
             if (!tbl->learnMoreLink.empty())
                 result.learnMoreLink = tbl->learnMoreLink;
-            if (!tbl->codeSample.empty())
-                result.markdown += "\n\n" + codeBlock("luau", tbl->codeSample);
+            result.codeSample = tbl->codeSample;
         }
+        if (metadata)
+            if (auto entry = metadata->find(symbol); entry != metadata->end())
+            {
+                result.readOnly = entry->second.readOnly;
+                result.deprecated = entry->second.deprecated;
+                result.deprecation = entry->second.deprecation;
+                result.documentedDefault = entry->second.documentedDefault;
+                result.notes = entry->second.notes;
+            }
         if (result.readOnly)
         {
             constexpr std::string_view readOnlyParagraph = "Read only at runtime.";
@@ -185,6 +198,13 @@ std::optional<Luau::DocumentationSymbol> getTypeDocumentationSymbol(Luau::TypeId
 std::string renderDocumentation(const PrintedDocumentation& documentation, bool includeReadOnly)
 {
     std::string result = documentation.markdown;
+    if (documentation.deprecated)
+    {
+        const std::string warning = documentation.deprecation.empty() ? "**Deprecated**" : "**Deprecated** " + documentation.deprecation;
+        result = result.empty() ? warning : warning + "\n\n" + result;
+    }
+    if (!documentation.codeSample.empty())
+        result += "\n\n" + codeBlock("luau", documentation.codeSample);
     if (includeReadOnly && documentation.readOnly)
     {
         if (!result.empty())

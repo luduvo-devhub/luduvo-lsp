@@ -832,7 +832,7 @@
           "markdownDescription": "Default severity for Luduvo diagnostics. `default` preserves each registered severity."
         },
         "luduvo-lsp.platform.luduvo.hover.presentation": {
-          "markdownDescription": "Controls Luduvo-specific hover presentation. `rich` adds canonical API/type headings, definition-side provenance, and tags; `standard` preserves upstream hover presentation",
+          "markdownDescription": "Controls Luduvo-specific hover presentation. `rich` adds canonical API/type headings and tags. `standard` preserves upstream hover presentation.",
           "type": "string",
           "enum": [
             "rich",
@@ -842,7 +842,7 @@
           "scope": "resource"
         },
         "luduvo-lsp.platform.luduvo.hover.maxTitleLength": {
-          "markdownDescription": "Maximum visible length of rich-hover titles, including provenance text but excluding hidden link URLs. Set to `null` to disable title truncation",
+          "markdownDescription": "Maximum visible length of rich-hover titles, excluding link URLs. Set to `null` to disable title truncation.",
           "type": [
             "integer",
             "null"
@@ -859,6 +859,15 @@
           ],
           "minimum": 4,
           "default": 2000,
+          "scope": "resource"
+        },
+        "luduvo-lsp.platform.luduvo.hover.sections": {
+          "markdownDescription": "Ordered sections in Luduvo rich hover and completion documentation. An empty list hides the documentation.",
+          "type": "array",
+          "items": {
+            "enum": ["title", "tags", "divider", "deprecation", "summary", "resources", "type", "default", "notes", "example"]
+          },
+          "default": ["title", "tags", "divider", "default", "deprecation", "summary", "resources", "divider", "type"],
           "scope": "resource"
         },
         "luduvo-lsp.platform.luduvo.resources.groups": {
@@ -929,6 +938,23 @@
                         "documentation": {
                           "type": "string",
                           "description": "Markdown documentation shown with the resource completion item"
+                        },
+                        "notes": {
+                          "type": "array",
+                          "items": { "type": "string" },
+                          "description": "Notes shown in the resource tooltip"
+                        },
+                        "example": {
+                          "type": "string",
+                          "description": "Luau example shown in the resource tooltip"
+                        },
+                        "deprecated": {
+                          "type": "boolean",
+                          "description": "Marks this resource suggestion as deprecated"
+                        },
+                        "deprecation": {
+                          "type": "string",
+                          "description": "Replacement guidance for a deprecated resource"
                         }
                       },
                       "additionalProperties": false

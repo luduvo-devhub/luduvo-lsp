@@ -1,4 +1,6 @@
 #include "Platform/luduvo/hover/LuduvoHoverRenderer.hpp"
+#include "Platform/luduvo/LuduvoResourceCatalog.hpp"
+#include "LSP/Completion.hpp"
 
 #include "LSP/DocumentationParser.hpp"
 
@@ -78,12 +80,14 @@ std::string truncateTypeDefinition(std::string_view text, size_t maximumLength)
     const size_t externBegin = text.find(externPrefix);
     if (externBegin == std::string_view::npos || text.size() < 4 || text.substr(text.size() - 4) != "\nend")
     {
+        if (text.substr(0, 9) == "function " || text.find(" where ") != std::string_view::npos)
+            return std::string(text);
         const size_t newline = text.find('\n');
         if (newline != std::string_view::npos && text.back() == '}')
             return std::string(text.substr(0, newline)) + "\n    -- ...\n}";
 
         const bool declaration = text.substr(0, 6) == "local " || text.substr(0, 6) == "const " || text.substr(0, 8) == "declare " ||
-                                 text.substr(0, 9) == "function " || text.substr(0, 5) == "type " || text.find(": ") != std::string_view::npos;
+                                 text.substr(0, 5) == "type " || text.find(": ") != std::string_view::npos;
         return declaration ? std::string(text) : truncateVisibleMiddle(text, maximumLength);
     }
 
@@ -197,7 +201,7 @@ std::string renderRichHover(const ClientLuduvoHoverConfiguration& config, const 
     const bool linked = model.learnMoreLink.has_value();
     if (config.maxTitleLength)
     {
-        const size_t fixedLength = visibleLength(model.provenance) + (linked ? 2 : 0);
+        const size_t fixedLength = linked ? 2 : 0;
         const size_t titleBudget = *config.maxTitleLength > fixedLength ? *config.maxTitleLength - fixedLength : 3;
         if (model.unionSummary && (model.unionSummary->multiline || visibleLength(title) > titleBudget))
         {
@@ -210,35 +214,95 @@ std::string renderRichHover(const ClientLuduvoHoverConfiguration& config, const 
             title = truncateVisible(title, titleBudget);
     }
 
-    std::string typeDefinition = model.overloads.empty() ? model.typeDefinition : renderOverloads(model.overloads, config.maxTypeDefinitionLength);
-    if (model.overloads.empty() && config.maxTypeDefinitionLength)
-        typeDefinition = truncateTypeDefinition(typeDefinition, *config.maxTypeDefinitionLength);
-
-    const bool hasVisibleDocumentation = !model.documentation.empty() || model.learnMoreLink.has_value();
-    if (model.showTypeDefinition && model.tags.empty() && !hasVisibleDocumentation && model.constrainedResources.empty() && model.provenance.empty())
-        return codeBlock("luau", typeDefinition);
-
-    std::string result = linked ? "# [" + title + " ](" + *model.learnMoreLink + ")↗" : "# " + title;
-    result += model.provenance;
-    if (!model.tags.empty())
+    std::string result;
+    bool dividerPending = false;
+    const auto append = [&](const std::string& markdown)
     {
-        result += "\n";
-        for (size_t index = 0; index < model.tags.size(); ++index)
-        {
-            if (index > 0)
-                result += " · ";
-            result += "`" + model.tags[index] + "`";
-        }
-    }
-    if (!model.documentation.empty())
-        result += "\n\n" + model.documentation;
+        if (markdown.empty())
+            return;
+        if (!result.empty())
+            result += dividerPending ? kDocumentationBreaker : "\n\n";
+        result += markdown;
+        dividerPending = false;
+    };
 
-    const std::string resourceConstraints = renderResourceConstraints(model.constrainedResources);
-    if (!resourceConstraints.empty())
-        result += "\n\n" + resourceConstraints;
-    if (!model.showTypeDefinition)
-        return result;
-    return result + kDocumentationBreaker + codeBlock("luau", typeDefinition);
+    const bool showTitle = model.hasDocumentationIdentity || linked || !model.tags.empty() || !model.documentation.empty() ||
+                           !model.constrainedResources.empty() || !model.showTypeDefinition;
+    for (const auto& section : config.sections)
+    {
+        if (section == "divider")
+            dividerPending = !result.empty();
+        else if (section == "title" && showTitle)
+            append(linked ? "# [" + title + " ](" + *model.learnMoreLink + ")↗" : "# " + title);
+        else if (section == "tags")
+        {
+            std::string tags;
+            for (const auto& tag : model.tags)
+            {
+                if (!tags.empty())
+                    tags += " · ";
+                tags += "`" + tag + "`";
+            }
+            append(tags);
+        }
+        else if (section == "deprecation" && model.deprecated && !model.deprecation.empty())
+            append("**Deprecated** " + model.deprecation);
+        else if (section == "summary")
+            append(model.documentation);
+        else if (section == "resources")
+            append(renderResourceConstraints(model.constrainedResources));
+        else if (section == "type" && model.showTypeDefinition)
+        {
+            std::string definition = model.overloads.empty() ? model.typeDefinition : renderOverloads(model.overloads, config.maxTypeDefinitionLength);
+            if (model.overloads.empty() && config.maxTypeDefinitionLength)
+                definition = truncateTypeDefinition(definition, *config.maxTypeDefinitionLength);
+            append(codeBlock("luau", definition));
+        }
+        else if (section == "default" && !model.documentedDefault.empty())
+            append("> Default: " + model.documentedDefault);
+        else if (section == "notes" && !model.notes.empty())
+        {
+            std::string notes = "**Notes**";
+            for (const auto& note : model.notes)
+                notes += "\n- " + note;
+            append(notes);
+        }
+        else if (section == "example" && !model.example.empty())
+            append(codeBlock("luau", model.example));
+    }
+    return result;
+}
+
+void applyResourceCompletionDocumentation(const ClientLuduvoHoverConfiguration& config, lsp::CompletionItem& item,
+    std::string_view kind, const LuduvoResourceName& resource)
+{
+    item.sortText = std::string(resource.deprecated ? SortText::Deprioritized : SortText::Default) + resource.name;
+    if (resource.deprecated)
+    {
+        item.deprecated = true;
+        item.tags = std::vector{lsp::CompletionItemTag::Deprecated};
+    }
+
+    RichHoverRenderModel model;
+    model.title = resource.name;
+    model.tags.emplace_back(kind);
+    if (resource.builtIn)
+        model.tags.emplace_back("built-in");
+    if (resource.deprecated)
+        model.tags.emplace_back("deprecated");
+    model.documentation = resource.documentation.value_or("");
+    model.deprecated = resource.deprecated;
+    model.deprecation = resource.deprecation;
+    model.notes = resource.notes;
+    model.example = resource.example;
+    model.showTypeDefinition = false;
+
+    auto presentation = config;
+    if (config.presentation == LuduvoHoverPresentation::Standard)
+        presentation.sections.erase(std::remove_if(presentation.sections.begin(), presentation.sections.end(),
+            [](const std::string& section) { return section == "title" || section == "tags"; }), presentation.sections.end());
+    if (auto markdown = renderRichHover(presentation, model); !markdown.empty())
+        item.documentation = lsp::MarkupContent{lsp::MarkupKind::Markdown, std::move(markdown)};
 }
 
 } // namespace luduvo::hover

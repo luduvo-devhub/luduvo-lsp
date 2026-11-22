@@ -354,6 +354,13 @@ std::vector<FieldObservation> eventSchemaFields(const ProjectSchemas& project, c
 }
 std::vector<FieldObservation> handleSchemaFields(const ProjectSchemas& project, const std::string& script)
 {
+    if (const auto live = project.capturedHandles.find(script); live != project.capturedHandles.end())
+    {
+        std::vector<FieldObservation> fields;
+        for (const auto& name : live->second)
+            fields.push_back({SchemaField{name, "Instance", {}}, script, false});
+        return fields;
+    }
     std::set<uint64_t> attached;
     const auto current = project.attachments.find(script);
     if (current != project.attachments.end())
@@ -423,6 +430,8 @@ ProjectSchemas collectProjectSchemas(const ContextProject& project, const std::o
     result.projectName = project.name;
     result.directory = project.directory;
     result.fresh = project.fresh;
+    if (snapshot)
+        result.capturedHandles = snapshot->scriptHandles;
     result.capturedAt = snapshot ? snapshot->capturedAtUnixMs : 0;
     result.inputSource = snapshot ? snapshot->inputSource : WorldDumpSource{};
     result.exportPath = projectTypesPath(project.directory);

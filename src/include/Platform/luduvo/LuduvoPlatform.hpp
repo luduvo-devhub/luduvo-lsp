@@ -57,6 +57,7 @@ public:
         const std::vector<Luau::AstNode*>& ancestry, Luau::Position position, std::vector<lsp::CompletionItem>& items) override;
     std::optional<lsp::Hover> handleTypeHover(const PlatformHoverContext& context) override;
     std::optional<lsp::MarkupContent> handleCompletionDocumentation(const PlatformCompletionDocumentationContext& context) override;
+    bool isCompletionDeprecated(const Luau::ModuleName& moduleName, const Luau::AutocompleteEntry& entry) const override;
     std::optional<lsp::MarkupContent> handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context) override;
     void handleSignatureHelp(const PlatformSignatureHelpContext& context) override;
     lsp::DocumentColorResult documentColor(const PlatformDocumentColorContext& context) override;

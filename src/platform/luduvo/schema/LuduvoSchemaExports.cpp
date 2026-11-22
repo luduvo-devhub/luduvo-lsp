@@ -252,7 +252,7 @@ void updateSchemaDatabase(const ContextStore& store, const ClientLuduvoConfigura
     for (const auto& entry : catalog->projects)
     {
         const auto previous = loadProjectSchemas(store.directory(), entry.first);
-        auto project = collectProjectSchemas(entry.second, store.loadWorld(entry.first), previous ? &*previous : nullptr, {}, core);
+        auto project = collectProjectSchemas(entry.second, store.resolveWorld(entry.second), previous ? &*previous : nullptr, {}, core);
         bool active = overlayReference(store, entry.first);
         for (const auto& script : project.scripts)
             active = active || importsProjectTypes(script.second, project.exportPath);

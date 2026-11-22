@@ -86,6 +86,8 @@ CommandLogChanges CommandLogReader::readLines()
     }
     if (result.rewritten)
         logging::write(logging::Level::Warning, "helper.commands", "Command log contents were rewritten: " + path);
+    else
+        result.previousContents = std::move(previous);
     previous = std::move(*contents);
     return result;
 }

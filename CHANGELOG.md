@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- `Instance.new` can now be auto-completed to suggest objects and show their starting components
+- Windows, Linux, and macOS should be able to get live project context that updates in realtime via Studio's LSP. Should. Doesn't mean it will though. Still save anyway!
+- Handles can now be read via project context instead of just relying on the honor system
 - Luduvo LSP can now use Luduvo's dedicated world dumper to dump project context! Expect it to not only be much faster than the old method, but also to give more/better context since it gives a lot more information about the project state than world.dump does
 - You can now configure which context dump method manual and autodump preforms for refreshes in notifications and the config
 - The dump method that was used for any particular refresh is shown in the LSP CLI inspect and debug UI
@@ -15,14 +18,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Outdated context-sensitive hints now give a stale tag if the LSP knows that the information its giving you is potentially outdated
 - Project context now infers signal function parameters for `Connect` and `Once` in onClientEvent and onServerEvent
 - A new `event-table.fields.type` diagnostic that flags invalid field types in event table declarations
+- Rich hover and completion documentation got a glowup in the wake of new documentation! Configurable sections, including documented defaults, notes, and examples
+- Both Luduvo deprecated methods AND properties are now marked as such in autocomplete/diagnostics, and shows scraped replacement guidance from the docs in the hover tooltip when applicable. Note that accessing properties/methods via brackets (`thing["My cool property"]`) won't trigger the diagnostic warning due to upstream limitations
+- Luduvo LSP now uses Studio PID data in command logs to narrow project staling to specific projects instead of panic-staling every project regardless of if they needed updating or not. You should see that the LSP should take up less resources on your machine during dumping as well as generally be faster. Thanks Igor :)
 
 ### Changed
 
+- Luduvo hover titles no longer include a generic client or server version suffix. Instead, the read-only tag will be doing most of the heavy lifting
 - Automatic context refresh's default has been changed to use the bundled `ldv-dump` tool instead of the old `world.dump` method
 - Stale context prompts only appear when automatic refresh is off or fails instead of every time the LSP helper detects a command that could stale the context 
 
 ### Fixed
 
+- Luduvo 52 came with `--headless`, so now all dumpers use it by default. That should hopefully get the github action workers able to run the smoke tests again 
+- The site API dumper get rewrote to work again on the new Zensical site, and won't fail due to ambiguous components anymore
 - Luduvo helper's autodumper no longer crashes when the project is already open in Luduvo Studio
 - Autodump now checks for autosaves in the project's `.backups` directory instead of just the legacy `world.ldv.autosave`
 

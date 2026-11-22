@@ -4,6 +4,7 @@
 #include "Platform/RobloxPlatform.hpp"
 #include "LSP/IostreamHelpers.hpp"
 #include "LSP/Completion.hpp"
+#include "LSP/DocumentationParser.hpp"
 #include "Platform/InstanceRequireAutoImporter.hpp"
 #include "LuauFileUtils.hpp"
 
@@ -242,8 +243,8 @@ TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
 
     auto world = requireItem(fixture.workspace.completion(params, nullptr), "World");
     REQUIRE(world.documentation);
-    CHECK_EQ(world.documentation->value, "# [game.World ](https://docs.luduvo.com/reference/World)↗ (Server Version)\n"
-                                         "`read-only`\n\n"
+    CHECK_EQ(world.documentation->value, "# [game.World ](https://docs.luduvo.com/reference/World)↗\n\n"
+                                         "`read-only`\n\n___\n\n"
                                          "The entity world");
 
     auto [cameraSource, cameraMarker] = sourceWithMarker("local camera = game.World.|");
@@ -253,8 +254,8 @@ TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
 
     auto camera = requireItem(fixture.workspace.completion(params, nullptr), "Camera");
     REQUIRE(camera.documentation);
-    CHECK_EQ(camera.documentation->value, "# [game.World.Camera ](https://docs.luduvo.com/reference/Camera)↗ (Server Version)\n"
-                                          "`uncheckable`\n\n"
+    CHECK_EQ(camera.documentation->value, "# [game.World.Camera ](https://docs.luduvo.com/reference/Camera)↗\n\n"
+                                          "`uncheckable`\n\n___\n\n"
                                           "The active camera");
 
     auto [prefabSource, prefabMarker] = sourceWithMarker("local prefab = game.Prefabs.|");
@@ -264,10 +265,44 @@ TEST_CASE("luduvo_rich_completion_documentation_matches_hover_presentation")
 
     auto spawn = requireItem(fixture.workspace.completion(params, nullptr), "Spawn");
     REQUIRE(spawn.documentation);
-    CHECK_EQ(spawn.documentation->value, "# [game.Prefabs.Spawn ](https://docs.luduvo.com/reference/Prefabs#Spawn)↗ (Server Version)\n"
-                                         "`resource-constrained`\n\n"
+    CHECK_EQ(spawn.documentation->value, "# [game.Prefabs.Spawn ](https://docs.luduvo.com/reference/Prefabs#Spawn)↗\n\n"
+                                         "`resource-constrained`\n\n___\n\n"
                                          "Spawn a prefab\n\n"
                                          "`name: string` expects a Luduvo prefab name.");
+}
+
+TEST_CASE("luduvo_completion_deprecates_members_independently_of_documentation_sections")
+{
+    const std::string definitions = R"(
+        declare extern type Sample with
+            OldProperty: string
+            OldMethod: (self: Sample) -> ()
+            CurrentProperty: string
+        end
+        declare sample: Sample
+    )";
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.hover.sections = {};
+    LuduvoFixture fixture("luduvo_deprecated_completion", config, definitions, definitions);
+    parseDocumentationContents(R"({
+        "@luduvo/server/globaltype/Sample.OldProperty": {"deprecated": true},
+        "@luduvo/server/globaltype/Sample.OldMethod": {"deprecated": true}
+    })", "test documentation", fixture.client.documentation, &fixture.client);
+    const auto [source, position] = sourceWithMarker("local value = sample.|");
+    lsp::CompletionParams params;
+    params.textDocument = {fixture.newDocument("deprecated.server.luau", source)};
+    params.position = position;
+    const auto result = fixture.workspace.completion(params, nullptr);
+    const auto current = requireItem(result, "CurrentProperty");
+    for (const auto* name : {"OldProperty", "OldMethod"})
+    {
+        const auto item = requireItem(result, name);
+        CHECK(item.deprecated);
+        REQUIRE(item.tags);
+        CHECK_EQ(item.tags->front(), lsp::CompletionItemTag::Deprecated);
+        CHECK(item.sortText > current.sortText);
+        CHECK_FALSE(item.documentation);
+    }
 }
 
 TEST_CASE("luduvo_resource_completion_uses_bound_parameters")
@@ -446,6 +481,15 @@ TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
     config.platform.luduvo.resources.sources["project-prefabs"].values = {
         ClientLuduvoResourcesConfiguration::Source::Value{"MyProjectPrefab", "A project-defined prefab"}};
+    config.platform.luduvo.resources.sources["project-prefabs"].values.push_back(nlohmann::json::parse(R"json({
+        "name": "OldPrefab",
+        "documentation": "The original prefab.",
+        "notes": ["Used by older maps."],
+        "example": "game.Prefabs.Spawn(\"OldPrefab\")",
+        "deprecated": true,
+        "deprecation": "Use MyProjectPrefab."
+    })json").get<ClientLuduvoResourcesConfiguration::Source::Value>());
+    config.platform.luduvo.hover.sections = {"title", "tags", "deprecation", "summary", "example", "notes"};
     config.platform.luduvo.resources.groups["prefab"] = {"string", true, {"project-prefabs"}};
     LuduvoFixture fixture("luduvo_resource_group_completion", config, definitions, definitions);
 
@@ -463,8 +507,24 @@ TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
     CHECK_EQ(custom.labelDetails, std::nullopt);
     CHECK_EQ(custom.detail, "prefab");
     REQUIRE(custom.documentation);
-    CHECK(custom.documentation->value.find("# MyProjectPrefab\n`prefab`") == 0);
+    CHECK(custom.documentation->value.find("# MyProjectPrefab\n\n`prefab`") == 0);
     CHECK(custom.documentation->value.find("A project-defined prefab") != std::string::npos);
+    const auto old = requireItem(items, "OldPrefab");
+    CHECK(old.deprecated == true);
+    REQUIRE(old.tags);
+    CHECK(*old.tags == std::vector{lsp::CompletionItemTag::Deprecated});
+    REQUIRE(old.sortText);
+    REQUIRE(custom.sortText);
+    CHECK(*old.sortText > *custom.sortText);
+    REQUIRE(old.documentation);
+    const auto& tooltip = old.documentation->value;
+    CHECK(tooltip.find("`prefab` · `deprecated`") != std::string::npos);
+    CHECK(tooltip.find("**Deprecated** Use MyProjectPrefab.") < tooltip.find("The original prefab."));
+    CHECK(tooltip.find("game.Prefabs.Spawn(\"OldPrefab\")") < tooltip.find("Used by older maps."));
+    CHECK(tooltip.find("Used by older maps.") != std::string::npos);
+    fixture.client.globalConfig.completion.showDeprecatedItems = false;
+    const auto filteredItems = fixture.workspace.completion(params, nullptr);
+    CHECK(std::none_of(filteredItems.begin(), filteredItems.end(), [](const auto& item) { return item.label == "OldPrefab"; }));
 
     auto [componentSource, componentMarker] = sourceWithMarker("game.World.Each(\"|\")");
     auto componentUri = fixture.newDocument("resource-components.server.luau", componentSource);
@@ -472,8 +532,46 @@ TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
     params.position = componentMarker;
     const auto component = requireItem(fixture.workspace.completion(params, nullptr), "AdornmentHandles");
     REQUIRE(component.documentation);
-    CHECK(component.documentation->value.find("# AdornmentHandles\n`component` · `built-in`") == 0);
+    CHECK(component.documentation->value.find("# AdornmentHandles\n\n`component` · `built-in`") == 0);
     CHECK(component.documentation->value.find("3D drag handles") != std::string::npos);
+}
+
+TEST_CASE("luduvo_instance_constructor_suggests_documented_objects")
+{
+    const std::string definitions = "declare Instance: { new: (name: string?) -> {} }";
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    config.platform.luduvo.hover.sections = {"notes"};
+    LuduvoFixture fixture("luduvo_constructor_completion", config, definitions, definitions);
+    auto [source, position] = sourceWithMarker("Instance.new(\"|\")");
+    const auto uri = fixture.newDocument("constructor.server.luau", source);
+    lsp::CompletionParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = position;
+    const auto part = requireItem(fixture.workspace.completion(params, nullptr), "Part");
+    REQUIRE(part.documentation);
+    CHECK(part.documentation->value.find("Starting components: Position") != std::string::npos);
+    CHECK(part.documentation->value.find("# Part") == std::string::npos);
+}
+
+TEST_CASE("luduvo_plugin_edit_create_suggests_documented_objects_for_class")
+{
+    const std::string definitions = R"(
+declare extern type PluginEdit with
+    function Create(self, class: string, props: {[string]: any}?): {}
+end
+declare ctx: { Edit: PluginEdit? }
+)";
+    LuduvoFixture fixture("luduvo_plugin_create_completion", Luau::LanguageServer::defaultTestClientConfiguration(), definitions, definitions);
+    auto [source, position] = sourceWithMarker(R"(
+if ctx.Edit then
+    ctx.Edit:Create("|")
+end
+)");
+    const auto uri = fixture.newDocument("plugin.client.luau", source);
+    lsp::CompletionParams params;
+    params.textDocument = lsp::TextDocumentIdentifier{uri};
+    params.position = position;
+    requireItem(fixture.workspace.completion(params, nullptr), "Part");
 }
 
 TEST_CASE("luduvo_resource_completion_honors_empty_groups_and_disables")

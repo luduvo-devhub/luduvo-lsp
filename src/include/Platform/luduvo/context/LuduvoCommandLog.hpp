@@ -8,6 +8,7 @@ struct CommandLogChanges
 {
     std::vector<std::string> lines;
     bool rewritten = false;
+    std::string previousContents;
 };
 // Studio processes can overwrite earlier bytes without shrinking the journal.
 // Retain the observed contents, not an assumed append-only byte offset.

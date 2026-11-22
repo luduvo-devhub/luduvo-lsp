@@ -26,6 +26,31 @@ std::vector<lsp::Diagnostic> diagnosticsFor(LuduvoFixture& fixture, const Uri& d
 
 TEST_SUITE_BEGIN("LuduvoDiagnostics");
 
+TEST_CASE("bundled_luduvo_deprecation_metadata_uses_luau_lint")
+{
+    const std::string definitions = R"(
+        declare extern type Instance with
+            NightSky: string
+            Panorama: string
+        end
+        declare self: Instance
+        declare game: { Tags: { Add: (tag: string) -> () } }
+    )";
+    LuduvoFixture fixture("luduvo_api_deprecation", Luau::LanguageServer::defaultTestClientConfiguration(), definitions, definitions);
+    const auto document = fixture.newDocument("main.server.luau", R"(
+        local old = self.NightSky
+        local current = self.Panorama
+        game.Tags.Add("test")
+    )");
+    std::vector<std::string> warnings;
+    for (const auto& diagnostic : diagnosticsFor(fixture, document))
+        if (diagnostic.message.find("DeprecatedApi: ") == 0)
+            warnings.push_back(diagnostic.message);
+    REQUIRE_EQ(warnings.size(), 2);
+    CHECK(warnings[0].find("NightSky") != std::string::npos);
+    CHECK(warnings[1].find("Add") != std::string::npos);
+}
+
 TEST_CASE("empty_world_query_reports_a_stable_luduvo_diagnostic")
 {
     LuduvoFixture fixture("luduvo_empty_world_query");

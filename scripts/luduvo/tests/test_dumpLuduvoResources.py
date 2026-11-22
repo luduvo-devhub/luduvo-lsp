@@ -177,6 +177,19 @@ end
 
         self.assertEqual({"Position": "World-space position"}, descriptions)
 
+    def test_ignores_empty_descriptions_from_duplicate_metadata_candidates(self):
+        editor = bytearray(component_editor_fixture("Position", "World-space position"))
+        name_address, category_address, _, _, _, _, _ = struct.unpack_from("<7Q", editor, 0x600)
+        struct.pack_into(
+            "<7Q", editor, 0x680, name_address, category_address, 0, 0, 0, 0, 0
+        )
+
+        descriptions = resources_dump.extract_component_descriptions(
+            bytes(editor), ["Position"]
+        )
+
+        self.assertEqual({"Position": "World-space position"}, descriptions)
+
     def test_downloads_editor_from_release_channel_bundle(self):
         editor = component_editor_fixture("Position", "World-space position")
         archive = io.BytesIO()
@@ -207,6 +220,35 @@ end
             )
 
         self.assertEqual(editor, result)
+
+    def test_remote_manifest_writes_component_names_when_description_extraction_fails(self):
+        manifest = json.dumps(
+            {
+                "version": 51,
+                "files": [
+                    {"name": "prefabs/Sphere.ldv"},
+                    {"name": "defs/luduvo.d.luau"},
+                ],
+            }
+        ).encode()
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "resources.luduvo.json"
+            with mock.patch.object(resources_dump, "fetch_bytes", return_value=manifest), mock.patch.object(
+                resources_dump, "load_component_names", return_value=["Position"]
+            ), mock.patch.object(
+                resources_dump, "remote_editor_binary", return_value=b"editor"
+            ), mock.patch.object(
+                resources_dump,
+                "extract_component_descriptions",
+                side_effect=resources_dump.ResourceCatalogError("metadata layout changed"),
+            ):
+                resources_dump.generate_from_manifest("https://example.invalid/manifest", output)
+
+            generated = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            [{"name": "Position"}], generated["resources"]["component"]
+        )
 
     def test_remote_manifest_prefabs_are_written_to_the_generated_artifact(self):
         manifest = json.dumps(

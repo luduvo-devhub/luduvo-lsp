@@ -144,15 +144,16 @@ def extract_component_descriptions(editor: bytes, component_names: list[str]) ->
             continue
         candidates.setdefault(name, []).append(description)
 
-    ambiguous = sorted(name for name, matches in candidates.items() if len(matches) != 1)
+    descriptions = {name: set(filter(None, matches)) for name, matches in candidates.items()}
+    ambiguous = sorted(name for name, matches in descriptions.items() if len(matches) > 1)
     if ambiguous:
-        raise ResourceCatalogError(f"ambiguous component metadata for {ambiguous[0]!r}")
+        raise ResourceCatalogError(f"ambiguous component descriptions for {ambiguous[0]!r}")
     minimum_recognized = max(1, len(component_names) // 2)
     if len(candidates) < minimum_recognized:
         raise ResourceCatalogError(
             f"LuduvoEditor component metadata layout changed: recognized {len(candidates)} of {len(component_names)} components"
         )
-    return {name: matches[0] for name, matches in candidates.items() if matches[0]}
+    return {name: next(iter(matches)) for name, matches in descriptions.items() if matches}
 
 
 def release_manifest(channel_url: str = RELEASE_CHANNEL_URL) -> dict:
@@ -308,6 +309,13 @@ def write_catalog(path: Path, catalog: dict) -> None:
     temporary.replace(path)
 
 
+def preserve_documented_objects(output: Path, catalog: dict) -> None:
+    if output.is_file():
+        previous = json.loads(output.read_text(encoding="utf-8"))
+        if objects := previous.get("resources", {}).get("object"):
+            catalog["resources"]["object"] = objects
+
+
 def generate_from_content_root(
     content_root: Path,
     output: Path = OUTPUT,
@@ -325,7 +333,13 @@ def generate_from_content_root(
             editor = editor_path.read_bytes()
         except OSError as error:
             raise ResourceCatalogError(f"could not read LuduvoEditor at {editor_path}: {error}") from error
-    catalog = build_catalog(version, prefabs, components, extract_component_descriptions(editor, components))
+    try:
+        descriptions = extract_component_descriptions(editor, components)
+    except ResourceCatalogError as error:
+        print(f"warning: could not extract component descriptions: {error}")
+        descriptions = {}
+    catalog = build_catalog(version, prefabs, components, descriptions)
+    preserve_documented_objects(output, catalog)
     write_catalog(output, catalog)
     return catalog
 
@@ -337,8 +351,13 @@ def generate_from_manifest(
 ) -> dict:
     version, prefabs = remote_prefab_names(manifest_url)
     components = load_component_names()
-    descriptions = extract_component_descriptions(remote_editor_binary(release_channel_url), components)
+    try:
+        descriptions = extract_component_descriptions(remote_editor_binary(release_channel_url), components)
+    except ResourceCatalogError as error:
+        print(f"warning: could not extract component descriptions: {error}")
+        descriptions = {}
     catalog = build_catalog(version, prefabs, components, descriptions)
+    preserve_documented_objects(output, catalog)
     write_catalog(output, catalog)
     return catalog
 

@@ -138,6 +138,7 @@ target_sources(Luau.LanguageServer PRIVATE
         src/platform/luduvo/context/LuduvoContextInspection.cpp
         src/platform/luduvo/context/LuduvoContextLogProcessor.cpp
         src/platform/luduvo/context/LuduvoCommandLog.cpp
+        src/platform/luduvo/context/LuduvoStudioContext.cpp
         src/platform/luduvo/context/LuduvoProcessIdentity.cpp
         src/platform/luduvo/context/LuduvoContextReport.cpp
         src/platform/luduvo/context/LuduvoContextLogs.cpp
@@ -305,6 +306,12 @@ target_compile_definitions(Luau.LanguageServer PUBLIC
 target_include_directories(Luau.LanguageServer PUBLIC src/include)
 target_include_directories(Luau.LanguageServer SYSTEM PUBLIC ${EXTERN_INCLUDES})
 target_link_libraries(Luau.LanguageServer PRIVATE Luau.Ast Luau.Analysis Luau.Compiler Luau.VM Luau.CodeGen)
+if(WIN32)
+    target_link_libraries(Luau.LanguageServer PRIVATE ws2_32 iphlpapi advapi32)
+elseif(APPLE)
+    find_library(LSP_COREFOUNDATION CoreFoundation REQUIRED)
+    target_link_libraries(Luau.LanguageServer PRIVATE "${LSP_COREFOUNDATION}")
+endif()
 
 set_target_properties(Luau.LanguageServer.CLI PROPERTIES OUTPUT_NAME luduvo-lsp)
 target_compile_options(Luau.LanguageServer.CLI PRIVATE ${LUAU_LSP_OPTIONS})

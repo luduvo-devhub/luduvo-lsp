@@ -9,7 +9,6 @@ SCRIPT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from luduvo_declarations import merge_surfaces, parse_declarations
-from dumpLuduvoDocs import build_documentation
 
 
 SOURCE = """
@@ -97,21 +96,6 @@ class DeclarationParserTests(unittest.TestCase):
             ["@luduvo/client/global/game.Gravity"],
             client_gravity["documentation_symbols"],
         )
-
-        docs = build_documentation(gravity)
-        self.assertNotIn(
-            "Read only at runtime.",
-            docs["@luduvo/server/global/game.Gravity"]["documentation"],
-        )
-        self.assertIn(
-            "Writable only on the server.",
-            docs["@luduvo/server/global/game.Gravity"]["documentation"],
-        )
-        self.assertIn(
-            "Read only at runtime.",
-            docs["@luduvo/client/global/game.Gravity"]["documentation"],
-        )
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <set>
 #include <system_error>
 
 using json = nlohmann::json;
@@ -42,7 +43,7 @@ static std::vector<LuduvoResourceName> resourceEntries(const std::vector<ClientL
     for (const ClientLuduvoResourcesConfiguration::Source::Value& value : values)
     {
         if (!value.name.empty())
-            result.push_back({value.name, value.documentation, builtIn});
+            result.push_back({value.name, value.documentation, builtIn, value.notes, value.example, value.deprecated, value.deprecation});
     }
     return result;
 }
@@ -63,6 +64,16 @@ static void addResourceEntries(LuduvoResourceGroup& group, const std::vector<Lud
         }
         if (!existing->documentation && resource.documentation)
             existing->documentation = resource.documentation;
+        if (existing->notes.empty())
+            existing->notes = resource.notes;
+        if (existing->example.empty())
+            existing->example = resource.example;
+        if (resource.deprecated)
+        {
+            existing->deprecated = true;
+            if (existing->deprecation.empty())
+                existing->deprecation = resource.deprecation;
+        }
     }
     std::sort(group.resources.begin(), group.resources.end(),
         [](const LuduvoResourceName& left, const LuduvoResourceName& right)
@@ -93,10 +104,14 @@ static std::unordered_map<std::string, std::vector<LuduvoResourceName>> parseEmb
                     addResourceEntries(group, {{item.get<std::string>(), std::nullopt, true}});
                 else if (formatVersion >= 2 && item.is_object() && item.contains("name") && item["name"].is_string())
                 {
-                    std::optional<std::string> documentation;
-                    if (item.contains("documentation") && item["documentation"].is_string())
-                        documentation = item["documentation"].get<std::string>();
-                    addResourceEntries(group, {{item["name"].get<std::string>(), std::move(documentation), true}});
+                    try
+                    {
+                        addResourceEntries(group, resourceEntries({item.get<ClientLuduvoResourcesConfiguration::Source::Value>()}, true));
+                    }
+                    catch (const json::exception&)
+                    {
+                        addResourceEntries(group, {{item["name"].get<std::string>(), std::nullopt, true}});
+                    }
                 }
             }
             result.emplace(kind, std::move(group.resources));
@@ -171,8 +186,9 @@ void LuduvoResourceCatalog::configure(const ClientLuduvoConfiguration& configura
     logging::Operation operation("bindings.resources", "resource catalog configuration");
     configuredWarnings.clear();
     configuredGroups = embeddedGroups;
-    for (const auto kind : {"event-table", "handle", "script"})
-        configuredGroups[kind] = LuduvoResourceGroup{kind, "string", {}, {kind}};
+    const std::set<std::string_view> projectKinds{"event-table", "handle", "script", "children", "descendants", "tag", "attribute"};
+    for (const auto& kind : projectKinds)
+        configuredGroups[std::string(kind)] = LuduvoResourceGroup{std::string(kind), "string", {}, {std::string(kind)}};
 
     if (auto installed = installedPrefabNames(configuration))
         configuredGroups["prefab"] = LuduvoResourceGroup{"prefab", "string", resourceEntries(std::move(*installed), true)};
@@ -207,7 +223,7 @@ void LuduvoResourceCatalog::configure(const ClientLuduvoConfiguration& configura
             if (source->second.provider == "project")
             {
                 const auto& provider = source->second.kind;
-                if (provider != "event-table" && provider != "handle" && provider != "script")
+                if (!projectKinds.count(provider))
                     configuredWarnings.push_back("Resource source '" + sourceName + "' has unknown project kind '" + provider + "'.");
                 else
                     group.projectSources.push_back(provider);

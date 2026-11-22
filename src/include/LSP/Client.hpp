@@ -23,6 +23,10 @@ using ConfigChangedCallback = std::function<void(const lsp::DocumentUri&, const 
 struct DocumentationMetadata
 {
     bool readOnly = false;
+    bool deprecated = false;
+    std::string deprecation;
+    std::string documentedDefault;
+    std::vector<std::string> notes;
 };
 
 /// Base client interface. LSPClient provides a full LSP implementation;

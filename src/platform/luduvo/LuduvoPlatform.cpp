@@ -3,6 +3,7 @@
 #include "Platform/luduvo/diagnostics/LuduvoDiagnosticAdapter.hpp"
 #include "Platform/luduvo/diagnostics/LuduvoDiagnosticRules.hpp"
 #include "Platform/luduvo/LuduvoLifecycle.hpp"
+#include "Platform/luduvo/LuduvoSymbols.hpp"
 #include "Platform/luduvo/LuduvoDefinitionResolver.hpp"
 #include "LuduvoDefinitions.hpp"
 #include "LuduvoDocumentation.hpp"
@@ -446,12 +447,52 @@ static PlatformDefinitionEnvironment definitionEnvironment(const char* environme
     return environment;
 }
 
-void LuduvoPlatform::mutateRegisteredDefinitions(Luau::GlobalTypes&, std::optional<nlohmann::json>, const Luau::ScopePtr& scope)
+void LuduvoPlatform::mutateRegisteredDefinitions(Luau::GlobalTypes& globals, std::optional<nlohmann::json>, const Luau::ScopePtr& scope)
 {
+    // Definition loading calls this for both global arenas. The scoped definitions belong to the main frontend.
+    if (workspaceFolder && &globals == &workspaceFolder->frontend.globals)
+    {
+        const auto& metadata = workspaceFolder->client->documentationMetadata;
+        const auto deprecated = [&](const std::optional<std::string>& symbol)
+        {
+            if (!getLuduvoSymbolIdentity(symbol))
+                return false;
+            const auto found = metadata.find(*symbol);
+            return found != metadata.end() && found->second.deprecated;
+        };
+        Luau::DenseHashSet<Luau::TypeId> visited;
+        const auto markMembers = [&](const auto& self, Luau::TypeId type) -> void
+        {
+            type = Luau::follow(type);
+            if (!getLuduvoSymbolIdentity(type->documentationSymbol) || visited.contains(type))
+                return;
+            visited.insert(type);
+            const auto mark = [&](auto& properties)
+            {
+                for (auto& [_, property] : properties)
+                {
+                    if (deprecated(property.documentationSymbol))
+                        property.deprecated = true;
+                    if (property.readTy)
+                        self(self, *property.readTy);
+                }
+            };
+            if (auto table = Luau::getMutable<Luau::TableType>(type))
+                mark(table->props);
+            else if (auto externType = Luau::getMutable<Luau::ExternType>(type))
+                mark(externType->props);
+        };
+        for (auto& [_, binding] : scope->bindings)
+        {
+            if (deprecated(binding.documentationSymbol))
+                binding.deprecated = true;
+            markMembers(markMembers, binding.typeId);
+        }
+        for (auto& [_, binding] : scope->exportedTypeBindings)
+            markMembers(markMembers, binding.type);
+    }
     const auto binding = scope->lookup(Luau::AstName("handles"));
-    if (!binding)
-        return;
-    if (auto table = Luau::getMutable<Luau::TableType>(Luau::follow(*binding)))
+    if (auto table = binding ? Luau::getMutable<Luau::TableType>(Luau::follow(*binding)) : nullptr)
     {
         if (table->indexer)
             table->indexer->isReadOnly = true;

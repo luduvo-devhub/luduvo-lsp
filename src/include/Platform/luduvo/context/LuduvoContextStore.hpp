@@ -153,6 +153,7 @@ public:
     ContextStoreResult resetProjectForScript(const std::string& workspaceDirectory, const std::string& scriptPath) const;
     std::optional<WorldDumpSnapshot> loadAlternateWorld(const ContextProject& project) const;
     std::optional<WorldDumpSnapshot> loadWorld(const std::string& projectId, std::string* error = nullptr) const;
+    std::optional<WorldDumpSnapshot> resolveWorld(const ContextProject& project, nlohmann::json* captureDetails = nullptr) const;
     ContextCleanupSummary cleanupCandidates() const;
     std::optional<ContextStatus> status(std::string* error = nullptr) const;
     std::optional<ContextOverview> overview(std::string* error = nullptr) const;

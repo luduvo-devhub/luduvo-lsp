@@ -7,6 +7,7 @@
 #include "LuauFileUtils.hpp"
 #include "Platform/luduvo/context/LuduvoContextInspection.hpp"
 #include "Platform/luduvo/context/LuduvoProcessIdentity.hpp"
+#include "Platform/luduvo/context/LuduvoStudioContext.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -614,6 +615,99 @@ std::optional<WorldDumpSnapshot> ContextStore::loadAlternateWorld(const ContextP
     return project.snapshotPath.empty() ? std::nullopt : readWorldSnapshot(project.snapshotPath + ".alternate");
 }
 
+static const char* dumpProducer(const WorldDumpSnapshot& snapshot)
+{
+    return snapshot.sceneFormat ? "ldv-dump" : "world.dump";
+}
+
+static std::vector<std::string> capturedSceneSections(const WorldDumpSnapshot& snapshot)
+{
+    std::vector<std::string> sections{"hierarchy", "attachments"};
+    for (const char* field : {"tags", "attributes", "components"})
+        if (std::any_of(snapshot.instances.begin(), snapshot.instances.end(),
+                [field](const WorldInstance& instance)
+                {
+                    const auto entry = instance.scene.find(field);
+                    return entry != instance.scene.end() && (entry->is_array() || entry->is_object());
+                }))
+            sections.emplace_back(field);
+    if (!snapshot.prefabs.is_null())
+        sections.emplace_back("prefabs");
+    if (!snapshot.singletons.is_null())
+        sections.emplace_back("singletons");
+    return sections;
+}
+
+std::optional<WorldDumpSnapshot> ContextStore::resolveWorld(const ContextProject& project, json* captureDetails) const
+{
+    auto snapshot = project.snapshotPath.empty() ? std::nullopt : readWorldSnapshot(project.snapshotPath);
+    const auto alternate = (captureDetails || (snapshot && project.fresh)) ? loadAlternateWorld(project) : std::nullopt;
+    auto studio = loadStudioCapture(*this, project);
+    json handleSources = json::object();
+    if (captureDetails)
+    {
+        json latest = {{"studio-lsp", nullptr}, {"ldv-dump", nullptr}, {"world.dump", nullptr}};
+        const auto record = [&](const WorldDumpSnapshot& world, const char* producer, const char* state, std::vector<std::string> sections)
+        {
+            if (!world.scriptHandles.empty())
+                sections.emplace_back("handles");
+            latest[producer] = {{"state", state}, {"capturedAtUnixMs", world.capturedAtUnixMs ? json(world.capturedAtUnixMs) : json(nullptr)},
+                {"sourcePath", world.sourcePath.empty() ? json(nullptr) : json(world.sourcePath)}, {"inputSource", world.inputSource},
+                {"sections", std::move(sections)}, {"handleScripts", world.scriptHandles.size()}};
+        };
+        if (alternate)
+            record(*alternate, dumpProducer(*alternate), "previous", capturedSceneSections(*alternate));
+
+        json fields = {{"hierarchy", nullptr}, {"attachments", nullptr}, {"tags", nullptr}, {"attributes", nullptr},
+            {"components", nullptr}, {"prefabs", nullptr}, {"singletons", nullptr}};
+        if (snapshot)
+        {
+            const auto source = dumpProducer(*snapshot);
+            const auto sections = capturedSceneSections(*snapshot);
+            for (const auto& section : sections)
+                fields[section] = source;
+            record(*snapshot, source, project.fresh ? "current" : "stale", sections);
+        }
+        if (studio)
+            record(studio->snapshot, "studio-lsp", studio->active ? "current" : "inactive", {});
+        *captureDetails = {{"latest", std::move(latest)}, {"fields", std::move(fields)}};
+    }
+
+    if (snapshot && !project.fresh)
+        snapshot->scriptHandles.clear();
+    if (snapshot && project.fresh)
+    {
+        if (captureDetails)
+            for (const auto& entry : snapshot->scriptHandles)
+                handleSources[entry.first] = dumpProducer(*snapshot);
+        if (alternate && bool(alternate->sceneFormat) != bool(snapshot->sceneFormat))
+        {
+            for (const auto& entry : alternate->scriptHandles)
+            {
+                if (!alternate->sceneFormat && snapshot->scriptHandles.count(entry.first))
+                    continue;
+                snapshot->scriptHandles.insert_or_assign(entry.first, entry.second);
+                if (captureDetails)
+                    handleSources[entry.first] = dumpProducer(*alternate);
+            }
+        }
+    }
+    if (studio && studio->active && !studio->snapshot.scriptHandles.empty())
+    {
+        if (!snapshot)
+            snapshot.emplace();
+        for (auto& entry : studio->snapshot.scriptHandles)
+        {
+            snapshot->scriptHandles.insert_or_assign(entry.first, std::move(entry.second));
+            if (captureDetails)
+                handleSources[entry.first] = "studio-lsp";
+        }
+    }
+    if (captureDetails)
+        (*captureDetails)["handlesByScript"] = std::move(handleSources);
+    return snapshot;
+}
+
 std::vector<ContextClientRegistration> ContextStore::clientRegistrations(bool includeDead) const
 {
     std::vector<ContextClientRegistration> result;
@@ -776,6 +870,7 @@ ContextCleanupSummary ContextStore::cleanupCandidates() const
             referencedSnapshots.insert(normalizeContextPath(project.snapshotPath));
             referencedSnapshots.insert(normalizeContextPath(project.snapshotPath + ".alternate"));
         }
+        referencedSnapshots.insert(normalizeContextPath(joinPath(stateDirectory, "projects/" + id + "/world.studio.json")));
         if (project.directory.empty())
             continue;
         error.clear();
@@ -792,7 +887,7 @@ ContextCleanupSummary ContextStore::cleanupCandidates() const
             if (!iterator->is_regular_file(error) || error)
                 continue;
             const auto filename = iterator->path().filename();
-            if (filename != "world.json" && filename != "world.json.alternate")
+            if (filename != "world.json" && filename != "world.json.alternate" && filename != "world.studio.json")
                 continue;
             const std::string path = normalizeContextPath(iterator->path().generic_u8string());
             if (!referencedSnapshots.count(path))
@@ -863,6 +958,7 @@ std::optional<ContextOverview> ContextStore::overview(std::string* error) const
     for (const auto& entry : catalog->projects)
     {
         auto& detail = result.projectDetails[entry.first];
+        resolveWorld(entry.second, &detail["captures"]);
         if (const auto world = loadWorld(entry.first))
             detail["snapshot"] = worldDumpMetadata(*world);
         if (const auto schemas = loadProjectSchemas(directory(), entry.first))

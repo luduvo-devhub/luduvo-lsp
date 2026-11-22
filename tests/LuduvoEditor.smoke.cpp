@@ -11,7 +11,8 @@ int main(int argc, char** argv)
         return 2;
     }
     const auto result =
-        luduvo::runAutomaticWorldDump({"smoke", argv[2], argv[3], luduvo::defaultLuduvoEditorPath(argv[1]), std::chrono::seconds(60)});
+        luduvo::runAutomaticWorldDump(
+            {"smoke", argv[2], argv[3], luduvo::defaultLuduvoEditorPath(argv[1]), std::chrono::seconds(60), luduvo::DumpMethod::Studio});
     if (!result.success || !result.snapshot)
     {
         std::cerr << result.error << '\n';
@@ -21,11 +22,11 @@ int main(int argc, char** argv)
     if (std::none_of(instances.begin(), instances.end(),
             [](const auto& instance)
             {
-                return instance.name == "Part";
+                return instance.name == "LspSmokeFixture";
             }))
     {
-        std::cerr << "The real editor dump did not contain the Part saved in the fixture project\n";
+        std::cerr << "The real editor dump did not contain LspSmokeFixture\n";
         return 1;
     }
-    std::cout << "Real editor autodump passed: " << instances.size() << " instances, including the fixture Part\n";
+    std::cout << "Real editor autodump passed: " << instances.size() << " instances, including LspSmokeFixture\n";
 }

@@ -52,7 +52,7 @@ static std::string generateFixtureName()
 }
 
 Fixture::Fixture()
-    : client(std::make_unique<TestClient>(TestClient{}))
+    : client(std::make_unique<TestClient>())
     , tempDir(generateFixtureName())
     , workspace(client.get(), "$TEST_WORKSPACE", Uri::file(tempDir.path()), std::nullopt)
 {

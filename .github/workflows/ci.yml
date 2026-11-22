@@ -131,39 +131,17 @@ jobs:
             libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
             libxcb-render-util0 libxcb-shape0 libxcb-xkb1
 
-      - name: Check macOS editor GPU support
-        if: runner.os == 'macOS'
-        id: editor-gpu
-        run: |
-          supported=$(swift - <<'SWIFT'
-          import Metal
-          if #available(macOS 13.0, *) {
-              print(MTLCopyAllDevices().contains { $0.supportsFamily(.metal3) } ? "true" : "false")
-          } else {
-              print("false")
-          }
-          SWIFT
-          )
-          echo "supported=$supported" >> "$GITHUB_OUTPUT"
-          if [ "$supported" = false ]; then
-            echo "::warning::Skipping the macOS editor smoke test: this runner has no Metal 3 GPU, which LuduvoEditor requires."
-            echo "### macOS editor smoke test skipped" >> "$GITHUB_STEP_SUMMARY"
-            echo "This runner has no Metal 3 GPU, which LuduvoEditor requires. The C++ test suites ran normally." >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Build editor smoke test runner
-        if: matrix.editor-smoke && (runner.os != 'macOS' || steps.editor-gpu.outputs.supported == 'true')
+        if: matrix.editor-smoke
         run: cmake --build build --target Luau.LanguageServer.ContextSmoke
 
       - name: Test Linux autodumping
         if: runner.os == 'Linux'
         timeout-minutes: 6
         env:
-          QT_QPA_PLATFORM: xcb
-          LIBGL_ALWAYS_SOFTWARE: '1'
           ALSOFT_DRIVERS: 'null'
         run: |
-          xvfb-run -a -s '-screen 0 1280x1024x24' python3 scripts/luduvo/smokeContextEditor.py \
+          python3 scripts/luduvo/smokeContextEditor.py \
             --runner "${{ matrix.smoke-runner }}" \
             --work-directory "$RUNNER_TEMP/luduvo-editor-smoke"
 
@@ -176,7 +154,7 @@ jobs:
             --work-directory "$env:RUNNER_TEMP/luduvo-editor-smoke"
 
       - name: Test macOS autodumping
-        if: runner.os == 'macOS' && steps.editor-gpu.outputs.supported == 'true'
+        if: runner.os == 'macOS' && matrix.editor-smoke
         timeout-minutes: 6
         run: |
           python3 scripts/luduvo/smokeContextEditor.py \

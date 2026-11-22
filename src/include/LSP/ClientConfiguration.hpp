@@ -379,8 +379,9 @@ struct ClientLuduvoHoverConfiguration
     std::optional<size_t> maxTitleLength = 96;
     /// Maximum type-definition length. A null value disables definition truncation.
     std::optional<size_t> maxTypeDefinitionLength = 2000;
+    std::vector<std::string> sections = {"title", "tags", "divider", "default", "deprecation", "summary", "resources", "divider", "type"};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoHoverConfiguration, presentation, maxTitleLength, maxTypeDefinitionLength)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoHoverConfiguration, presentation, maxTitleLength, maxTypeDefinitionLength, sections)
 
 using ClientLuduvoNotificationConfiguration = settings::CategoryConfiguration<bool>;
 using ClientLuduvoDiagnosticsConfiguration = settings::CategoryConfiguration<std::string>;
@@ -498,6 +499,10 @@ struct ClientLuduvoResourcesConfiguration
             std::string name{};
             /// Optional Markdown documentation shown with the completion item.
             std::optional<std::string> documentation{};
+            std::vector<std::string> notes{};
+            std::string example{};
+            bool deprecated = false;
+            std::string deprecation{};
             Value() = default;
             Value(const char* name)
                 : name(name)
@@ -532,29 +537,40 @@ struct ClientLuduvoResourcesConfiguration
 
 inline void to_json(nlohmann::json& json, const ClientLuduvoResourcesConfiguration::Source::Value& value)
 {
-    if (!value.documentation)
+    if (!value.documentation && value.notes.empty() && value.example.empty() && !value.deprecated && value.deprecation.empty())
         json = value.name;
     else
     {
         json = nlohmann::json{{"name", value.name}};
         if (value.documentation)
             json["documentation"] = *value.documentation;
+        if (!value.notes.empty())
+            json["notes"] = value.notes;
+        if (!value.example.empty())
+            json["example"] = value.example;
+        if (value.deprecated)
+            json["deprecated"] = true;
+        if (!value.deprecation.empty())
+            json["deprecation"] = value.deprecation;
     }
 }
 
 inline void from_json(const nlohmann::json& json, ClientLuduvoResourcesConfiguration::Source::Value& value)
 {
+    value = {};
     if (json.is_string())
     {
         value.name = json.get<std::string>();
-        value.documentation.reset();
         return;
     }
 
     json.at("name").get_to(value.name);
-    value.documentation.reset();
     if (json.contains("documentation"))
         value.documentation = json.at("documentation").get<std::string>();
+    value.notes = json.value("notes", std::vector<std::string>{});
+    value.example = json.value("example", std::string{});
+    value.deprecated = json.value("deprecated", false);
+    value.deprecation = json.value("deprecation", std::string{});
 }
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(ClientLuduvoResourcesConfiguration::Group, dataType, includeBuiltins, sources)

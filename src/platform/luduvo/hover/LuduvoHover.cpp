@@ -18,6 +18,8 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
     const auto& subject = context.subject;
     if (subject.literal)
         return std::nullopt;
+    if (configuration.hover.sections.empty())
+        return lsp::Hover{{lsp::MarkupKind::Markdown, ""}};
     const auto stale = schemas ? schemas->staleHint(context.moduleName, subject.node->asExpr(), subject.type) : "";
     if (configuration.hover.presentation != LuduvoHoverPresentation::Rich)
     {
@@ -56,7 +58,7 @@ std::optional<lsp::Hover> LuduvoPlatform::handleTypeHover(const PlatformHoverCon
         fallbackTitle = declarationTarget.name;
 
     const std::string expandedType = getRichHoverTypeDefinition(subject.type, options);
-    const std::string declaration = makeDeclaration(subject.type, normalizeRichHoverType(subject.type, options), expandedType, declarationTarget);
+    const std::string declaration = makeDeclaration(subject.type, normalizeRichHoverType(subject.type, options), expandedType, declarationTarget, options);
     std::optional<Luau::Property> property;
     if (subject.property)
         property = *subject.property;
@@ -74,14 +76,8 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(
 {
     if (!context.entry.type || !workspaceFolder)
         return std::nullopt;
-
-    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich)
-    {
-        const auto debug = schemas ? schemas->debug(context.moduleName, nullptr, *context.entry.type) : "";
-        if (debug.empty())
-            return std::nullopt;
-        return lsp::MarkupContent{lsp::MarkupKind::Markdown, context.fallbackDocumentation.value_or("") + debug};
-    }
+    if (configuration.hover.sections.empty())
+        return lsp::MarkupContent{lsp::MarkupKind::Markdown, ""};
 
     auto documentationSymbol =
         resolveDocumentationSymbol(*context.entry.type, context.entry.documentationSymbol, getEnvironmentForModule(context.moduleName));
@@ -89,6 +85,16 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(
     if (documentationSymbol)
         documentation =
             getDocumentation(workspaceFolder->client->documentation, *documentationSymbol, &workspaceFolder->client->documentationMetadata);
+    if (configuration.hover.presentation != LuduvoHoverPresentation::Rich)
+    {
+        const auto debug = schemas ? schemas->debug(context.moduleName, nullptr, *context.entry.type) : "";
+        if (documentation && documentation->deprecated)
+            return lsp::MarkupContent{lsp::MarkupKind::Markdown, renderDocumentation(*documentation) + debug};
+        if (debug.empty())
+            return std::nullopt;
+        return lsp::MarkupContent{lsp::MarkupKind::Markdown, context.fallbackDocumentation.value_or("") + debug};
+    }
+
     if (!documentation && context.fallbackDocumentation && !context.fallbackDocumentation->empty())
         documentation = PrintedDocumentation{*context.fallbackDocumentation, std::nullopt};
 
@@ -102,6 +108,19 @@ std::optional<lsp::MarkupContent> LuduvoPlatform::handleCompletionDocumentation(
     if (schemas)
         rendered += schemas->debug(context.moduleName, nullptr, *context.entry.type);
     return lsp::MarkupContent{lsp::MarkupKind::Markdown, std::move(rendered)};
+}
+
+bool LuduvoPlatform::isCompletionDeprecated(const Luau::ModuleName& moduleName, const Luau::AutocompleteEntry& entry) const
+{
+    if (!workspaceFolder)
+        return false;
+    const auto symbol = entry.type ? resolveDocumentationSymbol(*entry.type, entry.documentationSymbol, getEnvironmentForModule(moduleName))
+                                   : entry.documentationSymbol;
+    if (!symbol)
+        return false;
+    const auto& metadata = workspaceFolder->client->documentationMetadata;
+    const auto found = metadata.find(*symbol);
+    return found != metadata.end() && found->second.deprecated;
 }
 
 std::optional<lsp::MarkupContent> LuduvoPlatform::handleSignatureHelpDocumentation(const PlatformSignatureHelpDocumentationContext& context)

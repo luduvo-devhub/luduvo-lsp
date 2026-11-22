@@ -335,12 +335,14 @@ public:
     void poll()
     {
         const auto changes = commandsLog.readLines();
+        if (changes.rewritten)
+            processor.invalidateJournal();
         bool malformed = false;
         for (const auto& line : changes.lines)
         {
             try
             {
-                malformed = !processor.ingestCommandLine(line) || malformed;
+                malformed = !processor.ingestCommandLine(line, changes.previousContents) || malformed;
             }
             catch (const std::exception& error)
             {
@@ -351,6 +353,7 @@ public:
         if (malformed)
             processor.invalidateJournal();
         processor.pollFilesystem();
+        processor.pollStudio();
     }
 };
 

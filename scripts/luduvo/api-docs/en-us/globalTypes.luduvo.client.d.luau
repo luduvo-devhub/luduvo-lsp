@@ -56,6 +56,7 @@ export type EnumTweenEase = "In" | "Out" | "InOut" | "OutIn"
 export type EnumTweenBehavior = "Normal" | "AllowDiscrete"
 export type EnumPairRelation = "ChildOf" | "Tag" | "WornBy"
 export type EnumEventCoalesce = "First" | "Last"
+export type EnumEventDelivery = "Reliable" | "Unreliable"
 export type EnumSocialVerb = "FriendRequest" | "FriendRemove" | "Block" | "Unblock" | "Report"
 export type EnumReportReason = "Cheating" | "Harassment" | "Name" | "Scam" | "Other"
 export type EnumItemType = "place" | "model" | "accessory"
@@ -127,6 +128,7 @@ export type Enums = {
 	read TweenBehavior: { read Normal: "Normal", read AllowDiscrete: "AllowDiscrete", },
 	read PairRelation: { read ChildOf: "ChildOf", read Tag: "Tag", read WornBy: "WornBy", },
 	read EventCoalesce: { read First: "First", read Last: "Last", },
+	read EventDelivery: { read Reliable: "Reliable", read Unreliable: "Unreliable", },
 	read SocialVerb: { read FriendRequest: "FriendRequest", read FriendRemove: "FriendRemove", read Block: "Block", read Unblock: "Unblock", read Report: "Report", },
 	read ReportReason: { read Cheating: "Cheating", read Harassment: "Harassment", read Name: "Name", read Scam: "Scam", read Other: "Other", },
 	read ItemType: { read place: "place", read model: "model", read accessory: "accessory", },
@@ -201,6 +203,7 @@ type QueryParams = {
 	ExcludeInstances: {Instance}?,
 	IncludeInstances: {Instance}?,
 	CollisionGroup: string?,
+	AtTick: number?,
 }
 
 type SwingTwistJointDesc = {
@@ -664,6 +667,7 @@ declare extern type EventTable with
 	[string]: EventColumn
 	count: number
 	sender: EventColumn
+	tick: EventColumn
 	OnServerEvent: Signal<(player: Instance, ...any) -> ()>
 	OnClientEvent: Signal<(...any) -> ()>
 	FireServer: (self: EventTable, ...any) -> ()
@@ -723,6 +727,9 @@ declare extern type CameraOrbitComponent with
 	touchScale: number
 	collisionRadius: number
 	zoomSpeed: number
+	punch: vector
+	punchOffset: vector
+	active: boolean
 end
 
 declare extern type CameraFlyComponent with
@@ -881,6 +888,10 @@ declare extern type WheelJointComponent with
 	SpringFrequency: number
 	SpringDamping: number
 	DriveTorque: number
+	SpinSpeed: number
+	SteerTarget: number
+	SteerLimit: number
+	MaxSteerTorque: number
 	Steers: boolean
 	-- read-only
 	read Mount: vector
@@ -965,6 +976,7 @@ declare extern type CharacterTuningComponent with
 	MoveP: number
 	MaxGroundForce: number
 	MaxAirForce: number
+	AirBrakeForce: number
 	AltitudeP: number
 	AltitudeD: number
 	BalanceP: number
@@ -1094,6 +1106,8 @@ end
 declare extern type IdentityComponent with
 	-- read-only
 	read UserId: number
+	-- read-only
+	read RttMs: number
 end
 
 declare extern type DisplayNameComponent with
@@ -1993,6 +2007,53 @@ declare extern type ParticleAttractorSphereComponent with
 	Radius: number
 end
 
+declare extern type CharacterAbilitiesComponent with
+	Action1: number
+	Hold1: boolean
+	Add1: boolean
+	Velocity1: vector
+	Cooldown1: number
+	States1: number
+	Action2: number
+	Hold2: boolean
+	Add2: boolean
+	Velocity2: vector
+	Cooldown2: number
+	States2: number
+	Action3: number
+	Hold3: boolean
+	Add3: boolean
+	Velocity3: vector
+	Cooldown3: number
+	States3: number
+	Action4: number
+	Hold4: boolean
+	Add4: boolean
+	Velocity4: vector
+	Cooldown4: number
+	States4: number
+end
+
+declare extern type PoseOffsetComponent with
+	Head: vector
+	Torso: vector
+	LeftArm: vector
+	RightArm: vector
+	LeftLeg: vector
+	RightLeg: vector
+	Weight: number
+end
+
+declare extern type CharacterTuningOverrideComponent with
+	MoveP: number
+	MaxGroundForce: number
+	MaxAirForce: number
+	AirBrakeForce: number
+	TurnSpeed: number
+	MaxStepHeight: number
+	LaunchInfluence: number
+end
+
 declare extern type VisionConeComponent with
 	Range: number
 	FieldOfView: number
@@ -2049,6 +2110,7 @@ declare extern type CharacterMoveIntentComponent with
 	ShiftLock: boolean
 	JumpImpulsePending: boolean
 	MoveBits: number
+	ActionBits: number
 end
 
 declare extern type FloorInfoComponent with
@@ -2107,6 +2169,13 @@ declare extern type SuspensionStateComponent with
 	read GroundEntity: Instance?
 end
 
+declare extern type AssemblyMassComponent with
+	-- read-only
+	read Mass: number
+	-- read-only
+	read Center: vector
+end
+
 declare extern type RopeJointComponent with
 	-- read-only
 	read Tension: number
@@ -2131,6 +2200,10 @@ declare extern type RootMotionDeltaComponent with
 	read DeltaX: number
 	-- read-only
 	read DeltaZ: number
+end
+
+declare extern type AnimatorComponent with
+	FadeOut: number
 end
 
 declare extern type TargetYawComponent with
@@ -2194,6 +2267,8 @@ declare extern type Instance with
 	AnimLayers: AnimLayers
 	AnimationPreview: (self: Instance) -> AnimPreviewInfo?
 	AnimationWeight: (self: Instance, clip: string) -> number?
+	-- read-only
+	read Animator: AnimatorComponent
 	ApplyForce: (self: Instance, force: vector, at: vector?) -> ()
 	ApplyImpulse: (self: Instance, impulse: vector, at: vector?) -> ()
 	@[deprecated {use = "World.Query"}] function ApplyTorque(self, torque: vector): ()
@@ -2202,6 +2277,8 @@ declare extern type Instance with
 	ArrowDirection: EnumArrowDirection
 	AspectRatio: number
 	Assembly: boolean
+	-- read-only
+	read AssemblyMass: AssemblyMassComponent
 	-- read-only
 	Asset: string
 	-- read-only
@@ -2295,6 +2372,8 @@ declare extern type Instance with
 	-- read-only
 	Character: Instance?
 	-- read-only
+	read CharacterAbilities: CharacterAbilitiesComponent
+	-- read-only
 	CharacterAdded: Signal<(character: Instance) -> ()>
 	CharacterAnimation: boolean
 	-- read-only
@@ -2308,6 +2387,8 @@ declare extern type Instance with
 	CharacterSurfaceAlign: boolean
 	-- read-only
 	read CharacterTuning: CharacterTuningComponent
+	-- read-only
+	read CharacterTuningOverride: CharacterTuningOverrideComponent
 	Chassis: Instance?
 	-- read-only
 	Chatted: Signal<(message: string) -> ()>
@@ -2356,6 +2437,8 @@ declare extern type Instance with
 	function Component(self, name: "Ambient"): AmbientComponent
 	function Component(self, name: "AmbientLight"): AmbientComponent
 	function Component(self, name: "AngVelocity"): AngVelocityComponent
+	function Component(self, name: "Animator"): AnimatorComponent
+	function Component(self, name: "AssemblyMass"): AssemblyMassComponent
 	function Component(self, name: "Attachment"): AttachmentComponent
 	function Component(self, name: "Avatar"): PlatformAvatarConfigComponent
 	function Component(self, name: "Background"): BackgroundComponent
@@ -2368,10 +2451,12 @@ declare extern type Instance with
 	function Component(self, name: "CameraFly"): CameraFlyComponent
 	function Component(self, name: "CameraLens"): CameraLensComponent
 	function Component(self, name: "CameraOrbit"): CameraOrbitComponent
+	function Component(self, name: "CharacterAbilities"): CharacterAbilitiesComponent
 	function Component(self, name: "CharacterAppearance"): CharacterAppearanceComponent
 	function Component(self, name: "CharacterGravity"): CharacterGravityComponent
 	function Component(self, name: "CharacterMoveIntent"): CharacterMoveIntentComponent
 	function Component(self, name: "CharacterTuning"): CharacterTuningComponent
+	function Component(self, name: "CharacterTuningOverride"): CharacterTuningOverrideComponent
 	function Component(self, name: "ClickDetector"): ClickDetectorComponent
 	function Component(self, name: "Clouds"): CloudsComponent
 	function Component(self, name: "Collider"): ColliderComponent
@@ -2449,6 +2534,7 @@ declare extern type Instance with
 	function Component(self, name: "Physics"): RigidBodyComponent
 	function Component(self, name: "Pivot"): PivotComponent
 	function Component(self, name: "PlatformAvatarConfig"): PlatformAvatarConfigComponent
+	function Component(self, name: "PoseOffset"): PoseOffsetComponent
 	function Component(self, name: "Position"): PositionComponent
 	function Component(self, name: "PrefabInstance"): PrefabInstanceComponent
 	function Component(self, name: "RigidBody"): RigidBodyComponent
@@ -2859,6 +2945,7 @@ declare extern type Instance with
 	MaxPolyphony: number
 	MaxSize: UDim2
 	MaxSlopeAngle: number
+	MaxSteerTorque: number
 	MaxValue: number
 	MaximumMotorForce: number
 	MenuCheck: boolean
@@ -3025,6 +3112,8 @@ declare extern type Instance with
 	PopupOpen: boolean
 	PortColor3: vector
 	PortTransparency: number
+	-- read-only
+	read PoseOffset: PoseOffsetComponent
 	Position: vector
 	-- read-only
 	PrefabId: number
@@ -3075,6 +3164,8 @@ declare extern type Instance with
 	Rotate: (self: Instance, axis: vector, angle: number) -> ()
 	Rotation: number
 	RotationVector: vector
+	-- read-only
+	RttMs: number
 	SampleCount: number
 	Saturation: number
 	ScaleMax: number
@@ -3162,6 +3253,7 @@ declare extern type Instance with
 	read SoundSystem: SoundConfigComponent
 	Spacing: number
 	SpawnPoint: boolean
+	SpinSpeed: number
 	-- read-only
 	read SpotCone: SpotConeComponent
 	SpringDamping: number
@@ -3175,6 +3267,8 @@ declare extern type Instance with
 	StateChanged: Signal<(state: boolean | vector) -> ()>
 	-- read-only
 	Steer: number
+	SteerLimit: number
+	SteerTarget: number
 	Steers: boolean
 	Steps: number
 	StickCenter: vector
@@ -3184,7 +3278,7 @@ declare extern type Instance with
 	StickRadius: number
 	StickTip: vector
 	Stop: (self: Instance) -> ()
-	StopAnimation: (self: Instance) -> ()
+	StopAnimation: (self: Instance, fade: number?) -> ()
 	StopPreview: (self: Instance) -> boolean
 	@[deprecated {use = "Instance.RemoveComponent"}] function StopTimer(self): ()
 	-- read-only
@@ -3717,8 +3811,8 @@ declare game: {
 	},
 	-- property tweens
 	read Tween: {
-		-- animate the property from its value on the first update tick to final over duration seconds
-		TweenProperty: ((target: Instance, property: string, final: any, duration: number) -> Tween) & ((self: any, target: Instance, property: string, final: any, duration: number) -> Tween),
+		-- animate the property, or the Component.field, from its value on the first update tick to final over duration seconds
+		TweenProperty: ((target: Instance | Component, property: string, final: any, duration: number) -> Tween) & ((self: any, target: Instance | Component, property: string, final: any, duration: number) -> Tween),
 	},
 	-- sound configuration
 	read Sound: {
@@ -3789,6 +3883,14 @@ declare game: {
 		read MaxPlayers: number,
 		-- seconds since this client joined the session
 		read TimeInSession: number,
+		-- the server's network tick, estimated on clients
+		read ServerTick: number,
+		-- the server tick in seconds
+		read ServerTime: number,
+		-- server network ticks per second
+		read TickRate: number,
+		-- round trip time to the server in milliseconds
+		read RttMs: number,
 	},
 	-- the players of the session and their characters
 	read Players: {
@@ -3865,6 +3967,8 @@ declare game: {
 		read MousePosition: vector,
 		-- cursor motion this frame in UI units
 		read MouseDelta: vector,
+		-- mouse motion this frame in the units the camera turns by
+		read LookDelta: vector,
 		-- mouse wheel scroll delta this frame
 		read Scroll: number,
 		-- mouse lock behavior: 0 Default, 1 LockCenter
@@ -3950,7 +4054,7 @@ declare game: {
 		SetParam: ((idOrName: string, name: string, value: number | vector | boolean | string) -> ()) & ((self: any, idOrName: string, name: string, value: number | vector | boolean | string) -> ()),
 	},
 	-- networked event tables
-	read EventTable: ((name: string, direction: EventDirection?, fields: {{string | EventFieldType}}?, options: {Coalesce: EnumEventCoalesce?}?) -> EventTable) & {
+	read EventTable: ((name: string, direction: EventDirection?, fields: {{string | EventFieldType}}?, options: {Coalesce: EnumEventCoalesce?, Delivery: EnumEventDelivery?}?) -> EventTable) & {
 		-- clients push events, the server reads them
 		read ToServer: EventDirection,
 		-- the server pushes events, clients read them

@@ -597,6 +597,71 @@ TEST_CASE("handle_member_completion_shares_read_hints_only_with_scripts_on_the_s
     }
 }
 
+TEST_CASE("project_resource_completion_looks_up_children_attributes_and_tags")
+{
+    const std::string definitions = R"(
+        declare extern type Instance with
+            attr: { [string]: any }
+            function FindFirstChild(self, name: string, recursive: boolean?): Instance?
+            function WaitForChild(self, name: string, timeout: number?): Instance?
+            function GetAttributeChangedSignal(self, name: string): ()
+            function CustomLookup(self, name: string): ()
+        end
+        declare self: Instance
+        declare game: { Tags: { Find: (tag: string) -> {Instance} } }
+    )";
+    auto config = Luau::LanguageServer::defaultTestClientConfiguration();
+    LuduvoFixture fixture("project_resource_completion", config, definitions, definitions);
+    auto platformConfig = fixture.config.platform.luduvo;
+    platformConfig.context.enabled = true;
+    platformConfig.directories.context = fixture.tempDir.path() + "/state";
+    platformConfig.bindings.push_back({"Instance.CustomLookup", "resource", "name", {}, "descendants"});
+    fixture.tempDir.write_child("project.json", R"({"name":"Resources","assets":{"script":{"type":"script","path":"scripts/main.server.luau"}}})");
+    fixture.tempDir.write_child("scripts/main.server.luau", "");
+    ContextStore store(platformConfig.directories.context);
+    const auto added = store.updateProjectFiles(fixture.tempDir.path());
+    REQUIRE(added.projectId);
+    const auto dump = parseWorldDump(R"({"dump":1,"format":46,"prefabs":[],"singletons":{},"entities":[
+        {"index":0,"parent":null,"name":"Root","scripts":[{"path":"scripts/main.server.luau"}],"attributes":{"Health":{}}},
+        {"index":1,"parent":0,"name":"Door","scripts":[],"attributes":{"Locked":{}},"tags":["Interactable"]},
+        {"index":2,"parent":1,"name":"Knob","scripts":[]}
+    ]})");
+    REQUIRE(dump.snapshot);
+    REQUIRE(store.updateWorldForProject(*dump.snapshot, *added.projectId).success);
+    LuduvoBindingRegistry bindings;
+    bindings.configure(platformConfig);
+    LuduvoResourceCatalog resources;
+    resources.configure(platformConfig);
+    SchemaService service(fixture.workspace, platformConfig, bindings, resources);
+    const auto uri = fixture.newDocument("scripts/main.server.luau", "");
+    const auto labels = [&](std::string_view text)
+    {
+        const auto [content, marker] = sourceWithMarker(std::string(text));
+        Luau::LanguageServer::updateDocument(fixture.workspace, uri, content);
+        const auto name = fixture.workspace.fileResolver.getModuleName(uri);
+        const auto overlay = service.prepare(name);
+        fixture.workspace.frontend.check(name);
+        const auto doc = fixture.workspace.fileResolver.getTextDocument(uri);
+        const auto source = fixture.workspace.frontend.getSourceModule(name);
+        const auto position = doc->convertPosition(marker);
+        std::vector<lsp::CompletionItem> items;
+        service.complete(*doc, *source, position, Luau::findAncestryAtPositionForAutocomplete(*source, position), items);
+        std::set<std::string> result;
+        for (const auto& item : items)
+            result.insert(item.label);
+        return result;
+    };
+    CHECK(labels("local door = self.|").count("Door"));
+    CHECK(labels("local door = self[\"|\"]").count("Door"));
+    CHECK(labels("self:FindFirstChild(\"|\", true)") == std::set<std::string>{"Door"});
+    CHECK(labels("self:WaitForChild(\"|\")") == std::set<std::string>{"Door"});
+    CHECK(labels("self:CustomLookup(\"|\")") == (std::set<std::string>{"Door", "Knob"}));
+    CHECK(labels("self:GetAttributeChangedSignal(\"|\")") == std::set<std::string>{"Health"});
+    CHECK(labels("local door = self.Door; local locked = door.attr.|").count("Locked"));
+    CHECK(labels("local locked = self:WaitForChild(\"Door\").attr[\"|\"]").count("Locked"));
+    CHECK(labels("game.Tags.Find(\"|\")") == std::set<std::string>{"Interactable"});
+}
+
 TEST_CASE("schema_export_references_are_released_after_workspace_destruction")
 {
     TempDir state("schema_service_teardown");

@@ -8,10 +8,11 @@ from dataclasses import dataclass, field
 
 COMMENT = re.compile(r"^\s*--\s?(.*)$")
 EXTERN = re.compile(r"^\s*declare\s+extern\s+type\s+([A-Za-z_]\w*)\s+with\s*$")
-TABLE_TYPE = re.compile(r"^\s*(?:export\s+)?type\s+([A-Za-z_]\w*)\s*=\s*\{\s*$")
+TABLE_TYPE = re.compile(r"^\s*(?:export\s+)?type\s+([A-Za-z_]\w*)(?:<.*>)?\s*=\s*\{\s*$")
 GLOBAL_TABLE = re.compile(r"^\s*declare\s+([A-Za-z_]\w*)\s*:\s*\{\s*$")
 GLOBAL_VALUE = re.compile(r"^\s*declare\s+([A-Za-z_]\w*)\s*:\s*(.+?)\s*$")
 FIELD = re.compile(r"^\s*(read\s+)?([A-Za-z_]\w*)\s*:\s*(.+?)\s*,?\s*$")
+EXTERN_METHOD = re.compile(r"^\s*(?:@\[.*\]\s*)?function\s+([A-Za-z_]\w*)([<(].*)$")
 NESTED_TABLE = re.compile(r"^\s*(read\s+)?([A-Za-z_]\w*)\s*:\s*\{\s*$")
 DIRECTIVES = {"server-only", "client-only", "read-only"}
 
@@ -134,6 +135,13 @@ def parse_declarations(source: str, surface: str) -> list[dict]:
             kind = "type_member" if parent.kind == "type" else "global_member"
             add(name, parent.path, kind, type_text, bool(read))
             continue
+
+        if stack and stack[-1].closing == "end":
+            match = EXTERN_METHOD.match(line)
+            if match:
+                name, signature = match.groups()
+                add(name, stack[-1].path, "type_member", f"function {name}{signature}")
+                continue
 
         # A non-comment declaration separator breaks comment adjacency.
         pending.clear()

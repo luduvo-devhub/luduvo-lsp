@@ -12,6 +12,7 @@
 #include "Platform/luduvo/context/LuduvoProcessIdentity.hpp"
 #include "Platform/luduvo/context/LuduvoContextReport.hpp"
 #include "Platform/luduvo/context/LuduvoContextStore.hpp"
+#include "Platform/luduvo/context/LuduvoStudioContext.hpp"
 #include "Platform/luduvo/context/LuduvoWorldDump.hpp"
 #include "Platform/luduvo/LuduvoPlatform.hpp"
 #include "Platform/luduvo/LuduvoNotifications.hpp"
@@ -61,7 +62,7 @@ static std::map<std::string, std::string> preservedAutosaves(const std::string& 
 }
 
 #ifndef _WIN32
-TEST_CASE("POSIX automatic world dumps launch with the native display backend")
+TEST_CASE("POSIX automatic world dumps launch Studio headless")
 {
     TempDir temp("luduvo_linux_autodump");
     const std::string project = temp.path() + "/project with spaces";
@@ -70,16 +71,16 @@ TEST_CASE("POSIX automatic world dumps launch with the native display backend")
     temp.write_child("project with spaces/.journal/world.ldj", "live journal");
     temp.write_child("bundle/usr/bin/source.dump", std::string(worldDump));
     const std::string editor = temp.write_child("bundle/usr/bin/LuduvoEditor", R"sh(#!/bin/sh
-[ "$#" -eq 3 ] || exit 91
-[ "$2" = "--exec" ] || exit 92
-output="${3#world.dump }"
-[ "$output" != "$3" ] || exit 93
+[ "$#" -eq 6 ] || exit 91
+[ "$1" = "--headless" ] && [ "$3" = "--exec" ] && [ "$5" = "--exec" ] && [ "$6" = "file.quit" ] || exit 92
+output="${4#world.dump }"
+[ "$output" != "$4" ] || exit 93
+shift
 [ ! -e "$1/.studio.lock" ] && [ ! -e "$1/.journal" ] && [ ! -e "$1/world.ldv.autosave" ] || exit 96
 printf '%s' "$1" > "$0.project-argument"
 cat "$1/world.ldv" > "$0.world-input"
 if [ -f "$1/config.fixture" ]; then printf copy-edit > "$1/config.fixture" || exit 95; fi
 cp "$(dirname "$0")/source.dump" "$output" || exit 94
-sleep 10
 )sh");
     CHECK_EQ(luduvo::defaultLuduvoEditorPath(temp.path()), editor);
     std::filesystem::permissions(std::filesystem::u8path(editor), std::filesystem::perms::owner_exec, std::filesystem::perm_options::add);
@@ -1114,6 +1115,7 @@ TEST_CASE("luduvo platform context commands use the workspace context provider")
     WorkspaceFolder workspace(&client, "Command Project", Uri::file(projectRoot.generic_u8string()), std::nullopt);
     ClientLuduvoConfiguration configuration;
     configuration.context.enabled = true;
+    configuration.context.autoDump = false;
     configuration.directories.local = temp.path() + "/local";
     LuduvoPlatform platform(configuration, &workspace.fileResolver, &workspace);
     ClientConfiguration clientConfiguration;
@@ -1143,7 +1145,7 @@ TEST_CASE("luduvo platform context commands use the workspace context provider")
     CHECK(status->contains("clients"));
     CHECK_FALSE(status->contains("catalog"));
     CHECK(status->at("configuration").at("enabled").get<bool>());
-    CHECK(status->at("configuration").at("autoDump").get<bool>());
+    CHECK_FALSE(status->at("configuration").at("autoDump").get<bool>());
     CHECK_FALSE(status->at("configuration").at("lazyRefresh").get<bool>());
 
     const json argument = {{"uri", Uri::file(scriptPath).toString()}};
@@ -1368,6 +1370,131 @@ TEST_CASE("a later observed mutation cannot be hidden by an older queued dump")
     processor.ingestCommandLine("3 world.dump " + path);
     processor.pollFilesystem();
     CHECK(store.load()->projects.at("example").fresh);
+}
+
+TEST_CASE("PID command results localize mutations and dumps to the open project")
+{
+    TempDir temp("journal_project_attribution");
+    luduvo::ContextStore store(temp.path() + "/state");
+    const auto firstDir = std::filesystem::u8path(temp.write_child("first/project.json", R"({"name":"Example","assets":{}})")).parent_path();
+    const auto secondDir = std::filesystem::u8path(temp.write_child("second/project.json", R"({"name":"Example","assets":{}})")).parent_path();
+    const auto first = store.updateProjectFiles(firstDir.generic_u8string(), "Example");
+    const auto second = store.updateProjectFiles(secondDir.generic_u8string(), "Example");
+    REQUIRE(first.success);
+    REQUIRE(second.success);
+    REQUIRE(first.projectId);
+    REQUIRE(second.projectId);
+    REQUIRE(*first.projectId != *second.projectId);
+
+    const auto identity = luduvo::currentProcessIdentity();
+    REQUIRE(identity);
+    REQUIRE(store.updateClientProjects(identity->processId, identity->startToken, temp.path(),
+        {{*first.projectId, "Example", firstDir.generic_u8string()}, {*second.projectId, "Example", secondDir.generic_u8string()}}).result.success);
+    const auto path = temp.write_child("custom-dump.txt", std::string(worldDump));
+    const auto parsed = luduvo::parseWorldDump(worldDump, path);
+    REQUIRE(parsed.snapshot);
+    REQUIRE(store.updateWorldForProject(*parsed.snapshot, *first.projectId).success);
+    REQUIRE(store.updateWorldForProject(*parsed.snapshot, *second.projectId).success);
+    const auto secondGeneration = store.load()->projects.at(*second.projectId).worldGeneration;
+
+    luduvo::ContextLogProcessor processor(store);
+    const std::string header = "2026-11-13T16:00:00.000Z " + std::to_string(identity->processId) + " ";
+    REQUIRE(processor.ingestCommandLine(header + "1 file.open \"" + firstDir.generic_u8string() + "\""));
+    REQUIRE(processor.ingestCommandLine(header + "1 ok"));
+    REQUIRE(processor.ingestCommandLine(header + "2 edit.delete"));
+    REQUIRE(processor.ingestCommandLine(header + "2 fail No selection"));
+    CHECK(store.load()->projects.at(*first.projectId).fresh);
+    REQUIRE(processor.ingestCommandLine(header + "3 attr.set Test integer 1"));
+    REQUIRE(processor.ingestCommandLine(header + "3 ok"));
+    CHECK_FALSE(store.load()->projects.at(*first.projectId).fresh);
+    CHECK(store.load()->projects.at(*first.projectId).staleReason.find("attr.set") != std::string::npos);
+    CHECK(store.load()->projects.at(*second.projectId).fresh);
+
+    const auto wrongPath = temp.write_child("state/projects/" + *second.projectId + "/world.dump.txt", std::string(worldDump));
+    REQUIRE(processor.ingestCommandLine(header + "4 world.dump " + wrongPath));
+    REQUIRE(processor.ingestCommandLine(header + "4 ok"));
+    processor.pollFilesystem();
+    CHECK_FALSE(store.load()->projects.at(*first.projectId).fresh);
+    CHECK(store.load()->projects.at(*second.projectId).worldGeneration == secondGeneration);
+
+    REQUIRE(processor.ingestCommandLine(header + "5 world.dump " + path));
+    REQUIRE(processor.ingestCommandLine(header + "5 ok"));
+    REQUIRE(processor.ingestCommandLine(header + "6 file.open " + secondDir.generic_u8string()));
+    REQUIRE(processor.ingestCommandLine(header + "6 ok"));
+    REQUIRE(processor.ingestCommandLine(header + "7 file.save"));
+    REQUIRE(processor.ingestCommandLine(header + "7 ok"));
+    processor.pollFilesystem();
+    CHECK(store.load()->projects.at(*first.projectId).fresh);
+    CHECK_FALSE(store.load()->projects.at(*second.projectId).fresh);
+}
+
+TEST_CASE("resolved context retains partial and explicitly empty handle captures")
+{
+    TempDir temp("context_handle_precedence");
+    luduvo::ContextStore store(temp.path() + "/state");
+    temp.write_child("project.json", R"({"name":"Handles","assets":{}})");
+    const auto added = store.updateProjectFiles(temp.path());
+    REQUIRE(added.projectId);
+    const auto identity = luduvo::currentProcessIdentity();
+    REQUIRE(identity);
+    REQUIRE(luduvo::writeProcessIdentity(store.ownerPath(), *identity));
+    auto legacy = luduvo::parseWorldDump(worldDump);
+    REQUIRE(legacy.snapshot);
+    legacy.snapshot->scriptHandles = {{"a", {"Legacy"}}, {"b", {"Fallback"}}};
+    REQUIRE(store.updateWorldForProject(*legacy.snapshot, *added.projectId).success);
+    auto rich = luduvo::parseWorldDump(R"({"dump":1,"format":46,"entities":[
+        {"index":0,"parent":null,"name":"Root","scripts":[],"tags":["Cool"],"attributes":{"Speed":1}}
+    ],"prefabs":[],"singletons":{}})");
+    REQUIRE(rich.snapshot);
+    rich.snapshot->scriptHandles = {{"a", {"Saved"}}};
+    REQUIRE(store.updateWorldForProject(*rich.snapshot, *added.projectId).success);
+    const auto project = store.load()->projects.at(*added.projectId);
+    const auto saved = store.resolveWorld(project);
+    REQUIRE(saved);
+    CHECK(saved->scriptHandles.at("a") == std::vector<std::string>{"Saved"});
+    CHECK(saved->scriptHandles.at("b") == std::vector<std::string>{"Fallback"});
+    luduvo::publishStudioHandles(store, project, *identity, {{"a", {}}, {"c", {"Live"}}});
+    nlohmann::json captures;
+    const auto merged = store.resolveWorld(project, &captures);
+    REQUIRE(merged);
+    CHECK(merged->scriptHandles.at("a").empty());
+    CHECK(merged->scriptHandles.at("b") == std::vector<std::string>{"Fallback"});
+    CHECK(merged->scriptHandles.at("c") == std::vector<std::string>{"Live"});
+    CHECK(captures.at("fields").at("hierarchy") == "ldv-dump");
+    CHECK(captures.at("fields").at("prefabs") == "ldv-dump");
+    CHECK(captures.at("fields").at("attributes") == "ldv-dump");
+    CHECK(captures.at("fields").at("tags") == "ldv-dump");
+    CHECK(captures.at("handlesByScript") == nlohmann::json{{"a", "studio-lsp"}, {"b", "world.dump"}, {"c", "studio-lsp"}});
+    const auto& latest = captures.at("latest");
+    CHECK(latest.at("studio-lsp").at("state") == "current");
+    CHECK(latest.at("world.dump").at("state") == "previous");
+    const auto studioTimestamp = latest.at("studio-lsp").at("capturedAtUnixMs");
+    CHECK(studioTimestamp.get<int64_t>() > 0);
+
+    luduvo::publishStudioHandles(store, project, *identity, {{"a", {}}, {"c", {"Live"}}});
+    store.resolveWorld(project, &captures);
+    CHECK(captures.at("latest").at("studio-lsp").at("capturedAtUnixMs") == studioTimestamp);
+    luduvo::clearStudioHandles(store, project.id);
+    CHECK(store.resolveWorld(project, &captures)->scriptHandles.at("a") == std::vector<std::string>{"Saved"});
+    CHECK(captures.at("latest").at("studio-lsp").at("state") == "inactive");
+    CHECK(captures.at("latest").at("studio-lsp").at("capturedAtUnixMs") == studioTimestamp);
+    CHECK(captures.at("handlesByScript").at("a") == "ldv-dump");
+    CHECK_FALSE(captures.at("handlesByScript").contains("c"));
+
+    const auto inspected = luduvo::inspectContextInput(temp.path(), store.directory());
+    REQUIRE(inspected.report);
+    CHECK(inspected.report->at("capturedContext").at("captures") == captures);
+    const auto rendered = luduvo::renderReportText(luduvo::buildContextInspectionReport(*inspected.report));
+    CHECK(rendered.find("Dump history") != std::string::npos);
+    CHECK(rendered.find("studio-lsp [inactive]") != std::string::npos);
+
+    REQUIRE(store.updateWorldForProject(*legacy.snapshot, project.id).success);
+    const auto latestProject = store.load()->projects.at(project.id);
+    store.resolveWorld(latestProject, &captures);
+    CHECK(captures.at("fields").at("hierarchy") == "world.dump");
+    CHECK(captures.at("fields").at("attributes").is_null());
+    CHECK(captures.at("latest").at("ldv-dump").at("state") == "previous");
+    CHECK(captures.at("handlesByScript").at("a") == "ldv-dump");
 }
 
 TEST_CASE("automatic dumps choose newer autosaves and prefer saved worlds on equal timestamps")

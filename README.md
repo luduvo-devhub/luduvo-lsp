@@ -128,9 +128,11 @@ luduvo-lsp context status [--state-directory <directory>] [--format text|json] [
 luduvo-lsp context stop [--state-directory <directory>]
 ```
 
-Commands that can access a project database also can accept your LSP config via `--settings <path>`, like with other LSP command from upstream (namely `luduvo-lsp analyze`). If you share other arguments that may conflict with the information in `--settings`, said arguments will take precedence
+Commands that can access a project database also can accept your LSP config via `--settings <path>`, like with other LSP command from upstream (namely `luduvo-lsp analyze`). If you share other arguments that may conflict with the information in `--settings`, said arguments will take precedence.
 
 `run` starts the context helper and watches `--commands-log`, using the operating-system default location when omitted. It imports project-associated dumps into `--state-directory` and checks client registrations every `--poll-interval` milliseconds. If no live LSP registrations remain for `--idle-timeout` seconds, it exits.
+
+On Windows, Linux, and macOS, the helper can read live handle names when it matches a tracked project to a Studio process listening on its configured Language Server Port. It reads Studio's saved preference and falls back to port 6009 when the setting is missing or invalid. On Linux, it checks `$XDG_CONFIG_HOME/Luduvo/Luduvo Studio.conf` (normally under `~/.config`). On macOS, it reads `editor.lsp_port` from `com.luduvo-dev.Luduvo Studio` in MacOS' preferences folder. Open the project from Studio to record the project path in the command log.
 
 `stop` also stops the context helper but without any of the autmoated checks
 
@@ -341,8 +343,13 @@ Luduvo LSP introduces or otherwise changes plenty of config settings to customiz
 | `platform.luduvo.diagnostics.default` | severity | `"default"` | Default diagnostic severity; `default` preserves each rule's registered severity. |
 | `platform.luduvo.diagnostics.categories` | map of dotted rule IDs/categories to severity | `{}` | Overrides individual Luduvo diagnostics with `default`, `error`, `warning`, `information`, `hint`, or `off`. |
 | `platform.luduvo.hover.presentation` | `"rich"` or `"standard"` | `"rich"` | Selects Luduvo's API-aware hover layout or the upstream-compatible hover layout. Standard hovers keep documentation above the type definition. |
-| `platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits visible rich-hover title length while preserving provenance text. URLs do not count toward the limit; `null` disables truncation. |
+| `platform.luduvo.hover.maxTitleLength` | integer or `null` | `96` | Limits the visible title length. URLs do not count toward the limit. Use `null` to disable truncation. |
 | `platform.luduvo.hover.maxTypeDefinitionLength` | integer or `null` | `2000` | Limits the Luau type definition shown in rich hovers. `null` disables truncation. |
+| `platform.luduvo.hover.sections` | string array | `["title", "tags", "divider", "default", "deprecation", "summary", "resources", "divider", "type"]` | Controls which sections appear in rich hover and completion documentation and in what order. Entries can repeat. `divider` adds a horizontal rule between visible sections. Add `notes` or `example` to show those sections when available. Use `[]` to hide rich documentation. |
+
+`notes` and `default` appear when the resolved symbol has that metadata. For example, `Instance.Velocity` has both, while `Instance.Transparency` has a documented default.
+
+Deprecated Luduvo API members show a tag and any documented replacement guidance. Completion deprioritizes them and clients can display them with strikethrough. Luau's `DeprecatedApi` lint reports dot access and method calls. Quoted bracket access such as `obj["OldMember"]` can bypass that lint.
 | `platform.luduvo.resources.groups` | map of resource-group names to group dictionaries | `{}` | Each group defines `dataType`, `includeBuiltins` (boolean that decides whether or not to auto-include LSP-maintained Luduvo built-in sources), and a list of source names. Missing built-in groups implicitly use their active Luduvo built-ins. Currently, only the `string` data type is supported. |
 | `platform.luduvo.resources.sources` | map of source names to source dictionaries | `{}` | Defines the resources that each resource group uses. Static `values` entries may be strings or dictionaries containing `name` and optional Markdown `documentation`; a source may be shared by multiple groups. |
 | `platform.luduvo.bindings` | array of binding dictionaries | `[]` | Adds some constraint/feature for custom symbols |
@@ -446,7 +453,7 @@ Currently, all the providers are:
 
 Project sources require project context. For example, `{ "provider": "project", "kind": "script" }` supplies script paths to any group that includes that source. See [Project schemas](#project-schemas-and-portable-types) for indexing details.
 
-For a static source, `values` can be plain strings or dictionaries containing `name` and optional Markdown `documentation`, which appears in the completion tooltip:
+For a static source, `values` can be plain strings or dictionaries containing a required `name` field alongside a plethora of other optional fields. Those include Markdown `documentation` (rendered in the `summary` section), `notes` (a list of strings), `example` (a string of Luau code), `deprecated` (a boolean), and `deprecation` (replacement guidance). Tooltips follow `platform.luduvo.hover.sections`. Source values marked as deprecated here should act the exact same as how deprecated values are normally handled by your editor (assuming they support it).
 
 ```json
 {
@@ -457,7 +464,9 @@ For a static source, `values` can be plain strings or dictionaries containing `n
         "values": [
           {
             "name": "Test",
-            "documentation": "This is my awesome test description."
+            "documentation": "A project-defined prefab.",
+            "notes": ["Use this prefab for existing maps."],
+            "example": "local prefab = game.Prefabs.Spawn(\"Test\")"
           },
           "Test2 with no documentation"
         ]
@@ -499,11 +508,16 @@ If you ever want to modify the built-in groups Luduvo LSP comes with, this is th
 
 - `component`, which contains all of the names for the components in Luduvo
 - `prefab`, which contains all of the names for the prefabs in Luduvo
+- `object`, which supplies built-in names to `Instance.new`. Enable the `notes` hover section to see documented starting components.
 - `event-table`, which contains all of the names for the event tables in your project
 - `handle`, which contains all of the names for the handles in your project
 - `script`, which contains all of the names for the scripts in your project
+- `children`, which supplies direct child names for a resolved receiver
+- `descendants`, which supplies child names at any depth for custom bindings
+- `tag`, which supplies tag names from the captured scene
+- `attribute`, which supplies attribute names on a resolved receiver
 
-The last three groups uses sources with the `project` provider, so they won't normally show up unless you have project context enabled. To overwrite these builtin groups, just define a new group with one of these names and it'll override that built-in group. Set `includeBuiltins: true` if you are looking to extend the builtins and not override them completely.
+The last seven groups uses sources with the `project` provider, so they won't normally show up unless you have project context enabled. To overwrite these builtin groups, just define a new group with one of these names and it'll override that built-in group. Set `includeBuiltins: true` if you are looking to extend the builtins and not override them completely.
 
 #### Bindings
 

@@ -12,6 +12,10 @@ struct LuduvoResourceName
     std::string name;
     std::optional<std::string> documentation;
     bool builtIn = false;
+    std::vector<std::string> notes{};
+    std::string example{};
+    bool deprecated = false;
+    std::string deprecation{};
 };
 
 struct LuduvoResourceGroup

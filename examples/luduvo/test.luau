@@ -2,17 +2,19 @@
 --!nolint luduvo/unused-local
 
 -- Tested in Zed. Complete the unfinished `game.` declare on line 13, or try hovering any of the luduvo-speciifc data types!
-local part: Instance? = game.Prefabs.Spawn("Part")
+local part: Instance? = Instance.new("P")
 if part then
     part.Position = Vector3.new(0, 10, 0)
     part.Anchored = true
     part.Color = Color3.new(0.2, 0.6, 1)
+    part.Parent
     part:AddComponent(game.World.Pair("", "Example"))
 end
 
+self.CollisionGroup
 local checkpoint = tonumber(self.Name:split(" ")[2])
 local finishMe: EventTable
-finishMe.
+
 local testResourceAutocomplete = game.World:Query("") or self:HasComponent("") or game.Prefabs.Exists("")
 
 math.abs(3-2)
@@ -21,7 +23,7 @@ game.Tween.TweenProperty(self, "UIPosition", "bignbong", 10)
 local function test()
     return "hello"
 end
-game.World.Query()
+game.World:Query()
 
 table.insert({}, "hi")
 local newFunc = test
@@ -31,10 +33,9 @@ query:With("Health"):Without("Invulnerable")
 local count = query:Refresh()
 
 for i = 1, count do
-    local entity: Instance = query.Entity[i]
+    local entity: Instance = query.Instance[i]
     print(entity.Name)
 end
-
 local hit: RaycastResult? = game.Physics.Raycast(Vector3.zero, Vector3.yAxis, 100)
 if hit then
     print(hit.Position)
@@ -49,7 +50,7 @@ local playerData = game.CloudStore -- Should error if this is running on a clien
 
 if camera then
     camera.CameraLens.fovY = math.rad(90)
-    camera.CameraOrbit.distance = 8
+    camera. = 8
 end
 
 if playerData then

@@ -17,6 +17,7 @@ struct ProjectContextCandidate
 {
     ContextProject project;
     std::optional<WorldDumpSnapshot> snapshot;
+    nlohmann::json captureDetails;
 };
 
 struct WorldDumpRequest

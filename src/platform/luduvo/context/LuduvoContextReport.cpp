@@ -70,6 +70,78 @@ static ReportNode snapshotReport(const json& value)
     return result;
 }
 
+ReportNode buildContextCaptureReport(const json& captures, std::optional<std::string_view> script)
+{
+    ReportNode report{"Dump history"};
+    const auto& latest = captures.at("latest");
+    for (const char* producer : {"studio-lsp", "ldv-dump", "world.dump"})
+    {
+        ReportNode provider{producer};
+        const auto& capture = latest.at(producer);
+        if (capture.is_null())
+            provider.tags.push_back("no capture");
+        else
+        {
+            provider.tags.push_back(capture.at("state").get<std::string>());
+            const auto& captured = capture.at("capturedAtUnixMs");
+            const auto time = captured.is_null() ? 0 : captured.get<int64_t>();
+            provider.fields.push_back({"Captured", formatContextTimestamp(time), !time});
+            std::string sections;
+            for (const auto& section : capture.at("sections"))
+            {
+                if (!sections.empty())
+                    sections += ", ";
+                sections += section.get<std::string>();
+            }
+            provider.fields.push_back({"Contains", sections.empty() ? "none" : sections});
+            if (!script)
+            {
+                const auto& path = capture.at("sourcePath");
+                if (!path.is_null())
+                    provider.fields.push_back({"Dump path", path.get<std::string>()});
+                const auto input = capture.at("inputSource").get<WorldDumpSource>();
+                if (!input.kind.empty())
+                    appendSourceFields(provider, input);
+                provider.fields.push_back({"Scripts with captured handles", std::to_string(capture.at("handleScripts").get<size_t>())});
+            }
+        }
+        report.children.push_back(std::move(provider));
+    }
+
+    ReportNode sources{"Data sources"};
+    const auto& fields = captures.at("fields");
+    const std::pair<const char*, const char*> sections[] = {{"hierarchy", "Hierarchy"}, {"attachments", "Attachments"}, {"tags", "Tags"},
+        {"attributes", "Attributes"}, {"components", "Components"}, {"prefabs", "Prefabs"}, {"singletons", "Singletons"}};
+    for (const auto& [key, label] : sections)
+    {
+        const auto& source = fields.at(key);
+        std::string provider = "unavailable";
+        if (!source.is_null())
+        {
+            provider = source.get<std::string>();
+            if (latest.at(provider).at("state") == "stale")
+                provider += " [stale]";
+        }
+        sources.fields.push_back({label, std::move(provider)});
+    }
+    const auto& handles = captures.at("handlesByScript");
+    if (script)
+    {
+        if (!script->empty())
+            sources.fields.push_back({"Captured handles", handles.value(std::string(*script), "unavailable")});
+    }
+    else
+    {
+        ReportNode scripts{"Captured handles by script"};
+        for (const auto& [path, source] : handles.items())
+            scripts.fields.push_back({path, source.get<std::string>()});
+        if (!scripts.fields.empty())
+            sources.children.push_back(std::move(scripts));
+    }
+    report.children.push_back(std::move(sources));
+    return report;
+}
+
 ReportNode buildProjectSchemaReport(const json& value)
 {
     const auto project = value.get<ProjectSchemas>();
@@ -87,6 +159,8 @@ ReportNode buildProjectSchemaReport(const json& value)
         summary.fields.push_back({"Export error", project.exportError});
     appendSourceFields(summary, project.inputSource);
     root.children.push_back(std::move(summary));
+    if (const auto captures = value.find("captures"); captures != value.end() && captures->is_object())
+        root.children.push_back(buildContextCaptureReport(*captures));
     ReportNode scripts{"Scripts"};
     for (const auto& file : project.scripts)
     {
@@ -420,6 +494,8 @@ static ReportNode buildScriptInspectionReport(const json& inspection)
             projectNode.children.push_back(buildProjectSchemaReport(project.at("schemas")));
         if (project.contains("snapshot"))
             projectNode.children.push_back(snapshotReport(project.at("snapshot")));
+        if (project.contains("captures"))
+            projectNode.children.push_back(buildContextCaptureReport(project.at("captures"), std::string_view(inspection.value("inputPath", ""))));
         projectList.children.push_back(std::move(projectNode));
 
         const auto projectAttachments = project.find("attachments");
@@ -568,6 +644,8 @@ static ReportNode buildProjectReport(const json& inspection, bool promoteContext
             captured.fields.push_back({"Stale reason", context->value("staleReason", "")});
         if (context->contains("snapshot"))
             captured.children.push_back(snapshotReport(context->at("snapshot")));
+        if (context->contains("captures"))
+            captured.children.push_back(buildContextCaptureReport(context->at("captures")));
         appendSceneSections(captured, *context);
         if (const auto alternate = context->find("alternateSnapshot"); alternate != context->end())
         {
@@ -729,6 +807,8 @@ static ReportNode buildContextOverviewReport(const json& inspection)
                     const auto& detail = details->at(projectId);
                     if (detail.contains("snapshot"))
                         item.children.push_back(snapshotReport(detail.at("snapshot")));
+                    if (detail.contains("captures"))
+                        item.children.push_back(buildContextCaptureReport(detail.at("captures")));
                     if (detail.contains("schemas"))
                         item.children.push_back(buildProjectSchemaReport(detail.at("schemas")));
                 }

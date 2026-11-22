@@ -5,6 +5,7 @@
 #include "Luau/StringUtils.h"
 #include "Luau/TypePack.h"
 #include "LSP/Uri.hpp"
+#include "Platform/luduvo/context/LuduvoContextReport.hpp"
 #include "Platform/luduvo/schema/LuduvoSchemaEdits.hpp"
 #include <filesystem>
 #include <algorithm>
@@ -395,7 +396,8 @@ Luau::TypeId SchemaTypes::handleTable(const std::string& script)
             auto metadata = std::make_shared<SchemaTypeMetadata>();
             metadata->project = project;
             metadata->script = script;
-            metadata->resolution = fields.empty() ? "no observed handle names in the current context; generic read-only handles"
+            metadata->resolution = project->capturedHandles.count(script) ? "project capture" :
+                                   fields.empty() ? "no observed handle names in the current context; generic read-only handles"
                                                   : "handle reads in scripts attached to the same instance";
             structuralMetadata[type] = std::move(metadata);
             this->handles[script] = type;
@@ -464,6 +466,24 @@ std::string renderSchemaDebug(const SchemaTypeMetadata& metadata)
         result += "  \nExport path: " + fileLink(project.exportPath);
     if (project.exportedAt)
         result += "  \nExport updated: " + timestamp(project.exportedAt) + " [saved index]";
+    if (project.captureDetails.is_object())
+    {
+        const auto history = buildContextCaptureReport(project.captureDetails, std::string_view(metadata.script));
+        result += "\n\n**" + history.label + "**\n";
+        for (const auto& item : history.children)
+        {
+            if (item.tags.empty())
+            {
+                result += "\n**" + item.label + "**\n";
+                for (const auto& field : item.fields)
+                    result += "\n- " + field.name + ": " + field.value;
+                continue;
+            }
+            result += "\n- " + item.label + " [" + item.tags.front() + "]";
+            for (const auto& field : item.fields)
+                result += " Â· " + field.name + ": " + field.value;
+        }
+    }
     return result;
 }
 } // namespace luduvo
