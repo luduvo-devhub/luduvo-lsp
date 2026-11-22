@@ -1,6 +1,6 @@
 {
   "formatVersion": 2,
-  "luduvoContentVersion": "13",
+  "luduvoContentVersion": "14",
   "resources": {
     "component": [
       {
@@ -34,6 +34,14 @@
       {
         "name": "AngVelocity",
         "documentation": "Angular velocity in rad/s"
+      },
+      {
+        "name": "Animator",
+        "documentation": "Plays clips on a character and blends them with locomotion"
+      },
+      {
+        "name": "AssemblyMass",
+        "documentation": "Mass and center of mass of an assembly, on its root part"
       },
       {
         "name": "AtmosphereSky"
@@ -95,6 +103,10 @@
         "name": "Character"
       },
       {
+        "name": "CharacterAbilities",
+        "documentation": "Velocity changes the character's Action Bits fire inside its predicted move, alike on its client and the server"
+      },
+      {
         "name": "CharacterAnimation",
         "documentation": "Attaches an Animator once the six body parts exist"
       },
@@ -127,6 +139,10 @@
       {
         "name": "CharacterTuning",
         "documentation": "World-wide locomotion and PD force controller tuning"
+      },
+      {
+        "name": "CharacterTuningOverride",
+        "documentation": "Replaces the world's CharacterTuning drive, brake, turn, step and launch values for this character"
       },
       {
         "name": "ClickDetector",
@@ -276,7 +292,7 @@
       },
       {
         "name": "Lifetime",
-        "documentation": "Countdown to destruction; the server subtracts the tick time and deletes the entity at zero"
+        "documentation": "Countdown to destruction; the server, or the client that made the entity, subtracts the tick time and deletes the entity at zero"
       },
       {
         "name": "Light",
@@ -480,6 +496,10 @@
       },
       {
         "name": "PlayerSpawner"
+      },
+      {
+        "name": "PoseOffset",
+        "documentation": "Per-limb rotations composed on top of the animated pose"
       },
       {
         "name": "Position"
