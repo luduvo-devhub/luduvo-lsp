@@ -30,40 +30,40 @@ Then you'll probable be fine
 ## Luduvo definitions
 
 <!-- luduvo-api-stats:start -->
-As of Luduvo 54, the prefab section of `resources.luduvo.json`, `globalTypes.luduvo.client.d.luau`, and `globalTypes.luduvo.server.d.luau` files inside Luduvo LSP are essentially copy/pasted global type files straight from Luduvo itself (you can find them in the `prefabs/` and `defs/` directory of your Luduvo install's roaming data equivalent respectively). The components side of `resources.luduvo.json` was dumped from Luduvo's `LuduvoEditor.exe`. Currently, these files contain ~3292 entries spanning across:
+As of Luduvo 55, the prefab section of `resources.luduvo.json`, `globalTypes.luduvo.client.d.luau`, and `globalTypes.luduvo.server.d.luau` files inside Luduvo LSP are essentially copy/pasted global type files straight from Luduvo itself (you can find them in the `prefabs/` and `defs/` directory of your Luduvo install's roaming data equivalent respectively). The components side of `resources.luduvo.json` was dumped from Luduvo's `LuduvoEditor.exe`. Currently, these files contain ~3494 entries spanning across:
 
 ```text
-├── 2,937 API entries (1,643 documented)
-│   ├── 2,653 Entries under 302 Global Types (1,360 documented)
-│   │   ├── 295 Types with members (55 documented)
-│   │   │   ├── 293 Other types (Query, Signal, UDim2, etc. | 53 documented)
-│   │   │   │   └── 1,187 Members (Query.With, Signal.Connect, UDim2.Scale, etc. | 361 documented)
+├── 3,129 API entries (1,673 documented)
+│   ├── 2,813 Entries under 307 Global Types (1,359 documented)
+│   │   ├── 300 Types with members (54 documented)
+│   │   │   ├── 298 Other types (Query, Signal, UDim2, etc. | 52 documented)
+│   │   │   │   └── 1,291 Members (Query.With, Signal.Connect, UDim2.Scale, etc. | 357 documented)
 │   │   │   ├── The literal `Instance` type (documented)
 │   │   │   └── The literal `World` type (documented)
 │   │   └── 7 Types without members (AnimLayers, CloudStore, Pair, etc. | 6 documented)
-│   └── 284 Entries under 25 Global Variables/Classes (283 documented)
-│       ├── 17 Variables/classes with members (16 documented)
-│       │   ├── 15 Other variables/classes (UDim2, Vector3, task, etc. | all documented)
-│       │   │   └── 35 Members (UDim2.new, Vector3.xAxis, task.wait, etc. | all documented)
+│   └── 316 Entries under 26 Global Variables/Classes (314 documented)
+│       ├── 18 Variables/classes with members (17 documented)
+│       │   ├── 16 Other variables/classes (UDim2, Vector3, task, etc. | all documented)
+│       │   │   └── 36 Members (UDim2.new, Vector3.xAxis, task.wait, etc. | all documented)
 │       │   ├── `Instance` (documented)
 │       │   │   ├── 1 Static constructor (`Instance.new` | documented)
-│       │   │   └── 1,143 Members from the literal `Instance` type above (917 documented)
-│       │   │       ├── 56 Instance methods (instance:AddComponent, instance:ApplyImpulse, etc. | all documented)
-│       │   │       └── 1,087 Instance properties (instance.Character, instance.Activated, etc. | 861 documented)
+│       │   │   └── 1,194 Members from the literal `Instance` type above (921 documented)
+│       │   │       ├── 52 Instance methods (instance:AddComponent, instance:ApplyImpulse, etc. | all documented)
+│       │   │       └── 1,142 Instance properties (instance.Character, instance.Activated, etc. | 869 documented)
 │       │   └── `game` (undocumented)
-│       │       ├── 36 Direct members (all documented)
-│       │       │   ├── 24 Services (game.World, game.Input, etc. | all documented)
-│       │       │   └── 12 Other symbols (game.Bool, game.EventTable, game.ToServer, etc. | all documented)
-│       │       └── 208 Members across the 24 services (all documented)
-│       │           ├── 187 Members under 23 table services (game.Physics.Raycast, game.Input.Key, etc. | all documented)
+│       │       ├── 34 Direct members (all documented)
+│       │       │   ├── 21 Services (game.World, game.Input, etc. | all documented)
+│       │       │   └── 13 Other symbols (game.Bool, game.EventTable, game.ToServer, etc. | all documented)
+│       │       └── 205 Members across the 21 services (all documented)
+│       │           ├── 184 Members under 20 table services (game.Physics.Raycast, game.Input.Key, etc. | all documented)
 │       │           └── 21 Members from the literal `World` type above (game.World.Query, game.World.Each, etc. | all documented)
-│       └── 8 Variables without members (EventTableDump, handles, print, self, tick, warn | all documented)
-├── 316 Exposed* components (Anchored, MultiJump, etc. | 246 documented)
+│       └── 8 Variables without members (EventTableDump, handles, print, self, tick, warn | 7 documented)
+├── 325 Exposed* components (Anchored, MultiJump, etc. | none documented)
 │   └── * = Luduvo uses more components than this, but those aren't exposed in scripts
-└── 39 Prefabs (Part, Hotbar, etc. | none documented)
+└── 40 Prefabs (Part, Hotbar, etc. | none documented)
 ```
 
-Out of said 3292 entries, there are docs for about 1889 of them.
+Out of said 3494 entries, there are docs for about 1673 of them.
 <!-- luduvo-api-stats:end -->
 
 Luduvo also refers to different global types depending on the script's scope (client or server). Files ending in `.client.lua` or `.client.luau` receive client globals, and files ending in `.server.lua` or `.server.luau` receive server globals. Right now the default script side is set to `server` when parsing files that don't have a special suffix, but you can override this behavior in your config.
