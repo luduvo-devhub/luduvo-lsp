@@ -13,8 +13,8 @@ export type EnumShapeType = "Box" | "Sphere" | "Cylinder" | "Cone" | "Wedge"
 export type EnumColliderType = "Auto" | "None" | "Box" | "Sphere" | "Cylinder" | "Wedge" | "Capsule"
 export type EnumCsgType = "Union" | "Negate" | "Intersect"
 export type EnumCsgCollision = "Default" | "Hull" | "Box"
-export type EnumLeaderboardSort = "None" | "Descending" | "Ascending"
 export type EnumNormalId = "Right" | "Top" | "Back" | "Left" | "Bottom" | "Front"
+export type EnumSurfaceViewMode = "Camera" | "Portal" | "Mirror"
 export type EnumParticleSpace = "World" | "Local"
 export type EnumParticleFacing = "Camera" | "CameraWorldUp" | "VelocityRoll" | "VelocityPerpendicular" | "Fixed"
 export type EnumParticleBlend = "Additive" | "AlphaByDepth" | "AlphaBySpawnOrder" | "Cutout"
@@ -38,7 +38,7 @@ export type EnumListAxis = "Vertical" | "Horizontal"
 export type EnumListAlign = "Start" | "Center" | "End"
 export type EnumInputActionType = "Bool" | "Direction2D"
 export type EnumInputActionDrives = "None" | "Move" | "Jump"
-export type EnumKeyCode = "Unknown" | "Backspace" | "Tab" | "Return" | "Pause" | "CapsLock" | "Escape" | "Space" | "PageUp" | "PageDown" | "End" | "Home" | "Left" | "Up" | "Right" | "Down" | "Insert" | "Delete" | "Zero" | "One" | "Two" | "Three" | "Four" | "Five" | "Six" | "Seven" | "Eight" | "Nine" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "LeftGui" | "RightGui" | "Numpad0" | "Numpad1" | "Numpad2" | "Numpad3" | "Numpad4" | "Numpad5" | "Numpad6" | "Numpad7" | "Numpad8" | "Numpad9" | "NumpadMultiply" | "NumpadAdd" | "NumpadSubtract" | "NumpadDecimal" | "NumpadDivide" | "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12" | "NumLock" | "ScrollLock" | "LeftShift" | "RightShift" | "LeftControl" | "RightControl" | "LeftAlt" | "RightAlt" | "Semicolon" | "Equals" | "Comma" | "Minus" | "Period" | "Slash" | "Backquote" | "LeftBracket" | "Backslash" | "RightBracket" | "Apostrophe" | "ButtonA" | "ButtonB" | "ButtonX" | "ButtonY" | "ButtonL1" | "ButtonR1" | "ButtonL2" | "ButtonR2" | "ButtonSelect" | "ButtonStart" | "ButtonL3" | "ButtonR3" | "DPadUp" | "DPadDown" | "DPadLeft" | "DPadRight" | "Thumbstick1" | "Thumbstick2"
+export type EnumKeyCode = "Unknown" | "Backspace" | "Tab" | "Return" | "Pause" | "CapsLock" | "Escape" | "Space" | "PageUp" | "PageDown" | "End" | "Home" | "Left" | "Up" | "Right" | "Down" | "Insert" | "Delete" | "Zero" | "One" | "Two" | "Three" | "Four" | "Five" | "Six" | "Seven" | "Eight" | "Nine" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "LeftGui" | "RightGui" | "Numpad0" | "Numpad1" | "Numpad2" | "Numpad3" | "Numpad4" | "Numpad5" | "Numpad6" | "Numpad7" | "Numpad8" | "Numpad9" | "NumpadMultiply" | "NumpadAdd" | "NumpadSubtract" | "NumpadDecimal" | "NumpadDivide" | "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12" | "NumLock" | "ScrollLock" | "LeftShift" | "RightShift" | "LeftControl" | "RightControl" | "LeftAlt" | "RightAlt" | "Semicolon" | "Equals" | "Comma" | "Minus" | "Period" | "Slash" | "Backquote" | "LeftBracket" | "Backslash" | "RightBracket" | "Apostrophe" | "ButtonA" | "ButtonB" | "ButtonX" | "ButtonY" | "ButtonL1" | "ButtonR1" | "ButtonL2" | "ButtonR2" | "ButtonSelect" | "ButtonStart" | "ButtonL3" | "ButtonR3" | "DPadUp" | "DPadDown" | "DPadLeft" | "DPadRight" | "Thumbstick1" | "Thumbstick2" | "VRTriggerLeft" | "VRTriggerRight" | "VRGripLeft" | "VRGripRight" | "VRPrimaryLeft" | "VRSecondaryLeft" | "VRPrimaryRight" | "VRSecondaryRight" | "VRThumbstickLeft" | "VRThumbstickRight" | "VRMenu"
 export type EnumInputKeybind = "None" | "MoveForward" | "MoveBack" | "MoveLeft" | "MoveRight" | "Jump" | "Chat" | "PlayerList" | "Screenshot" | "ResetCharacter" | "LeaveGame"
 export type EnumArrowDirection = "Left" | "Right" | "Up" | "Down"
 export type EnumCoreMenuAction = "None" | "Resume" | "ResetCharacter" | "Settings" | "LeaveGame" | "Toggle"
@@ -57,6 +57,7 @@ export type EnumTweenBehavior = "Normal" | "AllowDiscrete"
 export type EnumPairRelation = "ChildOf" | "Tag" | "WornBy"
 export type EnumEventCoalesce = "First" | "Last"
 export type EnumEventDelivery = "Reliable" | "Unreliable"
+export type EnumEventTiming = "Arrival" | "Input"
 export type EnumSocialVerb = "FriendRequest" | "FriendRemove" | "Block" | "Unblock" | "Report"
 export type EnumReportReason = "Cheating" | "Harassment" | "Name" | "Scam" | "Other"
 export type EnumItemType = "place" | "model" | "accessory"
@@ -70,6 +71,7 @@ export type EnumFriendStatus = "NotFriend" | "Friend" | "FriendRequestSent" | "F
 export type EnumPresence = "Offline" | "Online" | "Playing"
 export type EnumInviteFailure = "NotFriends" | "Blocked" | "AlreadyInvited" | "RateLimited" | "Offline" | "Error"
 export type EnumKeybindOutcome = "Bound" | "Unbound" | "Canceled" | "Refused"
+export type EnumLeaderboardSort = "None" | "Descending" | "Ascending"
 export type EnumCsgKind = EnumCsgType
 
 export type Enums = {
@@ -85,8 +87,8 @@ export type Enums = {
 	read ColliderType: { read Auto: "Auto", read None: "None", read Box: "Box", read Sphere: "Sphere", read Cylinder: "Cylinder", read Wedge: "Wedge", read Capsule: "Capsule", },
 	read CsgType: { read Union: "Union", read Negate: "Negate", read Intersect: "Intersect", },
 	read CsgCollision: { read Default: "Default", read Hull: "Hull", read Box: "Box", },
-	read LeaderboardSort: { read None: "None", read Descending: "Descending", read Ascending: "Ascending", },
 	read NormalId: { read Right: "Right", read Top: "Top", read Back: "Back", read Left: "Left", read Bottom: "Bottom", read Front: "Front", },
+	read SurfaceViewMode: { read Camera: "Camera", read Portal: "Portal", read Mirror: "Mirror", },
 	read ParticleSpace: { read World: "World", read Local: "Local", },
 	read ParticleFacing: { read Camera: "Camera", read CameraWorldUp: "CameraWorldUp", read VelocityRoll: "VelocityRoll", read VelocityPerpendicular: "VelocityPerpendicular", read Fixed: "Fixed", },
 	read ParticleBlend: { read Additive: "Additive", read AlphaByDepth: "AlphaByDepth", read AlphaBySpawnOrder: "AlphaBySpawnOrder", read Cutout: "Cutout", },
@@ -110,7 +112,7 @@ export type Enums = {
 	read ListAlign: { read Start: "Start", read Center: "Center", read End: "End", },
 	read InputActionType: { read Bool: "Bool", read Direction2D: "Direction2D", },
 	read InputActionDrives: { read None: "None", read Move: "Move", read Jump: "Jump", },
-	read KeyCode: { read Unknown: "Unknown", read Backspace: "Backspace", read Tab: "Tab", read Return: "Return", read Pause: "Pause", read CapsLock: "CapsLock", read Escape: "Escape", read Space: "Space", read PageUp: "PageUp", read PageDown: "PageDown", read End: "End", read Home: "Home", read Left: "Left", read Up: "Up", read Right: "Right", read Down: "Down", read Insert: "Insert", read Delete: "Delete", read Zero: "Zero", read One: "One", read Two: "Two", read Three: "Three", read Four: "Four", read Five: "Five", read Six: "Six", read Seven: "Seven", read Eight: "Eight", read Nine: "Nine", read A: "A", read B: "B", read C: "C", read D: "D", read E: "E", read F: "F", read G: "G", read H: "H", read I: "I", read J: "J", read K: "K", read L: "L", read M: "M", read N: "N", read O: "O", read P: "P", read Q: "Q", read R: "R", read S: "S", read T: "T", read U: "U", read V: "V", read W: "W", read X: "X", read Y: "Y", read Z: "Z", read LeftGui: "LeftGui", read RightGui: "RightGui", read Numpad0: "Numpad0", read Numpad1: "Numpad1", read Numpad2: "Numpad2", read Numpad3: "Numpad3", read Numpad4: "Numpad4", read Numpad5: "Numpad5", read Numpad6: "Numpad6", read Numpad7: "Numpad7", read Numpad8: "Numpad8", read Numpad9: "Numpad9", read NumpadMultiply: "NumpadMultiply", read NumpadAdd: "NumpadAdd", read NumpadSubtract: "NumpadSubtract", read NumpadDecimal: "NumpadDecimal", read NumpadDivide: "NumpadDivide", read F1: "F1", read F2: "F2", read F3: "F3", read F4: "F4", read F5: "F5", read F6: "F6", read F7: "F7", read F8: "F8", read F9: "F9", read F10: "F10", read F11: "F11", read F12: "F12", read NumLock: "NumLock", read ScrollLock: "ScrollLock", read LeftShift: "LeftShift", read RightShift: "RightShift", read LeftControl: "LeftControl", read RightControl: "RightControl", read LeftAlt: "LeftAlt", read RightAlt: "RightAlt", read Semicolon: "Semicolon", read Equals: "Equals", read Comma: "Comma", read Minus: "Minus", read Period: "Period", read Slash: "Slash", read Backquote: "Backquote", read LeftBracket: "LeftBracket", read Backslash: "Backslash", read RightBracket: "RightBracket", read Apostrophe: "Apostrophe", read ButtonA: "ButtonA", read ButtonB: "ButtonB", read ButtonX: "ButtonX", read ButtonY: "ButtonY", read ButtonL1: "ButtonL1", read ButtonR1: "ButtonR1", read ButtonL2: "ButtonL2", read ButtonR2: "ButtonR2", read ButtonSelect: "ButtonSelect", read ButtonStart: "ButtonStart", read ButtonL3: "ButtonL3", read ButtonR3: "ButtonR3", read DPadUp: "DPadUp", read DPadDown: "DPadDown", read DPadLeft: "DPadLeft", read DPadRight: "DPadRight", read Thumbstick1: "Thumbstick1", read Thumbstick2: "Thumbstick2", },
+	read KeyCode: { read Unknown: "Unknown", read Backspace: "Backspace", read Tab: "Tab", read Return: "Return", read Pause: "Pause", read CapsLock: "CapsLock", read Escape: "Escape", read Space: "Space", read PageUp: "PageUp", read PageDown: "PageDown", read End: "End", read Home: "Home", read Left: "Left", read Up: "Up", read Right: "Right", read Down: "Down", read Insert: "Insert", read Delete: "Delete", read Zero: "Zero", read One: "One", read Two: "Two", read Three: "Three", read Four: "Four", read Five: "Five", read Six: "Six", read Seven: "Seven", read Eight: "Eight", read Nine: "Nine", read A: "A", read B: "B", read C: "C", read D: "D", read E: "E", read F: "F", read G: "G", read H: "H", read I: "I", read J: "J", read K: "K", read L: "L", read M: "M", read N: "N", read O: "O", read P: "P", read Q: "Q", read R: "R", read S: "S", read T: "T", read U: "U", read V: "V", read W: "W", read X: "X", read Y: "Y", read Z: "Z", read LeftGui: "LeftGui", read RightGui: "RightGui", read Numpad0: "Numpad0", read Numpad1: "Numpad1", read Numpad2: "Numpad2", read Numpad3: "Numpad3", read Numpad4: "Numpad4", read Numpad5: "Numpad5", read Numpad6: "Numpad6", read Numpad7: "Numpad7", read Numpad8: "Numpad8", read Numpad9: "Numpad9", read NumpadMultiply: "NumpadMultiply", read NumpadAdd: "NumpadAdd", read NumpadSubtract: "NumpadSubtract", read NumpadDecimal: "NumpadDecimal", read NumpadDivide: "NumpadDivide", read F1: "F1", read F2: "F2", read F3: "F3", read F4: "F4", read F5: "F5", read F6: "F6", read F7: "F7", read F8: "F8", read F9: "F9", read F10: "F10", read F11: "F11", read F12: "F12", read NumLock: "NumLock", read ScrollLock: "ScrollLock", read LeftShift: "LeftShift", read RightShift: "RightShift", read LeftControl: "LeftControl", read RightControl: "RightControl", read LeftAlt: "LeftAlt", read RightAlt: "RightAlt", read Semicolon: "Semicolon", read Equals: "Equals", read Comma: "Comma", read Minus: "Minus", read Period: "Period", read Slash: "Slash", read Backquote: "Backquote", read LeftBracket: "LeftBracket", read Backslash: "Backslash", read RightBracket: "RightBracket", read Apostrophe: "Apostrophe", read ButtonA: "ButtonA", read ButtonB: "ButtonB", read ButtonX: "ButtonX", read ButtonY: "ButtonY", read ButtonL1: "ButtonL1", read ButtonR1: "ButtonR1", read ButtonL2: "ButtonL2", read ButtonR2: "ButtonR2", read ButtonSelect: "ButtonSelect", read ButtonStart: "ButtonStart", read ButtonL3: "ButtonL3", read ButtonR3: "ButtonR3", read DPadUp: "DPadUp", read DPadDown: "DPadDown", read DPadLeft: "DPadLeft", read DPadRight: "DPadRight", read Thumbstick1: "Thumbstick1", read Thumbstick2: "Thumbstick2", read VRTriggerLeft: "VRTriggerLeft", read VRTriggerRight: "VRTriggerRight", read VRGripLeft: "VRGripLeft", read VRGripRight: "VRGripRight", read VRPrimaryLeft: "VRPrimaryLeft", read VRSecondaryLeft: "VRSecondaryLeft", read VRPrimaryRight: "VRPrimaryRight", read VRSecondaryRight: "VRSecondaryRight", read VRThumbstickLeft: "VRThumbstickLeft", read VRThumbstickRight: "VRThumbstickRight", read VRMenu: "VRMenu", },
 	read InputKeybind: { read None: "None", read MoveForward: "MoveForward", read MoveBack: "MoveBack", read MoveLeft: "MoveLeft", read MoveRight: "MoveRight", read Jump: "Jump", read Chat: "Chat", read PlayerList: "PlayerList", read Screenshot: "Screenshot", read ResetCharacter: "ResetCharacter", read LeaveGame: "LeaveGame", },
 	read ArrowDirection: { read Left: "Left", read Right: "Right", read Up: "Up", read Down: "Down", },
 	read CoreMenuAction: { read None: "None", read Resume: "Resume", read ResetCharacter: "ResetCharacter", read Settings: "Settings", read LeaveGame: "LeaveGame", read Toggle: "Toggle", },
@@ -129,6 +131,7 @@ export type Enums = {
 	read PairRelation: { read ChildOf: "ChildOf", read Tag: "Tag", read WornBy: "WornBy", },
 	read EventCoalesce: { read First: "First", read Last: "Last", },
 	read EventDelivery: { read Reliable: "Reliable", read Unreliable: "Unreliable", },
+	read EventTiming: { read Arrival: "Arrival", read Input: "Input", },
 	read SocialVerb: { read FriendRequest: "FriendRequest", read FriendRemove: "FriendRemove", read Block: "Block", read Unblock: "Unblock", read Report: "Report", },
 	read ReportReason: { read Cheating: "Cheating", read Harassment: "Harassment", read Name: "Name", read Scam: "Scam", read Other: "Other", },
 	read ItemType: { read place: "place", read model: "model", read accessory: "accessory", },
@@ -142,6 +145,7 @@ export type Enums = {
 	read Presence: { read Offline: "Offline", read Online: "Online", read Playing: "Playing", },
 	read InviteFailure: { read NotFriends: "NotFriends", read Blocked: "Blocked", read AlreadyInvited: "AlreadyInvited", read RateLimited: "RateLimited", read Offline: "Offline", read Error: "Error", },
 	read KeybindOutcome: { read Bound: "Bound", read Unbound: "Unbound", read Canceled: "Canceled", read Refused: "Refused", },
+	read LeaderboardSort: { read None: "None", read Descending: "Descending", read Ascending: "Ascending", },
 	read CsgKind: { read Union: "Union", read Negate: "Negate", read Intersect: "Intersect", },
 }
 
@@ -151,6 +155,8 @@ type RaycastResult = {
 	Instance: Instance?,
 	Entity: Instance?,
 	Distance: number,
+	LocalPosition: vector,
+	LocalNormal: vector,
 }
 
 type ShapecastHit = {
@@ -204,6 +210,15 @@ type QueryParams = {
 	IncludeInstances: {Instance}?,
 	CollisionGroup: string?,
 	AtTick: number?,
+}
+
+type SoundPlayOptions = {
+	Volume: number?,
+	PlaybackSpeed: number?,
+	RollOffMinDistance: number?,
+	RollOffMaxDistance: number?,
+	RollOffScale: number?,
+	Bus: ("Master" | "Music" | "SFX" | "UI" | number)?,
 }
 
 type SwingTwistJointDesc = {
@@ -375,7 +390,8 @@ type OperatorSpec = {
 	Params: {ParamSpec}?,
 	Prefab: string?,
 	Poll: ((ctx: PluginContext) -> (boolean, ...string?))?,
-	Execute: (ctx: PluginContext, params: {[string]: any}) -> (boolean, ...string?),
+	Prepare: ((ctx: PluginContext, params: {[string]: any}) -> (({[string]: any} | boolean)?, ...string?))?,
+	Execute: (ctx: PluginContext, params: {[string]: any}, data: {[string]: any}?) -> (boolean, ...string?),
 }
 
 type PluginHit = {
@@ -463,6 +479,23 @@ declare extern type DynamicMesh with
 	WriteVertices: (self: DynamicMesh, data: buffer, offset: number, start: number, count: number) -> ()
 	WriteIndices: (self: DynamicMesh, data: buffer, offset: number, start: number, count: number) -> ()
 	Apply: (self: DynamicMesh, target: Instance) -> ()
+end
+
+declare extern type DynamicImage with
+	Width: number
+	Height: number
+	Size: vector
+	TextureId: string
+	WritePixels: (self: DynamicImage, data: buffer, offset: number?, x: number?, y: number?, width: number?, height: number?) -> ()
+	ReadPixels: (self: DynamicImage, data: buffer?, offset: number?, x: number?, y: number?, width: number?, height: number?) -> buffer
+	Clear: (self: DynamicImage, color: vector?, alpha: number?) -> ()
+	SetPixel: (self: DynamicImage, x: number, y: number, color: vector, alpha: number?) -> ()
+	GetPixel: (self: DynamicImage, x: number, y: number) -> (vector, number)
+	FillRect: (self: DynamicImage, x: number, y: number, width: number, height: number, color: vector, alpha: number?) -> ()
+	DrawLine: (self: DynamicImage, x0: number, y0: number, x1: number, y1: number, thickness: number, color: vector, alpha: number?) -> ()
+	DrawCircle: (self: DynamicImage, x: number, y: number, radius: number, color: vector, alpha: number?) -> ()
+	Blit: (self: DynamicImage, source: DynamicImage, x: number?, y: number?, sourceX: number?, sourceY: number?, width: number?, height: number?, blend: boolean?) -> ()
+	Destroy: (self: DynamicImage) -> ()
 end
 
 export type Signal<F = (...any) -> ()> = {
@@ -573,6 +606,7 @@ declare extern type PluginEdit with
 	function Copy(self, inst: Instance, props: {[string]: any}?): Instance
 	function Set(self, inst: Instance, name: string, value: any): ()
 	function Reshape(self, part: Instance, size: vector, position: vector): ()
+	function AddAccessory(self, character: Instance, assetId: string, sha256: string?): (Instance?, string?)
 	function SetParent(self, inst: Instance, parent: Instance?): ()
 	function Destroy(self, inst: Instance): ()
 	function Select(self, list: {Instance}): ()
@@ -584,6 +618,7 @@ declare extern type PluginContext with
 	MoveIncrement: number
 	RotateIncrement: number
 	Camera: {Position: vector, Pivot: vector, Yaw: number, Pitch: number, Distance: number, Focused: boolean}
+	Seats: {{Id: number, Name: string, Kind: "person" | "agent", Color: vector, You: boolean, Selection: {Instance}}}
 	Snap: (value: number, increment: number, from: number, to: number) -> number
 	Edit: PluginEdit?
 end
@@ -677,26 +712,97 @@ declare extern type EventTable with
 	PushTo: (self: EventTable, userId: number, ...any) -> ()
 end
 
-declare extern type ToolComponent with
-	-- read-only
-	read equipped: number
-	-- read-only
-	read gripOffset: vector
-	-- read-only
-	read gripHand: number
-	-- read-only
-	read gripRotation: vector
-	-- read-only
-	read icon: string
-	-- read-only
-	read noDrop: number
-end
-
 declare extern type CameraLensComponent with
 	fovY: number
 	nearZ: number
 	farZ: number
 	fovAxis: number
+	clipEnabled: boolean
+	cullMask: number
+	clipNormal: vector
+	clipOffset: number
+end
+
+declare extern type OrthographicLensComponent with
+	size: number
+end
+
+declare extern type BillboardGuiComponent with
+	target: Instance?
+	unitsOffset: vector
+	width: number
+	height: number
+	anchorX: number
+	anchorY: number
+	maxDistance: number
+	alwaysOnTop: boolean
+	clampToScreen: boolean
+	edgeFadeStart: number
+	edgeFadeEnd: number
+	viewerDistance: number
+	studsOffset: vector
+	adornee: Instance?
+end
+
+declare extern type UITailComponent with
+	side: number
+	offset: number
+	length: number
+	width: number
+	pointAtTarget: boolean
+	pointAtAdornee: boolean
+end
+
+declare extern type UINotchComponent with
+	side: number
+	tipWidth: number
+	tipRadius: number
+	baseRadius: number
+end
+
+declare extern type CameraTargetComponent with
+	width: number
+	height: number
+	update: number
+	transparent: boolean
+end
+
+declare extern type LocalTransparencyComponent with
+	value: number
+end
+
+declare extern type RenderMaskComponent with
+	mask: number
+end
+
+declare extern type SteerInputComponent with
+	yaw: number
+	pitch: number
+	lookScale: number
+	touchScale: number
+end
+
+declare extern type CameraPoseComponent with
+	-- read-only
+	read prevPos: vector
+	-- read-only
+	read currPos: vector
+	-- read-only
+	read prevRotV: vector
+	-- read-only
+	read prevRotW: number
+	-- read-only
+	read currRotV: vector
+	-- read-only
+	read currRotW: number
+	snapEpoch: number
+	-- read-only
+	read initialized: boolean
+end
+
+declare extern type CameraTransformComponent with
+	position: vector
+	rotation: vector
 end
 
 declare extern type CameraOrbitComponent with
@@ -729,7 +835,18 @@ declare extern type CameraOrbitComponent with
 	zoomSpeed: number
 	punch: vector
 	punchOffset: vector
+	fadeStart: number
+	fadeEnd: number
+	minDistance: number
+	maxDistance: number
+	snapDistance: number
+	zoomStep: number
+	smoothRate: number
+	eyeHeight: number
+	spinSpeed: number
+	collisionSkin: number
 	active: boolean
+	fadeEnabled: boolean
 end
 
 declare extern type CameraFlyComponent with
@@ -737,40 +854,6 @@ declare extern type CameraFlyComponent with
 	pitch: number
 	speed: number
 	sensitivity: number
-end
-
-declare extern type OrthographicLensComponent with
-	size: number
-end
-
-declare extern type BillboardGuiComponent with
-	adornee: Instance?
-	unitsOffset: vector
-	width: number
-	height: number
-	anchorX: number
-	anchorY: number
-	maxDistance: number
-	alwaysOnTop: boolean
-	clampToScreen: boolean
-	edgeFadeStart: number
-	edgeFadeEnd: number
-	studsOffset: vector
-end
-
-declare extern type UITailComponent with
-	side: number
-	offset: number
-	length: number
-	width: number
-	pointAtAdornee: boolean
-end
-
-declare extern type UINotchComponent with
-	side: number
-	tipWidth: number
-	tipRadius: number
-	baseRadius: number
 end
 
 declare extern type PositionComponent with
@@ -935,7 +1018,7 @@ declare extern type CollisionGroupComponent with
 	CollisionGroup: string
 end
 
-declare extern type BrickColorComponent with
+declare extern type ColorComponent with
 	Color: vector
 end
 
@@ -952,18 +1035,34 @@ declare extern type MeshComponent with
 end
 
 declare extern type SurfaceAppearanceComponent with
-	Albedo: string
-	Normal: string
-	MetallicRoughness: string
-	Occlusion: string
-	Emissive: string
-	Underlay: string
+	read Albedo: string
+	write Albedo: string | DynamicImage | Instance
+	read Normal: string
+	write Normal: string | DynamicImage
+	read MetallicRoughness: string
+	write MetallicRoughness: string | DynamicImage
+	read Occlusion: string
+	write Occlusion: string | DynamicImage
+	read Emissive: string
+	write Emissive: string | DynamicImage
+	read Underlay: string
+	write Underlay: string | DynamicImage
 end
 
 declare extern type DecalComponent with
-	Texture: string
+	read Texture: string
+	write Texture: string | DynamicImage | Instance
 	Side: EnumNormalId
 	Layer: number
+end
+
+declare extern type SurfaceViewComponent with
+	ViewMode: EnumSurfaceViewMode
+	ViewTarget: Instance?
+	ViewFace: EnumNormalId
+	ViewWidth: number
+	ViewHeight: number
+	ViewDistance: number
 end
 
 declare extern type UvTransformComponent with
@@ -1003,38 +1102,27 @@ declare extern type CharacterTuningComponent with
 	SwimAlignP: number
 	SwimAlignD: number
 	SwimPitchRate: number
-end
-
-declare extern type HealthComponent with
-	Health: number
-	MaxHealth: number
-end
-
-declare extern type LastHitComponent with
-	-- read-only
-	read Attacker: Instance?
-end
-
-declare extern type TeamComponent with
-	Team: number
-end
-
-declare extern type TeamInfoComponent with
-	TeamId: number
-	TeamColor: vector
+	FloorRayScale: number
+	GroundTolerance: number
+	StepSearchDepth: number
+	StepLedgeNudge: number
+	StepSkin: number
+	LadderReachScale: number
+	LadderToe: number
+	LadderTopPerHip: number
+	LadderDownDot: number
+	ClimbSpeedScale: number
+	SwimSpeedScale: number
+	SwimFloatRate: number
+	SwimRiseSpeed: number
+	TiltDisableSpring: number
+	SurfaceAlignRate: number
+	SwimDragPerStud: number
+	RefFriction: number
 end
 
 declare extern type ClickDetectorComponent with
 	MaxActivationDistance: number
-end
-
-declare extern type BackpackComponent with
-	Slots: {number}
-	Active: number
-end
-
-declare extern type BackpackSlotComponent with
-	BackpackSlot: number
 end
 
 declare extern type LocomotionComponent with
@@ -1092,9 +1180,12 @@ declare extern type CharacterAppearanceComponent with
 	BodyRightArm: string
 	BodyLeftLeg: string
 	BodyRightLeg: string
-	Face: string
-	Shirt: string
-	Pants: string
+	read Face: string
+	write Face: string | DynamicImage
+	read Shirt: string
+	write Shirt: string | DynamicImage
+	read Pants: string
+	write Pants: string | DynamicImage
 	HeadColor: vector
 	TorsoColor: vector
 	LeftArmColor: vector
@@ -1137,6 +1228,7 @@ end
 declare extern type UIFrameComponent with
 	BackgroundColor: vector
 	BackgroundTransparency: number
+	BackgroundColor3: vector
 end
 
 declare extern type UIStrokeComponent with
@@ -1144,6 +1236,7 @@ declare extern type UIStrokeComponent with
 	BorderFocusOnly: boolean
 	BorderSizePixel: number
 	BorderTransparency: number
+	BorderColor3: vector
 end
 
 declare extern type UICornerComponent with
@@ -1155,10 +1248,18 @@ declare extern type UICornerRadiiComponent with
 end
 
 declare extern type UIImageComponent with
-	Image: string
+	read Image: string
+	write Image: string | DynamicImage | Instance
 	ImageColor: vector
 	ImageRotation: number
 	ImageTransparency: number
+	ImageColor3: vector
+end
+
+declare extern type UIViewportComponent with
+	CurrentCamera: Instance?
+	ViewportColor: vector
+	ViewportAlpha: number
 end
 
 declare extern type UITextStyleComponent with
@@ -1175,6 +1276,8 @@ declare extern type UITextStyleComponent with
 	TextTransparency: number
 	TextXAlignment: EnumTextHAlign
 	TextYAlignment: EnumTextVAlign
+	TextColor3: vector
+	TextStrokeColor3: vector
 end
 
 declare extern type UITextSourceComponent with
@@ -1187,6 +1290,7 @@ declare extern type UITextInputComponent with
 	MaxLength: number
 	Password: boolean
 	PlaceholderText: string
+	CursorColor3: vector
 end
 
 declare extern type BillboardComponent with
@@ -1196,6 +1300,11 @@ declare extern type BillboardComponent with
 	BillboardScreenSize: number
 	BillboardMaxDistance: number
 	BillboardColor: vector
+	BillboardViewerDistance: number
+end
+
+declare extern type OverheadStackComponent with
+	OverheadStackOrder: number
 end
 
 declare extern type UISurfaceComponent with
@@ -1243,6 +1352,7 @@ end
 declare extern type UIListStripeComponent with
 	StripeColor: vector
 	StripeTransparency: number
+	StripeColor3: vector
 end
 
 declare extern type UIScrollingFrameComponent with
@@ -1260,6 +1370,9 @@ declare extern type UISliderComponent with
 	TrackColor: vector
 	TrackThickness: number
 	TrackTransparency: number
+	FillColor3: vector
+	ThumbColor3: vector
+	TrackColor3: vector
 end
 
 declare extern type UISliderStateComponent with
@@ -1284,12 +1397,16 @@ declare extern type UISliderTicksComponent with
 	TickColor: vector
 	TickLength: number
 	TickTransparency: number
+	TickColor3: vector
 end
 
 declare extern type UISliderArtComponent with
-	FillImage: string
-	ThumbImage: string
-	TrackImage: string
+	read FillImage: string
+	write FillImage: string | DynamicImage
+	read ThumbImage: string
+	write ThumbImage: string | DynamicImage
+	read TrackImage: string
+	write TrackImage: string | DynamicImage
 end
 
 declare extern type UIToggleComponent with
@@ -1301,12 +1418,18 @@ declare extern type UIToggleComponent with
 	OnColor: vector
 	OnTransparency: number
 	SwitchWidth: number
+	KnobColor3: vector
+	OffColor3: vector
+	OnColor3: vector
 end
 
 declare extern type UIToggleArtComponent with
-	KnobImage: string
-	OffImage: string
-	OnImage: string
+	read KnobImage: string
+	write KnobImage: string | DynamicImage
+	read OffImage: string
+	write OffImage: string | DynamicImage
+	read OnImage: string
+	write OnImage: string | DynamicImage
 end
 
 declare extern type UICheckboxComponent with
@@ -1314,6 +1437,8 @@ declare extern type UICheckboxComponent with
 	BoxTransparency: number
 	CheckColor: vector
 	CheckTransparency: number
+	BoxColor3: vector
+	CheckColor3: vector
 end
 
 declare extern type UIWindowComponent with
@@ -1328,6 +1453,7 @@ declare extern type UIPlotComponent with
 	SampleCount: number
 	ScaleMax: number
 	ScaleMin: number
+	PlotColor3: vector
 end
 
 declare extern type UIRadialFillComponent with
@@ -1340,6 +1466,7 @@ declare extern type UISeparatorComponent with
 	LineColor: vector
 	LineThickness: number
 	LineTransparency: number
+	LineColor3: vector
 end
 
 declare extern type UIMenuComponent with
@@ -1347,6 +1474,8 @@ declare extern type UIMenuComponent with
 	HighlightTransparency: number
 	PanelColor: vector
 	PanelTransparency: number
+	HighlightColor3: vector
+	PanelColor3: vector
 end
 
 declare extern type UIShortcutComponent with
@@ -1357,13 +1486,15 @@ declare extern type UIDropdownComponent with
 	Options: string
 end
 
-declare extern type AdornmentHandlesComponent with
-	Adornee: Instance?
+declare extern type HandlesComponent with
 	HandlesColor: vector
 	HandlesFaces: number
 	HandlesStyle: EnumHandlesStyle
 	HandlesTransparency: number
 	HandlesType: EnumHandlesType
+	Target: Instance?
+	HandlesColor3: vector
+	Adornee: Instance?
 end
 
 declare extern type UIRadioButtonComponent with
@@ -1371,6 +1502,8 @@ declare extern type UIRadioButtonComponent with
 	CircleTransparency: number
 	DotColor: vector
 	DotTransparency: number
+	CircleColor3: vector
+	DotColor3: vector
 end
 
 declare extern type UIRadioGroupComponent with
@@ -1380,6 +1513,7 @@ end
 declare extern type UIItemListComponent with
 	SelectionColor: vector
 	SelectionTransparency: number
+	SelectionColor3: vector
 end
 
 declare extern type UIItemListStateComponent with
@@ -1400,6 +1534,7 @@ declare extern type UITreeViewComponent with
 	BranchColor: vector
 	BranchTransparency: number
 	Indent: number
+	BranchColor3: vector
 end
 
 declare extern type UINumberFieldComponent with
@@ -1427,6 +1562,8 @@ declare extern type UIProgressBarComponent with
 	ProgressTrackColor: vector
 	ProgressTrackTransparency: number
 	ProgressTransparency: number
+	ProgressColor3: vector
+	ProgressTrackColor3: vector
 end
 
 declare extern type UIProgressValueComponent with
@@ -1449,6 +1586,7 @@ declare extern type UIFoldableComponent with
 	HeaderColor: vector
 	HeaderHeight: number
 	HeaderTransparency: number
+	HeaderColor3: vector
 end
 
 declare extern type UIListClipperComponent with
@@ -1457,9 +1595,12 @@ declare extern type UIListClipperComponent with
 end
 
 declare extern type UIImageStatesComponent with
-	DisabledImage: string
-	HoverImage: string
-	PressedImage: string
+	read DisabledImage: string
+	write DisabledImage: string | DynamicImage | Instance
+	read HoverImage: string
+	write HoverImage: string | DynamicImage | Instance
+	read PressedImage: string
+	write PressedImage: string | DynamicImage | Instance
 end
 
 declare extern type UIImageScaleComponent with
@@ -1483,6 +1624,8 @@ declare extern type UITabsComponent with
 	SelectedTabTransparency: number
 	TabColor: vector
 	TabTransparency: number
+	SelectedTabColor3: vector
+	TabColor3: vector
 end
 
 declare extern type UIBusyBarComponent with
@@ -1490,6 +1633,7 @@ declare extern type UIBusyBarComponent with
 	BusySpeed: number
 	BusyTransparency: number
 	BusyWidth: number
+	BusyColor3: vector
 end
 
 declare extern type UIIconComponent with
@@ -1506,11 +1650,13 @@ declare extern type UIColorButtonComponent with
 	SwatchColor: vector
 	SwatchPreview: EnumSwatchPreview
 	SwatchTransparency: number
+	SwatchColor3: vector
 end
 
 declare extern type UIMultiSelectComponent with
 	MultiSelectColor: vector
 	MultiSelectTransparency: number
+	MultiSelectColor3: vector
 end
 
 declare extern type UIVectorFieldComponent with
@@ -1546,6 +1692,7 @@ declare extern type UITableBordersComponent with
 	GridLineColor: vector
 	GridLineThickness: number
 	GridLineTransparency: number
+	GridLineColor3: vector
 end
 
 declare extern type UIGraphComponent with
@@ -1557,6 +1704,7 @@ end
 declare extern type UIGraphPortComponent with
 	PortColor: vector
 	PortTransparency: number
+	PortColor3: vector
 end
 
 declare extern type UIGraphLinkComponent with
@@ -1637,6 +1785,7 @@ end
 
 declare extern type UIPlaceholderColorComponent with
 	PlaceholderColor: vector
+	PlaceholderColor3: vector
 end
 
 declare extern type UIDockComponent with
@@ -1681,6 +1830,7 @@ end
 declare extern type BackgroundComponent with
 	BackgroundColor: vector
 	BackgroundEnergyMultiplier: number
+	BackgroundColor3: vector
 end
 
 declare extern type PanoramaSkyComponent with
@@ -1753,6 +1903,7 @@ declare extern type WorldConfigComponent with
 	Gravity: number
 	SleepVelocityThreshold: number
 	ViewRadius: number
+	PaintedUiPassesPointer: boolean
 end
 
 declare extern type WorldLimitsComponent with
@@ -1821,13 +1972,6 @@ declare extern type PartOperationComponent with
 	CollisionFidelity: EnumCsgCollision
 	-- read-only
 	read Kind: EnumCsgType
-end
-
-declare extern type LeaderboardColumnComponent with
-	Stat: string
-	Order: number
-	Sort: EnumLeaderboardSort
-	Hidden: boolean
 end
 
 declare extern type ParticleEffectComponent with
@@ -1905,6 +2049,7 @@ end
 
 declare extern type ParticleGravityComponent with
 	Scale: number
+	Acceleration: vector
 end
 
 declare extern type ParticleCurlNoiseComponent with
@@ -1951,7 +2096,8 @@ declare extern type ParticleDepthCollisionComponent with
 end
 
 declare extern type ParticleSpriteComponent with
-	Texture: string
+	read Texture: string
+	write Texture: string | DynamicImage
 	Facing: EnumParticleFacing
 	Blend: EnumParticleBlend
 	Emissive: number
@@ -1969,7 +2115,8 @@ declare extern type ParticleLitComponent with
 end
 
 declare extern type ParticleRibbonComponent with
-	Texture: string
+	read Texture: string
+	write Texture: string | DynamicImage
 	Width: number
 	TileLength: number
 end
@@ -2034,16 +2181,6 @@ declare extern type CharacterAbilitiesComponent with
 	States4: number
 end
 
-declare extern type PoseOffsetComponent with
-	Head: vector
-	Torso: vector
-	LeftArm: vector
-	RightArm: vector
-	LeftLeg: vector
-	RightLeg: vector
-	Weight: number
-end
-
 declare extern type CharacterTuningOverrideComponent with
 	MoveP: number
 	MaxGroundForce: number
@@ -2052,6 +2189,14 @@ declare extern type CharacterTuningOverrideComponent with
 	TurnSpeed: number
 	MaxStepHeight: number
 	LaunchInfluence: number
+end
+
+declare extern type LimbPoseComponent with
+	Rotation: vector
+end
+
+declare extern type PoseWeightComponent with
+	Weight: number
 end
 
 declare extern type VisionConeComponent with
@@ -2210,6 +2355,27 @@ declare extern type TargetYawComponent with
 	Yaw: number
 end
 
+declare extern type TurnRequestComponent with
+	Yaw: number
+end
+
+declare extern type SoundAudibleComponent with
+	-- read-only
+	read Elapsed: number
+	-- read-only
+	read Duration: number
+end
+
+declare extern type SoundFailedComponent with
+	-- read-only
+	read Reason: string
+end
+
+declare extern type SensorEnvelopeComponent with
+	Padding: vector
+	Visitors: string
+end
+
 declare extern type Instance with
 	-- read-only
 	AbsoluteCanvasSize: vector
@@ -2222,21 +2388,24 @@ declare extern type Instance with
 	Action: EnumCoreMenuAction
 	-- read-only
 	Activated: Signal<(player: Instance, hit: vector) -> ()>
-	Active: number
 	ActiveAnimation: (self: Instance) -> string?
 	AddAccessory: (self: Instance, accessory: Instance | ContentAsset) -> Instance?
-	function AddComponent(self, name: "Tool"): ToolComponent
 	function AddComponent(self, name: "CameraLens"): CameraLensComponent
-	function AddComponent(self, name: "CameraOrbit"): CameraOrbitComponent
-	function AddComponent(self, name: "CameraFly"): CameraFlyComponent
 	function AddComponent(self, name: "OrthographicLens"): OrthographicLensComponent
 	function AddComponent(self, name: "BillboardGui"): BillboardGuiComponent
 	function AddComponent(self, name: "UITail"): UITailComponent
 	function AddComponent(self, name: "UINotch"): UINotchComponent
+	function AddComponent(self, name: "CameraTarget"): CameraTargetComponent
+	function AddComponent(self, name: "LocalTransparency"): LocalTransparencyComponent
+	function AddComponent(self, name: "RenderMask"): RenderMaskComponent
+	function AddComponent(self, name: "SteerInput"): SteerInputComponent
+	function AddComponent(self, name: "CameraPose"): CameraPoseComponent
+	function AddComponent(self, name: "CameraTransform"): CameraTransformComponent
+	function AddComponent(self, name: "CameraOrbit"): CameraOrbitComponent
+	function AddComponent(self, name: "CameraFly"): CameraFlyComponent
 	function AddComponent(self, ...: string | Pair): Component | Instance
-	Adornee: Instance?
 	-- read-only
-	read AdornmentHandles: AdornmentHandlesComponent
+	read AdornmentHandles: HandlesComponent
 	AdvancePreview: (self: Instance) -> boolean
 	-- read-only
 	read AeroSurface: AeroSurfaceComponent
@@ -2246,7 +2415,8 @@ declare extern type Instance with
 	-- read-only
 	AirJumps: number
 	AirMaxWishSpeed: number
-	Albedo: string
+	read Albedo: string
+	write Albedo: string | DynamicImage | Instance
 	Align: EnumListAlign
 	-- read-only
 	read Ambient: AmbientComponent
@@ -2296,15 +2466,11 @@ declare extern type Instance with
 	-- read-only
 	read Background: BackgroundComponent
 	BackgroundColor: vector
-	BackgroundColor3: vector
 	BackgroundEnergyMultiplier: number
 	BackgroundMode: EnumBackgroundMode
 	BackgroundTransparency: number
 	-- read-only
-	read Backpack: BackpackComponent
-	-- read-only
 	BackpackChanged: Signal<() -> ()>
-	BackpackSlot: number
 	BarWidth: number
 	-- read-only
 	read Billboard: BillboardComponent
@@ -2316,6 +2482,7 @@ declare extern type Instance with
 	BillboardOnTop: boolean
 	BillboardScreenSize: number
 	BillboardText: string
+	BillboardViewerDistance: number
 	BillboardWorldSize: number
 	BodyColorHead: vector
 	BodyColorLeftArm: vector
@@ -2332,22 +2499,22 @@ declare extern type Instance with
 	BodyRightLeg: string
 	BodyTorso: string
 	Bold: boolean
-	BorderColor3: vector
+	BorderColor: vector
 	BorderFocusOnly: boolean
 	BorderSizePixel: number
 	BorderTransparency: number
-	BoxColor3: vector
+	BoxColor: vector
 	BoxTransparency: number
-	BranchColor3: vector
+	BranchColor: vector
 	BranchTransparency: number
 	BreakForce: number
 	BreakLink: (self: Instance) -> ()
 	BreakTorque: number
 	-- read-only
-	read BrickColor: BrickColorComponent
+	read BrickColor: ColorComponent
 	Brightness: number
 	Bus: EnumSoundBus
-	BusyColor3: vector
+	BusyColor: vector
 	BusySpeed: number
 	BusyTransparency: number
 	BusyWidth: number
@@ -2357,6 +2524,12 @@ declare extern type Instance with
 	read CameraLens: CameraLensComponent
 	-- read-only
 	read CameraOrbit: CameraOrbitComponent
+	-- read-only
+	read CameraPose: CameraPoseComponent
+	-- read-only
+	read CameraTarget: CameraTargetComponent
+	-- read-only
+	read CameraTransform: CameraTransformComponent
 	CancelText: string
 	-- read-only
 	Canceled: Signal<() -> ()>
@@ -2392,14 +2565,14 @@ declare extern type Instance with
 	Chassis: Instance?
 	-- read-only
 	Chatted: Signal<(message: string) -> ()>
-	CheckColor3: vector
+	CheckColor: vector
 	CheckTransparency: number
 	Checked: boolean
 	-- read-only
 	ChildAdded: Signal<(child: Instance) -> ()>
 	-- read-only
 	ChildRemoved: Signal<(child: Instance) -> ()>
-	CircleColor3: vector
+	CircleColor: vector
 	CircleTransparency: number
 	-- read-only
 	read ClickDetector: ClickDetectorComponent
@@ -2431,7 +2604,7 @@ declare extern type Instance with
 	ColumnWidths: {number}
 	Columns: number
 	function Component(self, name: "AcousticPerception"): AcousticPerceptionComponent
-	function Component(self, name: "AdornmentHandles"): AdornmentHandlesComponent
+	function Component(self, name: "AdornmentHandles"): HandlesComponent
 	function Component(self, name: "AeroSurface"): AeroSurfaceComponent
 	function Component(self, name: "AirControl"): AirControlComponent
 	function Component(self, name: "Ambient"): AmbientComponent
@@ -2442,15 +2615,16 @@ declare extern type Instance with
 	function Component(self, name: "Attachment"): AttachmentComponent
 	function Component(self, name: "Avatar"): PlatformAvatarConfigComponent
 	function Component(self, name: "Background"): BackgroundComponent
-	function Component(self, name: "Backpack"): BackpackComponent
-	function Component(self, name: "BackpackSlot"): BackpackSlotComponent
 	function Component(self, name: "Billboard"): BillboardComponent
 	function Component(self, name: "BillboardGui"): BillboardGuiComponent
 	function Component(self, name: "BodyPart"): BodyPartComponent
-	function Component(self, name: "BrickColor"): BrickColorComponent
+	function Component(self, name: "BrickColor"): ColorComponent
 	function Component(self, name: "CameraFly"): CameraFlyComponent
 	function Component(self, name: "CameraLens"): CameraLensComponent
 	function Component(self, name: "CameraOrbit"): CameraOrbitComponent
+	function Component(self, name: "CameraPose"): CameraPoseComponent
+	function Component(self, name: "CameraTarget"): CameraTargetComponent
+	function Component(self, name: "CameraTransform"): CameraTransformComponent
 	function Component(self, name: "CharacterAbilities"): CharacterAbilitiesComponent
 	function Component(self, name: "CharacterAppearance"): CharacterAppearanceComponent
 	function Component(self, name: "CharacterGravity"): CharacterGravityComponent
@@ -2461,6 +2635,7 @@ declare extern type Instance with
 	function Component(self, name: "Clouds"): CloudsComponent
 	function Component(self, name: "Collider"): ColliderComponent
 	function Component(self, name: "CollisionGroup"): CollisionGroupComponent
+	function Component(self, name: "Color"): ColorComponent
 	function Component(self, name: "CoreMenuAction"): CoreMenuActionComponent
 	function Component(self, name: "CoreMenuPage"): CoreMenuPageComponent
 	function Component(self, name: "CoreSettingBind"): CoreSettingBindComponent
@@ -2471,7 +2646,7 @@ declare extern type Instance with
 	function Component(self, name: "Exposure"): ExposureComponent
 	function Component(self, name: "FloorInfo"): FloorInfoComponent
 	function Component(self, name: "Fog"): FogComponent
-	function Component(self, name: "Health"): HealthComponent
+	function Component(self, name: "Handles"): HandlesComponent
 	function Component(self, name: "HearingSense"): HearingSenseComponent
 	function Component(self, name: "HingeJoint"): HingeJointComponent
 	function Component(self, name: "HumanoidState"): HumanoidStateComponent
@@ -2481,19 +2656,20 @@ declare extern type Instance with
 	function Component(self, name: "InputBinding"): InputBindingComponent
 	function Component(self, name: "InputBindingKeybind"): InputBindingKeybindComponent
 	function Component(self, name: "InputContext"): InputContextComponent
-	function Component(self, name: "LastHit"): LastHitComponent
-	function Component(self, name: "LeaderboardColumn"): LeaderboardColumnComponent
 	function Component(self, name: "LensFlare"): LensFlareComponent
 	function Component(self, name: "Lifetime"): LifetimeComponent
 	function Component(self, name: "Light"): LightComponent
 	function Component(self, name: "LimbAttachment"): LimbAttachmentComponent
+	function Component(self, name: "LimbPose"): LimbPoseComponent
 	function Component(self, name: "LocalSpin"): LocalSpinComponent
+	function Component(self, name: "LocalTransparency"): LocalTransparencyComponent
 	function Component(self, name: "Locomotion"): LocomotionComponent
 	function Component(self, name: "Mesh"): MeshComponent
 	function Component(self, name: "MultiJump"): MultiJumpComponent
 	function Component(self, name: "Name"): NameComponent
 	function Component(self, name: "NavigationSettings"): NavigationSettingsComponent
 	function Component(self, name: "OrthographicLens"): OrthographicLensComponent
+	function Component(self, name: "OverheadStack"): OverheadStackComponent
 	function Component(self, name: "PanoramaSky"): PanoramaSkyComponent
 	function Component(self, name: "PartOperation"): PartOperationComponent
 	function Component(self, name: "ParticleAttractorSphere"): ParticleAttractorSphereComponent
@@ -2534,9 +2710,10 @@ declare extern type Instance with
 	function Component(self, name: "Physics"): RigidBodyComponent
 	function Component(self, name: "Pivot"): PivotComponent
 	function Component(self, name: "PlatformAvatarConfig"): PlatformAvatarConfigComponent
-	function Component(self, name: "PoseOffset"): PoseOffsetComponent
+	function Component(self, name: "PoseWeight"): PoseWeightComponent
 	function Component(self, name: "Position"): PositionComponent
 	function Component(self, name: "PrefabInstance"): PrefabInstanceComponent
+	function Component(self, name: "RenderMask"): RenderMaskComponent
 	function Component(self, name: "RigidBody"): RigidBodyComponent
 	function Component(self, name: "RootMotionDelta"): RootMotionDeltaComponent
 	function Component(self, name: "RopeConstraint"): RopeConstraintComponent
@@ -2545,17 +2722,21 @@ declare extern type Instance with
 	function Component(self, name: "Scale"): ScaleComponent
 	function Component(self, name: "Seat"): SeatComponent
 	function Component(self, name: "SeatInput"): SeatInputComponent
+	function Component(self, name: "SensorEnvelope"): SensorEnvelopeComponent
 	function Component(self, name: "SessionOwner"): SessionOwnerComponent
 	function Component(self, name: "Shape"): ShapeComponent
 	function Component(self, name: "SixSidedSky"): SixSidedSkyComponent
 	function Component(self, name: "Sound"): SoundComponent
 	function Component(self, name: "SoundAttenuation"): SoundAttenuationComponent
+	function Component(self, name: "SoundAudible"): SoundAudibleComponent
 	function Component(self, name: "SoundBus"): SoundBusComponent
 	function Component(self, name: "SoundCone"): SoundConeComponent
 	function Component(self, name: "SoundConfig"): SoundConfigComponent
+	function Component(self, name: "SoundFailed"): SoundFailedComponent
 	function Component(self, name: "SoundPolyphony"): SoundPolyphonyComponent
 	function Component(self, name: "SoundSystem"): SoundConfigComponent
 	function Component(self, name: "SpotCone"): SpotConeComponent
+	function Component(self, name: "SteerInput"): SteerInputComponent
 	function Component(self, name: "Streaming"): StreamingConfigComponent
 	function Component(self, name: "StreamingConfig"): StreamingConfigComponent
 	function Component(self, name: "SubstepForce"): SubstepForceComponent
@@ -2564,17 +2745,16 @@ declare extern type Instance with
 	function Component(self, name: "SurfaceAppearance"): SurfaceAppearanceComponent
 	function Component(self, name: "SurfaceMaterial"): SurfaceMaterialComponent
 	function Component(self, name: "SurfaceOverride"): PhysicalSurfaceOverrideComponent
+	function Component(self, name: "SurfaceView"): SurfaceViewComponent
 	function Component(self, name: "SuspensionConfig"): SuspensionConfigComponent
 	function Component(self, name: "SuspensionState"): SuspensionStateComponent
 	function Component(self, name: "SwingTwistJoint"): SwingTwistJointComponent
 	function Component(self, name: "TargetYaw"): TargetYawComponent
-	function Component(self, name: "Team"): TeamComponent
-	function Component(self, name: "TeamInfo"): TeamInfoComponent
 	function Component(self, name: "Timer"): TimerComponent
 	function Component(self, name: "TirePatchConfig"): TirePatchConfigComponent
 	function Component(self, name: "TirePatchState"): TirePatchStateComponent
-	function Component(self, name: "Tool"): ToolComponent
 	function Component(self, name: "Transparency"): TransparencyComponent
+	function Component(self, name: "TurnRequest"): TurnRequestComponent
 	function Component(self, name: "UIArrowButton"): UIArrowButtonComponent
 	function Component(self, name: "UIBusyBar"): UIBusyBarComponent
 	function Component(self, name: "UICheckbox"): UICheckboxComponent
@@ -2658,6 +2838,7 @@ declare extern type Instance with
 	function Component(self, name: "UITreeView"): UITreeViewComponent
 	function Component(self, name: "UIVectorField"): UIVectorFieldComponent
 	function Component(self, name: "UIVectorValue"): UIVectorValueComponent
+	function Component(self, name: "UIViewport"): UIViewportComponent
 	function Component(self, name: "UIWindow"): UIWindowComponent
 	function Component(self, name: "UvTransform"): UvTransformComponent
 	function Component(self, name: "Velocity"): VelocityComponent
@@ -2695,11 +2876,13 @@ declare extern type Instance with
 	CornerRadius: number
 	CorneringStiffness: number
 	Cursor: EnumCursorShape
-	CursorColor3: vector
+	CursorColor: vector
 	CursorPosition: number
 	CursorTransparency: number
 	-- read-only
 	read Data: NameComponent
+	-- read-only
+	Deactivated: Signal<(player: Instance?) -> ()>
 	-- read-only
 	read Decal: DecalComponent
 	Density: number
@@ -2712,11 +2895,12 @@ declare extern type Instance with
 	DirectionalShadowFill: number
 	DirectionalShadowMode: EnumShadowMode
 	Disabled: boolean
-	DisabledImage: string
+	read DisabledImage: string
+	write DisabledImage: string | DynamicImage | Instance
 	DisplayName: string
 	Distance: number
 	DockPrefab: string
-	DotColor3: vector
+	DotColor: vector
 	DotTransparency: number
 	Down: number
 	-- read-only
@@ -2725,19 +2909,22 @@ declare extern type Instance with
 	DragMoved: Signal<(a: number, b: number, c: number) -> ()>
 	DriveTorque: number
 	Drives: EnumInputActionDrives
-	Emissive: string
+	read Emissive: string
+	write Emissive: string | DynamicImage
 	Emit: (self: Instance, name: string, ...any) -> ()
 	Enabled: boolean
-	EquipTool: (self: Instance, tool: Instance) -> ()
+	@[deprecated {use = "the ToolEquipped attribute"}] function EquipTool(self, tool: Instance): ()
 	-- read-only
 	Equipped: Signal<(player: Instance?) -> ()>
 	-- read-only
 	read Exposure: ExposureComponent
-	Face: string
+	read Face: string
+	write Face: string | DynamicImage
 	FillAmount: number
-	FillColor3: vector
+	FillColor: vector
 	FillColumns: boolean
-	FillImage: string
+	read FillImage: string
+	write FillImage: string | DynamicImage
 	FillMode: EnumFillMode
 	FillTransparency: number
 	FindAncestorWithComponent: (self: Instance, name: string | Pair) -> Instance?
@@ -2788,7 +2975,8 @@ declare extern type Instance with
 	GetState: (self: Instance) -> boolean | vector
 	GetStateEnabled: (self: Instance, state: EnumHumanoidState) -> boolean
 	@[deprecated {use = "Instance.Anchor"}] function GetSwingTwistJoint(self): SwingTwistJointInfo?
-	GetTool: (self: Instance, slot: number?) -> Instance?
+	@[deprecated {use = "the ToolEquipped and ToolSlot attributes"}] function GetTool(self, slot: number?): Instance?
+	@[deprecated {use = "the Tool tag and the ToolSlot attribute"}] function GetTools(self): {Instance}
 	@[deprecated {use = "World.Query"}] function GetVisionCone(self): (number, number, number, number)
 	GraphOffset: vector
 	GraphZoom: number
@@ -2797,26 +2985,28 @@ declare extern type Instance with
 	GraphZoomStep: number
 	GravityScale: number
 	GravityVector: vector
-	GridLineColor3: vector
+	GridLineColor: vector
 	GridLineThickness: number
 	GridLineTransparency: number
 	GripSize: number
 	GroupTransparency: number
-	HandlesColor3: vector
+	-- read-only
+	read Handles: HandlesComponent
+	HandlesColor: vector
 	HandlesFaces: number
 	HandlesStyle: EnumHandlesStyle
 	HandlesTransparency: number
 	HandlesType: EnumHandlesType
 	HasComponent: (self: Instance, name: string | Pair) -> boolean
 	HeaderCell: boolean
-	HeaderColor3: vector
+	HeaderColor: vector
 	HeaderHeight: number
 	HeaderTransparency: number
 	Health: number
 	-- read-only
 	read HearingSense: HearingSenseComponent
 	HighValue: number
-	HighlightColor3: vector
+	HighlightColor: vector
 	HighlightTransparency: number
 	HingeAnchor: vector
 	HingeAxis: vector
@@ -2829,7 +3019,8 @@ declare extern type Instance with
 	HitSlopLeft: number
 	HitSlopRight: number
 	HitSlopTop: number
-	HoverImage: string
+	read HoverImage: string
+	write HoverImage: string | DynamicImage | Instance
 	-- read-only
 	Hovered: Signal<(entered: boolean, index: number) -> ()>
 	Hue: number
@@ -2840,8 +3031,9 @@ declare extern type Instance with
 	IconSize: number
 	-- read-only
 	read Identity: IdentityComponent
-	Image: string
-	ImageColor3: vector
+	read Image: string
+	write Image: string | DynamicImage | Instance
+	ImageColor: vector
 	ImageRectOffset: vector
 	ImageRectSize: vector
 	ImageRotation: number
@@ -2881,17 +3073,14 @@ declare extern type Instance with
 	Justify: EnumListAlign
 	KeyCode: number
 	Keybind: EnumInputKeybind
-	KnobColor3: vector
-	KnobImage: string
+	KnobColor: vector
+	read KnobImage: string
+	write KnobImage: string | DynamicImage
 	KnobInset: number
 	KnobTransparency: number
 	LabelText: string
-	-- read-only
-	read LastHit: LastHitComponent
 	Layer: number
 	LayoutOrder: number
-	-- read-only
-	read LeaderboardColumn: LeaderboardColumnComponent
 	Left: number
 	-- read-only
 	read LensFlare: LensFlareComponent
@@ -2904,9 +3093,11 @@ declare extern type Instance with
 	LightShadowOff: boolean
 	-- read-only
 	read LimbAttachment: LimbAttachmentComponent
+	-- read-only
+	read LimbPose: LimbPoseComponent
 	LimitsMax: number
 	LimitsMin: number
-	LineColor3: vector
+	LineColor: vector
 	LineHeight: number
 	LineThickness: number
 	LineTransparency: number
@@ -2921,6 +3112,8 @@ declare extern type Instance with
 	LocalPosition: vector
 	LocalRotationVector: vector
 	LocalSpin: vector
+	-- read-only
+	read LocalTransparency: LocalTransparencyComponent
 	Locked: boolean
 	-- read-only
 	read Locomotion: LocomotionComponent
@@ -2950,7 +3143,8 @@ declare extern type Instance with
 	MaximumMotorForce: number
 	MenuCheck: boolean
 	Mesh: string
-	MetallicRoughness: string
+	read MetallicRoughness: string
+	write MetallicRoughness: string | DynamicImage
 	MinEV: number
 	MinSize: vector
 	MinValue: number
@@ -2964,7 +3158,7 @@ declare extern type Instance with
 	MouseClick: Signal<(player: Instance) -> ()>
 	-- read-only
 	read MultiJump: MultiJumpComponent
-	MultiSelectColor3: vector
+	MultiSelectColor: vector
 	MultiSelectTransparency: number
 	MultiSelected: boolean
 	Name: string
@@ -2973,22 +3167,26 @@ declare extern type Instance with
 	NightSky: string
 	NoContactFriction: boolean
 	NoTranslate: boolean
-	Normal: string
+	read Normal: string
+	write Normal: string | DynamicImage
 	NormalCone: number
 	Number: number
 	NumberMax: number
 	NumberMin: number
 	NumberStep: number
-	Occlusion: string
+	read Occlusion: string
+	write Occlusion: string | DynamicImage
 	-- read-only
 	Occupant: Instance?
-	OffColor3: vector
-	OffImage: string
+	OffColor: vector
+	read OffImage: string
+	write OffImage: string | DynamicImage
 	OffTransparency: number
 	Offset: vector
 	On: boolean
-	OnColor3: vector
-	OnImage: string
+	OnColor: vector
+	read OnImage: string
+	write OnImage: string | DynamicImage
 	OnTransparency: number
 	Op: EnumCoreSettingOp
 	Open: boolean
@@ -2998,17 +3196,20 @@ declare extern type Instance with
 	read OrthographicLens: OrthographicLensComponent
 	Other: Instance?
 	OuterAngle: number
+	-- read-only
+	read OverheadStack: OverheadStackComponent
 	-- server-only write
 	OwnerUserId: number
 	Page: number
-	PanelColor3: vector
+	PanelColor: vector
 	PanelTransparency: number
 	Panorama: string
 	PanoramaEnergyMultiplier: number
 	PanoramaRotation: number
 	-- read-only
 	read PanoramaSky: PanoramaSkyComponent
-	Pants: string
+	read Pants: string
+	write Pants: string | DynamicImage
 	read Parent: Instance?
 	write Parent: (Instance | World)?
 	Part: EnumBodyPart
@@ -3094,7 +3295,7 @@ declare extern type Instance with
 	Pivot: vector
 	PivotPoint: vector
 	PivotTo: (self: Instance, position: vector, rotation: vector, pivot: vector?) -> ()
-	PlaceholderColor3: vector
+	PlaceholderColor: vector
 	PlaceholderText: string
 	PlaneAxis: vector
 	PlaneCone: number
@@ -3105,15 +3306,15 @@ declare extern type Instance with
 	PlaybackSpeed: number
 	-- read-only
 	Playing: boolean
-	PlotColor3: vector
+	PlotColor: vector
 	PlotTransparency: number
 	PlotType: EnumPlotType
 	Popup: boolean
 	PopupOpen: boolean
-	PortColor3: vector
+	PortColor: vector
 	PortTransparency: number
 	-- read-only
-	read PoseOffset: PoseOffsetComponent
+	read PoseWeight: PoseWeightComponent
 	Position: vector
 	-- read-only
 	PrefabId: number
@@ -3121,12 +3322,13 @@ declare extern type Instance with
 	read PrefabInstance: PrefabInstanceComponent
 	-- read-only
 	Pressed: Signal<(index: number) -> ()>
-	PressedImage: string
+	read PressedImage: string
+	write PressedImage: string | DynamicImage | Instance
 	PreviewAnimation: (self: Instance, clip: string, playing: boolean?, time: number?, speed: number?) -> boolean
 	Priority: number
 	Progress: number
-	ProgressColor3: vector
-	ProgressTrackColor3: vector
+	ProgressColor: vector
+	ProgressTrackColor: vector
 	ProgressTrackTransparency: number
 	ProgressTransparency: number
 	PushSample: (self: Instance, value: number) -> ()
@@ -3139,6 +3341,8 @@ declare extern type Instance with
 	Remaining: number
 	RemoveComponent: (self: Instance, ...string | Pair) -> ()
 	RenderDisabled: boolean
+	-- read-only
+	read RenderMask: RenderMaskComponent
 	RepeatDelay: number
 	RepeatInterval: number
 	ResampleMode: EnumResampleMode
@@ -3186,16 +3390,18 @@ declare extern type Instance with
 	Selectable: boolean
 	Selected: boolean
 	SelectedIndex: number
-	SelectedTabColor3: vector
+	SelectedTabColor: vector
 	SelectedTabTransparency: number
 	-- read-only
 	SelectionChanged: Signal<(selected: boolean) -> ()>
-	SelectionColor3: vector
+	SelectionColor: vector
 	SelectionGroup: boolean
 	SelectionRing: boolean
 	SelectionScope: Instance?
 	SelectionStart: number
 	SelectionTransparency: number
+	-- read-only
+	read SensorEnvelope: SensorEnvelopeComponent
 	-- read-only
 	read SessionOwner: SessionOwnerComponent
 	@[deprecated {use = "World.Query"}] function SetAngularVelocity(self, velocity: vector): ()
@@ -3211,7 +3417,8 @@ declare extern type Instance with
 	ShadowOff: boolean
 	-- read-only
 	read Shape: ShapeComponent
-	Shirt: string
+	read Shirt: string
+	write Shirt: string | DynamicImage
 	Shortcut: string
 	Side: EnumNormalId
 	Sink: boolean
@@ -3233,7 +3440,6 @@ declare extern type Instance with
 	SliderFormat: string
 	SliderValue: number
 	Slot: EnumAccessorySlot
-	Slots: {number}
 	SortColumn: number
 	SortDescending: boolean
 	-- read-only
@@ -3241,11 +3447,15 @@ declare extern type Instance with
 	-- read-only
 	read SoundAttenuation: SoundAttenuationComponent
 	-- read-only
+	read SoundAudible: SoundAudibleComponent
+	-- read-only
 	read SoundBus: SoundBusComponent
 	-- read-only
 	read SoundCone: SoundConeComponent
 	-- read-only
 	read SoundConfig: SoundConfigComponent
+	-- read-only
+	read SoundFailed: SoundFailedComponent
 	SoundId: string
 	-- read-only
 	read SoundPolyphony: SoundPolyphonyComponent
@@ -3267,6 +3477,8 @@ declare extern type Instance with
 	StateChanged: Signal<(state: boolean | vector) -> ()>
 	-- read-only
 	Steer: number
+	-- read-only
+	read SteerInput: SteerInputComponent
 	SteerLimit: number
 	SteerTarget: number
 	Steers: boolean
@@ -3285,7 +3497,7 @@ declare extern type Instance with
 	read Streaming: StreamingConfigComponent
 	-- read-only
 	read StreamingConfig: StreamingConfigComponent
-	StripeColor3: vector
+	StripeColor: vector
 	StripeTransparency: number
 	-- read-only
 	read SubstepForce: SubstepForceComponent
@@ -3307,6 +3519,8 @@ declare extern type Instance with
 	read SurfaceOverride: PhysicalSurfaceOverrideComponent
 	SurfacePixelsPerUnit: number
 	-- read-only
+	read SurfaceView: SurfaceViewComponent
+	-- read-only
 	read SuspensionConfig: SuspensionConfigComponent
 	SuspensionDamping: number
 	SuspensionDirection: vector
@@ -3318,26 +3532,25 @@ declare extern type Instance with
 	read SuspensionState: SuspensionStateComponent
 	SuspensionStiffness: number
 	SuspensionWheelRadius: number
-	SwatchColor3: vector
+	SwatchColor: vector
 	SwatchPreview: EnumSwatchPreview
 	SwatchTransparency: number
 	-- read-only
 	read SwingTwistJoint: SwingTwistJointComponent
 	SwitchWidth: number
-	TabColor3: vector
+	TabColor: vector
 	TabTransparency: number
-	TakeDamage: (self: Instance, amount: number, attacker: Instance?) -> ()
+	@[deprecated {use = "Instance.attr.Health"}] function TakeDamage(self, amount: number, attacker: Instance?): ()
+	Target: Instance?
 	-- read-only
 	read TargetYaw: TargetYawComponent
-	Team: number
-	TeamColor: vector
-	TeamId: number
-	-- read-only
-	read TeamInfo: TeamInfoComponent
+	Team: number?
+	TeamColor: vector?
+	TeamId: number?
 	Text: string
-	TextColor3: vector
+	TextColor: vector
 	TextSize: number
-	TextStrokeColor3: vector
+	TextStrokeColor: vector
 	TextStrokeScale: number
 	TextStrokeTransparency: number
 	TextStrokeWidth: number
@@ -3346,15 +3559,17 @@ declare extern type Instance with
 	TextWrapped: boolean
 	TextXAlignment: EnumTextHAlign
 	TextYAlignment: EnumTextVAlign
-	Texture: string
+	read Texture: string
+	write Texture: string | DynamicImage | Instance
 	-- read-only
 	Throttle: number
-	ThumbColor3: vector
+	ThumbColor: vector
 	ThumbCornerRadius: number
-	ThumbImage: string
+	read ThumbImage: string
+	write ThumbImage: string | DynamicImage
 	ThumbSize: number
 	ThumbTransparency: number
-	TickColor3: vector
+	TickColor: vector
 	TickLength: number
 	TickTransparency: number
 	TileSize: UDim2
@@ -3377,14 +3592,13 @@ declare extern type Instance with
 	-- read-only
 	ToggleTarget: Instance?
 	-- read-only
-	read Tool: ToolComponent
-	-- read-only
 	TouchEnded: Signal<(other: Instance) -> ()>
 	-- read-only
 	Touched: Signal<(other: Instance) -> ()>
 	TrackAxis: EnumSliderAxis
-	TrackColor3: vector
-	TrackImage: string
+	TrackColor: vector
+	read TrackImage: string
+	write TrackImage: string | DynamicImage
 	TrackThickness: number
 	TrackTransparency: number
 	TransformDirection: (self: Instance, direction: vector) -> vector
@@ -3392,6 +3606,8 @@ declare extern type Instance with
 	Transparency: number
 	Travel: number
 	Trigger: boolean
+	-- read-only
+	read TurnRequest: TurnRequestComponent
 	TwistAxis: vector
 	TwistMax: number
 	TwistMin: number
@@ -3570,9 +3786,12 @@ declare extern type Instance with
 	-- read-only
 	read UIVectorValue: UIVectorValueComponent
 	-- read-only
+	read UIViewport: UIViewportComponent
+	-- read-only
 	read UIWindow: UIWindowComponent
-	Underlay: string
-	UnequipTools: (self: Instance) -> ()
+	read Underlay: string
+	write Underlay: string | DynamicImage
+	@[deprecated {use = "the ToolEquipped attribute"}] function UnequipTools(self): ()
 	-- read-only
 	Unequipped: Signal<(player: Instance?) -> ()>
 	Up: number
@@ -3607,6 +3826,8 @@ declare extern type Instance with
 	read WeldBreak: WeldBreakComponent
 	-- read-only
 	read WheelJoint: WheelJointComponent
+	-- read-only
+	WheelMoved: Signal<(delta: number) -> ()>
 	WheelRadius: number
 	WireCurvature: number
 	-- read-only
@@ -3621,7 +3842,44 @@ declare extern type Instance with
 	ZeroLiftDrag: number
 	-- read-only
 	attr: { [string]: any }
+	BackgroundColor3: vector
+	BorderColor3: vector
+	BoxColor3: vector
+	BranchColor3: vector
+	BusyColor3: vector
+	CheckColor3: vector
+	CircleColor3: vector
+	CursorColor3: vector
+	DotColor3: vector
+	FillColor3: vector
+	GridLineColor3: vector
+	HandlesColor3: vector
+	HeaderColor3: vector
+	HighlightColor3: vector
+	ImageColor3: vector
+	KnobColor3: vector
+	LineColor3: vector
+	MultiSelectColor3: vector
+	OffColor3: vector
+	OnColor3: vector
+	PanelColor3: vector
+	PlaceholderColor3: vector
+	PlotColor3: vector
+	PortColor3: vector
+	ProgressColor3: vector
+	ProgressTrackColor3: vector
+	SelectedTabColor3: vector
+	SelectionColor3: vector
+	StripeColor3: vector
 	SurfacePixelsPerStud: number
+	SwatchColor3: vector
+	TabColor3: vector
+	TextColor3: vector
+	TextStrokeColor3: vector
+	ThumbColor3: vector
+	TickColor3: vector
+	TrackColor3: vector
+	Adornee: Instance?
 end
 
 declare extern type PartOperation extends Instance with
@@ -3633,11 +3891,19 @@ declare extern type PartOperation extends Instance with
 	Kind: EnumCsgType
 end
 
-declare extern type LeaderboardColumn extends Instance with
-	Stat: string
-	Order: number
-	Sort: EnumLeaderboardSort
-	Hidden: boolean
+declare extern type SurfaceView extends Instance with
+	ViewMode: EnumSurfaceViewMode
+	ViewTarget: Instance?
+	ViewFace: EnumNormalId
+	ViewWidth: number
+	ViewHeight: number
+	ViewDistance: number
+end
+
+declare extern type UIViewport extends Instance with
+	CurrentCamera: Instance?
+	ViewportColor: vector
+	ViewportAlpha: number
 end
 
 declare extern type World with
@@ -3650,9 +3916,9 @@ declare extern type World with
 	-- every entity at the top of the place
 	GetChildren: (() -> {Instance}) & ((self: World) -> {Instance})
 	-- signal fired with each entity that gains the component
-	GetComponentAddedSignal: ((component: string) -> Signal<(entity: Instance) -> ()>) & ((self: World, component: string) -> Signal<(entity: Instance) -> ()>)
+	GetComponentAddedSignal: ((component: string | Pair) -> Signal<(entity: Instance) -> ()>) & ((self: World, component: string | Pair) -> Signal<(entity: Instance) -> ()>)
 	-- signal fired with each entity that loses the component or is destroyed holding it
-	GetComponentRemovedSignal: ((component: string) -> Signal<(entity: Instance) -> ()>) & ((self: World, component: string) -> Signal<(entity: Instance) -> ()>)
+	GetComponentRemovedSignal: ((component: string | Pair) -> Signal<(entity: Instance) -> ()>) & ((self: World, component: string | Pair) -> Signal<(entity: Instance) -> ()>)
 	-- every entity in the place, top level first
 	GetDescendants: (() -> {Instance}) & ((self: World) -> {Instance})
 	-- a relationship pair for a query term
@@ -3694,6 +3960,8 @@ declare game: {
 		OverlapSphere: (center: vector, radius: number, out: {Instance} | QueryParams | nil, params: QueryParams?) -> (number, {Instance}),
 		-- whether the physics body of an entity sleeps
 		IsSleeping: ((e: Instance) -> boolean) & ((self: any, e: Instance) -> boolean),
+		-- whether the assembly of an entity is static, so forces and impulses on it are ignored
+		IsStatic: ((e: Instance) -> boolean) & ((self: any, e: Instance) -> boolean),
 		-- collect the entities inside a rotated box
 		OverlapBox: (center: vector, half: vector, rotation: vector?, out: {Instance} | QueryParams | nil, params: QueryParams?) -> (number, {Instance}),
 		-- sweep a box, a sphere, or a capsule and report every entity in the path, nearest first
@@ -3741,9 +4009,9 @@ declare game: {
 		-- list tags on an entity
 		Get: @[deprecated {use = "game.World.Query(game.World.Pair(\"Tag\", \"*\"))"}] (entity: Instance) -> {string},
 		-- signal fired with each entity that gains the tag
-		GetInstanceAddedSignal: ((tag: string) -> Signal<(entity: Instance) -> ()>) & ((self: any, tag: string) -> Signal<(entity: Instance) -> ()>),
+		GetInstanceAddedSignal: @[deprecated {use = "game.World.GetComponentAddedSignal(game.World.Pair(\"Tag\", tag))"}] (tag: string) -> Signal<(entity: Instance) -> ()>,
 		-- signal fired with each entity that loses the tag or is destroyed holding it
-		GetInstanceRemovedSignal: ((tag: string) -> Signal<(entity: Instance) -> ()>) & ((self: any, tag: string) -> Signal<(entity: Instance) -> ()>),
+		GetInstanceRemovedSignal: @[deprecated {use = "game.World.GetComponentRemovedSignal(game.World.Pair(\"Tag\", tag))"}] (tag: string) -> Signal<(entity: Instance) -> ()>,
 		-- check whether an entity has a tag
 		Has: @[deprecated {use = "inst:HasComponent(game.World.Pair(\"Tag\", tag))"}] (entity: Instance, tag: string) -> boolean,
 		-- remove a tag from an entity
@@ -3751,8 +4019,8 @@ declare game: {
 	},
 	-- prefab spawning
 	read Prefabs: {
-		-- spawn a prefab by name
-		Spawn: ((name: string) -> Instance?) & ((self: any, name: string) -> Instance?),
+		-- spawn a prefab by its numeric id or its name
+		Spawn: ((prefab: number | string) -> Instance?) & ((self: any, prefab: number | string) -> Instance?),
 		-- whether a prefab exists
 		Exists: ((name: string) -> boolean) & ((self: any, name: string) -> boolean),
 		-- lookup a prefab numeric id by name
@@ -3802,10 +4070,12 @@ declare game: {
 		-- cubemap sky faces, rotation, and energy multiplier
 		read SixSidedSky: { SkyboxBk: string, SkyboxDn: string, SkyboxFt: string, SkyboxLf: string, SkyboxRt: string, SkyboxUp: string, Rotation: number, Energy: number },
 	},
-	-- clip markers of the bound rig
+	-- clip markers and joints of the bound rig
 	read Animation: {
 		-- lowest index of the AnimLayers rows scripts can write
 		read FirstScriptLayer: number,
+		-- read the rig's joints parents first, each with its bind pivot in the rig
+		GetJoints: () -> {{Name: string, Parent: string?, Pivot: vector}},
 		-- body part mask bits for AnimLayers layers
 		read Part: {Head: number, Torso: number, LeftArm: number, RightArm: number, LeftLeg: number, RightLeg: number},
 	},
@@ -3818,8 +4088,8 @@ declare game: {
 	read Sound: {
 		-- get audio bus volume in decibels
 		GetBusVolumeDb: @[deprecated {use = "World.Query"}] (bus: number) -> number,
-		-- play a cooked sound at a world position for players within 200 units
-		PlayAt: ((assetId: string, position: vector, volume: number?) -> boolean) & ((self: any, assetId: string, position: vector, volume: number?) -> boolean),
+		-- play a cooked 3D one-shot sound at a world position
+		PlayAt: (assetId: string, position: vector, volume: number | SoundPlayOptions | nil, options: SoundPlayOptions?) -> boolean,
 		-- set audio bus volume in decibels
 		SetBusVolumeDb: @[deprecated {use = "World.Query"}] (bus: number, db: number) -> (),
 		-- volume of surface contact sounds, 0 to 1
@@ -3839,6 +4109,11 @@ declare game: {
 		-- stop a particle effect, letting live particles finish or clearing them
 		Stop: ((effect: Instance, mode: EnumParticleStopMode?) -> ()) & ((self: any, effect: Instance, mode: EnumParticleStopMode?) -> ()),
 	},
+	-- short-lived beam and bullet trails
+	read Trails: {
+		-- spawn a short-lived trail segment between two world positions
+		Add: ((from: vector, to: vector, width: number, color: vector, life: number, transparency: number?) -> ()) & ((self: any, from: vector, to: vector, width: number, color: vector, life: number, transparency: number?) -> ()),
+	},
 	-- locale and translation
 	read Locale: {
 		-- the current locale tag
@@ -3847,21 +4122,6 @@ declare game: {
 		Set: ((tag: string) -> (boolean, string)) & ((self: any, tag: string) -> (boolean, string)),
 		-- translate a key
 		Translate: ((key: string) -> string) & ((self: any, key: string) -> string),
-	},
-	-- emoji catalog, skin tones, and keyword search
-	read Emoji: {
-		-- the emoji picker categories and their entry counts
-		Categories: () -> {{id: string, name: string, count: number}},
-		-- the emoji id at 1-based index in category
-		CategoryAt: ((category: number, index: number) -> string?) & ((self: any, category: number, index: number) -> string?),
-		-- the default emoji ids for the frequently used row
-		FrequentDefaults: () -> {string},
-		-- the UTF-8 emoji glyph for skin tone 1 to 6 and whether it has skin tones
-		Glyph: ((id: string, skin: number?) -> (string?, boolean)) & ((self: any, id: string, skin: number?) -> (string?, boolean)),
-		-- the UTF-8 emoji glyph and display name for an emoji id
-		Info: ((id: string, skin: number?) -> (string?, string?)) & ((self: any, id: string, skin: number?) -> (string?, string?)),
-		-- emoji ids matching every word in query, ranked by match position
-		Search: ((query: string, limit: number?) -> {string}?) & ((self: any, query: string, limit: number?) -> {string}?),
 	},
 	-- players and their characters
 	read Session: {
@@ -3894,6 +4154,8 @@ declare game: {
 	},
 	-- the players of the session and their characters
 	read Players: {
+		-- every live character in the place
+		AliveCharacters: () -> {Instance},
 		-- every player in the session
 		All: @[deprecated {use = "World.Each"}] () -> {Instance},
 		-- the player with this user id
@@ -3902,18 +4164,8 @@ declare game: {
 		FromCharacter: ((character: Instance) -> Instance?) & ((self: any, character: Instance) -> Instance?),
 		-- the character bound to a player
 		CharacterOf: @[deprecated {use = "player.Character"}] (player: Instance) -> Instance?,
-		-- whether a player entity has the Admin tag
-		IsAdmin: @[deprecated {use = "Instance.HasComponent"}] (player: Instance) -> boolean,
-		-- the local user's relation to that player
-		FriendStatus: ((player: Instance) -> EnumFriendStatus) & ((self: any, player: Instance) -> EnumFriendStatus),
 		-- send a chat message as the local player
 		Chat: ((message: string) -> ()) & ((self: any, message: string) -> ()),
-		-- send a social action for a player
-		Social: ((player: Instance, verb: EnumSocialVerb, reason: EnumReportReason?) -> ()) & ((self: any, player: Instance, verb: EnumSocialVerb, reason: EnumReportReason?) -> ()),
-		-- ask for the local player's friends who are not on this server
-		RequestFriends: () -> (),
-		-- invite a friend to this server through a chat message
-		InviteFriend: ((userId: number) -> ()) & ((self: any, userId: number) -> ()),
 		-- the player of the local client
 		read LocalPlayer: Instance?,
 		-- fires with the player that joined
@@ -3928,28 +4180,22 @@ declare game: {
 		read PlayerChatted: Signal<(player: Instance, message: string) -> ()>,
 		-- fires with a line the server sends only to this player
 		read GameAnnounce: Signal<(message: string) -> ()>,
+		-- whether a player entity has the Admin tag
+		IsAdmin: @[deprecated {use = "Instance.HasComponent"}] (player: Instance) -> boolean,
+		-- the local user's relation to that player
+		FriendStatus: ((player: Instance) -> EnumFriendStatus) & ((self: any, player: Instance) -> EnumFriendStatus),
+		-- send a social action for a player
+		Social: ((player: Instance, verb: EnumSocialVerb, reason: EnumReportReason?) -> ()) & ((self: any, player: Instance, verb: EnumSocialVerb, reason: EnumReportReason?) -> ()),
+		-- ask for the local player's friends who are not on this server
+		RequestFriends: () -> (),
+		-- invite a friend to this server through a chat message
+		InviteFriend: ((userId: number) -> ()) & ((self: any, userId: number) -> ()),
 		-- fires with the friends that RequestFriends asked for
 		read FriendsReceived: Signal<(friends: {FriendInfo}) -> ()>,
 		-- fires with the user id, success, and reason of an InviteFriend
 		read InviteResult: Signal<(userId: number, success: boolean, reason: string) -> ()>,
 		-- fires with a player whose FriendStatus changed and the new status
 		read FriendStatusChanged: Signal<(player: Instance, status: EnumFriendStatus) -> ()>,
-	},
-	-- developer products sold in Lunes
-	read Marketplace: {
-		-- show the engine purchase prompt for a developer product of this place; the server asks that player, a client only its local player
-		PromptProductPurchase: ((player: Instance, productId: number | string, productType: ProductType?) -> ()) & ((self: any, player: Instance, productId: number | string, productType: ProductType?) -> ()),
-		-- whether the player owns a durable product or holds an active subscription to it
-		OwnsProduct: ((player: Instance, productId: number | string) -> boolean) & ((self: any, player: Instance, productId: number | string) -> boolean),
-		-- the player's subscription to a product: whether it is active, when it renews or ends, and whether it ends there
-		GetSubscriptionStatus: ((player: Instance, productId: number | string) -> SubscriptionStatus) & ((self: any, player: Instance, productId: number | string) -> SubscriptionStatus),
-		-- the product type tokens PromptProductPurchase takes
-		read ProductType: { Consumable: ProductType, Durable: ProductType, Subscription: ProductType },
-		-- grant a bought product; return true once granted, anything else delivers the receipt again later
-		-- server-only write
-		read ProcessReceipt: ((receipt: ProductReceipt) -> boolean?)?,
-		-- fires with the player, the product id, and whether the player bought it
-		read PromptProductPurchaseFinished: Signal<(player: Instance, productId: number, purchased: boolean) -> ()>,
 	},
 	-- client input reads and pointer ray
 	read Input: {
@@ -3982,8 +4228,8 @@ declare game: {
 		-- the UI element the d-pad, arrow keys and A or Enter drive
 		Selected: Instance?,
 		-- preferred input device enum values
-		read Device: {KeyboardAndMouse: number, Gamepad: number, Touch: number},
-		-- device class last used: 0 KeyboardAndMouse, 1 Gamepad, 2 Touch
+		read Device: {KeyboardAndMouse: number, Gamepad: number, Touch: number, VR: number},
+		-- device class last used: 0 KeyboardAndMouse, 1 Gamepad, 2 Touch, 3 VR
 		read PreferredInput: number,
 		-- fires (device: number) when the preferred input device changes
 		read PreferredInputChanged: Signal<(device: number) -> ()>,
@@ -3999,14 +4245,135 @@ declare game: {
 		read Cursor: {Auto: number, Arrow: number, Pointer: number, Text: number, Crosshair: number, ResizeEW: number, ResizeNS: number, ResizeNWSE: number, ResizeNESW: number, Grab: number, Grabbing: number, Wait: number, Progress: number, NotAllowed: number, Move: number, Hidden: number},
 		-- shows the cursor over the game view when true
 		MouseIconEnabled: boolean,
+		-- suppresses built-in locomotion and jump controls while raw key reads and Escape keep working
+		CaptureControls: boolean,
+		-- enables OS text input and routes committed UTF-8 text to Input.TextInput while menu and console are closed
+		CaptureText: boolean,
+		-- fires (text: string) with committed UTF-8 text when Input.CaptureText is true
+		read TextInput: Signal<(text: string) -> ()>,
 		-- shows an image for a cursor shape, hot spot in image pixels; no image restores the theme cursor
 		SetCustomCursor: ((shape: number, image: string?, hotX: number?, hotY: number?) -> ()) & ((self: any, shape: number, image: string?, hotX: number?, hotY: number?) -> ()),
 		-- keyboard key code enum values
-		read Key: {Backspace: number, Tab: number, Return: number, Pause: number, CapsLock: number, Escape: number, Space: number, PageUp: number, PageDown: number, End: number, Home: number, Left: number, Up: number, Right: number, Down: number, Insert: number, Delete: number, Zero: number, One: number, Two: number, Three: number, Four: number, Five: number, Six: number, Seven: number, Eight: number, Nine: number, A: number, B: number, C: number, D: number, E: number, F: number, G: number, H: number, I: number, J: number, K: number, L: number, M: number, N: number, O: number, P: number, Q: number, R: number, S: number, T: number, U: number, V: number, W: number, X: number, Y: number, Z: number, LeftGui: number, RightGui: number, Numpad0: number, Numpad1: number, Numpad2: number, Numpad3: number, Numpad4: number, Numpad5: number, Numpad6: number, Numpad7: number, Numpad8: number, Numpad9: number, NumpadMultiply: number, NumpadAdd: number, NumpadSubtract: number, NumpadDecimal: number, NumpadDivide: number, F1: number, F2: number, F3: number, F4: number, F5: number, F6: number, F7: number, F8: number, F9: number, F10: number, F11: number, F12: number, NumLock: number, ScrollLock: number, LeftShift: number, RightShift: number, LeftControl: number, RightControl: number, LeftAlt: number, RightAlt: number, Semicolon: number, Equals: number, Comma: number, Minus: number, Period: number, Slash: number, Backquote: number, LeftBracket: number, Backslash: number, RightBracket: number, Apostrophe: number, ButtonA: number, ButtonB: number, ButtonX: number, ButtonY: number, ButtonL1: number, ButtonR1: number, ButtonL2: number, ButtonR2: number, ButtonSelect: number, ButtonStart: number, ButtonL3: number, ButtonR3: number, DPadUp: number, DPadDown: number, DPadLeft: number, DPadRight: number, Thumbstick1: number, Thumbstick2: number},
+		read Key: {Backspace: number, Tab: number, Return: number, Pause: number, CapsLock: number, Escape: number, Space: number, PageUp: number, PageDown: number, End: number, Home: number, Left: number, Up: number, Right: number, Down: number, Insert: number, Delete: number, Zero: number, One: number, Two: number, Three: number, Four: number, Five: number, Six: number, Seven: number, Eight: number, Nine: number, A: number, B: number, C: number, D: number, E: number, F: number, G: number, H: number, I: number, J: number, K: number, L: number, M: number, N: number, O: number, P: number, Q: number, R: number, S: number, T: number, U: number, V: number, W: number, X: number, Y: number, Z: number, LeftGui: number, RightGui: number, Numpad0: number, Numpad1: number, Numpad2: number, Numpad3: number, Numpad4: number, Numpad5: number, Numpad6: number, Numpad7: number, Numpad8: number, Numpad9: number, NumpadMultiply: number, NumpadAdd: number, NumpadSubtract: number, NumpadDecimal: number, NumpadDivide: number, F1: number, F2: number, F3: number, F4: number, F5: number, F6: number, F7: number, F8: number, F9: number, F10: number, F11: number, F12: number, NumLock: number, ScrollLock: number, LeftShift: number, RightShift: number, LeftControl: number, RightControl: number, LeftAlt: number, RightAlt: number, Semicolon: number, Equals: number, Comma: number, Minus: number, Period: number, Slash: number, Backquote: number, LeftBracket: number, Backslash: number, RightBracket: number, Apostrophe: number, ButtonA: number, ButtonB: number, ButtonX: number, ButtonY: number, ButtonL1: number, ButtonR1: number, ButtonL2: number, ButtonR2: number, ButtonSelect: number, ButtonStart: number, ButtonL3: number, ButtonR3: number, DPadUp: number, DPadDown: number, DPadLeft: number, DPadRight: number, Thumbstick1: number, Thumbstick2: number, VRTriggerLeft: number, VRTriggerRight: number, VRGripLeft: number, VRGripRight: number, VRPrimaryLeft: number, VRSecondaryLeft: number, VRPrimaryRight: number, VRSecondaryRight: number, VRThumbstickLeft: number, VRThumbstickRight: number, VRMenu: number},
 		-- mouse button enum values
 		read Button: {Left: number, Right: number, Middle: number, X1: number, X2: number},
 		-- InputAction.Type enum values
 		read ActionType: {Bool: number, Direction2D: number},
+	},
+	-- client VR poses, controller inputs, haptics, and play-space state
+	read VR: {
+		-- whether an XR session is active on this client
+		read Enabled: boolean,
+		-- whether the XR session is focused and receiving input
+		read Focused: boolean,
+		-- current XR session state from VR.State
+		read SessionState: number,
+		-- bitmask of currently tracked devices (bit index from VR.Device)
+		read Tracked: number,
+		-- play-space scale multiplier applied to VR poses in studs
+		HeadScale: number,
+		-- position in studs, axis-angle rotation vector, and whether the device is tracked
+		Pose: (device: number) -> (vector, vector, boolean),
+		-- whether a VR.Device has a valid tracked pose this frame
+		IsTracked: (device: number) -> boolean,
+		-- 2D thumbstick deflection for a VR.Hand
+		Thumbstick: (hand: number) -> vector,
+		-- analog trigger pull from 0 to 1 for a VR.Hand
+		Trigger: (hand: number) -> number,
+		-- analog grip squeeze from 0 to 1 for a VR.Hand
+		Squeeze: (hand: number) -> number,
+		-- recenter the play space to the current head position and yaw
+		Recenter: () -> (),
+		-- queue a haptic vibration pulse on a VR.Hand
+		Vibrate: (hand: number, amplitude: number, duration: number?, frequency: number?) -> (),
+		-- fires (state: number) when VR.SessionState changes
+		read StateChanged: Signal<(state: number) -> ()>,
+		-- fires (tracked: number) when the VR.Tracked bitmask changes
+		read TrackingChanged: Signal<(tracked: number) -> ()>,
+		-- fires when the VR play space recenters
+		read Recentered: Signal<() -> ()>,
+		-- XR session state enum values
+		read State: {Off: number, Idle: number, Ready: number, Synchronized: number, Visible: number, Focused: number, Stopping: number, LossPending: number, Exiting: number},
+		-- VR controller hand enum values
+		read Hand: {Left: number, Right: number},
+		-- tracked VR device enum values
+		read Device: {Head: number, LeftHand: number, RightHand: number, LeftAim: number, RightAim: number, LeftEye: number, RightEye: number},
+	},
+	-- fetch, validate, and spawn remote assets
+	read Content: {
+		-- fetch an asset by id into the validated cache; the callback runs on a later frame with a handle Spawn and AddAccessory take
+		Fetch: (id: string, sha256: string?, cb: (asset: ContentAsset?, err: string?) -> ()) -> ContentRequest,
+		-- read a bundled read-only binary file under data/ into a Luau buffer, or nil if not present
+		ReadData: ((path: string) -> buffer?) & ((self: any, path: string) -> buffer?),
+		-- the texture id of the headshot portrait of a platform user; the image loads when an Image shows it
+		Headshot: ((userId: number) -> string) & ((self: any, userId: number) -> string),
+	},
+	-- the materials of parts
+	read Materials: {
+		-- list every material with its pipeline class and surface model
+		GetMaterials: () -> {MaterialEntry},
+		-- read one material. An absent dataset is nil, never a flag
+		GetMaterial: ((idOrName: string) -> MaterialSpec) & ((self: any, idOrName: string) -> MaterialSpec),
+		-- set a field of the material's shader on this client from the next frame. The file and the other players keep the Params
+		SetParam: ((idOrName: string, name: string, value: number | vector | boolean | string) -> ()) & ((self: any, idOrName: string, name: string, value: number | vector | boolean | string) -> ()),
+	},
+	-- networked event tables
+	read EventTable: ((name: string, direction: EventDirection?, fields: {{string | EventFieldType}}?, options: {Coalesce: EnumEventCoalesce?, Timing: EnumEventTiming?, Delivery: EnumEventDelivery?}?) -> EventTable) & {
+		-- clients push events, the server reads them
+		read ToServer: EventDirection,
+		-- the server pushes events, clients read them
+		read ToClients: EventDirection,
+		-- 32-bit float field
+		read F32: EventFieldType,
+		-- 32-bit integer field
+		read I32: EventFieldType,
+		-- byte field, 0 to 255
+		read U8: EventFieldType,
+		-- boolean field
+		read Bool: EventFieldType,
+		-- vector field
+		read Vec3: EventFieldType,
+		-- color field, stored as bytes
+		read Color: EventFieldType,
+		-- Instance reference field
+		read Instance: EventFieldType,
+		-- Instance reference field
+		read Entity: EventFieldType,
+		-- text field, 64 characters or less
+		read String: EventFieldType,
+		-- binary buffer field, 4096 bytes or less
+		read Buffer: EventFieldType,
+	},
+	-- emoji catalog, skin tones, and keyword search
+	read Emoji: {
+		-- the emoji picker categories and their entry counts
+		Categories: () -> {{id: string, name: string, count: number}},
+		-- the emoji id at 1-based index in category
+		CategoryAt: ((category: number, index: number) -> string?) & ((self: any, category: number, index: number) -> string?),
+		-- the default emoji ids for the frequently used row
+		FrequentDefaults: () -> {string},
+		-- the UTF-8 emoji glyph for skin tone 1 to 6 and whether it has skin tones
+		Glyph: ((id: string, skin: number?) -> (string?, boolean)) & ((self: any, id: string, skin: number?) -> (string?, boolean)),
+		-- the UTF-8 emoji glyph and display name for an emoji id
+		Info: ((id: string, skin: number?) -> (string?, string?)) & ((self: any, id: string, skin: number?) -> (string?, string?)),
+		-- emoji ids matching every word in query, ranked by match position
+		Search: ((query: string, limit: number?) -> {string}?) & ((self: any, query: string, limit: number?) -> {string}?),
+	},
+	-- developer products sold in Lunes
+	read Marketplace: {
+		-- show the engine purchase prompt for a developer product of this place; the server asks that player, a client only its local player
+		PromptProductPurchase: ((player: Instance, productId: number | string, productType: ProductType?) -> ()) & ((self: any, player: Instance, productId: number | string, productType: ProductType?) -> ()),
+		-- whether the player owns a durable product or holds an active subscription to it
+		OwnsProduct: ((player: Instance, productId: number | string) -> boolean) & ((self: any, player: Instance, productId: number | string) -> boolean),
+		-- the player's subscription to a product: whether it is active, when it renews or ends, and whether it ends there
+		GetSubscriptionStatus: ((player: Instance, productId: number | string) -> SubscriptionStatus) & ((self: any, player: Instance, productId: number | string) -> SubscriptionStatus),
+		-- the product type tokens PromptProductPurchase takes
+		read ProductType: { Consumable: ProductType, Durable: ProductType, Subscription: ProductType },
+		-- grant a bought product; return true once granted, anything else delivers the receipt again later
+		-- server-only write
+		read ProcessReceipt: ((receipt: ProductReceipt) -> boolean?)?,
+		-- fires with the player, the product id, and whether the player bought it
+		read PromptProductPurchaseFinished: Signal<(player: Instance, productId: number, purchased: boolean) -> ()>,
 	},
 	-- player and device settings
 	read Settings: {
@@ -4037,57 +4404,88 @@ declare game: {
 		-- fires (setting: string, index: number, count: number, label: string) when a device setting's place or count of places moves
 		read ValueChanged: Signal<(setting: string, index: number, count: number, label: string) -> ()>,
 	},
-	-- fetch, validate, and spawn remote assets
-	read Content: {
-		-- fetch an asset by id into the validated cache; the callback runs on a later frame with a handle Spawn and AddAccessory take
-		Fetch: (id: string, sha256: string?, cb: (asset: ContentAsset?, err: string?) -> ()) -> ContentRequest,
-		-- the texture id of the headshot portrait of a platform user; the image loads when an Image shows it
-		Headshot: ((userId: number) -> string) & ((self: any, userId: number) -> string),
-	},
-	-- the materials of parts
-	read Materials: {
-		-- list every material with its pipeline class and surface model
-		GetMaterials: () -> {MaterialEntry},
-		-- read one material. An absent dataset is nil, never a flag
-		GetMaterial: ((idOrName: string) -> MaterialSpec) & ((self: any, idOrName: string) -> MaterialSpec),
-		-- set a field of the material's shader on this client from the next frame. The file and the other players keep the Params
-		SetParam: ((idOrName: string, name: string, value: number | vector | boolean | string) -> ()) & ((self: any, idOrName: string, name: string, value: number | vector | boolean | string) -> ()),
-	},
-	-- networked event tables
-	read EventTable: ((name: string, direction: EventDirection?, fields: {{string | EventFieldType}}?, options: {Coalesce: EnumEventCoalesce?, Delivery: EnumEventDelivery?}?) -> EventTable) & {
-		-- clients push events, the server reads them
-		read ToServer: EventDirection,
-		-- the server pushes events, clients read them
-		read ToClients: EventDirection,
-		-- 32-bit float field
-		read F32: EventFieldType,
-		-- 32-bit integer field
-		read I32: EventFieldType,
-		-- byte field, 0 to 255
-		read U8: EventFieldType,
-		-- boolean field
-		read Bool: EventFieldType,
-		-- vector field
-		read Vec3: EventFieldType,
-		-- color field, stored as bytes
-		read Color: EventFieldType,
-		-- Instance reference field
-		read Instance: EventFieldType,
-		-- Instance reference field
-		read Entity: EventFieldType,
-		-- text field, 64 characters or less
-		read String: EventFieldType,
-	},
 	-- every named fixed set, as tables of the labels scripts read and write
 	read Enum: Enums,
 	-- the local copy of the screen UI
 	read Overlay: Instance?,
 }
 
--- empty Instance constructor
+declare Enum: Enums
+
+-- built-in object constructors
 declare Instance: {
 	-- create a built-in object or an empty Instance at the top of the place
 	new: (name: string?) -> Instance,
+	-- create a camera-facing interface surface
+	BillboardGui: () -> Instance,
+	-- create a camera with the default lens
+	Camera: () -> Instance,
+	-- create a character
+	Character: () -> Instance,
+	-- create a cone part
+	Cone: () -> Instance,
+	-- create a cylinder part
+	Cylinder: () -> Instance,
+	-- create an image projected onto a face
+	Decal: () -> Instance,
+	-- create an empty instance named Folder
+	Folder: () -> Instance,
+	-- create a rectangle interface element
+	Frame: () -> Instance,
+	-- create 3D drag handles that report drags on a target
+	Handles: () -> Instance,
+	-- create a clickable image
+	ImageButton: () -> Instance,
+	-- create an image interface element
+	ImageLabel: () -> Instance,
+	-- create an input action
+	InputAction: () -> Instance,
+	-- create a key or button binding for an input action
+	InputBinding: () -> Instance,
+	-- create a group of input actions
+	InputContext: () -> Instance,
+	-- create a surface view that reflects the world
+	Mirror: () -> Instance,
+	-- create a model with a pivot
+	Model: () -> Instance,
+	-- create a box part
+	Part: () -> Instance,
+	-- create a particle emitter
+	ParticleEmitter: () -> Instance,
+	-- create a light that shines in every direction
+	PointLight: () -> Instance,
+	-- create a surface view that looks out of another face
+	Portal: () -> Instance,
+	-- create a full-screen interface root
+	ScreenGui: () -> Instance,
+	-- create a frame that scrolls
+	ScrollingFrame: () -> Instance,
+	-- create a slider
+	Slider: () -> Instance,
+	-- create a sound
+	Sound: () -> Instance,
+	-- create a sphere part
+	Sphere: () -> Instance,
+	-- create a cone of light
+	SpotLight: () -> Instance,
+	-- create an interface surface on a part face
+	SurfaceGui: () -> Instance,
+	-- create a surface view that shows a camera
+	SurfaceView: () -> Instance,
+	-- create a text field
+	TextBox: () -> Instance,
+	-- create a clickable text label
+	TextButton: () -> Instance,
+	-- create a text interface element
+	TextLabel: () -> Instance,
+	-- create an on and off switch
+	Toggle: () -> Instance,
+	-- create a frame that shows a camera's image
+	ViewportFrame: () -> Instance,
+	-- create a wedge part
+	Wedge: () -> Instance,
+	-- create 3D drag handles that report drags on a target
+	AdornmentHandles: @[deprecated] () -> Instance,
 }
 
 -- vector constructor and constants
@@ -4196,6 +4594,12 @@ declare DynamicMesh: {
 	new: () -> DynamicMesh,
 }
 
+-- runtime image constructor
+declare DynamicImage: {
+	-- make a client image of width x height RGBA pixels, each side 1 to 1024; it shows on GUI images, decals, surface maps and particles, not on skies
+	new: (width: number, height: number) -> DynamicImage,
+}
+
 -- polygon helpers on flat buffers
 declare geometry: {
 	-- ear-clip a simple polygon of count f32 x, y points into u32 triangle indices; returns the index count, 0 on failure
@@ -4227,7 +4631,7 @@ declare print: (...any) -> ()
 declare warn: (...any) -> ()
 
 -- seconds from a monotonic clock
-declare tick: () -> number
+declare tick: @[deprecated {use = "os.clock"}] () -> number
 
 -- print every event table to the output
 declare EventTableDump: () -> ()
@@ -4235,11 +4639,8 @@ declare EventTableDump: () -> ()
 -- the entity this script runs on
 declare self: Instance
 
--- the Studio plugin whose init.lua is running
-declare plugin: Plugin
-
 -- named entities of this place
 declare handles: { [string]: Instance }
 
--- a table every script of this side reads and writes
+-- a table every script of this side reads and writes; deprecated, use a require module
 declare shared: { [any]: any }
