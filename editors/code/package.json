@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/luduvo-devhub/luduvo-lsp/issues"
   },
-  "version": "1.71.2",
+  "version": "1.71.3",
   "engines": {
     "vscode": "^1.82.0"
   },
@@ -865,9 +865,30 @@
           "markdownDescription": "Ordered sections in Luduvo rich hover and completion documentation. An empty list hides the documentation.",
           "type": "array",
           "items": {
-            "enum": ["title", "tags", "divider", "deprecation", "summary", "resources", "type", "default", "notes", "example"]
+            "enum": [
+              "title",
+              "tags",
+              "divider",
+              "deprecation",
+              "summary",
+              "resources",
+              "type",
+              "default",
+              "notes",
+              "example"
+            ]
           },
-          "default": ["title", "tags", "divider", "default", "deprecation", "summary", "resources", "divider", "type"],
+          "default": [
+            "title",
+            "tags",
+            "divider",
+            "default",
+            "deprecation",
+            "summary",
+            "resources",
+            "divider",
+            "type"
+          ],
           "scope": "resource"
         },
         "luduvo-lsp.platform.luduvo.resources.groups": {
@@ -941,7 +962,9 @@
                         },
                         "notes": {
                           "type": "array",
-                          "items": { "type": "string" },
+                          "items": {
+                            "type": "string"
+                          },
                           "description": "Notes shown in the resource tooltip"
                         },
                         "example": {
