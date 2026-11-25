@@ -52,7 +52,7 @@ REFERENCE_URL = "https://example.com/docs/reference/"
 class ApiDumpTests(unittest.TestCase):
     def test_adds_constructor_names_without_overwriting_object_pages(self):
         with patch.object(sys, "path", [str(SCRIPT.parent), *sys.path]):
-            from luduvo_website import object_resources
+            from dumpLuduvoDocs import object_resources
 
         constructor = {
             "location": "reference/Instance/#new",

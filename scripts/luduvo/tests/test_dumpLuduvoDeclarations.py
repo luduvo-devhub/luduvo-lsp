@@ -8,7 +8,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from luduvo_declarations import merge_surfaces, parse_declarations
+from dumpLuduvoDeclarationDocs import merge_surfaces, parse_declarations
 
 
 SOURCE = """
