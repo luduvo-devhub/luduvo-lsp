@@ -14,8 +14,6 @@
 #include "LuauFileUtils.hpp"
 #include <filesystem>
 
-LUAU_FASTFLAG(LuauUdtfPopulateEnv)
-
 using namespace luduvo;
 static std::string getErrors(const Luau::CheckResult& result)
 {
@@ -451,7 +449,6 @@ TEST_CASE("reporting_log_and_ui_inheritance_are_independent")
 
 TEST_CASE("portable_module_is_valid_and_documents_broad_indexer_limit")
 {
-    ScopedFastFlag populateTypeFunctionEnvironment{FFlag::LuauUdtfPopulateEnv, true};
     LuduvoFixture fixture("generated_schema_module");
     ProjectSchemas project;
     project.projectId = "test";

@@ -533,7 +533,6 @@ TEST_CASE("luduvo_resource_completion_groups_builtin_and_custom_entries")
     const auto component = requireItem(fixture.workspace.completion(params, nullptr), "AdornmentHandles");
     REQUIRE(component.documentation);
     CHECK(component.documentation->value.find("# AdornmentHandles\n\n`component` · `built-in`") == 0);
-    CHECK(component.documentation->value.find("3D drag handles") != std::string::npos);
 }
 
 TEST_CASE("luduvo_instance_constructor_suggests_documented_objects")

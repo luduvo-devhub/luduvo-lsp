@@ -48,7 +48,7 @@ static bool isHoverableTokenPosition(
     {
         if ((ancestor->is<Luau::AstExprLocal>() || ancestor->is<Luau::AstExprGlobal>() || ancestor->is<Luau::AstExprConstantNil>() ||
                 ancestor->is<Luau::AstExprConstantBool>() || ancestor->is<Luau::AstExprConstantNumber>() ||
-                ancestor->is<Luau::AstExprConstantInteger>() || ancestor->is<Luau::AstExprConstantString>()) &&
+                ancestor->is<Luau::AstExprConstantString>()) &&
             ancestor->location.containsClosed(position))
             return true;
         if (auto index = ancestor->as<Luau::AstExprIndexName>(); index && index->indexLocation.containsClosed(position))
@@ -121,7 +121,7 @@ bool isLiteralPosition(const Luau::SourceModule& sourceModule, const Luau::Posit
 {
     for (const Luau::AstNode* ancestor : Luau::findAstAncestryOfPosition(sourceModule, position))
         if ((ancestor->is<Luau::AstExprConstantNil>() || ancestor->is<Luau::AstExprConstantBool>() || ancestor->is<Luau::AstExprConstantNumber>() ||
-                ancestor->is<Luau::AstExprConstantInteger>() || ancestor->is<Luau::AstExprConstantString>()) &&
+                ancestor->is<Luau::AstExprConstantString>()) &&
             ancestor->location.containsClosed(position))
             return true;
     return false;

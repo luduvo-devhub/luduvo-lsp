@@ -24,12 +24,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Sync to upstream Luau 0.747
+- **Breaking**: `luau-lsp analyze` now uses the new Luau type solver by default, as upstream Luau no longer treats `LuauSolverV2` as an experimental flag. The language server is also affected when all FFlags are enabled by default. Pass `--flag:LuauSolverV2=false` to keep the old solver
 - Luduvo hover titles no longer include a generic client or server version suffix. Instead, the read-only tag will be doing most of the heavy lifting
 - Automatic context refresh's default has been changed to use the bundled `ldv-dump` tool instead of the old `world.dump` method
 - Stale context prompts only appear when automatic refresh is off or fails instead of every time the LSP helper detects a command that could stale the context 
 
 ### Fixed
 
+- Luduvo function hover now displays duplicate members of inferred return unions only once
+- `luau-lsp analyze` now reports each module's type errors once. A file that was already checked as a dependency of an earlier analyzed file printed its own type errors again, along with those of every module it requires
+- `luau-lsp analyze` continues checking the remaining files when the new solver encounters an internal compiler error
 - Luduvo 52 came with `--headless`, so now all dumpers use it by default. That should hopefully get the github action workers able to run the smoke tests again 
 - The site API dumper get rewrote to work again on the new Zensical site, and won't fail due to ambiguous components anymore
 - Luduvo helper's autodumper no longer crashes when the project is already open in Luduvo Studio

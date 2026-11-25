@@ -476,18 +476,18 @@ TEST_CASE("documentation_type_identity_ignores_shared_leaf_metadata")
 TEST_CASE("luduvo_rich_hover_expands_named_extern_types_in_the_type_block")
 {
     const std::string definitions = R"(
-        declare extern type ContentRequest with
+        declare extern type HoverTestContentRequest with
             Pending: boolean
-            Cancel: (self: ContentRequest) -> ()
+            Cancel: (self: HoverTestContentRequest) -> ()
         end
 
-        declare contentRequest: ContentRequest
+        declare contentRequest: HoverTestContentRequest
     )";
 
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
     LuduvoFixture fixture("luduvo_rich_hover_named_extern_type", config, definitions, definitions);
 
-    auto uri = fixture.newDocument("content.server.luau", "local request: ContentRequest = contentRequest\nprint(request)");
+    auto uri = fixture.newDocument("content.server.luau", "local request: HoverTestContentRequest = contentRequest\nprint(request)");
     lsp::HoverParams params;
     params.textDocument = lsp::TextDocumentIdentifier{uri};
     params.position = lsp::Position{1, 7};
@@ -495,8 +495,8 @@ TEST_CASE("luduvo_rich_hover_expands_named_extern_types_in_the_type_block")
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
     CHECK(result->contents.value.find("Pending: boolean") != std::string::npos);
-    CHECK(result->contents.value.find("Cancel: (self: ContentRequest) -> ()") != std::string::npos);
-    CHECK(result->contents.value.find("# ContentRequest") == 0);
+    CHECK(result->contents.value.find("Cancel: (self: HoverTestContentRequest) -> ()") != std::string::npos);
+    CHECK(result->contents.value.find("# HoverTestContentRequest") == 0);
 }
 
 TEST_CASE("luduvo_rich_hover_uses_only_the_type_block_for_unadorned_local_values")
@@ -576,7 +576,7 @@ TEST_CASE("luduvo_rich_hover_truncates_titles")
     const std::string definitions = "declare extremelyLongGlobalName: number";
 
     auto config = Luau::LanguageServer::defaultTestClientConfiguration();
-    config.platform.luduvo.hover.maxTitleLength = 24;
+    config.platform.luduvo.hover.maxTitleLength = 22;
     LuduvoFixture fixture("luduvo_rich_hover_title_limit", config, definitions, definitions);
 
     auto uri = fixture.newDocument("limit.server.luau", "local value = extremelyLongGlobalName");
@@ -586,7 +586,7 @@ TEST_CASE("luduvo_rich_hover_truncates_titles")
 
     auto result = fixture.workspace.hover(params, nullptr);
     REQUIRE(result);
-    CHECK_EQ(result->contents.value, "# extremelyLongGlobalNa...\n\n___\n\n" + codeBlock("luau", "declare extremelyLongGlobalName: number"));
+    CHECK_EQ(result->contents.value, "# extremelyLongGlobal...\n\n___\n\n" + codeBlock("luau", "declare extremelyLongGlobalName: number"));
 }
 
 TEST_CASE("luduvo_rich_hover_truncates_type_definitions_independently")
@@ -1115,7 +1115,7 @@ end
     const std::string sub = hover({2, 18});
     CHECK(sub.find("# ") == std::string::npos);
     CHECK(sub.find("@checked") == std::string::npos);
-    CHECK(sub.find("(self: string, number, number?) -> string") != std::string::npos);
+    CHECK_MESSAGE(sub.find("(self: string, _: number, _: number?): string") != std::string::npos, sub);
 
     const std::string insert = hover({5, 8});
     CHECK(insert.find("# ") == std::string::npos);

@@ -676,8 +676,9 @@ static Luau::LoadDefinitionFileResult loadDefinitionFileWithPrivateTypesExposed(
             frontend.prepareModuleScope(name, scope, false);
     };
 
+    Luau::InternalErrorReporter iceHandler{frontend.onInternalError, sourceModule.name};
     Luau::Frontend::Stats stats;
-    Luau::ModulePtr checkedModule = Luau::check(sourceModule, Luau::Mode::Definition, {}, frontend.builtinTypes, Luau::NotNull{&frontend.iceHandler},
+    Luau::ModulePtr checkedModule = Luau::check(sourceModule, Luau::Mode::Definition, {}, frontend.builtinTypes, Luau::NotNull{&iceHandler},
         Luau::NotNull{&frontend.moduleResolver}, Luau::NotNull{frontend.fileResolver}, globals.globalScope, globals.globalTypeFunctionScope,
         prepareModuleScope, frontend.options, {}, false, stats, frontend.writeJsonLog);
 

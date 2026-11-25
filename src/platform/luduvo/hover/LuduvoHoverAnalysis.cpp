@@ -11,6 +11,8 @@
 
 namespace luduvo::hover
 {
+static std::string normalizeNamedFunctionReturnPack(std::string signature, const Luau::FunctionType& function, Luau::ToStringOptions& options);
+
 std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, const std::string& expandedType, const DeclarationTarget& target,
     const Luau::ToStringOptions& options)
 {
@@ -21,11 +23,11 @@ std::string makeDeclaration(Luau::TypeId type, const std::string& renderedType, 
         auto signatureOptions = options;
         signatureOptions.exhaustive = false;
         signatureOptions.hideTableAliasExpansions = true;
-        const std::string signature = Luau::toStringNamedFunction(target.name, *function, signatureOptions);
+        std::string signature = Luau::toStringNamedFunction(target.name, *function, signatureOptions);
         // Anonymous recursive types need Luau's recursive type notation to retain their bindings.
         if (signature.find("*CYCLE*") != std::string::npos || signature.find("*CYCLETP*") != std::string::npos)
             return target.name + ": " + Luau::toString(type, signatureOptions);
-        return "function " + signature;
+        return "function " + normalizeNamedFunctionReturnPack(std::move(signature), *function, signatureOptions);
     }
 
     auto declarationFor = [&](const std::string& typeText)
@@ -499,6 +501,66 @@ std::string getRichHoverTypeDefinition(Luau::TypeId type, Luau::ToStringOptions&
     return normalizeRichHoverType(type, options);
 }
 
+struct ParameterList
+{
+    size_t open;
+    std::optional<size_t> firstComma;
+    size_t close;
+};
+
+static std::optional<ParameterList> findParameterList(std::string_view signature)
+{
+    const size_t open = signature.find('(');
+    if (open == std::string_view::npos)
+        return std::nullopt;
+
+    int depth = 0;
+    std::optional<size_t> firstComma;
+    char quote = '\0';
+    bool escaped = false;
+    for (size_t index = open + 1; index < signature.size(); ++index)
+    {
+        const char character = signature[index];
+        if (quote)
+        {
+            if (escaped)
+                escaped = false;
+            else if (character == '\\')
+                escaped = true;
+            else if (character == quote)
+                quote = '\0';
+            continue;
+        }
+        if (character == '\'' || character == '"')
+        {
+            quote = character;
+            continue;
+        }
+        if (character == '(' || character == '{' || character == '[' || character == '<')
+            ++depth;
+        else if (character == ')' || character == '}' || character == ']' || (character == '>' && signature[index - 1] != '-'))
+        {
+            if (character == ')' && depth == 0)
+                return ParameterList{open, firstComma, index};
+            --depth;
+        }
+        else if (character == ',' && depth == 0 && !firstComma)
+            firstComma = index;
+    }
+    return std::nullopt;
+}
+
+static std::string normalizeNamedFunctionReturnPack(std::string signature, const Luau::FunctionType& function, Luau::ToStringOptions& options)
+{
+    if (const auto parameters = findParameterList(signature))
+    {
+        signature.resize(parameters->close + 1);
+        signature += ": ";
+        signature += renderFunctionReturnPack(function, options);
+    }
+    return signature;
+}
+
 std::vector<RichHoverOverload> makeRichHoverOverloads(Luau::TypeId type, const DeclarationTarget& target, Luau::ToStringOptions& options,
     const std::vector<LuduvoResolvedResourceBinding>& constrainedResources)
 {
@@ -550,55 +612,6 @@ std::vector<RichHoverOverload> makeRichHoverOverloads(Luau::TypeId type, const D
         break;
     }
 
-    struct ParameterList
-    {
-        size_t open;
-        std::optional<size_t> firstComma;
-        size_t close;
-    };
-
-    auto findParameterList = [](std::string_view signature) -> std::optional<ParameterList>
-    {
-        const size_t open = signature.find('(');
-        if (open == std::string_view::npos)
-            return std::nullopt;
-
-        int depth = 0;
-        std::optional<size_t> firstComma;
-        char quote = '\0';
-        bool escaped = false;
-        for (size_t index = open + 1; index < signature.size(); ++index)
-        {
-            const char character = signature[index];
-            if (quote)
-            {
-                if (escaped)
-                    escaped = false;
-                else if (character == '\\')
-                    escaped = true;
-                else if (character == quote)
-                    quote = '\0';
-                continue;
-            }
-            if (character == '\'' || character == '"')
-            {
-                quote = character;
-                continue;
-            }
-            if (character == '(' || character == '{' || character == '[' || character == '<')
-                ++depth;
-            else if (character == ')' || character == '}' || character == ']' || character == '>')
-            {
-                if (character == ')' && depth == 0)
-                    return ParameterList{open, firstComma, index};
-                --depth;
-            }
-            else if (character == ',' && depth == 0 && !firstComma)
-                firstComma = index;
-        }
-        return std::nullopt;
-    };
-
     auto removeFirstParameter = [&](std::string& signature)
     {
         const auto parameters = findParameterList(signature);
@@ -632,10 +645,7 @@ std::vector<RichHoverOverload> makeRichHoverOverloads(Luau::TypeId type, const D
         if (renderAsMember && methodCall)
             removeFirstParameter(signature);
 
-        if (const auto parameters = findParameterList(signature))
-            signature = signature.substr(0, parameters->close + 1) + ": " + renderFunctionReturnPack(*functions[index], callableOptions);
-
-        overload.declaration = "function " + signature + "\nend";
+        overload.declaration = "function " + normalizeNamedFunctionReturnPack(std::move(signature), *functions[index], callableOptions) + "\nend";
         if (renderAsMember && hasDotCall && hasMethodCall)
             overload.callStyle = methodCall ? "Method call" : "Dot call";
         for (const LuduvoResolvedResourceBinding& binding : constrainedResources)
