@@ -223,7 +223,7 @@ You can still rechange these in your config and it will override these defaults.
 
 Since the `luduvo-lsp` extension is not on the VSCode/VSCodium Marketplace, you will need to manually install it. Here's how to do that:
 
-1. Download the latest release from the [releases tab](https://github.com/luduvo/luduvo-lsp/releases)
+1. Download the latest release from the [releases tab](https://github.com/luduvo-devhub/luduvo-lsp/releases)
 2. Extract the contents of the release archive
 3. Open VSCode/VSCodium and go to `Extensions` (or `Preferences` > `Extensions`)
 4. Click the `...` button in the top right corner and select `Install from VSIX...`
